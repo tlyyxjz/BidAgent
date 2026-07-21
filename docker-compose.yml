@@ -1,0 +1,121 @@
+services:
+  scrapeflow:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/scrapeflow.db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      PROXY_LIST: ${PROXY_LIST:-}
+      PLAYWRIGHT_HEADLESS: ${PLAYWRIGHT_HEADLESS:-true}
+      PLAYWRIGHT_TIMEOUT_SECONDS: ${PLAYWRIGHT_TIMEOUT_SECONDS:-30}
+      FREE_TIER_DAILY_LIMIT: ${FREE_TIER_DAILY_LIMIT:-5}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+      REPORT_OUTPUT_DIR: ${REPORT_OUTPUT_DIR:-data/reports}
+      ATTACHMENT_DIR: ${ATTACHMENT_DIR:-data/attachments}
+      APP_ROLE: web
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8000}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      # Sol S-10/S-11/S-15：SMTP / Session / 千里马配置
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+      SMTP_FROM_ADDR: ${SMTP_FROM_ADDR:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-ScrapeFlow 招标推送}
+      SMTP_TIMEOUT: ${SMTP_TIMEOUT:-30}
+      ANTI_DETECT_SESSION_DIR: ${ANTI_DETECT_SESSION_DIR:-data/sessions}
+      BROWSER_POOL_SIZE: ${BROWSER_POOL_SIZE:-2}
+      BROWSER_POOL_TIMEOUT: ${BROWSER_POOL_TIMEOUT:-30}
+      QIANLIMA_LOGIN_URL: ${QIANLIMA_LOGIN_URL:-https://www.qianlima.com/login}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # Worker：异步抓取任务（APP_ROLE=worker 避免重复抓取）
+  worker:
+    build: .
+    command: python -m app.worker_loop
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/scrapeflow.db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      PROXY_LIST: ${PROXY_LIST:-}
+      PLAYWRIGHT_HEADLESS: ${PLAYWRIGHT_HEADLESS:-true}
+      PLAYWRIGHT_TIMEOUT_SECONDS: ${PLAYWRIGHT_TIMEOUT_SECONDS:-30}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      APP_ROLE: worker
+      # Sol S-11：worker 也需要 session 目录配置（登录态采集）
+      ANTI_DETECT_SESSION_DIR: ${ANTI_DETECT_SESSION_DIR:-data/sessions}
+      BROWSER_POOL_SIZE: ${BROWSER_POOL_SIZE:-2}
+      BROWSER_POOL_TIMEOUT: ${BROWSER_POOL_TIMEOUT:-30}
+      QIANLIMA_LOGIN_URL: ${QIANLIMA_LOGIN_URL:-https://www.qianlima.com/login}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Scheduler：定时扫描订阅并触发推送（APP_ROLE=scheduler 避免重复推送）
+  scheduler:
+    build: .
+    command: python -m app.scheduler_loop
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/scrapeflow.db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      REPORT_OUTPUT_DIR: ${REPORT_OUTPUT_DIR:-data/reports}
+      APP_ROLE: scheduler
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8000}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      # Sol S-10：scheduler 需要 SMTP 配置才能真实发送推送邮件
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+      SMTP_FROM_ADDR: ${SMTP_FROM_ADDR:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-ScrapeFlow 招标推送}
+      SMTP_TIMEOUT: ${SMTP_TIMEOUT:-30}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis-data:

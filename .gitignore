@@ -1,0 +1,85 @@
+# ==== 敏感配置（含真实密钥，绝不提交）====
+.env
+.env.local
+.env.production
+.env.*.local
+!.env.example
+
+# ==== 凭证与密钥 ====
+*.key
+*.pem
+credentials.json
+cookies.json
+session.json
+auth.json
+*.session
+
+# ==== 运行时数据 ====
+data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+
+# ==== 日志与缓存 ====
+logs/
+*.log
+tmp/
+temp/
+cache/
+
+# ==== 私有数据与快照 ====
+dataset/test/
+gold/test/
+private_data/
+snapshots/
+sessions/
+
+# ==== 探测调试产物（scripts/probe_*.py 生成）====
+login_probe.png
+search_probe.png
+qianlima-dom.json
+qianlima-dom-probe.json
+qianlima-dom-probe-v2.json
+*_probe.png
+*_probe.json
+
+# ==== Python 缓存 ====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+*.egg-info/
+.eggs/
+
+# ==== 虚拟环境 ====
+venv/
+.venv/
+env/
+ENV/
+
+# ==== 前端 ====
+node_modules/
+dist/
+build/
+
+# ==== IDE ====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==== 系统 ====
+.DS_Store
+Thumbs.db

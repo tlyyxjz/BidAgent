@@ -1,0 +1,29 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+aiosqlite
+pydantic
+pydantic-settings
+httpx
+playwright
+slowapi
+redis
+rq
+loguru
+sentry-sdk
+pytest
+pytest-asyncio
+# 超聚变命题新增
+python-docx
+APScheduler
+python-multipart
+email-validator
+croniter
+aiofiles
+# PDF 附件解析（命题第 4 项硬要求增强）
+pdfplumber>=0.10.0
+# OCR 兜底（扫描件 PDF）
+ddddocr>=1.4.7
+# SimHash 分词
+jieba>=0.42.1
+
