@@ -1,0 +1,9 @@
+{
+  "sample_id": "sample-001",
+  "raw_text_file": "sample-001.txt",
+  "annotation_file": "../_test_sample.json",
+  "raw_text_sha256": "8c3a3e8b035b8bd45a3edd11cc4963cf37aa91c659bcd32b1c42d0d83cf10295",
+  "raw_text_length_utf16": 610,
+  "evidence_count": 7,
+  "field_count": 6
+}

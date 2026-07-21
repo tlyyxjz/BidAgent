@@ -1,0 +1,262 @@
+# BidAgent 金标标注工具
+
+## 概述
+纯前端网页标注工具，用于 BidAgent 项目金标数据的人工标注。严格对接 GLM 后端 `backend/schemas.py` 中的 `AnnotationDocument` Schema。
+
+## 文件清单（共 8 个文件）
+
+| 文件 | 说明 |
+|------|------|
+| `index.html` | 主页面结构 |
+| `style.css` | 样式表 |
+| `schema.js` | Schema 常量定义（与 `backend/enums.py` 对齐） |
+| `sample_data.js` | Mock 示例数据（人工构造，非真实公告） |
+| `app.js` | 核心业务逻辑 |
+| `test.html` | 自动化测试页面（30+ 测试用例） |
+| `validate_schema.py` | Pydantic Schema 校验脚本 |
+| `README.md` | 使用说明文档 |
+
+## 功能特性
+
+### ✅ 已实现
+
+1. **双栏布局**
+   - 左侧：`clean_raw_text` 原文展示区，等宽字体
+   - 右侧：六类核心字段标注面板
+
+2. **六类正式核心字段**（与 v4.1 一致）
+   - `project_identifier` — 项目编号
+   - `purchaser_name` — 采购人名称
+   - `winner_name` — 中标人名称
+   - `amount` — 金额及金额类型
+   - `publish_date` — 发布日期
+   - `bid_deadline` — 投标截止日期
+
+3. **六种字段状态**
+   - `present` — 存在（绿色）
+   - `absent` — 不存在（红色）
+   - `not_applicable` — 不适用（灰色）
+   - `ambiguous` — 歧义（橙色）
+   - `attachment_only` — 仅附件（蓝色）
+   - `unreadable` — 无法识别（紫色）
+
+4. **多值字段支持**
+   - 每个字段可添加多个值
+   - 每个值独立管理证据列表
+
+5. **证据标注（偏移量 100% 准确）**
+   - 鼠标选中文本后点击「添加证据」
+   - 自动记录 `[start, end)` 半开区间偏移量
+   - **双重验证机制**：DOM 节点偏移 + 字符串精确匹配兜底
+   - **强制验证**：保存前必须满足 `text.slice(start, end) === evidence_text`，不通过禁止保存
+   - 覆盖测试：ASCII、中文、换行、全角字符、emoji、特殊空白
+   - 支持多段合法证据
+   - 五种证据角色：`primary` / `context` / `qualifier` / `derivation_input` / `contradiction`
+
+6. **金额字段专属属性**
+   - `amount_type`：budget / ceiling / award / contract / unit_price / unknown
+   - `currency`：币种
+   - `original_unit`：原始单位（万元、亿元等）
+   - `tax_status`：含税状态
+
+7. **其他属性**
+   - `lot_id`：分包 ID
+   - `note`：字段备注
+
+8. **数据导入导出**
+   - 导入 TXT 原文
+   - 导入/导出 JSON（符合 `AnnotationDocument` Schema）
+   - localStorage 自动保存草稿（500ms 防抖）
+
+9. **文档级标注状态**
+   - 待标 / 已标 / 待仲裁
+
+### 🔒 安全约束
+
+- 纯前端实现，不上传任何数据到服务器
+- 不加载远程脚本，所有代码本地运行
+- 不读取 `.env` 或 API Key
+- 示例数据均为人工构造的 Mock 内容
+- 不接触冻结测试集
+
+## 使用说明
+
+### 启动方法
+
+推荐使用本地 HTTP 服务器启动：
+
+```bash
+# 进入 annotation_tool 目录
+cd annotation_tool
+
+# 启动 Python 内置 HTTP 服务器
+python -m http.server 8000 --directory .
+```
+
+然后在浏览器中访问：**http://localhost:8000/**
+
+也可以直接双击 `index.html` 用浏览器打开（部分浏览器 localStorage 可能受限）。
+
+### 快速开始
+1. 打开页面后默认加载示例数据，可直接体验
+2. 点击「导入 TXT」可加载自己的公告 clean_raw_text
+3. 在左侧原文中用鼠标选中一段文字
+4. 在右侧对应字段中点击「+ 添加选中的文本为证据」
+5. 完成后点击「导出 JSON」保存标注结果
+
+### 标注流程
+1. **设置文档信息**：填写 document_id、标注员 ID
+2. **逐字段标注**：
+   - 选择字段状态（present / absent / ...）
+   - 若为 present，添加字段值
+   - 在原文中选中证据文本，添加到对应值
+   - 至少需要一个 `primary` 角色的证据
+3. **填写备注**：对不确定的字段添加说明
+4. **导出 JSON**：保存标注结果
+
+### 偏移量约定
+- 坐标空间：`clean_raw_text`
+- 区间格式：`[start, end)` 半开区间（含 start，不含 end）
+- 验证规则：`clean_raw_text.slice(start, end) === evidence.text`
+
+## 输出 JSON 格式
+
+严格符合 `backend/schemas.py` 中的 `AnnotationDocument` Schema：
+
+```json
+{
+  "document_id": "sample-001",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2024-03-16T10:30:00.000Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "ZFCG-2024-0315",
+          "normalized_value": "ZFCG-2024-0315",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 32,
+              "end": 47,
+              "text": "ZFCG-2024-0315"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    }
+  ]
+}
+```
+
+## 与 GLM 后端对齐情况
+
+| 枚举/常量 | GLM 后端 | 标注工具 | 状态 |
+|----------|---------|---------|------|
+| CoreFieldName（6类） | ✅ | ✅ | 完全对齐 |
+| GoldStatus（6种） | ✅ | ✅ | 完全对齐 |
+| EvidenceRole（5种） | ✅ | ✅ | 完全对齐 |
+| AmountType（6种） | ✅ | ✅ | 完全对齐 |
+| TaxStatus（3种） | ✅ | ✅ | 完全对齐 |
+| AnnotationDocument Schema | ✅ | ✅ | 导出格式一致 |
+| 偏移量 [start, end) | ✅ | ✅ | 约定一致 |
+| 坐标空间 clean_raw_text | ✅ | ✅ | 约定一致 |
+
+## 已知限制
+
+1. **单文档标注**：当前版本一次只能标注一份文档，不支持批量标注
+2. **无后端集成**：纯前端工具，数据仅保存在浏览器 localStorage 和导出的 JSON 文件中
+3. **无双人标注对比**：不支持标注一致性检查（IAA），需后续评测脚本处理
+4. **无项目级分组**：当前只处理单公告级别，不涉及项目级去重和关联
+5. **证据无原文回显高亮**：当前版本不在原文中可视化高亮已标注证据位置
+
+## 自动化测试
+
+### 浏览器端测试（test.html）
+
+覆盖 30+ 测试用例，包含：
+- ✅ 六类核心字段完整性
+- ✅ 六种字段状态枚举
+- ✅ 五种证据角色枚举
+- ✅ 偏移量验证（ASCII / 中文 / 换行 / 全角 / emoji / 特殊空白）
+- ✅ 单值和多值字段
+- ✅ 多段证据多角色
+- ✅ JSON 导入导出一致性
+- ✅ localStorage 保存和恢复
+- ✅ present 状态至少一个 value
+- ✅ 非 present 状态不得残留 values
+- ✅ primary 证据要求
+- ✅ 金额字段专属属性
+- ✅ lot_id / note 字段
+
+**运行方法**：启动 HTTP 服务器后访问 `http://localhost:8000/test.html`
+
+### Pydantic Schema 校验（validate_schema.py）
+
+使用 GLM 后端 `AnnotationDocument` 模型对导出 JSON 进行结构校验。
+
+**运行方法**：
+```bash
+python annotation_tool/validate_schema.py
+```
+
+校验内容：
+- 字段枚举值合法性
+- extra="forbid" 禁止额外字段
+- present 状态 values 非空
+- 非 present 状态 values 为空
+- 证据列表至少一个 primary
+- 偏移量结构合法（end > start）
+- 字段名不重复
+
+## 测试结果
+
+### 功能测试清单
+
+- [x] 页面加载正常，双栏布局正确
+- [x] 示例数据正确加载，6个字段卡片展示正常
+- [x] 字段状态切换功能正常（6种状态）
+- [x] present 状态下可添加/删除多个值
+- [x] 鼠标选中文本可获取偏移量
+- [x] 添加证据功能正常
+- [x] 证据编辑弹窗可修改角色和偏移量
+- [x] 偏移量实时验证功能正常
+- [x] 金额类型等扩展字段可编辑
+- [x] 备注字段可编辑
+- [x] JSON 导出格式正确
+- [x] JSON 导入功能正常
+- [x] TXT 原文导入功能正常
+- [x] localStorage 自动保存和恢复正常
+- [x] 重置功能正常
+
+## 开发基线与分支信息
+
+### GLM 后端基线
+- **GLM 最新分支**：`origin/feature/glm-w1-review`
+- **GLM 最新提交**：`6b39e5d`（security: 移除报告中 Key 片段显示）
+- **Schema 来源**：只读参考 `backend/schemas.py` 和 `backend/enums.py`
+- **未修改 GLM 代码**：仅新增 `annotation_tool/` 目录，不触碰 backend 任何文件
+
+### 当前分支
+- **分支名**：`feature/doubao-W1-05-annotation-tool`
+- **Git 状态说明**：本地仓库因初始浅克隆导致无初始提交，所有文件均为 Added 状态；代码内容基于 GLM 6b39e5d
+- **修改目录**：仅 `annotation_tool/`
+- **未修改**：`backend/`、`app/`、`tests/`、`models/`、`schemas/`、`migrations/`、`evaluation/`、`extractors/`
+
+## 后续可扩展方向
+
+1. 批量标注模式（多文档切换）
+2. 双人标注一致性检查
+3. 标注进度统计和质量看板
+4. 键盘快捷键支持
+5. 证据高亮回显（在原文中标记已选证据）
+6. 与后端 API 对接，直接入库

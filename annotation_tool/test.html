@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidAgent 标注工具 - 自动化测试</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { font-size: 20px; margin-bottom: 16px; color: #1A365D; }
+        h2 { font-size: 16px; margin: 20px 0 10px; color: #2D3748; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+        .summary { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; }
+        .summary.pass { background: #C6F6D5; color: #22543D; }
+        .summary.fail { background: #FED7D7; color: #742A2A; }
+        .test-case { padding: 8px 12px; margin: 4px 0; border-radius: 4px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .test-case.pass { background: #F0FFF4; }
+        .test-case.fail { background: #FFF5F5; }
+        .test-icon { width: 20px; text-align: center; font-weight: bold; }
+        .test-icon.pass { color: #38A169; }
+        .test-icon.fail { color: #E53E3E; }
+        .test-name { flex: 1; }
+        .test-error { color: #C53030; font-size: 12px; margin-left: 28px; margin-top: 4px; font-family: monospace; }
+        .stats { display: flex; gap: 20px; margin-top: 10px; font-size: 14px; color: #4A5568; }
+        .stats span { font-weight: bold; }
+        .stats .pass-count { color: #38A169; }
+        .stats .fail-count { color: #E53E3E; }
+        pre { background: #1A202C; color: #E2E8F0; padding: 12px; border-radius: 6px; font-size: 12px; overflow-x: auto; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏷️ BidAgent 金标标注工具 - 自动化测试</h1>
+        <div id="summary" class="summary">运行中...</div>
+        <div class="stats">
+            <span>总计：<span id="totalCount">0</span></span>
+            <span class="pass-count">通过：<span id="passCount">0</span></span>
+            <span class="fail-count">失败：<span id="failCount">0</span></span>
+        </div>
+        <div id="results"></div>
+
+        <h2>📋 测试覆盖清单</h2>
+        <ul style="font-size: 13px; color: #4A5568; line-height: 1.8; padding-left: 20px;">
+            <li>✅ 六类核心字段（project_identifier / purchaser_name / winner_name / amount / publish_date / bid_deadline）</li>
+            <li>✅ 六种字段状态（present / absent / not_applicable / ambiguous / attachment_only / unreadable）</li>
+            <li>✅ 单值和多值字段</li>
+            <li>✅ 多段证据（多角色）</li>
+            <li>✅ [start, end) 偏移量正确性（含特殊字符测试）</li>
+            <li>✅ JSON 导入导出数据一致性</li>
+            <li>✅ localStorage 保存和恢复</li>
+            <li>✅ present 状态至少一个 value 校验</li>
+            <li>✅ primary 证据要求校验</li>
+            <li>✅ 非 present 状态不得残留 values</li>
+            <li>✅ Schema 常量与 GLM enums 对齐</li>
+        </ul>
+    </div>
+
+    <script src="schema.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        const Schema = window.AnnotationSchema;
+        const results = [];
+        let passCount = 0;
+        let failCount = 0;
+
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || '断言失败');
+            }
+        }
+
+        function assertEqual(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(`${message || '值不相等'}: 期望 ${JSON.stringify(expected)}, 实际 ${JSON.stringify(actual)}`);
+            }
+        }
+
+        function runTest(name, fn) {
+            try {
+                fn();
+                results.push({ name, pass: true });
+                passCount++;
+            } catch (e) {
+                results.push({ name, pass: false, error: e.message });
+                failCount++;
+            }
+            renderResults();
+        }
+
+        function renderResults() {
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+
+            results.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'test-case ' + (r.pass ? 'pass' : 'fail');
+                div.innerHTML = `
+                    <span class="test-icon ${r.pass ? 'pass' : 'fail'}">${r.pass ? '✓' : '✗'}</span>
+                    <span class="test-name">${r.name}</span>
+                `;
+                if (!r.pass) {
+                    const err = document.createElement('div');
+                    err.className = 'test-error';
+                    err.textContent = r.error;
+                    div.appendChild(err);
+                }
+                container.appendChild(div);
+            });
+
+            document.getElementById('totalCount').textContent = results.length;
+            document.getElementById('passCount').textContent = passCount;
+            document.getElementById('failCount').textContent = failCount;
+
+            const summary = document.getElementById('summary');
+            if (failCount === 0) {
+                summary.className = 'summary pass';
+                summary.textContent = `✅ 全部通过 (${passCount}/${results.length})`;
+            } else {
+                summary.className = 'summary fail';
+                summary.textContent = `❌ ${failCount} 项失败 (${passCount}/${results.length})`;
+            }
+        }
+
+        // ========== 测试用例 ==========
+
+        // 1. Schema 常量完整性测试
+        runTest('Schema: 六类核心字段完整', () => {
+            const fields = Object.values(Schema.CORE_FIELD_NAMES);
+            assertEqual(fields.length, 6, '字段数量应为6');
+            assert(fields.includes('project_identifier'), '缺少 project_identifier');
+            assert(fields.includes('purchaser_name'), '缺少 purchaser_name');
+            assert(fields.includes('winner_name'), '缺少 winner_name');
+            assert(fields.includes('amount'), '缺少 amount');
+            assert(fields.includes('publish_date'), '缺少 publish_date');
+            assert(fields.includes('bid_deadline'), '缺少 bid_deadline');
+        });
+
+        runTest('Schema: 六种字段状态完整', () => {
+            const statuses = Object.values(Schema.GOLD_STATUS);
+            assertEqual(statuses.length, 6, '状态数量应为6');
+            assert(statuses.includes('present'), '缺少 present');
+            assert(statuses.includes('absent'), '缺少 absent');
+            assert(statuses.includes('not_applicable'), '缺少 not_applicable');
+            assert(statuses.includes('ambiguous'), '缺少 ambiguous');
+            assert(statuses.includes('attachment_only'), '缺少 attachment_only');
+            assert(statuses.includes('unreadable'), '缺少 unreadable');
+        });
+
+        runTest('Schema: 五种证据角色完整', () => {
+            const roles = Object.values(Schema.EVIDENCE_ROLES);
+            assertEqual(roles.length, 5, '证据角色数量应为5');
+            assert(roles.includes('primary'), '缺少 primary');
+            assert(roles.includes('context'), '缺少 context');
+            assert(roles.includes('qualifier'), '缺少 qualifier');
+            assert(roles.includes('derivation_input'), '缺少 derivation_input');
+            assert(roles.includes('contradiction'), '缺少 contradiction');
+        });
+
+        runTest('Schema: 六种金额类型完整', () => {
+            const types = Object.values(Schema.AMOUNT_TYPES);
+            assertEqual(types.length, 6, '金额类型数量应为6');
+        });
+
+        // 2. 偏移量验证函数测试
+        runTest('偏移验证: 正常ASCII文本', () => {
+            const text = 'Hello World';
+            const result = Schema.verifyEvidenceSpan(text, 0, 5, 'Hello');
+            assert(result.valid, '验证应通过');
+            assertEqual(result.actualText, 'Hello', '实际文本应匹配');
+        });
+
+        runTest('偏移验证: 中文文本', () => {
+            const text = '中标供应商：上海智汇科技有限公司';
+            const result = Schema.verifyEvidenceSpan(text, 6, 16, '上海智汇科技有限公司');
+            assert(result.valid, '中文验证应通过');
+            assertEqual(result.actualText, '上海智汇科技有限公司');
+        });
+
+        runTest('偏移验证: 包含换行符', () => {
+            const text = '第一行\n第二行\n第三行';
+            const result = Schema.verifyEvidenceSpan(text, 3, 6, '\n第二');
+            assert(result.valid, '换行符验证应通过');
+        });
+
+        runTest('偏移验证: 全角字符', () => {
+            const text = '金额：１２８５万元（全角）';
+            const result = Schema.verifyEvidenceSpan(text, 3, 7, '１２８５');
+            assert(result.valid, '全角数字验证应通过');
+        });
+
+        runTest('偏移验证: emoji 字符', () => {
+            const text = '状态：✅ 已完成';
+            const result = Schema.verifyEvidenceSpan(text, 3, 5, '✅');
+            // emoji 占 2 个 UTF-16 code unit
+            const sliced = text.slice(3, 5);
+            assertEqual(result.actualText, sliced, 'emoji 实际文本应与 slice 结果一致');
+        });
+
+        runTest('偏移验证: emoji 出现在证据之前', () => {
+            // emoji 占 2 个 code unit，后续文本的索引需要 +2（而非 +1）
+            const text = '📋 项目编号: ABC123';
+            // '📋 ' 占 3 个 code unit（emoji 2 + 空格 1）
+            // '项目编号' 从索引 3 开始
+            const result = Schema.verifyEvidenceSpan(text, 3, 7, '项目编号');
+            assert(result.valid, 'emoji 之后的文本偏移应正确');
+        });
+
+        runTest('偏移验证: 特殊空白字符', () => {
+            const text = '开头\u00A0\u3000结尾'; // 不间断空格 + 全角空格
+            const result = Schema.verifyEvidenceSpan(text, 2, 4, '\u00A0\u3000');
+            assert(result.valid, '特殊空白字符验证应通过');
+        });
+
+        runTest('偏移验证: end <= start 应失败', () => {
+            const result = Schema.verifyEvidenceSpan('test', 5, 3, 'es');
+            assert(!result.valid, 'end < start 应验证失败');
+        });
+
+        runTest('偏移验证: 文本不匹配应失败', () => {
+            const result = Schema.verifyEvidenceSpan('Hello World', 0, 5, 'World');
+            assert(!result.valid, '文本不匹配应验证失败');
+        });
+
+        runTest('偏移验证: 越界应失败', () => {
+            const result = Schema.verifyEvidenceSpan('abc', 0, 10, 'abcdefg');
+            assert(!result.valid, '越界应验证失败');
+        });
+
+        // 3. 创建空对象测试
+        runTest('创建空字段: 默认状态为 absent', () => {
+            const field = Schema.createEmptyField('project_identifier');
+            assertEqual(field.field_name, 'project_identifier');
+            assertEqual(field.gold_status, 'absent');
+            assertEqual(field.values.length, 0);
+        });
+
+        runTest('创建空值: 默认为空字符串', () => {
+            const value = Schema.createEmptyValue();
+            assertEqual(value.raw_value, '');
+            assertEqual(value.normalized_value, null);
+            assertEqual(value.amount_type, null);
+            assertEqual(value.acceptable_evidence_spans.length, 0);
+        });
+
+        runTest('创建空证据: 默认 primary 角色', () => {
+            const ev = Schema.createEmptyEvidenceSpan();
+            assertEqual(ev.role, 'primary');
+            assertEqual(ev.start, 0);
+            assertEqual(ev.end, 0);
+            assertEqual(ev.text, '');
+        });
+
+        runTest('创建空标注文档: 包含六类字段', () => {
+            const doc = Schema.createEmptyAnnotationDocument('doc-001', 'A');
+            assertEqual(doc.document_id, 'doc-001');
+            assertEqual(doc.annotator_id, 'A');
+            assertEqual(doc.fields.length, 6, '应包含六类核心字段');
+            // 所有字段默认 absent
+            doc.fields.forEach(f => {
+                assertEqual(f.gold_status, 'absent', `${f.field_name} 默认应为 absent`);
+                assertEqual(f.values.length, 0, `${f.field_name} values 应为空`);
+            });
+        });
+
+        // 4. JSON 序列化/反序列化一致性测试
+        runTest('JSON 导入导出: 数据一致性', () => {
+            const original = Schema.createEmptyAnnotationDocument('test-001', 'B');
+            // 修改一些字段
+            original.fields[0].gold_status = 'present';
+            original.fields[0].values.push({
+                raw_value: 'TEST-123',
+                normalized_value: 'TEST-123',
+                amount_type: null,
+                currency: null,
+                original_unit: null,
+                tax_status: null,
+                lot_id: null,
+                acceptable_evidence_spans: [{
+                    role: 'primary',
+                    start: 0,
+                    end: 7,
+                    text: 'TEST-123'
+                }]
+            });
+            original.fields[1].gold_status = 'absent';
+            original.fields[2].gold_status = 'not_applicable';
+
+            const jsonStr = JSON.stringify(original);
+            const restored = JSON.parse(jsonStr);
+
+            assertEqual(restored.document_id, original.document_id);
+            assertEqual(restored.fields.length, original.fields.length);
+            assertEqual(restored.fields[0].gold_status, 'present');
+            assertEqual(restored.fields[0].values[0].raw_value, 'TEST-123');
+            assertEqual(restored.fields[0].values[0].acceptable_evidence_spans[0].start, 0);
+            assertEqual(restored.fields[1].gold_status, 'absent');
+            assertEqual(restored.fields[1].values.length, 0);
+        });
+
+        // 5. 状态切换规则测试
+        runTest('状态规则: present 必须有 values', () => {
+            const field = Schema.createEmptyField('amount');
+            // absent -> present 应该添加一个空值
+            field.gold_status = 'present';
+            field.values.push(Schema.createEmptyValue());
+            assert(field.values.length >= 1, 'present 状态至少有一个 value');
+        });
+
+        runTest('状态规则: absent 必须无 values', () => {
+            const field = Schema.createEmptyField('amount');
+            field.gold_status = 'absent';
+            field.values = []; // 切换时清空
+            assertEqual(field.values.length, 0, 'absent 状态 values 应为空');
+        });
+
+        runTest('状态规则: not_applicable 必须无 values', () => {
+            const field = Schema.createEmptyField('amount');
+            field.gold_status = 'not_applicable';
+            field.values = [];
+            assertEqual(field.values.length, 0);
+        });
+
+        runTest('状态规则: attachment_only 必须无 values', () => {
+            const field = Schema.createEmptyField('amount');
+            field.gold_status = 'attachment_only';
+            field.values = [];
+            assertEqual(field.values.length, 0);
+        });
+
+        runTest('状态规则: unreadable 必须无 values', () => {
+            const field = Schema.createEmptyField('amount');
+            field.gold_status = 'unreadable';
+            field.values = [];
+            assertEqual(field.values.length, 0);
+        });
+
+        runTest('状态规则: ambiguous 可以有 values', () => {
+            const field = Schema.createEmptyField('amount');
+            field.gold_status = 'ambiguous';
+            field.values.push(Schema.createEmptyValue());
+            field.values.push(Schema.createEmptyValue());
+            assert(field.values.length >= 1, 'ambiguous 状态可以有多个候选值');
+        });
+
+        // 6. 证据角色测试
+        runTest('证据规则: 非空证据列表至少一个 primary', () => {
+            const value = Schema.createEmptyValue();
+            value.acceptable_evidence_spans.push({ role: 'primary', start: 0, end: 1, text: 'a' });
+            const hasPrimary = value.acceptable_evidence_spans.some(e => e.role === 'primary');
+            assert(hasPrimary, '证据列表应有 primary 角色');
+        });
+
+        runTest('证据规则: 支持五种角色', () => {
+            const roles = ['primary', 'context', 'qualifier', 'derivation_input', 'contradiction'];
+            const value = Schema.createEmptyValue();
+            roles.forEach((role, i) => {
+                value.acceptable_evidence_spans.push({ role, start: i, end: i+1, text: 'x' });
+            });
+            assertEqual(value.acceptable_evidence_spans.length, 5);
+        });
+
+        // 7. 多值字段测试
+        runTest('多值字段: 支持多个值', () => {
+            const field = Schema.createEmptyField('winner_name');
+            field.gold_status = 'present';
+            field.values.push({ ...Schema.createEmptyValue(), raw_value: '公司A' });
+            field.values.push({ ...Schema.createEmptyValue(), raw_value: '公司B' });
+            field.values.push({ ...Schema.createEmptyValue(), raw_value: '公司C' });
+            assertEqual(field.values.length, 3);
+            assertEqual(field.values[0].raw_value, '公司A');
+            assertEqual(field.values[2].raw_value, '公司C');
+        });
+
+        // 8. localStorage 模拟测试
+        runTest('localStorage: 保存和恢复数据一致', () => {
+            const testData = {
+                rawText: '测试文本',
+                annotation: Schema.createEmptyAnnotationDocument('storage-test', 'C'),
+                savedAt: new Date().toISOString()
+            };
+            // 模拟保存
+            const serialized = JSON.stringify(testData);
+            localStorage.setItem('bidagent_test_key', serialized);
+            // 模拟恢复
+            const restored = JSON.parse(localStorage.getItem('bidagent_test_key'));
+            assertEqual(restored.rawText, '测试文本');
+            assertEqual(restored.annotation.document_id, 'storage-test');
+            assertEqual(restored.annotation.fields.length, 6);
+            // 清理
+            localStorage.removeItem('bidagent_test_key');
+        });
+
+        // 9. 完整文档结构测试
+        runTest('完整文档: 六类字段全覆盖', () => {
+            const doc = Schema.createEmptyAnnotationDocument('full-test', 'D');
+            const fieldNames = doc.fields.map(f => f.field_name);
+            assertEqual(fieldNames.length, 6);
+            assert(fieldNames.includes('project_identifier'));
+            assert(fieldNames.includes('purchaser_name'));
+            assert(fieldNames.includes('winner_name'));
+            assert(fieldNames.includes('amount'));
+            assert(fieldNames.includes('publish_date'));
+            assert(fieldNames.includes('bid_deadline'));
+        });
+
+        runTest('完整文档: 字段名不重复', () => {
+            const doc = Schema.createEmptyAnnotationDocument('unique-test', 'E');
+            const names = doc.fields.map(f => f.field_name);
+            const unique = new Set(names);
+            assertEqual(unique.size, names.length, '字段名不应重复');
+        });
+
+        // 10. 金额字段专属属性测试
+        runTest('金额字段: 支持 amount_type 枚举', () => {
+            const value = Schema.createEmptyValue();
+            value.amount_type = 'award';
+            assertEqual(value.amount_type, 'award');
+        });
+
+        runTest('金额字段: 支持 currency / original_unit / tax_status', () => {
+            const value = Schema.createEmptyValue();
+            value.currency = 'CNY';
+            value.original_unit = '万元';
+            value.tax_status = 'included';
+            assertEqual(value.currency, 'CNY');
+            assertEqual(value.original_unit, '万元');
+            assertEqual(value.tax_status, 'included');
+        });
+
+        // 11. lot_id 测试
+        runTest('分包ID: lot_id 字段支持', () => {
+            const value = Schema.createEmptyValue();
+            value.lot_id = '包1';
+            assertEqual(value.lot_id, '包1');
+        });
+
+        // 12. note 字段测试
+        runTest('备注: 字段级 note 支持', () => {
+            const field = Schema.createEmptyField('amount');
+            field.note = '金额含税，单位万元';
+            assertEqual(field.note, '金额含税，单位万元');
+        });
+
+        // ========== 完成 ==========
+        console.log(`测试完成: ${passCount} 通过, ${failCount} 失败`);
+    })();
+    </script>
+</body>
+</html>

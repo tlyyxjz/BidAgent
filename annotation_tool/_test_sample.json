@@ -1,0 +1,159 @@
+{
+  "document_id": "sample-001",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2024-03-16T10:30:00+08:00",
+  "clean_raw_text_sha256": "8c3a3e8b035b8bd45a3edd11cc4963cf37aa91c659bcd32b1c42d0d83cf10295",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "ZFCG-2024-0315",
+          "normalized_value": "ZFCG-2024-0315",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 32,
+              "end": 46,
+              "text": "ZFCG-2024-0315"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "某市大数据管理局",
+          "normalized_value": "某市大数据管理局",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 433,
+              "end": 441,
+              "text": "某市大数据管理局"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "上海智汇科技有限公司",
+          "normalized_value": "上海智汇科技有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 86,
+              "end": 96,
+              "text": "上海智汇科技有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "1285.60万元",
+          "normalized_value": "12856000.00",
+          "amount_type": "award",
+          "currency": "CNY",
+          "original_unit": "万元",
+          "tax_status": "unknown",
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 132,
+              "end": 141,
+              "text": "1285.60万元"
+            },
+            {
+              "role": "qualifier",
+              "start": 123,
+              "end": 131,
+              "text": "中标（成交）金额"
+            }
+          ]
+        }
+      ],
+      "note": "中标金额，人民币"
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2024年3月15日",
+          "normalized_value": "2024-03-15",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 581,
+              "end": 591,
+              "text": "2024年3月15日"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2024年3月10日",
+          "normalized_value": "2024-03-10",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 599,
+              "end": 609,
+              "text": "2024年3月10日"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    }
+  ]
+}
