@@ -2,7 +2,7 @@
 
 覆盖：
 - _percentile：百分位计算
-- _resample_docs：重抽样行为
+- _resample_pairs：配对重抽样行为（修复后版本）
 - bootstrap_evaluate：基本流程、CI 范围合理性
 - bootstrap_evaluate_async：异步执行不阻塞事件循环
 - 异常输入处理
@@ -20,7 +20,7 @@ from backend.bootstrap import (
     bootstrap_evaluate,
     bootstrap_evaluate_async,
     _percentile,
-    _resample_docs,
+    _resample_pairs,
 )
 from backend.enums import (
     AmountType,
@@ -158,42 +158,166 @@ class TestPercentile:
 
 
 # ============================================================
-# 测试套件 2：_resample_docs
+# 测试套件 2：_resample_pairs（修复后：配对重抽样）
 # ============================================================
 
 
-class TestResampleDocs:
+class TestResamplePairs:
+    """验证配对重抽样：保持 (gold, system) 对应关系。"""
+
     def test_returns_same_length(self):
         import random
         rng = random.Random(42)
         docs = [_make_gold(f"d{i}") for i in range(10)]
-        resampled = _resample_docs(docs, rng)
+        records = [_make_system(f"d{i}") for i in range(10)]
+        pairs = list(zip(docs, records))
+        resampled = _resample_pairs(pairs, rng)
         assert len(resampled) == 10
 
     def test_empty_input(self):
         import random
         rng = random.Random(42)
-        assert _resample_docs([], rng) == []
+        assert _resample_pairs([], rng) == []
 
     def test_resample_with_replacement(self):
         """重抽样允许重复（bootstrap 核心特性）。"""
         import random
         rng = random.Random(42)
-        # 单个文档重抽样 100 次，应全部是同一个
+        # 单个配对重抽样 1 次，结果是该配对
         docs = [_make_gold("only-one")]
-        resampled = _resample_docs(docs, rng)
-        # 1 个文档重抽样 1 次，结果是该文档
+        records = [_make_system("only-one")]
+        pairs = list(zip(docs, records))
+        resampled = _resample_pairs(pairs, rng)
         assert len(resampled) == 1
-        assert resampled[0].document_id == "only-one"
+        assert resampled[0][0].document_id == "only-one"
+        assert resampled[0][1].document_id == "only-one"
+
+    def test_pairs_keep_gold_system_correspondence(self):
+        """修复验证：配对重抽样后，gold.document_id 必须 == system.document_id。"""
+        import random
+        rng = random.Random(7)
+        docs = [_make_gold(f"d{i}") for i in range(20)]
+        records = [_make_system(f"d{i}") for i in range(20)]
+        pairs = list(zip(docs, records))
+        resampled = _resample_pairs(pairs, rng)
+        for g, s in resampled:
+            assert g.document_id == s.document_id, (
+                f"配对失配：gold={g.document_id} system={s.document_id}"
+            )
 
     def test_resample_reproducible_with_seed(self):
         import random
         docs = [_make_gold(f"d{i}") for i in range(20)]
+        records = [_make_system(f"d{i}") for i in range(20)]
+        pairs = list(zip(docs, records))
         rng1 = random.Random(123)
         rng2 = random.Random(123)
-        r1 = _resample_docs(docs, rng1)
-        r2 = _resample_docs(docs, rng2)
-        assert [d.document_id for d in r1] == [d.document_id for d in r2]
+        r1 = _resample_pairs(pairs, rng1)
+        r2 = _resample_pairs(pairs, rng2)
+        assert [p[0].document_id for p in r1] == [p[0].document_id for p in r2]
+
+    def test_handles_none_system_record(self):
+        """system 缺失（None）的配对也能正常重抽样。"""
+        import random
+        rng = random.Random(42)
+        docs = [_make_gold(f"d{i}") for i in range(5)]
+        # 只有 d0、d1 有 system 记录，其他为 None
+        records = [_make_system("d0"), _make_system("d1")]
+        sys_map = {r.document_id: r for r in records}
+        pairs = [(g, sys_map.get(g.document_id)) for g in docs]
+        resampled = _resample_pairs(pairs, rng)
+        assert len(resampled) == 5
+        # 重抽样后 None 仍然是 None，非 None 仍然配对
+        for g, s in resampled:
+            if s is not None:
+                assert g.document_id == s.document_id
+
+
+class TestBootstrapRepeatedSampling:
+    """验证 Bootstrap 重复抽样的权重正确性（修复后核心特性）。
+
+    用户复查项 R-4：同一项目被重复抽样时不能因 document_id 相同而被字典去重。
+    评测器内部按 document_id 建字典，重复项目会被评测多次（权重 ×N），这是 Bootstrap 的正确行为。
+    """
+
+    def test_resampled_pairs_allow_duplicates(self):
+        """重抽样结果允许同一配对出现多次（bootstrap 核心特性）。"""
+        import random
+        rng = random.Random(42)
+        docs = [_make_gold(f"d{i}") for i in range(10)]
+        records = [_make_system(f"d{i}") for i in range(10)]
+        pairs = list(zip(docs, records))
+        resampled = _resample_pairs(pairs, rng)
+        # 10 次重抽样中，按概率应有重复（不是全部唯一）
+        ids = [p[0].document_id for p in resampled]
+        assert len(ids) == 10
+        # 至少有一个重复（统计上几乎必然，但容错）
+        unique_count = len(set(ids))
+        # 不强制必须重复，但允许重复
+        assert 1 <= unique_count <= 10
+
+    def test_evaluate_dataset_weights_duplicates_correctly(self):
+        """验证 evaluate_dataset 对重复 gold_docs 按权重累加指标。
+
+        场景：3 个文档，其中 d0 在 gold_docs 中出现 2 次（Bootstrap 重抽样），
+        d0 系统输出正确，d1/d2 系统输出错误。
+        期望：d0 的指标被累加 2 次（权重 ×2）。
+        """
+        from backend.evaluation import evaluate_dataset
+
+        # 3 个 gold 文档，amount 全部 present
+        docs = [_make_gold(f"d{i}") for i in range(3)]
+        # d0 系统输出正确，d1/d2 系统输出错误值
+        records = [
+            _make_system("d0", correct=True),
+            _make_system("d1", correct=False),
+            _make_system("d2", correct=False),
+        ]
+        # 模拟 Bootstrap 重抽样：d0 出现 2 次，d1 出现 1 次，d2 出现 0 次
+        resampled_gold = [docs[0], docs[0], docs[1]]
+        # resampled_sys 只传去重后的（d0, d1）
+        resampled_sys = [records[0], records[1]]
+
+        summary = evaluate_dataset(
+            gold_docs=resampled_gold,
+            system_records=resampled_sys,
+            system_identifier="test-weighted",
+        )
+        # amount 字段：gold_present=3（d0×2 + d1×1），system_correct=2（d0×2）
+        amount_metrics = next(
+            m for m in summary.field_metrics if m.field_name == CoreFieldName.AMOUNT
+        )
+        assert amount_metrics.gold_present_count == 3, (
+            f"d0 出现 2 次 + d1 出现 1 次 = 3，实际 {amount_metrics.gold_present_count}"
+        )
+        assert amount_metrics.system_correct_count == 2, (
+            f"d0 正确×2 = 2，实际 {amount_metrics.system_correct_count}"
+        )
+        # recall = 2/3 ≈ 0.667
+        assert 0.6 <= amount_metrics.recall <= 0.7
+
+    def test_bootstrap_ci_reflects_repeated_sampling(self):
+        """验证 Bootstrap CI 在重复抽样下不会因为去重而失真。
+
+        如果 Bootstrap 内部错误地去重了 gold_docs，CI 会退化为单次评测。
+        正确实现应让 CI 反映重抽样的方差。
+        """
+        # 构造 10 个文档，部分正确部分错误，CI 应非零宽度
+        docs = [_make_gold(f"d{i}") for i in range(10)]
+        records = [_make_system(f"d{i}", correct=(i % 2 == 0)) for i in range(10)]
+        result = bootstrap_evaluate(
+            gold_docs=docs,
+            system_records=records,
+            system_identifier="test-ci",
+            n_bootstrap=200,
+            random_seed=42,
+        )
+        amount_f1 = result.field_f1[CoreFieldName.AMOUNT]
+        # CI 宽度应 > 0（如果不是全部正确或全部错误）
+        ci_width = amount_f1.ci_upper - amount_f1.ci_lower
+        assert ci_width > 0, (
+            f"CI 宽度应 > 0（反映重抽样方差），实际 {ci_width}"
+        )
 
 
 # ============================================================

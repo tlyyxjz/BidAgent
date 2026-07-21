@@ -21,7 +21,6 @@ from __future__ import annotations
 import asyncio
 import random
 from dataclasses import dataclass, field
-from typing import Callable
 
 from app.utils.logger import get_logger
 
@@ -29,7 +28,6 @@ from backend.evaluation import evaluate_dataset
 from backend.schemas import (
     AnnotationDocument,
     EvaluationSummary,
-    FieldMetrics,
     LLMExtractionRecord,
 )
 
@@ -121,15 +119,19 @@ def _extract_metrics(summary: EvaluationSummary) -> dict[str, dict[str, float]]:
     return per_field
 
 
-def _resample_docs(
-    docs: list[AnnotationDocument],
+def _resample_pairs(
+    pairs: list[tuple[AnnotationDocument, LLMExtractionRecord | None]],
     rng: random.Random,
-) -> list[AnnotationDocument]:
-    """有放回重抽样文档列表。"""
-    if not docs:
+) -> list[tuple[AnnotationDocument, LLMExtractionRecord | None]]:
+    """修复：配对重抽样 (gold, system) 一起重抽，保持对应关系。
+
+    标准配对 bootstrap：把 (gold_doc, system_record) 作为整体单元重抽样，
+    避免之前只重抽样 gold_docs 导致 document_id 失配的问题。
+    """
+    if not pairs:
         return []
-    n = len(docs)
-    return [rng.choice(docs) for _ in range(n)]
+    n = len(pairs)
+    return [rng.choice(pairs) for _ in range(n)]
 
 
 def _summarize_resample(
@@ -203,6 +205,14 @@ def bootstrap_evaluate(
         random_seed,
     )
 
+    # 修复：构造配对单元 (gold, system)，确保重抽样时保持对应关系
+    sys_map: dict[str, LLMExtractionRecord] = {}
+    for r in system_records:
+        sys_map[r.document_id] = r
+    pairs: list[tuple[AnnotationDocument, LLMExtractionRecord | None]] = [
+        (g, sys_map.get(g.document_id)) for g in gold_docs
+    ]
+
     # 先跑一次原始数据集得到点估计
     original_metrics = _summarize_resample(
         gold_docs, system_records, system_identifier, dataset_split, "bootstrap-original"
@@ -217,11 +227,20 @@ def bootstrap_evaluate(
     }
 
     for i in range(n_bootstrap):
-        resampled = _resample_docs(gold_docs, rng)
+        # 修复：配对重抽样，保持 (gold, system) 对应关系
+        resampled_pairs = _resample_pairs(pairs, rng)
+        resampled_gold = [p[0] for p in resampled_pairs]
+        # 收集非 None 的 system 记录（去重，因为重抽样可能产生重复）
+        seen_sys_ids: set[str] = set()
+        resampled_sys: list[LLMExtractionRecord] = []
+        for _, sys_rec in resampled_pairs:
+            if sys_rec is not None and sys_rec.document_id not in seen_sys_ids:
+                resampled_sys.append(sys_rec)
+                seen_sys_ids.add(sys_rec.document_id)
         try:
             metrics = _summarize_resample(
-                resampled,
-                system_records,
+                resampled_gold,
+                resampled_sys,
                 system_identifier,
                 dataset_split,
                 f"bootstrap-{i}",

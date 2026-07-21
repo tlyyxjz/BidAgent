@@ -19,7 +19,6 @@ Pydantic v2 实现，对应《金标数据标注手册》第七章 JSON 示例�
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -145,7 +144,12 @@ class AnnotatedField(BaseModel):
 
     @model_validator(mode="after")
     def _check_values_consistency(self) -> AnnotatedField:
-        """状态与值数量一致性校验。"""
+        """状态与值数量一致性校验。
+
+        已知限制（W1 阶段）：按 v4.1 §10.3，present 字段应至少有一个 primary 证据。
+        当前实现未强制要求 evidence_spans，因为 W1 阶段还没有真实金标数据。
+        W1-08/W1-09 标注阶段开始后，应启用 strict 模式强制要求。
+        """
         if self.gold_status == GoldStatus.PRESENT:
             if not self.values:
                 raise ValueError(

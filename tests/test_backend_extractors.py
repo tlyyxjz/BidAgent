@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.enums import CoreFieldName, SupportLevel
+from backend.enums import CoreFieldName
 from backend.extractors import (
     PROMPT_VERSION,
     DirectLLMBaseline,
@@ -33,7 +33,6 @@ from backend.extractors import (
     load_records_jsonl,
     save_records_jsonl,
 )
-from backend.schemas import LLMExtractionRecord
 
 
 # ============================================================
@@ -69,7 +68,8 @@ class TestPromptConstruction:
         assert compute_prompt_hash(sys1, user1) != compute_prompt_hash(sys2, user2)
 
     def test_prompt_version_constant(self):
-        assert PROMPT_VERSION == "1.0"
+        # v1.1: 移除 evidence_text 要求，符合 A 组公平性
+        assert PROMPT_VERSION == "1.1"
 
 
 # ============================================================
@@ -139,7 +139,7 @@ class TestExtractOneSuccess:
         assert record.success is True
         assert record.document_id == "doc-001"
         assert record.model_identifier == "stub-1.0"
-        assert record.prompt_version == "1.0"
+        assert record.prompt_version == "1.1"  # v1.1: 移除 evidence_text 要求
         assert len(record.prompt_hash) == 64
         assert record.error_message is None
         assert record.output is not None

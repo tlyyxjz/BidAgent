@@ -33,7 +33,6 @@ from typing import Iterable
 from app.utils.logger import get_logger
 
 from backend.enums import (
-    AmountType,
     CoreFieldName,
     GoldStatus,
 )
@@ -42,7 +41,6 @@ from backend.schemas import (
     AnnotationDocument,
     EvaluationSummary,
     FieldMetrics,
-    FieldValue,
     LLMExtractionOutput,
     LLMExtractionRecord,
     LLMExtractedField,
@@ -108,21 +106,48 @@ def normalize_value(field_name: str, raw: str) -> str:
         return s
 
     if field_name == CoreFieldName.AMOUNT:
+        # 修复：处理中文金额单位（万/万元/亿/亿元），统一转为元
+        # 先去逗号和空白
+        cleaned = s.replace(",", "").replace(" ", "").replace("　", "")
+        # 识别单位（必须在数字之后）
+        # 顺序：亿元 > 亿元 > 万 > 万 > 元（裸数字）
+        multiplier = Decimal("1")
+        if cleaned.endswith("亿元"):
+            multiplier = Decimal("100000000")
+            cleaned = cleaned[:-2]
+        elif cleaned.endswith("亿"):
+            multiplier = Decimal("100000000")
+            cleaned = cleaned[:-1]
+        elif cleaned.endswith("万元"):
+            multiplier = Decimal("10000")
+            cleaned = cleaned[:-2]
+        elif cleaned.endswith("万"):
+            multiplier = Decimal("10000")
+            cleaned = cleaned[:-1]
+        elif cleaned.endswith("元"):
+            cleaned = cleaned[:-1]
         # 提取数字部分
-        m = re.search(r"[\d,]+\.?\d*", s.replace(",", ""))
+        m = re.search(r"[\d.]+", cleaned)
         if not m:
             return s
         try:
-            d = Decimal(m.group(0))
+            d = Decimal(m.group(0)) * multiplier
             return f"{d:.2f}"
         except (InvalidOperation, ValueError):
             return s
 
     if field_name in (CoreFieldName.PUBLISH_DATE, CoreFieldName.BID_DEADLINE):
-        # 提取 YYYY-MM-DD
-        m = re.search(r"\d{4}[-/]\d{1,2}[-/]\d{1,2}", s)
+        # 修复：支持中文日期格式 "2024年1月15日" 和 "2024-1-15"（单位数月日）
+        # 先尝试中文格式
+        m_cn = re.search(r"(\d{4})年(\d{1,2})月(\d{1,2})日", s)
+        if m_cn:
+            y, mo, d = m_cn.groups()
+            return f"{y}-{int(mo):02d}-{int(d):02d}"
+        # 再尝试 YYYY-MM-DD 或 YYYY/MM/DD（单位数月日也匹配）
+        m = re.search(r"(\d{4})[-/](\d{1,2})[-/](\d{1,2})", s)
         if m:
-            return m.group(0).replace("/", "-")
+            y, mo, d = m.groups()
+            return f"{y}-{int(mo):02d}-{int(d):02d}".replace("/", "-")
         return s
 
     return s
@@ -149,9 +174,9 @@ class DocumentFieldResult:
     gold_value_count: int
     system_value_count: int
     matched_count: int  # 与金标匹配的值数量
-    system_output_count: int  # 系统输出值数量
+    system_output_count: int  # 系统输出值数量（原始计数，未去重）
     false_positive_on_absent: int  # 金标 absent 但系统有输出
-    is_correct: bool  # 单值字段：是否完全匹配；多值字段：是否有至少一个匹配
+    is_correct: bool | None  # 单值字段：是否完全匹配；多值字段：是否有至少一个匹配；None 表示不参与评测
     unmatched_system_values: list[str] = field(default_factory=list)
     unmatched_gold_values: list[str] = field(default_factory=list)
 
@@ -203,22 +228,32 @@ def evaluate_document(
         fname = gold_field.field_name
         gold_set = _field_value_set(gold_field)
         system_field = system_fields_map.get(fname)
-        system_set = _system_value_set(system_field) if system_field else set()
+        # 修复：system_value_count 用原始计数（未去重），matched 用集合交集
+        system_raw_values: list[str] = []
+        if system_field:
+            for v in system_field.values:
+                val = v.normalized_value or v.raw_value
+                if val:
+                    system_raw_values.append(
+                        normalize_value(fname, val)
+                    )
+        system_set = set(system_raw_values)
+        system_value_count_raw = len(system_raw_values)  # 原始计数（含重复）
 
         matched = gold_set & system_set
         unmatched_system = system_set - gold_set
         unmatched_gold = gold_set - system_set
 
-        # 单值字段正确性：金标 present 且系统匹配金标
+        # 修复：is_correct 用 None 表示不参与主评测（OTHER 状态）
         if gold_field.gold_status == GoldStatus.PRESENT:
-            is_correct = len(matched) > 0
+            is_correct: bool | None = len(matched) > 0
         elif gold_field.gold_status == GoldStatus.ABSENT:
             # 金标 absent，系统也不应有输出
             is_correct = len(system_set) == 0
         else:
             # not_applicable / ambiguous / attachment_only / unreadable
-            # 不计入主评测分母，但仍记录
-            is_correct = False
+            # 不计入主评测分母，is_correct 设为 None
+            is_correct = None
 
         # 空值误报：金标 absent 但系统有输出
         fp_on_absent = 1 if (
@@ -233,7 +268,7 @@ def evaluate_document(
                 gold_value_count=len(gold_set),
                 system_value_count=len(system_set),
                 matched_count=len(matched),
-                system_output_count=len(system_set),
+                system_output_count=system_value_count_raw,  # 原始计数
                 false_positive_on_absent=fp_on_absent,
                 is_correct=is_correct,
                 unmatched_system_values=sorted(unmatched_system),
@@ -302,10 +337,14 @@ def evaluate_dataset(
         else:
             m.gold_other_count += 1
 
-        if r.system_output_count > 0:
-            m.system_output_count += 1
-        if r.is_correct and r.gold_status in (GoldStatus.PRESENT,):
-            m.system_correct_count += 1
+        # 修复：只有 PRESENT 和 ABSENT 状态进入主评测分母
+        # OTHER 状态（not_applicable/ambiguous/attachment_only/unreadable）不计入
+        # precision 分母，遵循 v4.1 §10.3
+        if r.gold_status in (GoldStatus.PRESENT, GoldStatus.ABSENT):
+            if r.system_output_count > 0:
+                m.system_output_count += 1
+            if r.is_correct is True and r.gold_status == GoldStatus.PRESENT:
+                m.system_correct_count += 1
         m.false_positive_on_absent += r.false_positive_on_absent
 
     # run_id 默认用时间戳

@@ -33,17 +33,22 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.models.database import Base
 from app.models.user import utc_now
 
-try:
-    import ulid as _ulid
+import ulid as _ulid
 
-    def _new_id() -> str:
-        """生成 26 字符 ULID（时间排序，无业务含义）。"""
-        return str(_ulid.new())
-except ImportError:  # pragma: no cover
-    import uuid
 
-    def _new_id() -> str:
-        return uuid.uuid4().hex
+def _new_id() -> str:
+    """生成 26 字符 ULID（Crockford Base32，时间排序，无业务含义）。
+
+    依赖 ulid-py（已在 requirements.txt 中声明为必需依赖）。
+    不再使用 uuid4.hex 截断作为 fallback，因为：
+    1. 截断后的 UUID 不是合法 ULID（不符合 Crockford Base32 编码）；
+    2. 不具备 ULID 的时间排序特征；
+    3. 可能使依赖 ULID 格式的代码产生误判。
+
+    如果环境中缺少 ulid-py，应直接报错而非降级：
+        pip install ulid-py>=1.1.0
+    """
+    return str(_ulid.new())
 
 
 # ============================================================
@@ -180,6 +185,16 @@ class NoticeSource(Base):
         DateTime(timezone=True), default=utc_now, nullable=False
     )
 
+    # 修复：同一公告在同一 URL 上应唯一
+    __table_args__ = (
+        Index(
+            "ix_ba_sources_notice_url",
+            "notice_id",
+            "source_url",
+            unique=True,
+        ),
+    )
+
 
 class NoticeVersion(Base):
     """公告版本 - 同一来源页面在某一抓取时间的内容状态。"""
@@ -257,7 +272,22 @@ class Evidence(Base):
 
 
 class ExtractedField(Base):
-    """抽取字段 - 从公告版本中抽取的结构化字段。"""
+    """抽取字段 - 从公告版本中抽取的结构化字段。
+
+    多值字段存储说明（v4.1 §4.6）：
+    ---------------------------------
+    一个公告版本中同一字段名可能有多条记录，每条对应一个值。
+    例如：
+    - 多个中标人（联合体中标）：winner_name 字段有 2 行 ExtractedField
+    - 多个分包金额：amount 字段按 lot_id 分多行，每行一个金额
+    - 多个项目编号：通常存 ProjectIdentifier 表，但也可能在 ExtractedField 中多行
+
+    因此 (version_id, field_name) 不设唯一约束，改为普通索引。
+    完全相同的值（同 version_id + field_name + lot_id + raw_value）由应用层去重，
+    避免数据库层过严约束阻塞多值字段写入。
+
+    value_count 字段记录该字段在当前版本中的总值数（冗余字段，便于快速查询）。
+    """
     __tablename__ = "ba_extracted_fields"
 
     field_id: Mapped[str] = mapped_column(
@@ -300,6 +330,18 @@ class ExtractedField(Base):
     display_rule_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
+    )
+
+    # 修复：去掉 unique=True，改为普通索引。
+    # 原唯一约束 (version_id, field_name) 会阻塞多值字段写入
+    # （多个中标人、多分包金额、多项目编号等场景）。
+    # 完全重复由应用层去重，数据库层只保证查询效率。
+    __table_args__ = (
+        Index(
+            "ix_ba_fields_version_name",
+            "version_id",
+            "field_name",
+        ),
     )
 
 

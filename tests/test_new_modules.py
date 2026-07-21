@@ -31,7 +31,9 @@ from app.processors.simhash import (
 )
 
 
-pytestmark = pytest.mark.asyncio
+# 注：原 pytestmark = pytest.mark.asyncio 已删除
+# pytest.ini 已设置 asyncio_mode = auto，会自动识别 async 测试
+# 模块级标记会导致同步测试函数也被标记，触发 PytestWarning
 
 
 # ==== SimHash 测试（命题第 3 项硬要求）====

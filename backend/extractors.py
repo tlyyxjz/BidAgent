@@ -25,11 +25,10 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-import time
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from app.utils.logger import get_logger
 
@@ -37,8 +36,6 @@ from backend.enums import CoreFieldName
 from backend.schemas import (
     LLMExtractionOutput,
     LLMExtractionRecord,
-    LLMExtractedField,
-    LLMExtractedValue,
 )
 
 logger = get_logger("backend.extractors")
@@ -49,7 +46,7 @@ logger = get_logger("backend.extractors")
 # ============================================================
 
 
-PROMPT_VERSION = "1.0"
+PROMPT_VERSION = "1.1"  # v1.1: 移除 evidence_text 要求，符合 A 组公平性
 
 _SYSTEM_PROMPT = """你是一个招投标公告结构化抽取助手。
 
@@ -70,6 +67,7 @@ _SYSTEM_PROMPT = """你是一个招投标公告结构化抽取助手。
 - raw_value 保持原文形式，不得改写
 - normalized_value 给出归一化结果（金额单位为元，日期为 YYYY-MM-DD）
 - 仅依据原文，不要根据常识补全
+- 不需要输出证据片段或原文定位
 
 输出 JSON Schema：
 {
@@ -83,8 +81,7 @@ _SYSTEM_PROMPT = """你是一个招投标公告结构化抽取助手。
           "normalized_value": "1285000.00",
           "amount_type": "award",
           "currency": "CNY",
-          "lot_id": "包1",
-          "evidence_text": "中标金额：128.50万元"
+          "lot_id": "包1"
         }
       ]
     }
@@ -199,7 +196,10 @@ class StubLLMClient:
 
 
 def _default_stub_response(system_prompt: str, user_prompt: str) -> str:
-    """默认桩响应 - 返回符合 Schema 的最小 JSON。"""
+    """默认桩响应 - 返回符合 Schema 的最小 JSON。
+
+    v1.1: 不再输出 evidence_text，符合 A 组公平性（不要求证据）。
+    """
     return json.dumps(
         {
             "fields": [
@@ -212,7 +212,6 @@ def _default_stub_response(system_prompt: str, user_prompt: str) -> str:
                             "normalized_value": "1200000.00",
                             "amount_type": "budget",
                             "currency": "CNY",
-                            "evidence_text": "项目预算金额：120万元",
                         }
                     ],
                 }
@@ -481,9 +480,15 @@ class DirectLLMBaseline:
             # 尝试截取第一个 { ... } 块
             start = text.find("{")
             end = text.rfind("}")
+            # 修复：end < start 应为 end <= start（单字符场景不可能是合法 JSON）
             if start == -1 or end == -1 or end <= start:
                 raise ValueError(f"无法在响应中找到合法 JSON 块：{content[:200]!r}")
-            data = json.loads(text[start : end + 1])
+            try:
+                data = json.loads(text[start : end + 1])
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"JSON 解析失败（截取 {start}:{end + 1}）：{exc} content={content[:200]!r}"
+                ) from exc
 
         # 兼容 LLM 直接返回字段数组（无 fields 包装）
         if isinstance(data, list):
@@ -533,6 +538,7 @@ def load_records_jsonl(path: str | Path) -> list[LLMExtractionRecord]:
     if not path.exists():
         return []
     records: list[LLMExtractionRecord] = []
+    skipped = 0
     with path.open("r", encoding="utf-8") as f:
         for line_no, line in enumerate(f, start=1):
             line = line.strip()
@@ -540,9 +546,24 @@ def load_records_jsonl(path: str | Path) -> list[LLMExtractionRecord]:
                 continue
             try:
                 records.append(LLMExtractionRecord.model_validate_json(line))
-            except Exception:
-                # 静默跳过损坏行，但保留行号便于排查
+            except Exception as exc:
+                # 修复：记录警告日志，便于排查损坏行
+                logger.warning(
+                    "load_records_jsonl skip corrupted line={} file={} error={}: {}",
+                    line_no,
+                    path,
+                    type(exc).__name__,
+                    exc,
+                )
+                skipped += 1
                 continue
+    if skipped > 0:
+        logger.warning(
+            "load_records_jsonl done file={} loaded={} skipped={}",
+            path,
+            len(records),
+            skipped,
+        )
     return records
 
 

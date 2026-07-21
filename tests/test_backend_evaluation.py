@@ -29,8 +29,6 @@ from backend.enums import (
     SupportLevel,
 )
 from backend.evaluation import (
-    DocumentFieldResult,
-    FieldStatusStats,
     compute_status_stats,
     evaluate_dataset,
     evaluate_document,
@@ -153,17 +151,52 @@ class TestNormalizeValue:
         assert v1 == v2
 
     def test_amount_to_decimal_string(self):
-        assert normalize_value(CoreFieldName.AMOUNT, "128.50万元") == "128.50"
+        # 修复：金额归一化现在处理"万元"单位，转为元
+        assert normalize_value(CoreFieldName.AMOUNT, "128.50万元") == "1285000.00"
+
+    def test_amount_wan_unit(self):
+        # "万" 单独使用
+        assert normalize_value(CoreFieldName.AMOUNT, "100万") == "1000000.00"
+
+    def test_amount_yi_unit(self):
+        # "亿" 单位
+        assert normalize_value(CoreFieldName.AMOUNT, "1.5亿") == "150000000.00"
+
+    def test_amount_yi_yuan_unit(self):
+        # "亿元" 单位
+        assert normalize_value(CoreFieldName.AMOUNT, "2亿元") == "200000000.00"
+
+    def test_amount_plain_yuan(self):
+        # 裸数字 + "元"
+        assert normalize_value(CoreFieldName.AMOUNT, "1000元") == "1000.00"
+
+    def test_amount_plain_number(self):
+        # 纯数字（无单位）
+        assert normalize_value(CoreFieldName.AMOUNT, "1000") == "1000.00"
 
     def test_amount_strips_commas(self):
-        # 注意：这里测试的是已包含逗号的数字
-        assert normalize_value(CoreFieldName.AMOUNT, "1,234,567.89") == "1234567.89"
+        # 逗号分隔的数字 + 元
+        assert normalize_value(CoreFieldName.AMOUNT, "1,234,567.89元") == "1234567.89"
+
+    def test_amount_normalizes_different_units_to_same(self):
+        # "128.50万元" 和 "1285000元" 应归一化为相同值
+        v1 = normalize_value(CoreFieldName.AMOUNT, "128.50万元")
+        v2 = normalize_value(CoreFieldName.AMOUNT, "1285000元")
+        assert v1 == v2 == "1285000.00"
 
     def test_publish_date_extracted(self):
         assert normalize_value(CoreFieldName.PUBLISH_DATE, "发布日期：2026-07-20") == "2026-07-20"
 
     def test_publish_date_slash_format(self):
         assert normalize_value(CoreFieldName.PUBLISH_DATE, "2026/07/20") == "2026-07-20"
+
+    def test_publish_date_chinese_format(self):
+        # 修复：支持中文日期格式
+        assert normalize_value(CoreFieldName.PUBLISH_DATE, "2026年7月20日") == "2026-07-20"
+
+    def test_publish_date_single_digit_month_day(self):
+        # 修复：单位数月日补零
+        assert normalize_value(CoreFieldName.PUBLISH_DATE, "2026-1-5") == "2026-01-05"
 
     def test_bid_deadline_extracted(self):
         assert normalize_value(CoreFieldName.BID_DEADLINE, "截止时间：2026-08-15 09:00") == "2026-08-15"
@@ -336,7 +369,8 @@ class TestEvaluateDocument:
         results = evaluate_document(gold, system)
         r = results[0]
         assert r.gold_status == GoldStatus.NOT_APPLICABLE
-        assert r.is_correct is False  # 不计入主分母
+        # 修复：OTHER 状态不参与主评测，is_correct=None 表示不参与评测
+        assert r.is_correct is None
 
     def test_partial_match_with_normalization(self):
         """归一化后匹配（如大小写差异）。"""
@@ -599,7 +633,6 @@ class TestExportJson:
 
 def EvaluationSummary_stub():
     """构造一个最小 summary 用于导出测试。"""
-    from datetime import datetime
     from backend.schemas import EvaluationSummary
     return EvaluationSummary(
         run_id="stub",

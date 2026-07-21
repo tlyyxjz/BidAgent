@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import inspect, select, text
+from sqlalchemy import inspect, select
 from sqlalchemy.exc import IntegrityError
 
 from app.models.database import AsyncSessionLocal, Base
@@ -690,3 +690,129 @@ def test_all_models_registered_in_metadata():
         "ba_project_identifiers",
     }
     assert expected.issubset(registered), f"未注册的表：{expected - registered}"
+
+
+# ============================================================
+# 测试套件 9：多值字段写入（修复唯一约束后）
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_multi_value_field_multiple_rows_allowed():
+    """W1-03 修复验证：同一版本同一字段名允许多行（多值字段）。
+
+    场景：联合体中标，winner_name 字段有两个值。
+    修复前：(version_id, field_name) 唯一约束会阻塞写入。
+    修复后：去掉 unique=True，允许多行。
+    """
+    ids = await _build_full_chain()
+
+    async with AsyncSessionLocal() as session:
+        # 同一版本同一字段名插入第二行（不同 raw_value）
+        field2 = ExtractedField(
+            version_id=ids["version"],
+            field_name=CoreFieldName.WINNER_NAME,
+            field_type=FieldType.TEXT,
+            raw_value="乙公司",
+            normalized_value="乙公司",
+            support_level=SupportLevel.DIRECT,
+        )
+        field3 = ExtractedField(
+            version_id=ids["version"],
+            field_name=CoreFieldName.WINNER_NAME,
+            field_type=FieldType.TEXT,
+            raw_value="丙公司",
+            normalized_value="丙公司",
+            support_level=SupportLevel.DIRECT,
+        )
+        session.add_all([field2, field3])
+        await session.commit()
+
+        # 查询验证：同 version_id 同 field_name 应有 2 行
+        rows = (
+            await session.execute(
+                select(ExtractedField).where(
+                    ExtractedField.version_id == ids["version"],
+                    ExtractedField.field_name == CoreFieldName.WINNER_NAME,
+                )
+            )
+        ).scalars().all()
+        assert len(rows) == 2, f"多值字段应允许 2 行，实际 {len(rows)}"
+        winners = {r.raw_value for r in rows}
+        assert winners == {"乙公司", "丙公司"}
+
+
+@pytest.mark.asyncio
+async def test_multi_lot_amount_multiple_rows_allowed():
+    """W1-03 修复验证：多分包金额允许多行（按 lot_id 区分）。
+
+    场景：招标项目分 2 个包，每包有独立预算金额。
+    """
+    ids = await _build_full_chain()
+
+    async with AsyncSessionLocal() as session:
+        lot1_amount = ExtractedField(
+            version_id=ids["version"],
+            field_name=CoreFieldName.AMOUNT,
+            field_type=FieldType.AMOUNT,
+            raw_value="500000.00",
+            normalized_value="500000.00",
+            amount_type="budget",
+            lot_id="包1",
+            support_level=SupportLevel.DIRECT,
+        )
+        lot2_amount = ExtractedField(
+            version_id=ids["version"],
+            field_name=CoreFieldName.AMOUNT,
+            field_type=FieldType.AMOUNT,
+            raw_value="800000.00",
+            normalized_value="800000.00",
+            amount_type="budget",
+            lot_id="包2",
+            support_level=SupportLevel.DIRECT,
+        )
+        session.add_all([lot1_amount, lot2_amount])
+        await session.commit()
+
+        rows = (
+            await session.execute(
+                select(ExtractedField).where(
+                    ExtractedField.version_id == ids["version"],
+                    ExtractedField.field_name == CoreFieldName.AMOUNT,
+                ).order_by(ExtractedField.lot_id)
+            )
+        ).scalars().all()
+        # 原始 _build_full_chain 中已有 1 行 amount，新增 2 行，共 3 行
+        assert len(rows) == 3, f"多分包金额应允许 3 行，实际 {len(rows)}"
+        lot_ids = {r.lot_id for r in rows}
+        assert "包1" in lot_ids and "包2" in lot_ids
+
+
+@pytest.mark.asyncio
+async def test_ulid_format_validation():
+    """W1-03 修复验证：ULID 必须是合法的 26 字符 Crockford Base32。
+
+    修复前：fallback 用 uuid4.hex[:26] 截断，不是合法 ULID。
+    修复后：直接 import ulid，import 失败就报错。
+    """
+    import re
+
+    # Crockford Base32 字符集：0-9 A-Z（不含 I L O U）
+    crockford_pattern = re.compile(r"^[0-9A-HJKMNP-TV-Z]{26}$")
+
+    async with AsyncSessionLocal() as session:
+        org = Organization(canonical_name="ULID 格式验证组织")
+        session.add(org)
+        await session.flush()
+        uid = org.organization_id
+        await session.rollback()
+
+    assert len(uid) == 26, f"ULID 长度应为 26，实际 {len(uid)}"
+    assert crockford_pattern.match(uid), (
+        f"ULID 必须符合 Crockford Base32 格式，实际 {uid!r}"
+    )
+    # 不应包含 I L O U（Crockford 排除字符）
+    forbidden = set("ILOU")
+    assert not (set(uid) & forbidden), (
+        f"ULID 不应包含 I/L/O/U，实际 {uid!r}"
+    )

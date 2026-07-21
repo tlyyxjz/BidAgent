@@ -31,7 +31,7 @@ import httpx
 
 from app.utils.logger import get_logger
 
-from backend.extractors import LLMClient, LLMResponse
+from backend.extractors import LLMResponse
 
 logger = get_logger("backend.llm_client")
 
