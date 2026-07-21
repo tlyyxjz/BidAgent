@@ -715,3 +715,60 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #a0aec0;
 }
+
+/* ========== 证据高亮回显（按角色着色） ========== */
+.evidence-highlight {
+    background-color: #fef3c7;
+    border-bottom: 2px solid #d69e2e;
+    border-radius: 2px;
+    padding: 1px 0;
+}
+
+.evidence-highlight.evidence-role-primary {
+    background-color: #c6f6d5;
+    border-bottom-color: #38a169;
+}
+
+.evidence-highlight.evidence-role-context {
+    background-color: #bee3f8;
+    border-bottom-color: #3182ce;
+}
+
+.evidence-highlight.evidence-role-qualifier {
+    background-color: #feebc8;
+    border-bottom-color: #dd6b20;
+}
+
+.evidence-highlight.evidence-role-derivation_input {
+    background-color: #e9d8fd;
+    border-bottom-color: #805ad5;
+}
+
+.evidence-highlight.evidence-role-contradiction {
+    background-color: #fed7d7;
+    border-bottom-color: #c53030;
+}
+
+/* ========== 字段校验错误高亮 ========== */
+.field-card-error {
+    border: 2px solid #c53030 !important;
+    box-shadow: 0 0 0 3px rgba(197, 48, 48, 0.2) !important;
+    animation: field-error-flash 0.4s ease-out;
+}
+
+@keyframes field-error-flash {
+    0%   { background-color: #fff5f5; }
+    100% { background-color: white; }
+}
+
+/* ========== 证据重叠警告 ========== */
+.overlap-warning {
+    padding: 8px 14px;
+    background-color: #feebc8;
+    border: 1px solid #dd6b20;
+    border-radius: 4px;
+    color: #7b341e;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 0 16px 8px 16px;
+}

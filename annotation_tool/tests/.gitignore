@@ -1,0 +1,6 @@
+# Playwright 测试产物
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/
+_tmp_*.json

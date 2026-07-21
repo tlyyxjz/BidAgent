@@ -22,7 +22,7 @@
                     <option value="review">待仲裁</option>
                 </select>
             </label>
-            <span id="autoSaveIndicator" class="save-indicator">● 自动保存已启用</span>
+            <span id="autoSaveIndicator" class="save-indicator">● 自动保存已启用（仅保存在当前浏览器本机）</span>
         </div>
         <div class="toolbar-right">
             <button id="btnImportText" class="btn btn-secondary">导入 TXT</button>
@@ -67,12 +67,13 @@
                     <span id="selectionInfo">未选中文本</span>
                 </div>
             </div>
+            <div id="overlapWarning" class="overlap-warning" style="display:none;"></div>
             <div id="textContainer" class="text-container">
                 <pre id="rawText" class="raw-text"></pre>
             </div>
             <div class="text-footer">
                 <span id="charCount">字符数：0</span>
-                <span class="hint">提示：鼠标选中文本后，点击字段的「添加证据」按钮</span>
+                <span class="hint">提示：鼠标选中文本后，点击字段的「添加证据」按钮；文件导入上限 5 MB</span>
             </div>
         </section>
 

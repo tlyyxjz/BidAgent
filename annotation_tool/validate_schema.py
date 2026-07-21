@@ -20,84 +20,78 @@ from common import (
     utf16_slice, utf16_len, normalize_newlines
 )
 
-# 尝试导入 GLM 真实 Schema
-sys.path.insert(0, os.path.join(SCRIPT_DIR, '..'))
+# 强制导入 GLM 真实 Schema，不得使用本地副本产生假通过
+# 使用 importlib 直接加载 backend/schemas.py 和 backend/enums.py，
+# 绕过 backend/__init__.py 的其他模块导入（models/bootstrap/extractors 等可能依赖 app.config），
+# 但仍使用真实 GLM Schema 定义，不创建本地副本。
+import importlib
+import importlib.util
+
+REPO_ROOT = os.path.join(SCRIPT_DIR, '..')
+BACKEND_DIR = os.path.join(REPO_ROOT, 'backend')
+ENUMS_PATH = os.path.join(BACKEND_DIR, 'enums.py')
+SCHEMAS_PATH = os.path.join(BACKEND_DIR, 'schemas.py')
+
+
+def _load_real_schema():
+    """直接从 backend/schemas.py 加载真实 AnnotationDocument。
+
+    绕过 backend/__init__.py 是为了规避 models/bootstrap/extractors 等模块
+    对 app.config 的依赖（标注工具校验只需 Schema 定义本身）。
+    仍然加载真实 GLM 代码，绝不创建本地副本。
+    """
+    if not os.path.exists(ENUMS_PATH):
+        print(f"错误：找不到 GLM 真实 enums.py: {ENUMS_PATH}", file=sys.stderr)
+        print("       不得使用本地 Schema 副本产生假通过。", file=sys.stderr)
+        print("       请在仓库根目录运行：python annotation_tool/validate_schema.py", file=sys.stderr)
+        sys.exit(1)
+    if not os.path.exists(SCHEMAS_PATH):
+        print(f"错误：找不到 GLM 真实 schemas.py: {SCHEMAS_PATH}", file=sys.stderr)
+        print("       不得使用本地 Schema 副本产生假通过。", file=sys.stderr)
+        print("       请在仓库根目录运行：python annotation_tool/validate_schema.py", file=sys.stderr)
+        sys.exit(1)
+
+    # 先加载 backend.enums 模块（schemas.py 依赖它）
+    # 用临时包名 _ba_enums 加载，避免触发 backend/__init__.py
+    spec_enums = importlib.util.spec_from_file_location('_ba_enums', ENUMS_PATH)
+    enums_mod = importlib.util.module_from_spec(spec_enums)
+    sys.modules['_ba_enums'] = enums_mod
+    try:
+        spec_enums.loader.exec_module(enums_mod)
+    except Exception as e:
+        print(f"错误：加载 GLM 真实 enums.py 失败 ({e})", file=sys.stderr)
+        print("       不得使用本地 Schema 副本产生假通过。", file=sys.stderr)
+        sys.exit(1)
+
+    # 让 schemas.py 的 `from backend.enums import ...` 解析到 _ba_enums
+    # 创建一个假的 backend.enums 包模块指向真实 enums_mod
+    import types
+    fake_backend = types.ModuleType('backend')
+    fake_backend.__path__ = [BACKEND_DIR]
+    sys.modules['backend'] = fake_backend
+    sys.modules['backend.enums'] = enums_mod
+
+    # 加载 backend.schemas
+    spec_schemas = importlib.util.spec_from_file_location('backend.schemas', SCHEMAS_PATH)
+    schemas_mod = importlib.util.module_from_spec(spec_schemas)
+    sys.modules['backend.schemas'] = schemas_mod
+    try:
+        spec_schemas.loader.exec_module(schemas_mod)
+    except Exception as e:
+        print(f"错误：加载 GLM 真实 schemas.py 失败 ({e})", file=sys.stderr)
+        print("       不得使用本地 Schema 副本产生假通过。", file=sys.stderr)
+        sys.exit(1)
+
+    return schemas_mod.AnnotationDocument
+
+
 try:
-    from backend.schemas import AnnotationDocument
-    HAS_GLM_SCHEMA = True
-except ImportError as e:
-    print(f"警告：无法导入 GLM Schema，使用本地副本 ({e})")
-    HAS_GLM_SCHEMA = False
-
-    from pydantic import BaseModel, ConfigDict, Field, model_validator
-    from typing import Literal
-    from datetime import datetime
-
-    class EvidenceSpan(BaseModel):
-        model_config = ConfigDict(extra="forbid")
-        role: Literal["primary", "context", "qualifier", "derivation_input", "contradiction"]
-        start: int = Field(..., ge=0)
-        end: int = Field(..., ge=1)
-        text: str = Field(..., min_length=1)
-
-        @model_validator(mode="after")
-        def _check_range(self):
-            if self.end <= self.start:
-                raise ValueError(f"end({self.end}) 必须大于 start({self.start})")
-            return self
-
-    class FieldValue(BaseModel):
-        model_config = ConfigDict(extra="forbid")
-        raw_value: str = Field(..., min_length=1)
-        normalized_value: str | None = None
-        amount_type: Literal["budget", "ceiling", "award", "contract", "unit_price", "unknown"] | None = None
-        currency: str | None = Field(default=None, max_length=10)
-        original_unit: str | None = Field(default=None, max_length=20)
-        tax_status: Literal["included", "excluded", "unknown"] | None = None
-        lot_id: str | None = Field(default=None, max_length=100)
-        acceptable_evidence_spans: list[EvidenceSpan] = Field(default_factory=list)
-
-        @model_validator(mode="after")
-        def _check_primary_evidence(self):
-            if self.acceptable_evidence_spans:
-                has_primary = any(s.role == "primary" for s in self.acceptable_evidence_spans)
-                if not has_primary:
-                    raise ValueError("非空证据列表必须至少包含一个 primary 证据")
-            return self
-
-    class AnnotatedField(BaseModel):
-        model_config = ConfigDict(extra="forbid")
-        field_name: Literal["project_identifier", "purchaser_name", "winner_name", "amount", "publish_date", "bid_deadline"]
-        gold_status: Literal["present", "absent", "not_applicable", "ambiguous", "attachment_only", "unreadable"]
-        values: list[FieldValue] = Field(default_factory=list)
-        note: str = Field(default="")
-
-        @model_validator(mode="after")
-        def _check_values_consistency(self):
-            if self.gold_status == "present":
-                if not self.values:
-                    raise ValueError(f"gold_status=present 时 values 不能为空 (field={self.field_name})")
-            elif self.gold_status in ("absent", "not_applicable", "attachment_only", "unreadable"):
-                if self.values:
-                    raise ValueError(f"gold_status={self.gold_status} 时 values 必须为空 (field={self.field_name})")
-            return self
-
-    class AnnotationDocument(BaseModel):
-        model_config = ConfigDict(extra="forbid")
-        document_id: str = Field(..., min_length=1)
-        annotator_id: str = Field(..., min_length=1)
-        annotation_version: str = Field(..., min_length=1)
-        annotation_time: datetime | None = None
-        fields: list[AnnotatedField] = Field(..., min_length=1)
-
-        @model_validator(mode="after")
-        def _check_unique_field_names(self):
-            seen = set()
-            for f in self.fields:
-                if f.field_name in seen:
-                    raise ValueError(f"field_name 重复出现: {f.field_name}")
-                seen.add(f.field_name)
-            return self
+    AnnotationDocument = _load_real_schema()
+except Exception as e:
+    print(f"错误：无法导入 GLM 真实 Schema ({e})", file=sys.stderr)
+    print("       不得使用本地 Schema 副本产生假通过。", file=sys.stderr)
+    print("       请在仓库根目录运行：python annotation_tool/validate_schema.py", file=sys.stderr)
+    sys.exit(1)
 
 
 def validate_evidence_offsets(doc, raw_text):
@@ -154,7 +148,7 @@ def main():
     print("=" * 60)
     print("BidAgent 标注工具 - 完整校验报告")
     print("=" * 60)
-    print(f"\n使用 Schema: {'GLM 原始 backend/schemas.py' if HAS_GLM_SCHEMA else '本地副本（结构一致）'}")
+    print(f"\n使用 Schema: GLM 原始 backend/schemas.py（不得使用本地副本）")
     print(f"Pydantic 版本: {__import__('pydantic').__version__}")
     print(f"原文文件: {raw_text_path}")
     print(f"标注文件: {json_path}")

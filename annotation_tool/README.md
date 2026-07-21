@@ -12,8 +12,9 @@
 | `schema.js` | Schema 常量定义（与 `backend/enums.py` 对齐） |
 | `sample_data.js` | Mock 示例数据（人工构造，非真实公告） |
 | `app.js` | 核心业务逻辑 |
-| `test.html` | 自动化测试页面（30+ 测试用例） |
-| `validate_schema.py` | Pydantic Schema 校验脚本 |
+| `test.html` | 自动化测试页面（35+ 测试用例） |
+| `tests/` | Playwright 端到端测试目录（12 项交互场景） |
+| `validate_schema.py` | Pydantic Schema 校验脚本（强制使用 GLM 真实 Schema，无本地 fallback） |
 | `README.md` | 使用说明文档 |
 
 ## 功能特性
@@ -47,9 +48,10 @@
 5. **证据标注（偏移量 100% 准确）**
    - 鼠标选中文本后点击「添加证据」
    - 自动记录 `[start, end)` 半开区间偏移量
-   - **双重验证机制**：DOM 节点偏移 + 字符串精确匹配兜底
-   - **强制验证**：保存前必须满足 `text.slice(start, end) === evidence_text`，不通过禁止保存
-   - 覆盖测试：ASCII、中文、换行、全角字符、emoji、特殊空白
+   - **基于 DOM Range 的精确定位**：使用 `TreeWalker` 遍历原文容器文本节点，累计 UTF-16 code unit 长度，根据 `Range.startContainer/startOffset` 与 `endContainer/endOffset` 计算绝对偏移
+   - **不使用 indexOf 兜底**：同一文本多次出现时也能准确定位到鼠标实际选中的位置；高亮 `<span>` 拆分文本节点后仍能正确计算
+   - **强制验证**：保存前必须满足 `rawText.slice(start, end) === evidence_text`，无法唯一、准确定位时禁止保存
+   - 覆盖测试：ASCII、中文、换行、全角字符、emoji、特殊空白、相同文本多次出现、跨文本节点选择
    - 支持多段合法证据
    - 五种证据角色：`primary` / `context` / `qualifier` / `derivation_input` / `contradiction`
 
@@ -64,12 +66,35 @@
    - `note`：字段备注
 
 8. **数据导入导出**
-   - 导入 TXT 原文
-   - 导入/导出 JSON（符合 `AnnotationDocument` Schema）
+   - 导入 TXT 原文（最大 5 MB，可配置）
+   - 导入/导出 JSON（符合 `AnnotationDocument` Schema，extra="forbid" 严格模式）
+   - 导出前执行完整前端校验：六类字段齐全、字段名不重复、present 至少一个 value、每个 value 至少一个 primary 证据、非 present 状态 values 为空、枚举合法、`start < end`、`rawText.slice(start, end) === evidence.text`；失败时禁止导出、显示具体字段和错误、自动切换到首个错误字段
+   - 导入 JSON 后、写入 state 前执行完整校验；损坏 JSON / 缺失字段 / 非法枚举 / 非 present 残留 values / 偏移不匹配 / `annotation_version` 不兼容均明确报错，**校验失败不覆盖当前草稿**
    - localStorage 自动保存草稿（500ms 防抖）
 
-9. **文档级标注状态**
-   - 待标 / 已标 / 待仲裁
+9. **localStorage 按文档隔离**
+   - 草稿按 `document_id` 隔离存储：`bidagent_annotation_draft_${document_id}`
+   - 维护轻量文档索引（document_id / title / updated_at / annotation_status）
+   - 切换文档前自动保存当前草稿；文档 B 不会恢复文档 A 的草稿
+   - 重置只清除当前文档，不影响其他文档
+   - **数据仅保存在当前浏览器本机**，不上传任何服务器
+
+10. **证据高亮回显与重叠检测**
+    - 已标注的证据片段在原文中按角色着色高亮（primary/ context/ qualifier/ derivation_input/ contradiction）
+    - 高亮 `<span>` 拆分文本节点后，DOM Range 仍能正确计算后续选区偏移
+    - 检测到证据区间重叠时在原文上方显示警告，不静默跳过
+
+11. **XSS 防护**
+    - 公告文本、导入 JSON 内容、验证错误文本均通过 `textContent` / `document.createElement` 渲染
+    - 不直接拼入 `innerHTML`；确需 `innerHTML` 时完整转义
+    - 用户控制文本（如证据原文）优先禁止进入 `innerHTML`
+
+12. **公告类型与标注状态本地元数据**
+    - `noticeType` 与 `annotationStatus` 与 state 同步，保存到独立本地元数据对象 `bidagent_annotation_meta_${document_id}`
+    - **不混入 `extra="forbid"` 的导出 JSON**，避免破坏 `AnnotationDocument` Schema 校验
+
+13. **文档级标注状态**
+    - 待标 / 已标 / 待仲裁
 
 ### 🔒 安全约束
 
@@ -173,11 +198,9 @@ python -m http.server 8000 --directory .
 
 ## 已知限制
 
-1. **单文档标注**：当前版本一次只能标注一份文档，不支持批量标注
-2. **无后端集成**：纯前端工具，数据仅保存在浏览器 localStorage 和导出的 JSON 文件中
-3. **无双人标注对比**：不支持标注一致性检查（IAA），需后续评测脚本处理
-4. **无项目级分组**：当前只处理单公告级别，不涉及项目级去重和关联
-5. **证据无原文回显高亮**：当前版本不在原文中可视化高亮已标注证据位置
+1. **无后端集成**：纯前端工具，数据仅保存在浏览器 localStorage 和导出的 JSON 文件中
+2. **无双人标注对比**：不支持标注一致性检查（IAA），需后续评测脚本处理
+3. **无项目级分组**：当前只处理单公告级别，不涉及项目级去重和关联
 
 ## 自动化测试
 
@@ -202,9 +225,11 @@ python -m http.server 8000 --directory .
 
 ### Pydantic Schema 校验（validate_schema.py）
 
-使用 GLM 后端 `AnnotationDocument` 模型对导出 JSON 进行结构校验。
+使用 **GLM 后端真实 `AnnotationDocument` 模型**（`backend/schemas.py`）对导出 JSON 进行结构校验。
 
-**运行方法**：
+**重要**：脚本已移除本地 Pydantic Schema 副本 fallback。导入真实后端 Schema 失败时直接 `sys.exit(1)`，不得用副本产生假通过。
+
+**运行方法**（必须在仓库根目录运行，以便导入 `backend.schemas`）：
 ```bash
 python annotation_tool/validate_schema.py
 ```
@@ -217,6 +242,32 @@ python annotation_tool/validate_schema.py
 - 证据列表至少一个 primary
 - 偏移量结构合法（end > start）
 - 字段名不重复
+- UTF-16 code unit 切片验证：`utf16_slice(raw_text, start, end) == evidence.text`
+- 原文 SHA256 哈希匹配
+
+### Playwright 端到端测试（tests/）
+
+覆盖真实 DOM 交互的 12 项场景：
+
+1. present 无 value，禁止导出
+2. present value 无 primary，禁止导出
+3. 非 present 残留 values，禁止导出
+4. 合法数据可以导出
+5. 非法 JSON 导入不覆盖当前状态
+6. 不同 document_id 草稿隔离
+7. XSS 文本 `<img src=x onerror=alert(1)>` 不执行
+8. 重复文本选择第二处时偏移正确
+9. 高亮后继续选择第二段证据
+10. noticeType 和 annotationStatus 保存恢复
+11. 导出后重新导入数据一致
+12. fixture 不被 generate.py 覆盖
+
+**运行方法**：
+```bash
+cd annotation_tool/tests
+npm install
+npx playwright test
+```
 
 ## 测试结果
 
@@ -254,9 +305,7 @@ python annotation_tool/validate_schema.py
 
 ## 后续可扩展方向
 
-1. 批量标注模式（多文档切换）
-2. 双人标注一致性检查
-3. 标注进度统计和质量看板
-4. 键盘快捷键支持
-5. 证据高亮回显（在原文中标记已选证据）
-6. 与后端 API 对接，直接入库
+1. 双人标注一致性检查
+2. 标注进度统计和质量看板
+3. 键盘快捷键支持
+4. 与后端 API 对接，直接入库

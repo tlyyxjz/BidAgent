@@ -10,6 +10,10 @@
   * _test_sample.json
   * fixtures/manifest.json
   * sample_data.js
+
+环境变量：
+- BIDAGENT_OUTPUT_DIR：可选，将派生文件输出重定向到该目录（便于沙箱/CI 运行）。
+  未设置时默认输出到标注工具根目录（与原行为一致）。
 """
 import json
 import os
@@ -163,6 +167,20 @@ def generate_annotation(raw_text):
     return annotation
 
 
+def _get_output_dirs():
+    """根据 BIDAGENT_OUTPUT_DIR 环境变量返回三个输出目录。
+
+    返回 (json_dir, manifest_dir, sample_js_dir)。
+    未设置环境变量时，全部回退到 TOOL_DIR / FIXTURES_DIR，与原行为一致。
+    """
+    override = os.environ.get('BIDAGENT_OUTPUT_DIR')
+    if override:
+        override = os.path.abspath(override)
+        os.makedirs(override, exist_ok=True)
+        return override, override, override
+    return TOOL_DIR, FIXTURES_DIR, TOOL_DIR
+
+
 def main():
     print("=" * 60)
     print("生成测试 Fixture 和标注数据")
@@ -174,13 +192,16 @@ def main():
     # 2. 生成标注
     annotation = generate_annotation(raw_text)
 
-    # 3. 写入 _test_sample.json（标注工具根目录）
-    json_path = os.path.join(TOOL_DIR, '_test_sample.json')
+    # 输出目录：支持 BIDAGENT_OUTPUT_DIR 重定向（沙箱/CI 环境）
+    json_dir, manifest_dir, sample_js_dir = _get_output_dirs()
+
+    # 3. 写入 _test_sample.json
+    json_path = os.path.join(json_dir, '_test_sample.json')
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(annotation, f, ensure_ascii=False, indent=2)
     print(f"\n✅ 写入 JSON: {json_path}")
 
-    # 4. 写入 fixtures/manifest.json
+    # 4. 写入 manifest.json
     manifest = {
         'sample_id': 'sample-001',
         'raw_text_file': 'sample-001.txt',
@@ -190,13 +211,13 @@ def main():
         'evidence_count': 7,
         'field_count': 6
     }
-    manifest_path = os.path.join(FIXTURES_DIR, 'manifest.json')
+    manifest_path = os.path.join(manifest_dir, 'manifest.json')
     with open(manifest_path, 'w', encoding='utf-8') as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
     print(f"✅ 写入 manifest: {manifest_path}")
 
     # 5. 生成 sample_data.js（前端使用，内容与 fixture 完全一致）
-    sample_js_path = os.path.join(TOOL_DIR, 'sample_data.js')
+    sample_js_path = os.path.join(sample_js_dir, 'sample_data.js')
     annotation_no_hash = {k: v for k, v in annotation.items() if k != 'clean_raw_text_sha256'}
     sample_js_content = f"""/**
  * Mock 示例数据（自动生成，请勿手动修改）
