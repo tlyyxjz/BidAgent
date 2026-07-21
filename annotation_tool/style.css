@@ -246,6 +246,64 @@ body {
 .fields-panel {
     width: 50%;
     background-color: #f7fafc;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========== 字段导航区 ========== */
+.fields-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: #edf2f7;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.field-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background-color: white;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1.4;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.field-nav-item:hover {
+    background-color: #ebf8ff;
+    border-color: #90cdf4;
+}
+
+.field-nav-item.active {
+    background-color: #3182ce;
+    border-color: #2c5282;
+    color: white;
+}
+
+.field-nav-item.active .status-badge {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.field-nav-item.active .nav-field-meta {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.nav-field-name {
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.nav-field-meta {
+    font-size: 11px;
+    color: #718096;
+    margin-left: auto;
 }
 
 .fields-container {

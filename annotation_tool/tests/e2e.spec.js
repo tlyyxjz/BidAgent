@@ -551,4 +551,93 @@ test.describe('BidAgent W1-05 标注工具端到端测试', () => {
     try { fs.rmSync(TMP_GEN_OUTPUT_DIR, { recursive: true, force: true }); } catch (_) {}
   });
 
+  // ============================================================
+  // 布局验收测试（人工验收反馈固化）
+  // ============================================================
+
+  test('13. 六字段导航区存在且独立', async ({ page }) => {
+    const navInfo = await page.evaluate(() => {
+      const nav = document.getElementById('fieldsNav');
+      const container = document.getElementById('fieldsContainer');
+      if (!nav || !container) return { exists: false };
+      const navRect = nav.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      return {
+        exists: true,
+        tagName: nav.tagName,
+        itemCount: nav.querySelectorAll('.field-nav-item').length,
+        navAboveContainer: navRect.bottom <= containerRect.top + 1,
+      };
+    });
+
+    expect(navInfo.exists).toBe(true);
+    expect(navInfo.tagName).toBe('NAV');
+    expect(navInfo.itemCount).toBe(6);
+    expect(navInfo.navAboveContainer).toBe(true);
+  });
+
+  test('14. 只显示一个字段编辑器', async ({ page }) => {
+    const cardCount = await page.evaluate(() => {
+      return document.getElementById('fieldsContainer').querySelectorAll('.field-card').length;
+    });
+    expect(cardCount).toBe(1);
+  });
+
+  test('15. 点击导航切换字段', async ({ page }) => {
+    // 点击第 3 个导航项（索引 2，中标人名称）
+    const navItems = await page.$$('.field-nav-item');
+    expect(navItems.length).toBeGreaterThanOrEqual(3);
+    await navItems[2].click();
+    await page.waitForTimeout(500);
+
+    const switchInfo = await page.evaluate(() => {
+      const items = Array.from(document.querySelectorAll('.field-nav-item'));
+      const activeItem = document.querySelector('.field-nav-item.active');
+      const card = document.querySelector('.field-card');
+      return {
+        activeIndex: activeItem ? items.indexOf(activeItem) : -1,
+        cardFieldName: card ? card.querySelector('.field-name')?.textContent : null,
+      };
+    });
+
+    expect(switchInfo.activeIndex).toBe(2);
+    expect(switchInfo.cardFieldName).toContain('中标人');
+  });
+
+  test('16. 值项完整显示不被截断', async ({ page }) => {
+    // 切换回第 1 个字段
+    const navItems = await page.$$('.field-nav-item');
+    await navItems[0].click();
+    await page.waitForTimeout(500);
+
+    const valueInfo = await page.evaluate(() => {
+      const valueItem = document.querySelector('.value-item');
+      if (!valueItem) return { exists: false };
+      const rect = valueItem.getBoundingClientRect();
+      const labels = Array.from(valueItem.querySelectorAll('.value-field label, .evidence-label'))
+        .map(l => l.textContent.trim());
+      const hasOverflow = valueItem.scrollHeight > valueItem.clientHeight + 2;
+      const viewportHeight = window.innerHeight;
+      const fullyVisible = rect.top >= 0 && rect.bottom <= viewportHeight;
+      return {
+        exists: true,
+        labels,
+        hasOverflow,
+        fullyVisible,
+        height: rect.height,
+      };
+    });
+
+    expect(valueInfo.exists).toBe(true);
+    expect(valueInfo.labels).toContain('原始值');
+    expect(valueInfo.labels).toContain('归一化值');
+    expect(valueInfo.hasOverflow).toBe(false);
+    expect(valueInfo.fullyVisible).toBe(true);
+  });
+
+  test('17. 示例公告类型默认为 award（原文为中标结果公告）', async ({ page }) => {
+    const noticeType = await page.inputValue('#noticeType');
+    expect(noticeType).toBe('award');
+  });
+
 });

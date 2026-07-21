@@ -168,10 +168,16 @@ const SAMPLE_ANNOTATION = {
     ]
 };
 
+// ========== 示例公告类型（根据原文推断，用于前端默认显示） ==========
+// 不混入 SAMPLE_ANNOTATION（AnnotationDocument extra="forbid"）
+// 仅作为前端 docMeta.noticeType 的默认值
+const SAMPLE_NOTICE_TYPE = "award";
+
 // 导出到 window
 if (typeof window !== 'undefined') {
     window.SampleData = {
         SAMPLE_RAW_TEXT,
-        SAMPLE_ANNOTATION
+        SAMPLE_ANNOTATION,
+        SAMPLE_NOTICE_TYPE
     };
 }

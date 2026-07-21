@@ -390,9 +390,14 @@
             state.rawText = SampleData.SAMPLE_RAW_TEXT;
         }
 
+        // 默认 noticeType：优先使用 SAMPLE_NOTICE_TYPE（根据原文推断）
+        // 原文为中标结果公告时应为 award，不应默认 tender
+        const defaultNoticeType = (typeof SampleData !== 'undefined' && SampleData.SAMPLE_NOTICE_TYPE)
+            ? SampleData.SAMPLE_NOTICE_TYPE : 'tender';
+
         // 加载文档元数据（noticeType / annotationStatus）
         const meta = loadDocMeta(initialDocId);
-        state.docMeta = meta || { noticeType: 'tender', annotationStatus: 'pending' };
+        state.docMeta = meta || { noticeType: defaultNoticeType, annotationStatus: 'pending' };
 
         // 同步表单值
         syncDocInfoFromState();
@@ -552,15 +557,89 @@
     // ========== 字段渲染 ==========
 
     function renderFields() {
+        // 1. 渲染六字段紧凑导航
+        renderFieldsNav();
+
+        // 2. 渲染当前选中字段的编辑器（一次只显示一个）
         const container = document.getElementById('fieldsContainer');
         while (container.firstChild) {
             container.removeChild(container.firstChild);
         }
 
-        state.annotation.fields.forEach((field, fieldIndex) => {
-            const card = createFieldCard(field, fieldIndex);
+        // 默认选中第一个字段
+        if (state.currentFieldIndex < 0 || state.currentFieldIndex >= state.annotation.fields.length) {
+            state.currentFieldIndex = 0;
+        }
+
+        const currentField = state.annotation.fields[state.currentFieldIndex];
+        if (currentField) {
+            const card = createFieldCard(currentField, state.currentFieldIndex);
             container.appendChild(card);
+        }
+    }
+
+    /**
+     * 渲染六字段紧凑导航：每项显示名称、状态、值数量、完成状态。
+     * 未选字段只显示概要信息；点击切换当前编辑字段。
+     */
+    function renderFieldsNav() {
+        const nav = document.getElementById('fieldsNav');
+        if (!nav) return;
+        while (nav.firstChild) {
+            nav.removeChild(nav.firstChild);
+        }
+
+        state.annotation.fields.forEach((field, fieldIndex) => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'field-nav-item';
+            item.dataset.fieldIndex = fieldIndex;
+            if (fieldIndex === state.currentFieldIndex) {
+                item.classList.add('active');
+                item.setAttribute('aria-current', 'true');
+            }
+
+            // 字段名称
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'nav-field-name';
+            nameSpan.textContent = Schema.FIELD_DISPLAY_NAMES[field.field_name] || field.field_name;
+            item.appendChild(nameSpan);
+
+            // 状态徽章
+            const statusBadge = document.createElement('span');
+            statusBadge.className = 'status-badge status-' + field.gold_status;
+            statusBadge.textContent = Schema.STATUS_DISPLAY_NAMES[field.gold_status] || field.gold_status;
+            item.appendChild(statusBadge);
+
+            // 值数量 + 完成状态
+            const metaSpan = document.createElement('span');
+            metaSpan.className = 'nav-field-meta';
+            const valueCount = (field.values && field.values.length) || 0;
+            const isComplete = isFieldComplete(field);
+            metaSpan.textContent = valueCount + ' 值' + (isComplete ? ' · ✓' : '');
+            item.appendChild(metaSpan);
+
+            item.addEventListener('click', () => {
+                switchToField(fieldIndex);
+            });
+
+            nav.appendChild(item);
         });
+    }
+
+    /**
+     * 判断字段是否完成标注（用于导航项显示完成状态）。
+     */
+    function isFieldComplete(field) {
+        if (!field) return false;
+        const presentStatuses = [Schema.GOLD_STATUS.PRESENT, Schema.GOLD_STATUS.AMBIGUOUS];
+        if (presentStatuses.includes(field.gold_status)) {
+            return field.values && field.values.length > 0 &&
+                field.values.some(v => v.acceptable_evidence_spans &&
+                    v.acceptable_evidence_spans.some(e => e && e.role === Schema.EVIDENCE_ROLES.PRIMARY));
+        }
+        // 非 present 状态（absent/not_applicable 等）也算标记完成
+        return field.gold_status !== '' && field.gold_status !== Schema.GOLD_STATUS.PRESENT;
     }
 
     function createFieldCard(field, fieldIndex) {
@@ -1130,7 +1209,7 @@
 
             // 自动切换到首个错误字段
             if (result.firstErrorFieldIndex >= 0) {
-                switchToField(result.firstErrorFieldIndex);
+                flashFieldError(result.firstErrorFieldIndex);
             }
             return;
         }
@@ -1178,14 +1257,34 @@
     }
 
     /**
-     * 滚动到指定字段卡片并高亮（用于校验失败时定位）。
+     * 切换当前编辑字段（点击导航项或校验失败时调用）。
+     * 切换后只显示目标字段的编辑器。
      */
     function switchToField(fieldIndex) {
-        const cards = document.querySelectorAll('.field-card');
-        if (cards[fieldIndex]) {
-            cards[fieldIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            cards[fieldIndex].classList.add('field-card-error');
-            setTimeout(() => cards[fieldIndex].classList.remove('field-card-error'), 3000);
+        if (fieldIndex < 0 || fieldIndex >= state.annotation.fields.length) return;
+        if (fieldIndex === state.currentFieldIndex) return;
+
+        state.currentFieldIndex = fieldIndex;
+        renderFieldsNav();
+        const container = document.getElementById('fieldsContainer');
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+        const card = createFieldCard(state.annotation.fields[fieldIndex], fieldIndex);
+        container.appendChild(card);
+    }
+
+    /**
+     * 校验失败时高亮目标字段卡片（不切换，仅闪烁）。
+     */
+    function flashFieldError(fieldIndex) {
+        if (fieldIndex < 0) return;
+        // 切换到错误字段
+        switchToField(fieldIndex);
+        const card = document.querySelector('.field-card');
+        if (card) {
+            card.classList.add('field-card-error');
+            setTimeout(() => card.classList.remove('field-card-error'), 3000);
         }
     }
 

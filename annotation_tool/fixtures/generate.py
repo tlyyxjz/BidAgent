@@ -181,6 +181,27 @@ def _get_output_dirs():
     return TOOL_DIR, FIXTURES_DIR, TOOL_DIR
 
 
+def infer_notice_type(raw_text):
+    """根据原文内容推断公告类型（noticeType）。
+
+    推断规则（按优先级）：
+    1. 包含"中标（成交）结果公告"或"中标公告" → award
+    2. 包含"更正公告" → correction
+    3. 包含"招标公告"或"招标（采购）" → tender
+    4. 其他 → other
+
+    与前端 index.html 的 <select id="noticeType"> 选项值一致：
+    tender / award / correction / other
+    """
+    if '中标' in raw_text and ('结果公告' in raw_text or '中标公告' in raw_text):
+        return 'award'
+    if '更正公告' in raw_text:
+        return 'correction'
+    if '招标公告' in raw_text or '招标（采购）' in raw_text:
+        return 'tender'
+    return 'other'
+
+
 def main():
     print("=" * 60)
     print("生成测试 Fixture 和标注数据")
@@ -219,6 +240,11 @@ def main():
     # 5. 生成 sample_data.js（前端使用，内容与 fixture 完全一致）
     sample_js_path = os.path.join(sample_js_dir, 'sample_data.js')
     annotation_no_hash = {k: v for k, v in annotation.items() if k != 'clean_raw_text_sha256'}
+
+    # 根据原文内容推断公告类型（noticeType），用于前端默认显示
+    # 原文第 2 行明确写"中标（成交）结果公告"，应为 award
+    notice_type = infer_notice_type(raw_text)
+
     sample_js_content = f"""/**
  * Mock 示例数据（自动生成，请勿手动修改）
  * 权威来源：fixtures/sample-001.txt
@@ -232,11 +258,17 @@ const SAMPLE_RAW_TEXT = {json.dumps(raw_text, ensure_ascii=False)};
 // ========== 示例标注数据（完整的 AnnotationDocument） ==========
 const SAMPLE_ANNOTATION = {json.dumps(annotation_no_hash, ensure_ascii=False, indent=4)};
 
+// ========== 示例公告类型（根据原文推断，用于前端默认显示） ==========
+// 不混入 SAMPLE_ANNOTATION（AnnotationDocument extra="forbid"）
+// 仅作为前端 docMeta.noticeType 的默认值
+const SAMPLE_NOTICE_TYPE = {json.dumps(notice_type, ensure_ascii=False)};
+
 // 导出到 window
 if (typeof window !== 'undefined') {{
     window.SampleData = {{
         SAMPLE_RAW_TEXT,
-        SAMPLE_ANNOTATION
+        SAMPLE_ANNOTATION,
+        SAMPLE_NOTICE_TYPE
     }};
 }}
 """
