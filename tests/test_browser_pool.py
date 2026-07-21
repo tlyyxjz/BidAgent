@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -81,7 +81,11 @@ async def test_acquire_times_out():
 async def test_context_closes_and_releases():
     """Context 管理器退出时自动关闭并归还。"""
     pool, slot = make_started_pool()
-    context = AsyncMock()
+    # context 的 set_default_timeout / set_default_navigation_timeout 是同步方法，
+    # 用 MagicMock 避免返回协程导致 "coroutine never awaited" warning；
+    # 只有 close 是 async，用 AsyncMock。
+    context = MagicMock()
+    context.close = AsyncMock()
     slot.browser.new_context.return_value = context
 
     async with pool.context() as returned:
