@@ -30,6 +30,8 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Iterable
 
+from app.utils.logger import get_logger
+
 from backend.enums import (
     AmountType,
     CoreFieldName,
@@ -45,6 +47,8 @@ from backend.schemas import (
     LLMExtractionRecord,
     LLMExtractedField,
 )
+
+logger = get_logger("backend.evaluation")
 
 
 # ============================================================
@@ -260,6 +264,14 @@ def evaluate_dataset(
     if not gold_docs:
         raise ValueError("gold_docs 不能为空")
 
+    logger.info(
+        "evaluate_dataset start gold_count={} system_count={} system_id={} split={}",
+        len(gold_docs),
+        len(system_records),
+        system_identifier,
+        dataset_split,
+    )
+
     # 按 document_id 索引系统记录
     sys_map: dict[str, LLMExtractionRecord] = {}
     for r in system_records:
@@ -301,13 +313,24 @@ def evaluate_dataset(
         from datetime import datetime
         run_id = f"run-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    return EvaluationSummary(
+    summary = EvaluationSummary(
         run_id=run_id,
         system_identifier=system_identifier,
         dataset_split=dataset_split,
         document_count=len(gold_docs),
         field_metrics=list(per_field.values()),
     )
+
+    logger.info(
+        "evaluate_dataset done run_id={} docs={} matched={} macro_p={:.4f} macro_r={:.4f} macro_f1={:.4f}",
+        run_id,
+        len(gold_docs),
+        matched_doc_count,
+        summary.macro_precision,
+        summary.macro_recall,
+        summary.macro_f1,
+    )
+    return summary
 
 
 # ============================================================

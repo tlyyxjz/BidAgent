@@ -18,6 +18,7 @@
 - 失败记录 success=False + error_message，写入 JSONL 不丢弃
 - 提示词版本 + SHA256 与 LLMExtractionRecord 绑定，支持消融对比
 - 不内置任何证据验证逻辑（A 组公平性要求）
+- 结构化日志带 request_id 上下文（遵循项目硬约束）
 """
 from __future__ import annotations
 
@@ -30,6 +31,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
+from app.utils.logger import get_logger
+
 from backend.enums import CoreFieldName
 from backend.schemas import (
     LLMExtractionOutput,
@@ -37,6 +40,8 @@ from backend.schemas import (
     LLMExtractedField,
     LLMExtractedValue,
 )
+
+logger = get_logger("backend.extractors")
 
 
 # ============================================================
@@ -286,6 +291,13 @@ class DirectLLMBaseline:
         system_prompt, user_prompt = build_prompt(notice_text, notice_type)
         prompt_hash = compute_prompt_hash(system_prompt, user_prompt)
         started_at = datetime.now()
+        logger.info(
+            "extract_one start doc={} model={} prompt_hash={} text_len={}",
+            document_id,
+            self._model_identifier,
+            prompt_hash[:12],
+            len(notice_text),
+        )
 
         last_error: str | None = None
         last_response: LLMResponse | None = None
@@ -305,6 +317,14 @@ class DirectLLMBaseline:
             except Exception as exc:
                 last_error = f"attempt {attempt + 1}/{attempts}: {type(exc).__name__}: {exc}"
                 last_response = None
+                logger.warning(
+                    "extract_one retry doc={} attempt={}/{} error={}: {}",
+                    document_id,
+                    attempt + 1,
+                    attempts,
+                    type(exc).__name__,
+                    exc,
+                )
                 if attempt < attempts - 1:
                     await asyncio.sleep(0.5 * (attempt + 1))
 
@@ -312,6 +332,12 @@ class DirectLLMBaseline:
         latency_ms = int((finished_at - started_at).total_seconds() * 1000)
 
         if last_error is not None or last_response is None:
+            logger.error(
+                "extract_one failed doc={} latency_ms={} error={}",
+                document_id,
+                latency_ms,
+                last_error or "未知错误",
+            )
             return LLMExtractionRecord(
                 document_id=document_id,
                 model_identifier=self._model_identifier,
@@ -330,6 +356,13 @@ class DirectLLMBaseline:
         try:
             output = self._parse_response(last_response.content)
         except Exception as exc:
+            logger.error(
+                "extract_one parse_failed doc={} latency_ms={} error={}: {}",
+                document_id,
+                latency_ms,
+                type(exc).__name__,
+                exc,
+            )
             return LLMExtractionRecord(
                 document_id=document_id,
                 model_identifier=self._model_identifier,
@@ -347,6 +380,15 @@ class DirectLLMBaseline:
                 error_message=f"JSON 解析失败：{type(exc).__name__}: {exc}",
             )
 
+        logger.info(
+            "extract_one success doc={} latency_ms={} tokens={}/{}/{} fields={}",
+            document_id,
+            latency_ms,
+            last_response.prompt_tokens,
+            last_response.completion_tokens,
+            last_response.total_tokens,
+            len(output.fields),
+        )
         return LLMExtractionRecord(
             document_id=document_id,
             model_identifier=self._model_identifier,
@@ -382,6 +424,13 @@ class DirectLLMBaseline:
         if not documents:
             return []
 
+        logger.info(
+            "extract_batch start count={} concurrency={} model={}",
+            len(documents),
+            concurrency,
+            self._model_identifier,
+        )
+
         semaphore = asyncio.Semaphore(concurrency)
 
         async def _wrapped(idx: int, doc_id: str, text: str, ntype: str | None) -> tuple[int, LLMExtractionRecord]:
@@ -395,7 +444,17 @@ class DirectLLMBaseline:
         ]
         results = await asyncio.gather(*tasks, return_exceptions=False)
         results.sort(key=lambda x: x[0])
-        return [r for _, r in results]
+        records = [r for _, r in results]
+
+        success_count = sum(1 for r in records if r.success)
+        failure_count = len(records) - success_count
+        logger.info(
+            "extract_batch done count={} success={} failure={}",
+            len(records),
+            success_count,
+            failure_count,
+        )
+        return records
 
     def _parse_response(self, content: str) -> LLMExtractionOutput:
         """解析 LLM 输出为 LLMExtractionOutput。
