@@ -131,12 +131,12 @@ SAMPLE_NOTICES: list[dict] = [
 
 
 def mask_key(key: str) -> str:
-    """脱敏 API Key：只显示前 4 后 4 字符。"""
-    if not key:
-        return "<empty>"
-    if len(key) <= 8:
-        return "***"
-    return f"{key[:4]}...{key[-4:]}"
+    """脱敏 API Key：不显示任何 Key 片段。
+
+    用户第三轮要求："连前后四位也不需要保存"。
+    报告中只记录"已从环境变量读取，未记录任何 Key 片段"。
+    """
+    return "<redacted: read from env>"
 
 
 def sha256_short(text: str) -> str:
