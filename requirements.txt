@@ -26,4 +26,6 @@ pdfplumber>=0.10.0
 ddddocr>=1.4.7
 # SimHash 分词
 jieba>=0.42.1
+# BidAgent v4.1 四层数据模型主键（时间排序 ULID）
+ulid-py>=1.1.0
 
