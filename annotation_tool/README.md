@@ -247,7 +247,7 @@ python annotation_tool/validate_schema.py
 
 ### Playwright 端到端测试（tests/）
 
-覆盖真实 DOM 交互的 12 项场景：
+覆盖真实 DOM 交互的 26 项场景：
 
 1. present 无 value，禁止导出
 2. present value 无 primary，禁止导出
@@ -261,6 +261,17 @@ python annotation_tool/validate_schema.py
 10. noticeType 和 annotationStatus 保存恢复
 11. 导出后重新导入数据一致
 12. fixture 不被 generate.py 覆盖
+13-17. 布局验收（六字段导航区/单字段编辑器/导航切换/值不截断/公告类型推断）
+18-26. **跨文档隔离（P0 修复验证）**：
+  18. 导入 TXT B 后字段和值全部为空
+  19. B 的 document_id 与 A 不同
+  20. B 不显示 A 的证据高亮
+  21. 重新导入 A 时可恢复 A 自己的草稿
+  22. 相同 TXT 再次导入时不创建随机新文档
+  23. 导入 B 后刷新只恢复 B，不恢复 A
+  24. 新 TXT 导入后完成度不得沿用上一篇
+  25. 切换文件前的保存提示正常
+  26. 导入空 TXT 或超大 TXT 时明确报错且不覆盖当前文档
 
 **运行方法**：
 ```bash
@@ -268,6 +279,18 @@ cd annotation_tool/tests
 npm install
 npx playwright test
 ```
+
+### TXT 导入与跨文档隔离说明
+
+为避免跨公告数据污染（P0），TXT 导入采用以下规则：
+
+- **独立 document_id**：规范化文件名 + 内容 SHA-256 前 12 位，相同文件再次导入识别为同一文档
+- **保存提示**：导入前若当前文档有未保存修改，弹窗询问"是否保存当前草稿后再导入新公告？"
+- **完整重置**：六类字段及 values、证据、高亮、当前字段索引、标注状态、公告类型、备注、校验错误、重叠提示
+- **空状态初始化**：六类字段初始化为 `gold_status=''`（待判断），进度显示 0/6，与 `absent`（不存在，计入完成）区分
+- **localStorage 隔离**：草稿键 `bidagent_annotation_draft_${document_id}`，元数据键 `bidagent_annotation_meta_${document_id}`
+- **JSON 与 TXT 行为区分**：TXT 创建或恢复文档；JSON 加载完整标注，校验失败不覆盖当前状态
+- **页面状态栏**：显示当前文件名、document_id、内容哈希、是否恢复草稿
 
 ## 测试结果
 

@@ -26,7 +26,8 @@
     const STORAGE_KEYS = {
         DOC_INDEX: 'bidagent_annotation_doc_index',
         DRAFT_PREFIX: 'bidagent_annotation_draft_',
-        META_PREFIX: 'bidagent_annotation_meta_'
+        META_PREFIX: 'bidagent_annotation_meta_',
+        LAST_ACTIVE_DOC: 'bidagent_annotation_last_active_doc'
     };
 
     // 文件导入大小限制（5 MB，可配置）
@@ -75,6 +76,104 @@
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
         const bytes = new Uint8Array(hashBuffer);
         return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    /**
+     * 根据原文内容推断公告类型（noticeType）。
+     * 推断规则与 fixtures/generate.py 中的 infer_notice_type 完全一致：
+     * 1. 包含"中标"且("结果公告"或"中标公告") → award
+     * 2. 包含"更正公告" → correction
+     * 3. 包含"招标公告"或"招标（采购）" → tender
+     * 4. 其他 → other
+     */
+    function inferNoticeType(rawText) {
+        if (!rawText) return 'other';
+        if (rawText.indexOf('中标') >= 0 &&
+            (rawText.indexOf('结果公告') >= 0 || rawText.indexOf('中标公告') >= 0)) {
+            return 'award';
+        }
+        if (rawText.indexOf('更正公告') >= 0) return 'correction';
+        if (rawText.indexOf('招标公告') >= 0 || rawText.indexOf('招标（采购）') >= 0) return 'tender';
+        return 'other';
+    }
+
+    /**
+     * 规范化文件名：去除扩展名，只保留字母/数字/中文/下划线/连字符，其余替换为下划线。
+     * 用于生成稳定的 document_id 前缀。
+     */
+    function sanitizeFileName(fileName) {
+        if (!fileName) return 'untitled';
+        // 去除路径（兼容 \ 和 /）
+        const base = fileName.replace(/^.*[\\\/]/, '');
+        // 去除扩展名
+        const noExt = base.replace(/\.[^.]+$/, '');
+        // 只保留中文/字母/数字/下划线/连字符，其余替换为下划线
+        const cleaned = noExt.replace(/[^\u4e00-\u9fa5A-Za-z0-9_-]/g, '_');
+        return cleaned || 'untitled';
+    }
+
+    /**
+     * 根据文件名 + 内容 SHA-256 短摘要生成稳定的 document_id。
+     * 规则：sanitized_name + '_' + sha256前12位
+     * 相同文件（文件名+内容）再次导入时生成相同 document_id，便于识别为同一文档。
+     */
+    function generateDocumentId(fileName, contentHash) {
+        const name = sanitizeFileName(fileName);
+        const shortHash = (contentHash || '').slice(0, 12);
+        return name + '_' + shortHash;
+    }
+
+    /**
+     * 判断标注文档是否包含非空数据（值或证据或备注）。
+     * 用于导入新 TXT 前判断是否需要提示用户保存当前草稿。
+     * 空白初始化（全 absent、无 values）不算非空。
+     */
+    function hasNonEmptyAnnotation(annotation) {
+        if (!annotation || !annotation.fields) return false;
+        return annotation.fields.some(field => {
+            if (field.note && field.note.trim()) return true;
+            if (field.values && field.values.length > 0) {
+                return field.values.some(v =>
+                    (v.raw_value && v.raw_value.trim()) ||
+                    (v.normalized_value && v.normalized_value.trim()) ||
+                    (v.acceptable_evidence_spans && v.acceptable_evidence_spans.length > 0)
+                );
+            }
+            return false;
+        });
+    }
+
+    /**
+     * 为 TXT 导入创建空白标注文档（gold_status = '' 表示"待判断"）。
+     * 与 createEmptyAnnotationDocument（absent）不同：
+     * - '' 表示用户尚未判断，进度显示 0/6
+     * - absent 表示用户明确标记为"不存在"，进度计入已完成
+     * 导出时校验会拒绝 '' 状态，强制用户为每个字段选择合法状态。
+     */
+    function createBlankAnnotationForImport(documentId, annotatorId) {
+        const doc = Schema.createEmptyAnnotationDocument(documentId, annotatorId);
+        // 覆盖为"待判断"状态（空字符串），与 absent 区分
+        doc.fields.forEach(f => { f.gold_status = ''; });
+        return doc;
+    }
+
+    /**
+     * 记住最后活动的 document_id，用于刷新后恢复。
+     */
+    function setLastActiveDoc(docId) {
+        try {
+            localStorage.setItem(STORAGE_KEYS.LAST_ACTIVE_DOC, docId || '');
+        } catch (e) {
+            console.warn('保存最后活动文档失败', e);
+        }
+    }
+
+    function getLastActiveDoc() {
+        try {
+            return localStorage.getItem(STORAGE_KEYS.LAST_ACTIVE_DOC) || '';
+        } catch (e) {
+            return '';
+        }
     }
 
     // ========== 完整校验（导出前 / 导入后） ==========
@@ -377,27 +476,36 @@
     // ========== 初始化 ==========
 
     function init() {
-        const initialDocId = 'sample-001';
+        // 优先恢复最后活动的文档，没有则使用 sample-001
+        const lastActiveDoc = getLastActiveDoc();
+        const initialDocId = lastActiveDoc || 'sample-001';
 
         // 尝试从 localStorage 恢复该文档的草稿
         const saved = loadFromStorage(initialDocId);
         if (saved && saved.annotation) {
             state.annotation = saved.annotation;
             state.rawText = saved.rawText || '';
-        } else {
+        } else if (initialDocId === 'sample-001') {
             // 使用示例数据初始化
             state.annotation = JSON.parse(JSON.stringify(SampleData.SAMPLE_ANNOTATION));
             state.rawText = SampleData.SAMPLE_RAW_TEXT;
+        } else {
+            // 最后活动文档无草稿，回退到 sample-001
+            state.annotation = JSON.parse(JSON.stringify(SampleData.SAMPLE_ANNOTATION));
+            state.rawText = SampleData.SAMPLE_RAW_TEXT;
+            setLastActiveDoc('sample-001');
         }
 
         // 默认 noticeType：优先使用 SAMPLE_NOTICE_TYPE（根据原文推断）
-        // 原文为中标结果公告时应为 award，不应默认 tender
         const defaultNoticeType = (typeof SampleData !== 'undefined' && SampleData.SAMPLE_NOTICE_TYPE)
             ? SampleData.SAMPLE_NOTICE_TYPE : 'tender';
 
         // 加载文档元数据（noticeType / annotationStatus）
         const meta = loadDocMeta(initialDocId);
         state.docMeta = meta || { noticeType: defaultNoticeType, annotationStatus: 'pending' };
+
+        // 初始化当前字段索引为第一个字段
+        state.currentFieldIndex = 0;
 
         // 同步表单值
         syncDocInfoFromState();
@@ -406,6 +514,12 @@
         renderText();
         renderFields();
         updateProgress();
+
+        // 更新文档状态显示
+        updateDocStatusDisplay(
+            initialDocId === 'sample-001' ? 'sample-001.txt' : '',
+            initialDocId, '', !!saved
+        );
 
         // 绑定事件
         bindEvents();
@@ -434,9 +548,11 @@
 
         // 尝试加载目标文档的草稿
         const saved = loadFromStorage(newDocId);
+        let restoredFromDraft = false;
         if (saved && saved.annotation) {
             state.annotation = saved.annotation;
             state.rawText = saved.rawText || '';
+            restoredFromDraft = true;
         } else {
             // 新文档，从空白开始（不携带文档 A 的内容）
             const annotatorId = state.annotation.annotator_id || 'A';
@@ -448,11 +564,24 @@
         const meta = loadDocMeta(newDocId);
         state.docMeta = meta || { noticeType: 'tender', annotationStatus: 'pending' };
 
+        // 重置编辑状态
+        state.currentFieldIndex = 0;
+        state.currentValueIndex = -1;
+        state.editingEvidenceIndex = -1;
+
+        // 清除重叠提示
+        const overlapWarning = document.getElementById('overlapWarning');
+        if (overlapWarning) overlapWarning.style.display = 'none';
+
         // 重新渲染
         syncDocInfoFromState();
         renderText();
         renderFields();
         updateProgress();
+
+        // 更新文档状态显示 + 记住最后活动文档
+        updateDocStatusDisplay('', newDocId, '', restoredFromDraft);
+        setLastActiveDoc(newDocId);
     }
 
     // ========== 文本渲染和证据高亮 ==========
@@ -1113,25 +1242,146 @@
 
     // ========== 导入导出 ==========
 
+    /**
+     * 导入 TXT 原文：创建一个新的标注文档，而非只替换 rawText。
+     *
+     * 关键行为（P0 修复：避免跨公告数据污染）：
+     * 1. 文件大小校验、空文本校验（不覆盖当前文档）
+     * 2. 读取并规范化换行符为 LF
+     * 3. 计算 SHA-256，生成稳定 document_id（文件名 + hash 前 12 位）
+     *    - 相同文件再次导入生成相同 document_id，识别为同一文档
+     * 4. 若当前文档有未保存修改（含值/证据/备注），弹窗询问是否保存后再导入
+     * 5. 若新 document_id 已有草稿，询问是否恢复草稿；否则创建空白标注
+     * 6. 完整重置 state：annotation / rawText / docMeta / currentFieldIndex / 校验错误 / 高亮
+     * 7. localStorage 按新 document_id 隔离
+     * 8. 六字段初始化为 absent 空状态（createEmptyAnnotationDocument），不保留旧公告任何数据
+     * 9. 重新推断 noticeType
+     * 10. 更新页面文档状态显示（文件名 / document_id / 内容哈希 / 是否恢复草稿）
+     */
     function importTextFile(file) {
-        // 文件大小限制
+        // 1. 文件大小限制
         if (file.size > MAX_IMPORT_SIZE) {
-            alert('文件过大 (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)，最大允许 ' + (MAX_IMPORT_SIZE / 1024 / 1024) + ' MB');
+            alert('文件过大 (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)，最大允许 ' + (MAX_IMPORT_SIZE / 1024 / 1024) + ' MB\n\n当前文档未被修改。');
             return;
         }
 
+        // 2. 若当前文档有未保存修改，提示用户（不得静默丢弃）
+        //    判断依据：state.annotation 存在非空值/证据/备注，且自上次保存后有改动
+        //    这里采用简化判断：只要有非空标注数据就提示（保守策略，避免误丢）
+        const oldDocId = state.annotation ? state.annotation.document_id : '';
+        const hasData = hasNonEmptyAnnotation(state.annotation);
+        if (hasData) {
+            const saveFirst = confirm(
+                '检测到当前文档 "' + oldDocId + '" 已有标注数据。\n\n' +
+                '是否保存当前草稿后再导入新公告？\n\n' +
+                '• 点击"确定"：保存当前草稿后继续导入\n' +
+                '• 点击"取消"：放弃导入，保留当前文档'
+            );
+            if (!saveFirst) {
+                return; // 用户取消，不导入，不修改当前状态
+            }
+            // 保存当前草稿（按旧 document_id 隔离）
+            saveToStorage();
+        }
+
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             const text = normalizeNewlines(e.target.result);
-            state.rawText = text;
+
+            // 3. 空文本校验（不覆盖当前文档）
+            if (!text || !text.trim()) {
+                alert('导入失败：文件内容为空。\n\n当前文档未被修改。');
+                return;
+            }
+
+            // 4. 计算 SHA-256，生成稳定 document_id
+            const contentHash = await computeSha256(text);
+            const newDocId = generateDocumentId(file.name, contentHash);
+
+            // 5. 检查该 document_id 是否已有草稿
+            const existingDraft = loadFromStorage(newDocId);
+            const annotatorId = (state.annotation && state.annotation.annotator_id) || 'A';
+            let restoredFromDraft = false;
+
+            if (existingDraft && existingDraft.annotation) {
+                // 已有草稿，询问是否恢复
+                const restore = confirm(
+                    '检测到该文档已存在草稿：\n' +
+                    '  document_id: ' + newDocId + '\n' +
+                    '  文件名: ' + file.name + '\n\n' +
+                    '是否恢复已有草稿？\n\n' +
+                    '• 点击"确定"：恢复草稿（包含原标注、证据、状态）\n' +
+                    '• 点击"取消"：创建空白标注（草稿将被覆盖）'
+                );
+                if (restore) {
+                    state.annotation = existingDraft.annotation;
+                    state.rawText = existingDraft.rawText || text;
+                    const existingMeta = loadDocMeta(newDocId);
+                    state.docMeta = existingMeta || { noticeType: inferNoticeType(state.rawText), annotationStatus: 'pending' };
+                    restoredFromDraft = true;
+                } else {
+                    // 创建空白标注，覆盖草稿
+                    state.annotation = createBlankAnnotationForImport(newDocId, annotatorId);
+                    state.rawText = text;
+                    state.docMeta = { noticeType: inferNoticeType(text), annotationStatus: 'pending' };
+                }
+            } else {
+                // 新文档，创建空白标注（gold_status='' 表示"待判断"，进度 0/6）
+                state.annotation = createBlankAnnotationForImport(newDocId, annotatorId);
+                state.rawText = text;
+                state.docMeta = { noticeType: inferNoticeType(text), annotationStatus: 'pending' };
+            }
+
+            // 6. 完整重置编辑状态
+            state.currentFieldIndex = 0;
+            state.currentValueIndex = -1;
+            state.editingEvidenceIndex = -1;
+
+            // 7. 清除重叠提示
+            const overlapWarning = document.getElementById('overlapWarning');
+            if (overlapWarning) overlapWarning.style.display = 'none';
+
+            // 8. 同步表单 + 渲染
+            syncDocInfoFromState();
             renderText();
-            scheduleAutoSave();
-            alert('文本导入成功（已规范化换行符为 LF）');
+            renderFields();
+            updateProgress();
+
+            // 9. 保存新文档草稿（按新 document_id 隔离）+ 记住最后活动文档
+            saveToStorage();
+            setLastActiveDoc(newDocId);
+
+            // 10. 更新文档状态显示
+            updateDocStatusDisplay(file.name, newDocId, contentHash, restoredFromDraft);
+
+            const msg = restoredFromDraft
+                ? '文本导入成功（已恢复草稿）\n\ndocument_id: ' + newDocId + '\n内容哈希: ' + contentHash.slice(0, 12) + '...'
+                : '文本导入成功（已创建新文档，字段已重置为空状态）\n\ndocument_id: ' + newDocId + '\n内容哈希: ' + contentHash.slice(0, 12) + '...';
+            alert(msg);
         };
         reader.onerror = function() {
-            alert('文件读取失败');
+            alert('文件读取失败。当前文档未被修改。');
         };
         reader.readAsText(file, 'UTF-8');
+    }
+
+    /**
+     * 更新页面文档状态显示区：文件名 / document_id / 内容哈希 / 是否恢复草稿。
+     */
+    function updateDocStatusDisplay(fileName, docId, contentHash, restoredFromDraft) {
+        const el = document.getElementById('docStatusInfo');
+        if (!el) return;
+        const nameSpan = el.querySelector('.doc-status-name');
+        const idSpan = el.querySelector('.doc-status-id');
+        const hashSpan = el.querySelector('.doc-status-hash');
+        const restoredSpan = el.querySelector('.doc-status-restored');
+        if (nameSpan) nameSpan.textContent = fileName || '(未导入文件)';
+        if (idSpan) idSpan.textContent = docId || state.annotation.document_id || '(无)';
+        if (hashSpan) hashSpan.textContent = contentHash ? contentHash.slice(0, 12) + '...' : '(未计算)';
+        if (restoredSpan) {
+            restoredSpan.textContent = restoredFromDraft ? '是' : '否';
+            restoredSpan.className = 'doc-status-restored ' + (restoredFromDraft ? 'restored-yes' : 'restored-no');
+        }
     }
 
     /**
@@ -1177,6 +1427,9 @@
 
             // 校验通过，更新 state 和 localStorage
             state.annotation = data;
+            state.currentFieldIndex = 0;
+            state.currentValueIndex = -1;
+            state.editingEvidenceIndex = -1;
             syncDocInfoFromState();
             renderFields();
             renderText(); // 更新高亮
@@ -1249,11 +1502,21 @@
         state.annotation = Schema.createEmptyAnnotationDocument(docId, annotatorId);
         state.rawText = '';
         state.docMeta = { noticeType: 'tender', annotationStatus: 'pending' };
+        state.currentFieldIndex = 0;
+        state.currentValueIndex = -1;
+        state.editingEvidenceIndex = -1;
+
+        // 清除重叠提示
+        const overlapWarning = document.getElementById('overlapWarning');
+        if (overlapWarning) overlapWarning.style.display = 'none';
+
         syncDocInfoFromState();
         renderText();
         renderFields();
         updateProgress();
         clearStorage(docId);
+        updateDocStatusDisplay('', docId, '', false);
+        setLastActiveDoc(docId);
     }
 
     /**
@@ -1477,9 +1740,19 @@
         renderFields: renderFields,
         getSelectedTextInfo: getSelectedTextInfo,
         getAbsoluteOffsetFromRange: getAbsoluteOffsetFromRange,
+        importTextFile: importTextFile,
         importJsonFile: importJsonFile,
         exportJson: exportJson,
         resetAnnotation: resetAnnotation,
+        inferNoticeType: inferNoticeType,
+        sanitizeFileName: sanitizeFileName,
+        generateDocumentId: generateDocumentId,
+        hasNonEmptyAnnotation: hasNonEmptyAnnotation,
+        createBlankAnnotationForImport: createBlankAnnotationForImport,
+        updateDocStatusDisplay: updateDocStatusDisplay,
+        computeSha256: computeSha256,
+        setLastActiveDoc: setLastActiveDoc,
+        getLastActiveDoc: getLastActiveDoc,
         MAX_IMPORT_SIZE: MAX_IMPORT_SIZE
     };
 

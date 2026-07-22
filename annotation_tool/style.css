@@ -159,6 +159,56 @@ body {
     color: #718096;
 }
 
+/* ========== 文档状态栏（文件名/document_id/内容哈希/恢复草稿） ========== */
+.doc-status-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 8px 20px;
+    background-color: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12px;
+    color: #4a5568;
+    flex-shrink: 0;
+}
+
+.doc-status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.doc-status-item .label {
+    color: #718096;
+    font-weight: 500;
+}
+
+.doc-status-name,
+.doc-status-id,
+.doc-status-hash {
+    font-family: 'Consolas', 'Monaco', monospace;
+    color: #2d3748;
+    word-break: break-all;
+}
+
+.doc-status-restored {
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 11px;
+}
+
+.doc-status-restored.restored-yes {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.doc-status-restored.restored-no {
+    background-color: #edf2f7;
+    color: #718096;
+}
+
 /* ========== 主体双栏布局 ========== */
 .main-container {
     display: flex;

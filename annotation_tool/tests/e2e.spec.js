@@ -1,7 +1,7 @@
 /**
  * BidAgent W1-05 标注工具 - Playwright 端到端测试
  *
- * 覆盖 12 项真实 DOM 交互场景：
+ * 覆盖 26 项真实 DOM 交互场景：
  *  1. present 无 value，禁止导出
  *  2. present value 无 primary，禁止导出
  *  3. 非 present 残留 values，禁止导出
@@ -14,6 +14,17 @@
  * 10. noticeType 和 annotationStatus 保存恢复
  * 11. 导出后重新导入数据一致
  * 12. fixture 不被 generate.py 覆盖
+ * 13-17. 布局验收（导航/单字段编辑器/切换/无截断/公告类型）
+ * 18-26. 跨文档隔离（P0：TXT 导入不得污染旧公告标注）
+ *   18. 导入 TXT B 后字段和值全部为空
+ *   19. B 的 document_id 与 A 不同
+ *   20. B 不显示 A 的证据高亮
+ *   21. 重新导入 A 时可恢复 A 自己的草稿
+ *   22. 相同 TXT 再次导入时不创建随机新文档
+ *   23. 导入 B 后刷新只恢复 B 不恢复 A
+ *   24. 新 TXT 导入后完成度不得沿用上一篇
+ *   25. 切换文件前的保存提示正常
+ *   26. 导入空 TXT 或超大 TXT 时明确报错且不覆盖当前文档
  *
  * 沙箱注意：临时文件统一写入 os.tmpdir()，避免受限路径；
  *          测试 12 通过 BIDAGENT_OUTPUT_DIR 环境变量重定向 generate.py 的派生文件输出。
@@ -638,6 +649,448 @@ test.describe('BidAgent W1-05 标注工具端到端测试', () => {
   test('17. 示例公告类型默认为 award（原文为中标结果公告）', async ({ page }) => {
     const noticeType = await page.inputValue('#noticeType');
     expect(noticeType).toBe('award');
+  });
+
+  // ============================================================
+  // 跨文档隔离测试（P0：TXT 导入不得污染旧公告标注）
+  // ============================================================
+
+  // 文档 B 的原文（与 sample-001 不同，用于测试跨文档隔离）
+  const DOC_B_TEXT = [
+    '某单位办公设备采购招标公告',
+    '',
+    '项目编号：ZB-2024-0999',
+    '采购人：某单位后勤处',
+    '发布日期：2024年6月1日',
+    '投标截止日期：2024年6月20日',
+    '',
+    '现就办公设备采购项目进行公开招标，欢迎合格供应商参加投标。',
+    '本项目采购预算：500万元。'
+  ].join('\n');
+
+  const TMP_TXT_B = path.join(TMP_DIR, 'bidagent_e2e_doc_b.txt');
+  const TMP_TXT_A = path.join(TMP_DIR, 'bidagent_e2e_doc_a.txt');
+  const TMP_TXT_EMPTY = path.join(TMP_DIR, 'bidagent_e2e_empty.txt');
+
+  // 处理导入 TXT 时的多个 dialog（保存提示 / 恢复草稿提示 / 成功 alert）
+  // autoAccept: 是否全部接受（默认 true）
+  function autoAcceptDialogs(page, expectedCount) {
+    const messages = [];
+    let count = 0;
+    return new Promise((resolve) => {
+      const handler = d => {
+        count++;
+        messages.push({ type: d.type(), message: d.message() });
+        d.accept();
+        if (count >= expectedCount) {
+          page.off('dialog', handler);
+          resolve(messages);
+        }
+      };
+      page.on('dialog', handler);
+    });
+  }
+
+  test('18. 标注文档 A 后导入 TXT B，B 的字段和值全部为空', async ({ page }) => {
+    // 1. 文档 A：注入合法标注（含值和证据）
+    const { rawText, annotation } = await buildValidAnnotation(page, 'doc-A-isolation');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 2. 写入文档 B 的 TXT 文件
+    fs.writeFileSync(TMP_TXT_B, DOC_B_TEXT, 'utf-8');
+
+    // 3. 导入 TXT B（A 有数据，会弹保存提示 → 接受；B 是新文档，弹成功 alert）
+    const dialogPromise = autoAcceptDialogs(page, 2);
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await dialogPromise;
+
+    await page.waitForTimeout(800);
+
+    // 4. 验证 B 的字段全部为 absent 空状态，无 values
+    const bInfo = await page.evaluate(() => {
+      const ann = window.App.state.annotation;
+      return {
+        documentId: ann.document_id,
+        fields: ann.fields.map(f => ({
+          name: f.field_name,
+          status: f.gold_status,
+          valueCount: (f.values || []).length,
+        })),
+        rawTextStartsWith: window.App.state.rawText.slice(0, 20),
+      };
+    });
+
+    expect(bInfo.documentId).not.toBe('doc-A-isolation');
+    expect(bInfo.rawTextStartsWith).toContain('办公设备采购招标公告');
+    // 新导入文档字段应为"待判断"状态（空字符串），非 absent
+    bInfo.fields.forEach(f => {
+      expect(f.status).toBe('');
+      expect(f.valueCount).toBe(0);
+    });
+
+    try { fs.unlinkSync(TMP_TXT_B); } catch (_) {}
+  });
+
+  test('19. B 的 document_id 与 A 不同', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'doc-A-id-test');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    const docAId = await page.inputValue('#documentId');
+
+    fs.writeFileSync(TMP_TXT_B, DOC_B_TEXT, 'utf-8');
+    const dialogPromise = autoAcceptDialogs(page, 2);
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    const docBId = await page.inputValue('#documentId');
+    expect(docBId).not.toBe(docAId);
+    // B 的 document_id 应包含文件名前缀
+    expect(docBId).toContain('bidagent_e2e_doc_b');
+
+    try { fs.unlinkSync(TMP_TXT_B); } catch (_) {}
+  });
+
+  test('20. B 不显示 A 的证据高亮', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'doc-A-highlight');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // A 导入后应有高亮 span
+    const aHighlightCount = await page.evaluate(() => {
+      return document.querySelectorAll('#rawText .evidence-highlight').length;
+    });
+    expect(aHighlightCount).toBeGreaterThan(0);
+
+    // 导入 B
+    fs.writeFileSync(TMP_TXT_B, DOC_B_TEXT, 'utf-8');
+    const dialogPromise = autoAcceptDialogs(page, 2);
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    // B 不应有任何高亮
+    const bHighlightCount = await page.evaluate(() => {
+      return document.querySelectorAll('#rawText .evidence-highlight').length;
+    });
+    expect(bHighlightCount).toBe(0);
+
+    try { fs.unlinkSync(TMP_TXT_B); } catch (_) {}
+  });
+
+  test('21. 重新导入 A 时，可恢复 A 自己的草稿', async ({ page }) => {
+    // 1. 先导入 A 的 TXT，获取文件生成的 document_id
+    const { rawText } = await buildValidAnnotation(page, 'doc-A-restore');
+    fs.writeFileSync(TMP_TXT_A, rawText, 'utf-8');
+    fs.writeFileSync(TMP_TXT_B, DOC_B_TEXT, 'utf-8');
+
+    // 导入 A（sample-001 有数据 → 保存提示 accept；A 新 → 成功 alert）
+    let dialogPromise = autoAcceptDialogs(page, 2);
+    let fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    let fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_A);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    const docAId = await page.inputValue('#documentId');
+    expect(docAId).not.toBe('sample-001');
+
+    // 2. 在 A 的 document_id 下注入合法标注（含值和证据）
+    await page.evaluate(({ docAId, rawText }) => {
+      const Schema = window.AnnotationSchema;
+      const now = new Date().toISOString();
+      function findEv(text) {
+        const start = rawText.indexOf(text);
+        if (start < 0) throw new Error('证据文本不在 rawText 中: ' + text);
+        return { role: 'primary', start, end: start + text.length, text };
+      }
+      const mkField = (name, value, evidence) => ({
+        field_name: name, gold_status: 'present',
+        values: [{ raw_value: value, normalized_value: value, amount_type: null, currency: null,
+          original_unit: null, tax_status: null, lot_id: null, acceptable_evidence_spans: evidence }],
+        note: ''
+      });
+      const annotation = {
+        document_id: docAId, annotator_id: 'A', annotation_version: Schema.ANNOTATION_VERSION,
+        annotation_time: now,
+        fields: [
+          mkField('project_identifier', 'ZFCG-2024-0315', [findEv('ZFCG-2024-0315')]),
+          mkField('purchaser_name', '某市大数据管理局', [findEv('某市大数据管理局')]),
+          mkField('winner_name', '上海智汇科技有限公司', [findEv('上海智汇科技有限公司')]),
+          mkField('amount', '1285.60万元', [findEv('1285.60万元')]),
+          mkField('publish_date', '2024年3月15日', [findEv('2024年3月15日')]),
+          mkField('bid_deadline', '2024年3月10日', [findEv('2024年3月10日')])
+        ]
+      };
+      const draftKey = 'bidagent_annotation_draft_' + docAId;
+      localStorage.setItem(draftKey, JSON.stringify({ rawText, annotation, savedAt: now }));
+    }, { docAId, rawText });
+
+    // 刷新加载 A 的草稿
+    await page.reload();
+    await page.waitForFunction(() => window.App && window.App.state && window.App.state.annotation, { timeout: 5000 });
+    await page.waitForTimeout(500);
+
+    // 3. 导入 B（A 有数据 → 保存提示 accept；B 新 → 成功 alert）
+    dialogPromise = autoAcceptDialogs(page, 2);
+    fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    const docBId = await page.inputValue('#documentId');
+    expect(docBId).not.toBe(docAId);
+
+    // 4. 重新导入 A（B 无数据 → 无保存提示；A 有草稿 → 恢复提示 accept；成功 alert）
+    dialogPromise = autoAcceptDialogs(page, 2);
+    fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_A);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    // 5. 验证 A 的草稿已恢复
+    const restoredInfo = await page.evaluate(() => {
+      const ann = window.App.state.annotation;
+      return {
+        documentId: ann.document_id,
+        winnerValues: ann.fields.find(f => f.field_name === 'winner_name').values.length,
+        amountValues: ann.fields.find(f => f.field_name === 'amount').values.length,
+      };
+    });
+
+    expect(restoredInfo.documentId).toBe(docAId);
+    expect(restoredInfo.winnerValues).toBeGreaterThan(0);
+    expect(restoredInfo.amountValues).toBeGreaterThan(0);
+
+    try { fs.unlinkSync(TMP_TXT_B); } catch (_) {}
+    try { fs.unlinkSync(TMP_TXT_A); } catch (_) {}
+  });
+
+  test('22. 相同 TXT 再次导入时不创建错误的随机新文档', async ({ page }) => {
+    fs.writeFileSync(TMP_TXT_B, DOC_B_TEXT, 'utf-8');
+
+    // 第一次导入 B（sample-001 有数据 → 保存提示；B 新 → 成功）
+    let dialogPromise = autoAcceptDialogs(page, 2);
+    let fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    let fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    const firstDocId = await page.inputValue('#documentId');
+
+    // 第二次导入相同 TXT B（B 无数据 → 无保存提示；B 有草稿 → 恢复提示 accept；成功）
+    dialogPromise = autoAcceptDialogs(page, 2);
+    fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    const secondDocId = await page.inputValue('#documentId');
+
+    // 两次 document_id 必须相同（基于文件名+内容哈希，确定性）
+    expect(secondDocId).toBe(firstDocId);
+
+    try { fs.unlinkSync(TMP_TXT_B); } catch (_) {}
+  });
+
+  test('23. 导入 B 后刷新，只恢复 B，不恢复 A', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'doc-A-refresh');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    fs.writeFileSync(TMP_TXT_B, DOC_B_TEXT, 'utf-8');
+
+    // 导入 B
+    const dialogPromise = autoAcceptDialogs(page, 2);
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    const docBId = await page.inputValue('#documentId');
+    expect(docBId).not.toBe('doc-A-refresh');
+
+    // 刷新页面
+    await page.reload();
+    await page.waitForFunction(() => window.App && window.App.state && window.App.state.annotation, { timeout: 5000 });
+    await page.waitForTimeout(500);
+
+    // 刷新后应恢复 B 的草稿（document_id 仍为 B），不是 A
+    const restoredId = await page.inputValue('#documentId');
+    expect(restoredId).toBe(docBId);
+
+    // B 的字段应为"待判断"状态（空字符串）
+    const fieldInfo = await page.evaluate(() => {
+      const ann = window.App.state.annotation;
+      return ann.fields.map(f => ({ name: f.field_name, status: f.gold_status, valueCount: (f.values || []).length }));
+    });
+    fieldInfo.forEach(f => {
+      expect(f.status).toBe('');
+      expect(f.valueCount).toBe(0);
+    });
+
+    try { fs.unlinkSync(TMP_TXT_B); } catch (_) {}
+  });
+
+  test('24. 新 TXT 导入后完成度不得沿用上一篇', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'doc-A-progress');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // A 的完成度应 > 0（6 个字段都有合法标注）
+    const aProgress = await page.textContent('#progressText');
+    expect(aProgress).toContain('6 / 6');
+
+    fs.writeFileSync(TMP_TXT_B, DOC_B_TEXT, 'utf-8');
+    const dialogPromise = autoAcceptDialogs(page, 2);
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await dialogPromise;
+    await page.waitForTimeout(800);
+
+    // B 的完成度应为 0/6（全 absent 空状态，尚未标注）
+    const bProgress = await page.textContent('#progressText');
+    expect(bProgress).toContain('0 / 6');
+
+    try { fs.unlinkSync(TMP_TXT_B); } catch (_) {}
+  });
+
+  test('25. 切换文件前的保存提示正常', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'doc-A-prompt');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    fs.writeFileSync(TMP_TXT_B, DOC_B_TEXT, 'utf-8');
+
+    // 监听所有 dialog，记录消息
+    const dialogMessages = [];
+    const dialogHandler = d => {
+      dialogMessages.push({ type: d.type(), message: d.message() });
+      d.accept();
+    };
+    page.on('dialog', dialogHandler);
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_B);
+    await page.waitForTimeout(1500);
+
+    page.off('dialog', dialogHandler);
+
+    // 应该出现保存提示（confirm 类型，包含"保存当前草稿"）
+    const savePrompt = dialogMessages.find(d => d.type === 'confirm' && d.message.includes('保存当前草稿'));
+    expect(savePrompt).toBeDefined();
+
+    try { fs.unlinkSync(TMP_TXT_B); } catch (_) {}
+  });
+
+  test('26. 导入空 TXT 或超大 TXT 时明确报错且不覆盖当前文档', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'doc-A-error');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    const docBefore = await page.inputValue('#documentId');
+    const fieldsBefore = await page.evaluate(() => {
+      return window.App.state.annotation.fields.map(f => ({
+        name: f.field_name, status: f.gold_status, valueCount: (f.values || []).length
+      }));
+    });
+
+    // 1. 空 TXT
+    fs.writeFileSync(TMP_TXT_EMPTY, '   \n  \t  \n', 'utf-8');
+
+    const dialogMessages1 = [];
+    const handler1 = d => { dialogMessages1.push(d.message()); d.accept(); };
+    page.on('dialog', handler1);
+
+    let fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    let fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(TMP_TXT_EMPTY);
+    await page.waitForTimeout(1500);
+
+    page.off('dialog', handler1);
+
+    // 应报错且不覆盖当前文档
+    const errorMsg1 = dialogMessages1.find(m => m.includes('文件内容为空'));
+    expect(errorMsg1).toBeDefined();
+
+    const docAfterEmpty = await page.inputValue('#documentId');
+    expect(docAfterEmpty).toBe(docBefore);
+
+    // 当前文档数据应保持不变
+    const fieldsAfterEmpty = await page.evaluate(() => {
+      return window.App.state.annotation.fields.map(f => ({
+        name: f.field_name, status: f.gold_status, valueCount: (f.values || []).length
+      }));
+    });
+    expect(JSON.stringify(fieldsAfterEmpty)).toBe(JSON.stringify(fieldsBefore));
+
+    // 2. 超大 TXT（超过 MAX_IMPORT_SIZE）
+    // 构造一个超过 5MB 的文件名（不实际写 5MB，而是 mock file.size）
+    // 由于 Playwright setFiles 无法直接 mock size，这里用 File 构造
+    // 改为直接调用 App.importTextFile 并 mock file 对象
+    const oversizedResult = await page.evaluate(() => {
+      const fakeFile = { size: 6 * 1024 * 1024, name: 'oversized.txt' };
+      let alertMsg = null;
+      const origAlert = window.alert;
+      window.alert = (msg) => { alertMsg = msg; };
+      try {
+        window.App.importTextFile(fakeFile);
+      } catch (e) {
+        // FileReader 会失败，但 size 校验应先拦截
+      }
+      window.alert = origAlert;
+      return alertMsg;
+    });
+
+    expect(oversizedResult).toContain('文件过大');
+    expect(oversizedResult).toContain('当前文档未被修改');
+
+    // 当前文档数据仍应保持不变
+    const docAfterOversized = await page.inputValue('#documentId');
+    expect(docAfterOversized).toBe(docBefore);
+
+    try { fs.unlinkSync(TMP_TXT_EMPTY); } catch (_) {}
   });
 
 });
