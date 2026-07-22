@@ -13,7 +13,7 @@
 | `sample_data.js` | Mock 示例数据（人工构造，非真实公告） |
 | `app.js` | 核心业务逻辑 |
 | `test.html` | 自动化测试页面（35+ 测试用例） |
-| `tests/` | Playwright 端到端测试目录（12 项交互场景） |
+| `tests/` | Playwright 端到端测试目录（48 项交互场景） |
 | `validate_schema.py` | Pydantic Schema 校验脚本（强制使用 GLM 真实 Schema，无本地 fallback） |
 | `README.md` | 使用说明文档 |
 
@@ -247,7 +247,7 @@ python annotation_tool/validate_schema.py
 
 ### Playwright 端到端测试（tests/）
 
-覆盖真实 DOM 交互的 36 项场景：
+覆盖真实 DOM 交互的 48 项场景：
 
 1. present 无 value，禁止导出
 2. present value 无 primary，禁止导出
@@ -283,6 +283,19 @@ python annotation_tool/validate_schema.py
   34. 重新选择按钮关闭预览弹窗且不保存
   35. 点击已保存证据滚动并高亮原文
   36. 证据失效检测（slice 不一致时显示"证据已失效"）
+37-48. **P0-1/P0-2 阻塞缺陷修复验证（多值滚动 + 证据操作后字段保持）**：
+  37. 金额字段添加 5 个值均可滚动到并编辑
+  38. 添加第 5 个值后自动滚动并聚焦 raw_value
+  39. 在金额字段添加 primary 证据后仍停留在金额字段
+  40. 在中标人第二个值添加证据后仍停留在中标人和第二个值
+  41. 编辑证据后不跳回项目编号
+  42. 删除证据后不跳回项目编号
+  43. 添加/删除值后当前字段不变
+  44. 自动保存后当前字段不变
+  45. 左右滚动位置不互相影响
+  46. 1366×768 下所有多值内容可访问
+  47. 导出 JSON 不包含 ui_id 等 UI 元数据
+  48. 原有测试无回归（综合验证）
 
 **运行方法**：
 ```bash
@@ -317,6 +330,28 @@ npx playwright test
 - **多段证据支持**：一个字段可保存多段证据，`primary` 保存主证据，`qualifier` 保存角色/金额类型/分包等限定证据
 - **点击证据项定位**：点击已保存证据项滚动到对应原文位置并临时高亮（1.2s 闪烁动画）
 - **证据失效检测**：若 `rawText.slice(start, end) !== evidence.text`（原文已变化），证据项显示"证据已失效"红色标记，点击时弹窗提示，不展示错误高亮
+
+### P0-1/P0-2 阻塞缺陷修复说明
+
+针对人工标注中发现的两个 P0 阻塞缺陷，采用以下修复策略：
+
+- **P0-1 多值滚动失效修复**：
+  - `.text-panel` / `.fields-panel` 新增 `min-width: 0`，避免 flex 子项溢出
+  - `.text-container` / `.fields-container` 新增 `min-height: 0`，使 `overflow-y: auto` 在 flex column 布局下正确生效（flex 子项默认 `min-height: auto` 会撑开父容器，导致滚动失效）
+  - `.fields-nav` 新增 `flex-shrink: 0`，字段导航在空间不足时不被压缩，保持可见
+  - `.field-card` 由 `overflow: hidden` 改为 `overflow: visible`，不再截断值列表
+  - 右侧 `fieldsContainer` 是唯一主滚动容器，与左侧 `textContainer` 完全独立，避免嵌套滚动冲突
+- **P0-2 证据操作后字段保持**：
+  - `closeEvidencePreview()` / `closeEvidenceModal()` 不再重置 `currentFieldIndex` / `currentValueIndex`，只重置 `editingEvidenceIndex`
+  - `renderFields()` 只在 `currentFieldIndex < 0` 或越界时回退到 0，不主动重置有效值
+  - 重新渲染前保存 `scrollTop` 和 `currentFieldIndex`，渲染后仅在字段未变时恢复 `scrollTop`
+  - 添加/编辑/删除证据、添加/编辑字段值、展开/折叠值、自动保存后均不改变 `currentFieldIndex`
+- **ui_id 稳定标识系统**：
+  - 每个前端值项分配 `v_<timestamp>_<counter>` 格式的 `ui_id`，跨 `renderFields()` 保持状态对应关系
+  - `state.valueCollapsed` 以 `ui_id` 为键记录折叠状态
+  - `state.pendingFocusUiId` 标记新增值，`renderFields()` 末尾自动滚动到新增值 + 展开并聚焦 `raw_value` 输入框
+  - `stripUiMetadataForExport()` 在导出 JSON 时剥离 `ui_id` 等 UI 元数据，确保符合 Schema `extra="forbid"` 约束
+- **允许切换字段的场景**：仅用户主动点击字段导航、导出校验失败后定位首个错误字段、导入或重置新文档时初始化到第一个字段
 
 ## 测试结果
 

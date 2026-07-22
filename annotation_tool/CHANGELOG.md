@@ -4,6 +4,95 @@
 
 ## [Unreleased] - 2026-07-22
 
+### P0-1 / P0-2 阻塞缺陷修复（多值滚动 + 证据操作后字段保持）
+
+#### 背景
+人工标注中发现两个 P0 阻塞缺陷：
+1. **P0-1**：打开"金额及金额类型"后连续添加多个金额值，右侧只能看到第一个值，后续新增值无法滚动查看或编辑。
+2. **P0-2**：在非第一个字段（金额/中标人等）选中原文并添加证据保存后，页面自动跳回第一个字段"项目编号"。
+
+#### 根因
+
+**P0-1（多值滚动失效）**
+- `.text-panel` / `.fields-panel` 是 `display: flex; flex-direction: column`，但子项 `.text-container` / `.fields-container` 缺少 `min-height: 0`，导致 flex column 子项默认 `min-height: auto` 撑开父容器，`overflow-y: auto` 无法正确生效，内容溢出而非滚动。
+- `.fields-nav` 缺少 `flex-shrink: 0`，在空间不足时被压缩，进一步破坏滚动布局。
+- `.field-card` 使用 `overflow: hidden` 截断值列表，导致多值无法完整展示。
+
+**P0-2（添加证据后跳回项目编号）**
+- `closeEvidencePreview()` 和 `closeEvidenceModal()` 在关闭弹窗时执行 `state.currentFieldIndex = -1` 和 `state.currentValueIndex = -1`。
+- 随后 `renderFields()` 检测到 `currentFieldIndex < 0` 时回退到 `0`，导致页面始终跳回第一个字段"项目编号"。
+- 缺少跨 `renderFields()` 的稳定值标识，无法在重新渲染后恢复滚动位置和当前值项。
+
+#### 修复（app.js / style.css / tests/e2e.spec.js）
+
+1. **CSS 滚动容器修复（style.css）**
+   - `.text-panel` / `.fields-panel`：新增 `min-width: 0`，避免 flex 子项溢出
+   - `.text-container`：新增 `min-height: 0`，使 `overflow: auto` 正确生效，左侧原文独立滚动
+   - `.fields-nav`：新增 `flex-shrink: 0`，字段导航在空间不足时不被压缩，保持可见
+   - `.fields-container`：新增 `min-height: 0`，使 `overflow-y: auto` 正确生效，右侧字段编辑区独立纵向滚动
+   - `.field-card`：`overflow: hidden` → `overflow: visible`，不再截断值列表
+   - 新增 `.value-item.collapsed`、`.value-collapse-btn`、`.value-item.value-just-added` 样式，支持值项折叠/展开和新增值闪烁动画
+
+2. **ui_id 稳定标识系统（app.js）**
+   - `generateUiId()`：生成 `v_<timestamp>_<counter>` 格式的唯一 ID
+   - `ensureValueUiId(value)` / `ensureAllValuesHaveUiId(annotation)`：为所有 value 分配 ui_id
+   - `stripUiMetadataForExport(fields)`：导出 JSON 时剥离 `ui_id` 等 UI 元数据，确保符合 Schema `extra="forbid"` 约束
+   - ui_id 仅存在于前端内存和 localStorage 草稿中，不混入导出 JSON
+
+3. **状态保持的 renderFields()（app.js）**
+   - 重新渲染前保存 `container.scrollTop` 和 `state.currentFieldIndex`
+   - 只在 `currentFieldIndex < 0` 或越界时回退到 0，不主动重置有效值（P0-2 核心）
+   - 渲染后仅在字段未变时恢复 `scrollTop`，避免跨字段切换时滚动位置错乱
+   - 处理 `pendingFocusUiId`：添加新值后自动滚动到新增值 + 展开并聚焦 `raw_value` 输入框
+
+4. **值项折叠状态保持（app.js）**
+   - `state.valueCollapsed`：以 `ui_id` 为键记录折叠状态，跨 `renderFields()` 保持
+   - `createValueItem()` 根据 `valueCollapsed[ui_id]` 恢复折叠状态
+   - 折叠/展开按钮切换 `state.valueCollapsed[ui_id]` 并更新 DOM
+
+5. **添加新值后自动展开+滚动+聚焦（app.js）**
+   - `addFieldValue()`：设置 `state.pendingFocusUiId = newValue.ui_id`，确保新值不折叠
+   - `renderFields()` 末尾处理 `pendingFocusUiId`：滚动到新增值、添加闪烁动画、聚焦 `raw_value` 输入框
+
+6. **证据操作后保持当前字段（app.js）**
+   - `closeEvidencePreview()`：移除 `state.currentFieldIndex = -1` 和 `state.currentValueIndex = -1`，只重置 `editingEvidenceIndex`
+   - `closeEvidenceModal()`：同上
+   - 添加/编辑/删除证据、添加/编辑字段值、展开/折叠值、自动保存后均不改变 `currentFieldIndex`
+
+7. **导出 JSON 剥离 UI 元数据（app.js）**
+   - `exportJson()` 使用 `stripUiMetadataForExport(state.annotation.fields)` 输出纯净 fields 数组
+   - 确保导出 JSON 不包含 `ui_id`、`valueCollapsed`、`pendingFocusUiId`、滚动位置等 UI 元数据
+
+8. **新增 12 项 Playwright 测试（tests/e2e.spec.js，场景 37-48）**
+   - 37. 金额字段添加 5 个值均可滚动到并编辑
+   - 38. 添加第 5 个值后自动滚动并聚焦 raw_value
+   - 39. 在金额字段添加 primary 证据后仍停留在金额字段
+   - 40. 在中标人第二个值添加证据后仍停留在中标人和第二个值
+   - 41. 编辑证据后不跳回项目编号
+   - 42. 删除证据后不跳回项目编号
+   - 43. 添加/删除值后当前字段不变
+   - 44. 自动保存后当前字段不变
+   - 45. 左右滚动位置不互相影响
+   - 46. 1366×768 下所有多值内容可访问
+   - 47. 导出 JSON 不包含 ui_id 等 UI 元数据
+   - 48. 原有测试无回归（综合验证）
+   - 新增辅助函数 `switchToFieldByName` 和 `getCurrentFieldName`，通过 `window.App` 直接切换字段并验证
+
+#### 测试结果
+
+- 35 项浏览器单元测试：全部通过 ✅
+- 48 项 Playwright 端到端测试（原 36 + 新增 12）：全部通过 ✅
+- GLM Schema 校验：全部通过 ✅
+- 后端 519 项回归测试：全部通过 ✅
+- 1366×768 下 5 个金额值截图：`tests/1366x768_5values.png` ✅
+
+### 不变项
+
+- JSON Schema（未修改 `backend/schemas.py`）
+- UTF-16 偏移逻辑（未修改 `validate_schema.py` / `common.py`）
+- 未修改 `backend/`
+- 未合并 `main` / `develop`
+
 ### 证据质量控制（证据不完整/高亮错位修复）
 
 #### 背景

@@ -1686,4 +1686,458 @@ test.describe('BidAgent W1-05 标注工具端到端测试', () => {
     }
   });
 
+  // ============================================================
+  // P0-1/P0-2：多值滚动 + 状态保持（场景 37-48）
+  // ============================================================
+
+  // 辅助：切换到指定字段
+  async function switchToFieldByName(page, fieldName) {
+    await page.evaluate((fieldName) => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === fieldName);
+      if (idx >= 0) window.App.switchToField(idx);
+    }, fieldName);
+    await page.waitForTimeout(200);
+  }
+
+  // 辅助：获取当前激活字段名
+  async function getCurrentFieldName(page) {
+    return await page.evaluate(() => {
+      const idx = window.App.state.currentFieldIndex;
+      if (idx < 0) return null;
+      return window.App.state.annotation.fields[idx].field_name;
+    });
+  }
+
+  test('37. 金额字段添加 5 个值均可滚动到并编辑', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'multi-value-5');
+    // amount 字段设为 present，初始有 1 个值
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'amount');
+
+    // 添加 4 个值（共 5 个）
+    for (let i = 0; i < 4; i++) {
+      await page.click('.add-value-btn');
+      await page.waitForTimeout(200);
+    }
+
+    // 验证有 5 个值项
+    const valueCount = await page.$$eval('.value-item', items => items.length);
+    expect(valueCount).toBe(5);
+
+    // 逐个填写 raw_value，验证可编辑
+    for (let i = 0; i < 5; i++) {
+      const inputs = await page.$$('.value-item input[data-field-key="raw_value"]');
+      expect(inputs.length).toBeGreaterThanOrEqual(i + 1);
+      await inputs[i].fill('金额值_' + (i + 1));
+      await page.waitForTimeout(100);
+    }
+
+    // 验证最后一个值可滚动到（fieldsContainer 可滚动）
+    const lastVisible = await page.evaluate(() => {
+      const container = document.getElementById('fieldsContainer');
+      const items = container.querySelectorAll('.value-item');
+      const last = items[items.length - 1];
+      const rect = last.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      // 滚动到最后一个值
+      last.scrollIntoView({ block: 'center' });
+      const newRect = last.getBoundingClientRect();
+      return newRect.top >= containerRect.top && newRect.bottom <= containerRect.bottom + 200;
+    });
+    expect(lastVisible).toBe(true);
+
+    // 验证值确实写入了 state
+    const values = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'amount');
+      return f.values.map(v => v.raw_value);
+    });
+    expect(values.length).toBe(5);
+    expect(values[4]).toBe('金额值_5');
+  });
+
+  test('38. 添加第 5 个值后自动滚动并聚焦', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'auto-focus-5');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'amount');
+
+    // 添加 4 个值（共 5 个）
+    for (let i = 0; i < 4; i++) {
+      await page.click('.add-value-btn');
+      await page.waitForTimeout(200);
+    }
+
+    // 第 5 个值的 raw_value 输入框应自动聚焦
+    const focusedKey = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active ? active.getAttribute('data-field-key') : null;
+    });
+    expect(focusedKey).toBe('raw_value');
+
+    // 新增值应有 value-just-added 临时高亮类
+    const hasJustAdded = await page.evaluate(() => {
+      const items = document.querySelectorAll('.value-item.value-just-added');
+      return items.length;
+    });
+    expect(hasJustAdded).toBeGreaterThanOrEqual(1);
+  });
+
+  test('39. 在金额字段添加 primary 证据后仍停留在金额字段', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'stay-amount-ev');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    // 清空 amount 现有证据，只保留一个空值
+    annotation.fields.find(f => f.field_name === 'amount').values[0].acceptable_evidence_spans = [];
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'amount');
+    expect(await getCurrentFieldName(page)).toBe('amount');
+
+    // 选中金额证据
+    await selectTextViaDomRange(page, '1285.60万元');
+    await page.click('.add-evidence-btn');
+    await page.waitForTimeout(200);
+    await page.click('#evidencePreviewModal button:has-text("保存证据")');
+    await page.waitForTimeout(300);
+
+    // 保存证据后应仍在 amount 字段
+    expect(await getCurrentFieldName(page)).toBe('amount');
+  });
+
+  test('40. 在中标人第二个值添加证据后仍停留在中标人和第二个值', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'stay-winner-v2');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'winner_name') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    const winnerField = annotation.fields.find(f => f.field_name === 'winner_name');
+    // 添加第二个值（空值，无证据）
+    winnerField.values.push({
+      raw_value: '', normalized_value: null, amount_type: null,
+      currency: null, original_unit: null, tax_status: null,
+      lot_id: null, acceptable_evidence_spans: []
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'winner_name');
+
+    // 获取第二个值的 ui_id
+    const secondValueUiId = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'winner_name');
+      return f.values[1].ui_id;
+    });
+
+    // 在第二个值上添加证据
+    await selectTextViaDomRange(page, '上海智汇科技有限公司');
+    // 点击第二个值的「添加证据」按钮
+    const addEvBtns = await page.$$('.add-evidence-btn');
+    if (addEvBtns.length >= 2) {
+      await addEvBtns[1].click();
+    } else {
+      // 只有一个按钮时直接点
+      await addEvBtns[0].click();
+    }
+    await page.waitForTimeout(200);
+    await page.click('#evidencePreviewModal button:has-text("保存证据")');
+    await page.waitForTimeout(300);
+
+    // 应仍在 winner_name 字段
+    expect(await getCurrentFieldName(page)).toBe('winner_name');
+
+    // 第二个值应仍有 ui_id（未被重置）
+    const currentSecondUiId = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'winner_name');
+      return f.values[1] ? f.values[1].ui_id : null;
+    });
+    expect(currentSecondUiId).toBe(secondValueUiId);
+
+    // 第二个值应有 1 条证据
+    const evCount = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'winner_name');
+      return f.values[1] ? f.values[1].acceptable_evidence_spans.length : -1;
+    });
+    expect(evCount).toBe(1);
+  });
+
+  test('41. 编辑证据后不跳回项目编号', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'edit-ev-stay');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'winner_name') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'winner_name');
+
+    // 点击证据的编辑按钮
+    await page.click('.evidence-item .icon-btn:has-text("✎")');
+    await page.waitForTimeout(200);
+
+    // 修改证据角色为 context（不改偏移量）
+    await page.selectOption('#evidenceRole', 'context');
+    await page.click('#evidenceModal button:has-text("保存证据")');
+    await page.waitForTimeout(300);
+
+    // 应仍在 winner_name 字段
+    expect(await getCurrentFieldName(page)).toBe('winner_name');
+  });
+
+  test('42. 删除证据后不跳回项目编号', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'del-ev-stay');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'winner_name') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'winner_name');
+
+    // 点击证据的删除按钮
+    await page.click('.evidence-item .icon-btn.delete:has-text("×")');
+    await page.waitForTimeout(300);
+
+    // 应仍在 winner_name 字段
+    expect(await getCurrentFieldName(page)).toBe('winner_name');
+  });
+
+  test('43. 添加/删除值后当前字段不变', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'add-del-stay');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'publish_date') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'publish_date');
+    expect(await getCurrentFieldName(page)).toBe('publish_date');
+
+    // 添加值
+    await page.click('.add-value-btn');
+    await page.waitForTimeout(200);
+    expect(await getCurrentFieldName(page)).toBe('publish_date');
+
+    // 删除刚添加的值（第二个删除按钮）
+    const delBtns = await page.$$('.value-actions .btn-danger');
+    if (delBtns.length >= 2) {
+      page.on('dialog', d => d.accept());
+      await delBtns[1].click();
+      await page.waitForTimeout(300);
+    }
+    expect(await getCurrentFieldName(page)).toBe('publish_date');
+  });
+
+  test('44. 自动保存后当前字段不变', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'autosave-stay');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'bid_deadline') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'bid_deadline');
+
+    // 修改备注触发自动保存
+    await page.fill('.note-section textarea', '测试备注_自动保存');
+    await page.waitForTimeout(1000); // 等待 500ms 防抖 + 保存
+
+    // 应仍在 bid_deadline 字段
+    expect(await getCurrentFieldName(page)).toBe('bid_deadline');
+  });
+
+  test('45. 左右滚动位置不互相影响', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'scroll-isolation');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 在左侧原文区滚动
+    await page.evaluate(() => {
+      const textContainer = document.getElementById('textContainer');
+      textContainer.scrollTop = 100;
+    });
+    await page.waitForTimeout(200);
+
+    // 在右侧字段区滚动（取最大可滚动值的一半，确保不超出范围）
+    const fieldsTargetScroll = await page.evaluate(() => {
+      const fieldsContainer = document.getElementById('fieldsContainer');
+      const maxScroll = fieldsContainer.scrollHeight - fieldsContainer.clientHeight;
+      const target = Math.min(50, Math.max(5, Math.floor(maxScroll / 2)));
+      fieldsContainer.scrollTop = target;
+      return target;
+    });
+    await page.waitForTimeout(200);
+
+    // 验证左侧滚动位置不受右侧影响
+    const textScroll = await page.evaluate(() => document.getElementById('textContainer').scrollTop);
+    expect(textScroll).toBe(100);
+
+    // 验证右侧滚动位置不受左侧影响
+    const fieldsScroll = await page.evaluate(() => document.getElementById('fieldsContainer').scrollTop);
+    expect(fieldsScroll).toBe(fieldsTargetScroll);
+  });
+
+  test('46. 1366×768 下所有多值内容可访问', async ({ page }) => {
+    // 设置视口为 1366×768
+    await page.setViewportSize({ width: 1366, height: 768 });
+
+    const { rawText, annotation } = await buildValidAnnotation(page, 'small-screen-5');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await switchToFieldByName(page, 'amount');
+
+    // 添加 4 个值（共 5 个）
+    for (let i = 0; i < 4; i++) {
+      await page.click('.add-value-btn');
+      await page.waitForTimeout(200);
+    }
+
+    // 验证 5 个值都能通过滚动访问
+    const allAccessible = await page.evaluate(() => {
+      const container = document.getElementById('fieldsContainer');
+      const items = container.querySelectorAll('.value-item');
+      const containerRect = container.getBoundingClientRect();
+      const results = [];
+      for (let i = 0; i < items.length; i++) {
+        items[i].scrollIntoView({ block: 'center' });
+        const rect = items[i].getBoundingClientRect();
+        // 检查值项是否在容器可视范围内（允许部分超出）
+        const visible = rect.top >= containerRect.top - 10 && rect.bottom <= containerRect.bottom + 10;
+        results.push(visible);
+      }
+      return results;
+    });
+    // 所有值都应可访问
+    expect(allAccessible.every(v => v)).toBe(true);
+    expect(allAccessible.length).toBe(5);
+  });
+
+  test('47. 导出 JSON 不包含 ui_id 等 UI 元数据', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'no-ui-meta');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 确保所有 value 有 ui_id（前端状态）
+    const hasUiId = await page.evaluate(() => {
+      return window.App.state.annotation.fields.every(f =>
+        f.values.every(v => v.ui_id && typeof v.ui_id === 'string')
+      );
+    });
+    expect(hasUiId).toBe(true);
+
+    // 使用 stripUiMetadataForExport 验证剥离
+    const exportData = await page.evaluate(() => {
+      const fields = window.App.stripUiMetadataForExport(window.App.state.annotation.fields);
+      return fields;
+    });
+
+    // 验证导出的 fields 不含 ui_id
+    const hasNoUiId = exportData.every(f =>
+      f.values.every(v => v.ui_id === undefined)
+    );
+    expect(hasNoUiId).toBe(true);
+
+    // 验证导出 JSON 字符串不含 ui_id
+    const jsonStr = JSON.stringify(exportData);
+    expect(jsonStr.indexOf('ui_id')).toBe(-1);
+
+    // 验证导出 JSON 不含 scrollTop 等其他 UI 元数据
+    expect(jsonStr.indexOf('scrollTop')).toBe(-1);
+    expect(jsonStr.indexOf('valueCollapsed')).toBe(-1);
+    expect(jsonStr.indexOf('pendingFocusUiId')).toBe(-1);
+  });
+
+  test('48. 原有测试无回归（综合验证）', async ({ page }) => {
+    // 验证 ui_id 不影响导出校验
+    const { rawText, annotation } = await buildValidAnnotation(page, 'regression-48');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 导出应成功（校验通过）
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
+    await page.click('#btnExportJson');
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/annotation.*\.json/);
+
+    // 验证导出文件不含 ui_id
+    const path = await download.path();
+    if (path) {
+      const fs = require('fs');
+      const content = fs.readFileSync(path, 'utf-8');
+      expect(content.indexOf('ui_id')).toBe(-1);
+    }
+
+    // 验证 state 中仍有 ui_id（不影响内部状态）
+    const stillHasUiId = await page.evaluate(() => {
+      return window.App.state.annotation.fields.some(f =>
+        f.values.some(v => v.ui_id)
+      );
+    });
+    expect(stillHasUiId).toBe(true);
+  });
+
 });

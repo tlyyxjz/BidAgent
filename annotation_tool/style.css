@@ -222,6 +222,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-width: 0;
 }
 
 .panel-header {
@@ -255,6 +256,7 @@ body {
 
 .text-container {
     flex: 1;
+    min-height: 0;
     overflow: auto;
     padding: 16px;
 }
@@ -308,6 +310,7 @@ body {
     padding: 8px 12px;
     background-color: #edf2f7;
     border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
 }
 
 .field-nav-item {
@@ -358,6 +361,7 @@ body {
 
 .fields-container {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 12px;
     display: flex;
@@ -370,7 +374,7 @@ body {
     background-color: white;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    overflow: hidden;
+    overflow: visible;
     transition: box-shadow 0.2s;
 }
 
@@ -1010,4 +1014,45 @@ body {
 
 .evidence-item:hover {
     background-color: #ebf8ff;
+}
+
+/* ========== 值项折叠/展开（P0-1/P0-2 状态保持） ========== */
+.value-item.collapsed .value-fields,
+.value-item.collapsed .evidence-section {
+    display: none;
+}
+
+.value-collapse-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #718096;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+}
+
+.value-collapse-btn:hover {
+    background-color: #e2e8f0;
+    color: #2d3748;
+}
+
+/* 新增值项临时高亮（addFieldValue 后自动聚焦） */
+.value-item.value-just-added {
+    animation: value-flash 1.2s ease-out;
+}
+
+@keyframes value-flash {
+    0%   { background-color: #fef3c7; box-shadow: 0 0 0 3px rgba(214, 158, 46, 0.3); }
+    100% { background-color: #f7fafc; box-shadow: none; }
+}
+
+/* 值项 raw_value 输入框标识（供自动聚焦定位） */
+.value-field input[data-field-key="raw_value"] {
+    /* 无额外样式，仅用 data 属性定位 */
 }

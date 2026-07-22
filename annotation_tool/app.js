@@ -46,8 +46,72 @@
         currentFieldIndex: -1,
         currentValueIndex: -1,
         editingEvidenceIndex: -1,
-        saveTimeout: null
+        saveTimeout: null,
+        // P0-2 状态保持：值项折叠状态（ui_id -> true 表示折叠）
+        valueCollapsed: {},
+        // P0-1 添加新值后自动滚动+聚焦的目标 ui_id
+        pendingFocusUiId: null
     };
+
+    // ========== ui_id 管理（P0-2 稳定标识，不混入导出 JSON） ==========
+    // 给每个前端值项分配稳定的 ui_id，用于跨 renderFields 保持状态对应关系。
+    // ui_id 仅存在于前端内存和 localStorage 草稿中，导出 JSON 时剥离。
+
+    let _uiIdCounter = 0;
+    function generateUiId() {
+        _uiIdCounter++;
+        return 'v_' + Date.now().toString(36) + '_' + _uiIdCounter.toString(36);
+    }
+
+    function ensureValueUiId(value) {
+        if (!value) return value;
+        if (!value.ui_id) {
+            value.ui_id = generateUiId();
+        }
+        return value;
+    }
+
+    function ensureAllValuesHaveUiId(annotation) {
+        if (!annotation || !annotation.fields) return;
+        annotation.fields.forEach(field => {
+            if (field.values) {
+                field.values.forEach(v => ensureValueUiId(v));
+            }
+        });
+    }
+
+    /**
+     * 从导出 JSON / 校验中剥离 ui_id 等 UI 元数据。
+     * 返回深拷贝后的纯净 fields 数组（符合 AnnotationDocument Schema extra="forbid"）。
+     */
+    function stripUiMetadataForExport(fields) {
+        return fields.map(f => {
+            const fieldClone = {
+                field_name: f.field_name,
+                gold_status: f.gold_status,
+                values: (f.values || []).map(v => {
+                    const valueClone = {
+                        raw_value: v.raw_value,
+                        normalized_value: v.normalized_value,
+                        amount_type: v.amount_type,
+                        currency: v.currency,
+                        original_unit: v.original_unit,
+                        tax_status: v.tax_status,
+                        lot_id: v.lot_id,
+                        acceptable_evidence_spans: (v.acceptable_evidence_spans || []).map(e => ({
+                            role: e.role,
+                            start: e.start,
+                            end: e.end,
+                            text: e.text
+                        }))
+                    };
+                    return valueClone;
+                }),
+                note: f.note || ''
+            };
+            return fieldClone;
+        });
+    }
 
     // ========== 工具函数 ==========
 
@@ -496,6 +560,11 @@
             setLastActiveDoc('sample-001');
         }
 
+        // P0-2: 为所有 value 分配 ui_id（草稿中可能缺失）
+        ensureAllValuesHaveUiId(state.annotation);
+        // 重置折叠状态（新文档加载时不保留旧折叠）
+        state.valueCollapsed = {};
+
         // 默认 noticeType：优先使用 SAMPLE_NOTICE_TYPE（根据原文推断）
         const defaultNoticeType = (typeof SampleData !== 'undefined' && SampleData.SAMPLE_NOTICE_TYPE)
             ? SampleData.SAMPLE_NOTICE_TYPE : 'tender';
@@ -568,6 +637,12 @@
         state.currentFieldIndex = 0;
         state.currentValueIndex = -1;
         state.editingEvidenceIndex = -1;
+        // P0-2: 重置折叠状态和待聚焦 ui_id
+        state.valueCollapsed = {};
+        state.pendingFocusUiId = null;
+
+        // P0-2: 为所有 value 分配 ui_id
+        ensureAllValuesHaveUiId(state.annotation);
 
         // 清除重叠提示
         const overlapWarning = document.getElementById('overlapWarning');
@@ -691,11 +766,16 @@
 
         // 2. 渲染当前选中字段的编辑器（一次只显示一个）
         const container = document.getElementById('fieldsContainer');
+
+        // P0-2 状态保持：保存滚动位置和当前字段索引
+        const savedScrollTop = container.scrollTop;
+        const savedFieldIndex = state.currentFieldIndex;
+
         while (container.firstChild) {
             container.removeChild(container.firstChild);
         }
 
-        // 默认选中第一个字段
+        // 只在无效时回退到 0，不主动重置有效值（P0-2 修复）
         if (state.currentFieldIndex < 0 || state.currentFieldIndex >= state.annotation.fields.length) {
             state.currentFieldIndex = 0;
         }
@@ -704,6 +784,23 @@
         if (currentField) {
             const card = createFieldCard(currentField, state.currentFieldIndex);
             container.appendChild(card);
+        }
+
+        // P0-2 状态保持：恢复滚动位置（仅在字段未变时）
+        if (savedFieldIndex === state.currentFieldIndex) {
+            container.scrollTop = savedScrollTop;
+        }
+
+        // P0-1 添加新值后自动滚动+聚焦
+        if (state.pendingFocusUiId) {
+            const targetItem = container.querySelector('.value-item[data-ui-id="' + CSS.escape(state.pendingFocusUiId) + '"]');
+            if (targetItem) {
+                targetItem.classList.add('value-just-added');
+                targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const rawInput = targetItem.querySelector('input[data-field-key="raw_value"]');
+                if (rawInput) rawInput.focus();
+            }
+            state.pendingFocusUiId = null;
         }
     }
 
@@ -862,9 +959,31 @@
         const item = document.createElement('div');
         item.className = 'value-item';
 
+        // P0-2 稳定标识：data-ui-id 用于跨 renderFields 保持状态
+        ensureValueUiId(value);
+        item.setAttribute('data-ui-id', value.ui_id);
+
+        // P0-2 折叠状态恢复
+        if (state.valueCollapsed[value.ui_id]) {
+            item.classList.add('collapsed');
+        }
+
         // 值头部
         const header = document.createElement('div');
         header.className = 'value-header';
+
+        // P0-2 折叠/展开按钮
+        const collapseBtn = document.createElement('button');
+        collapseBtn.className = 'value-collapse-btn';
+        collapseBtn.type = 'button';
+        collapseBtn.title = '展开/折叠';
+        collapseBtn.textContent = state.valueCollapsed[value.ui_id] ? '▶' : '▼';
+        collapseBtn.addEventListener('click', () => {
+            const isCollapsed = item.classList.toggle('collapsed');
+            state.valueCollapsed[value.ui_id] = isCollapsed;
+            collapseBtn.textContent = isCollapsed ? '▶' : '▼';
+        });
+        header.appendChild(collapseBtn);
 
         const idxSpan = document.createElement('span');
         idxSpan.className = 'value-index';
@@ -1004,6 +1123,8 @@
         const input = document.createElement('input');
         input.type = type;
         input.value = value;
+        // P0-1: data-field-key 用于 addFieldValue 后自动聚焦 raw_value
+        input.setAttribute('data-field-key', key);
         input.addEventListener('input', (e) => onChange(e.target.value));
 
         div.appendChild(lbl);
@@ -1093,7 +1214,9 @@
 
         // present 时确保至少有一个空值
         if (newStatus === Schema.GOLD_STATUS.PRESENT && field.values.length === 0) {
-            field.values.push(Schema.createEmptyValue());
+            const emptyVal = Schema.createEmptyValue();
+            ensureValueUiId(emptyVal);
+            field.values.push(emptyVal);
         }
 
         renderFields();
@@ -1103,13 +1226,23 @@
 
     function addFieldValue(fieldIndex) {
         const field = state.annotation.fields[fieldIndex];
-        field.values.push(Schema.createEmptyValue());
+        const newValue = Schema.createEmptyValue();
+        ensureValueUiId(newValue);
+        field.values.push(newValue);
+        // P0-1: 设置待聚焦 ui_id，renderFields 后自动滚动+展开+聚焦
+        state.pendingFocusUiId = newValue.ui_id;
+        // 确保新值不折叠
+        if (state.valueCollapsed[newValue.ui_id]) {
+            delete state.valueCollapsed[newValue.ui_id];
+        }
         renderFields();
         scheduleAutoSave();
     }
 
     function removeFieldValue(fieldIndex, valueIndex) {
         const field = state.annotation.fields[fieldIndex];
+        // P0-2: 记录被删值的 ui_id，清理折叠状态
+        const removedUiId = field.values[valueIndex] ? field.values[valueIndex].ui_id : null;
         if (field.values.length <= 1) {
             if (!confirm('至少需要保留一个值。确定要删除吗？这将把字段状态改为"不存在"。')) {
                 return;
@@ -1119,6 +1252,11 @@
         } else {
             field.values.splice(valueIndex, 1);
         }
+        // 清理被删值的折叠状态
+        if (removedUiId && state.valueCollapsed[removedUiId]) {
+            delete state.valueCollapsed[removedUiId];
+        }
+        // P0-2: 不改变 currentFieldIndex，保持当前字段
         renderFields();
         renderText(); // 更新高亮
         updateProgress();
@@ -1366,8 +1504,9 @@
 
     function closeEvidencePreview() {
         document.getElementById('evidencePreviewModal').classList.add('hidden');
-        state.currentFieldIndex = -1;
-        state.currentValueIndex = -1;
+        // P0-2 修复：不重置 currentFieldIndex / currentValueIndex，
+        // 否则后续 renderFields() 会跳回第一个字段。
+        // 只清理编辑证据的临时索引。
         state.editingEvidenceIndex = -1;
     }
 
@@ -1507,8 +1646,8 @@
 
     function closeEvidenceModal() {
         document.getElementById('evidenceModal').classList.add('hidden');
-        state.currentFieldIndex = -1;
-        state.currentValueIndex = -1;
+        // P0-2 修复：不重置 currentFieldIndex / currentValueIndex，
+        // 否则后续 renderFields() 会跳回第一个字段。
         state.editingEvidenceIndex = -1;
     }
 
@@ -1677,6 +1816,11 @@
             state.currentFieldIndex = 0;
             state.currentValueIndex = -1;
             state.editingEvidenceIndex = -1;
+            // P0-2: 重置折叠状态和待聚焦 ui_id
+            state.valueCollapsed = {};
+            state.pendingFocusUiId = null;
+            // P0-2: 为所有 value 分配 ui_id
+            ensureAllValuesHaveUiId(state.annotation);
 
             // 7. 清除重叠提示
             const overlapWarning = document.getElementById('overlapWarning');
@@ -1771,6 +1915,10 @@
             state.currentFieldIndex = 0;
             state.currentValueIndex = -1;
             state.editingEvidenceIndex = -1;
+            // P0-2: 重置折叠状态，为导入的 value 分配 ui_id
+            state.valueCollapsed = {};
+            state.pendingFocusUiId = null;
+            ensureAllValuesHaveUiId(state.annotation);
             syncDocInfoFromState();
             renderFields();
             renderText(); // 更新高亮
@@ -1810,12 +1958,13 @@
 
         // 只导出 AnnotationDocument Schema 允许的字段（extra="forbid"）
         // noticeType / annotationStatus 不混入导出 JSON
+        // P0-2: 剥离 ui_id 等 UI 元数据，避免破坏 Schema 校验
         const exportData = {
             document_id: state.annotation.document_id,
             annotator_id: state.annotation.annotator_id,
             annotation_version: state.annotation.annotation_version,
             annotation_time: state.annotation.annotation_time,
-            fields: state.annotation.fields
+            fields: stripUiMetadataForExport(state.annotation.fields)
         };
 
         const jsonStr = JSON.stringify(exportData, null, 2);
@@ -1846,6 +1995,10 @@
         state.currentFieldIndex = 0;
         state.currentValueIndex = -1;
         state.editingEvidenceIndex = -1;
+        // P0-2: 重置折叠状态和待聚焦 ui_id
+        state.valueCollapsed = {};
+        state.pendingFocusUiId = null;
+        ensureAllValuesHaveUiId(state.annotation);
 
         // 清除重叠提示
         const overlapWarning = document.getElementById('overlapWarning');
@@ -2113,7 +2266,15 @@
         checkEvidenceQuality: checkEvidenceQuality,
         inferEvidenceCategory: inferEvidenceCategory,
         CONTEXT_RADIUS: CONTEXT_RADIUS,
-        MAX_IMPORT_SIZE: MAX_IMPORT_SIZE
+        MAX_IMPORT_SIZE: MAX_IMPORT_SIZE,
+        // P0-1/P0-2 状态保持
+        addFieldValue: addFieldValue,
+        removeFieldValue: removeFieldValue,
+        removeEvidence: removeEvidence,
+        ensureValueUiId: ensureValueUiId,
+        ensureAllValuesHaveUiId: ensureAllValuesHaveUiId,
+        stripUiMetadataForExport: stripUiMetadataForExport,
+        generateUiId: generateUiId
     };
 
     // ========== 启动 ==========
