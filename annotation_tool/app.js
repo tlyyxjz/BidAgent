@@ -1014,6 +1014,11 @@
     function createEvidenceItem(evidence, evIndex, fieldIndex, valueIndex) {
         const item = document.createElement('div');
         item.className = 'evidence-item';
+        // data 属性用于 focusEvidenceInText 定位
+        item.setAttribute('data-ev-index', evIndex);
+        item.setAttribute('data-field', fieldIndex);
+        item.setAttribute('data-value', valueIndex);
+        item.title = '点击定位到原文位置';
 
         // 角色标签
         const roleTag = document.createElement('span');
@@ -1033,6 +1038,23 @@
         offsetSpan.className = 'evidence-offset';
         offsetSpan.textContent = '[' + evidence.start + ', ' + evidence.end + ')';
         item.appendChild(offsetSpan);
+
+        // 哈希/slice 失效检测：若失效，添加失效标记
+        const verify = Schema.verifyEvidenceSpan(state.rawText, evidence.start, evidence.end, evidence.text);
+        if (!verify.valid) {
+            item.classList.add('evidence-invalid');
+            const invalidTag = document.createElement('span');
+            invalidTag.className = 'evidence-invalid-tag';
+            invalidTag.textContent = '证据已失效';
+            item.appendChild(invalidTag);
+        }
+
+        // 点击证据项（非按钮区域）→ 滚动并高亮原文
+        item.addEventListener('click', (e) => {
+            // 点击编辑/删除按钮时不触发定位
+            if (e.target.closest('button')) return;
+            focusEvidenceInText(evIndex, fieldIndex, valueIndex);
+        });
 
         // 操作按钮
         const actions = document.createElement('div');
@@ -1105,6 +1127,78 @@
 
     // ========== 证据操作 ==========
 
+    /**
+     * 上下文预览长度：前后各 20 字符（UTF-16 code unit）。
+     */
+    const CONTEXT_RADIUS = 20;
+
+    /**
+     * 证据非阻塞质量提示词表：
+     * - 金额字段：若选中文字及其上下文窗口内不含任一金额类型词，提示"证据可能不完整"。
+     * - 企业字段：若不含任一角色词，提示"补充上下文（采购人/中标人等）"。
+     * - 日期字段：若不含任一日期类型词，提示"补充上下文（发布/截止/开标）"。
+     * 仅提示，不阻止保存，不强制固定格式。
+     */
+    const EVIDENCE_QUALITY_KEYWORDS = {
+        amount: {
+            field: 'amount',
+            label: '金额证据',
+            words: ['预算', '限价', '中标', '成交', '合同', '单价', '金额', '报价', '估算', '控制价', '最高限价', '成交价', '合同价'],
+            suggestion: '未检测到"预算/限价/中标/成交/合同/单价"等金额类型词，证据可能不完整。建议用「向左/向右扩展1字」或「重新选择」补齐类型词与单位。'
+        },
+        enterprise: {
+            field: 'enterprise',
+            label: '企业证据',
+            words: ['采购人', '中标人', '供应商', '代理机构', '投标人', '申请人', '承包方', '甲方', '乙方', '受让方', '出让方'],
+            suggestion: '未检测到"采购人/中标人/供应商/代理机构"等角色词，建议补充上下文以明确主体角色。'
+        },
+        date: {
+            field: 'date',
+            label: '日期证据',
+            words: ['发布', '截止', '开标', '公示', '公告', '报名', '递交', '开启', '中标', '成交', '签订', '履行'],
+            suggestion: '未检测到"发布/截止/开标"等日期类型词，建议补充上下文以明确日期语义。'
+        }
+    };
+
+    /**
+     * 根据字段名推断证据质量检查类别。
+     * project_identifier / winner_name / purchaser_name → enterprise
+     * amount → amount
+     * publish_date / bid_deadline → date
+     * 其他 → null（不检查）
+     */
+    function inferEvidenceCategory(fieldName) {
+        if (!fieldName) return null;
+        if (fieldName === 'amount') return 'amount';
+        if (fieldName === 'purchaser_name' || fieldName === 'winner_name' || fieldName === 'project_identifier') return 'enterprise';
+        if (fieldName === 'publish_date' || fieldName === 'bid_deadline') return 'date';
+        return null;
+    }
+
+    /**
+     * 检查证据在"选中文字 + 前后 CONTEXT_RADIUS 字符"窗口内是否含有类型词。
+     * @returns {{missing: boolean, category: string, suggestion: string} | null}
+     */
+    function checkEvidenceQuality(fieldName, start, end) {
+        const cat = inferEvidenceCategory(fieldName);
+        if (!cat) return null;
+        const rule = EVIDENCE_QUALITY_KEYWORDS[cat];
+        if (!rule) return null;
+
+        const ctxStart = Math.max(0, start - CONTEXT_RADIUS);
+        const ctxEnd = Math.min(state.rawText.length, end + CONTEXT_RADIUS);
+        const window = state.rawText.slice(ctxStart, ctxEnd);
+
+        const missing = !rule.words.some(w => window.indexOf(w) >= 0);
+        return { missing, category: cat, suggestion: rule.suggestion, label: rule.label };
+    }
+
+    /**
+     * 打开证据预览弹窗。用户选中文本后点击「添加证据」触发。
+     * 弹窗显示：选中文字 + 前后 20 字上下文 + start/end + slice 验证 + 非阻塞质量提示。
+     * 支持「向左扩展1字 / 向右扩展1字 / 重新选择」。
+     * 支持选择证据角色（primary / qualifier 等），便于一个字段保存多段证据。
+     */
     function addEvidenceFromSelection(fieldIndex, valueIndex) {
         const selection = getSelectedTextInfo();
         if (!selection) {
@@ -1119,17 +1213,205 @@
             return;
         }
 
-        const field = state.annotation.fields[fieldIndex];
-        const value = field.values[valueIndex];
+        // 记录目标字段/值索引，供预览弹窗的扩展/重选/保存使用
+        state.currentFieldIndex = fieldIndex;
+        state.currentValueIndex = valueIndex;
+        state.editingEvidenceIndex = -1; // -1 表示新增（非编辑）
+
+        // 默认角色 primary
+        document.getElementById('previewRole').value = Schema.EVIDENCE_ROLES.PRIMARY;
+
+        renderEvidencePreview(selection.start, selection.end, selection.text);
+        document.getElementById('evidencePreviewModal').classList.remove('hidden');
+    }
+
+    /**
+     * 渲染证据预览弹窗内容：偏移量、上下文、slice 验证、质量提示。
+     * XSS 防护：所有用户控制文本通过 textContent / createElement 渲染。
+     */
+    function renderEvidencePreview(start, end, text) {
+        // 偏移量
+        document.getElementById('previewStart').value = start;
+        document.getElementById('previewEnd').value = end;
+        document.getElementById('previewLen').value = end - start;
+
+        // 选中文字
+        document.getElementById('previewText').value = text;
+
+        // 上下文：前 20 字 + 选中（高亮）+ 后 20 字
+        const ctxStart = Math.max(0, start - CONTEXT_RADIUS);
+        const ctxEnd = Math.min(state.rawText.length, end + CONTEXT_RADIUS);
+        const prefix = state.rawText.slice(ctxStart, start);
+        const suffix = state.rawText.slice(end, ctxEnd);
+
+        const ctxEl = document.getElementById('previewContext');
+        while (ctxEl.firstChild) ctxEl.removeChild(ctxEl.firstChild);
+
+        if (prefix) {
+            const preSpan = document.createElement('span');
+            preSpan.className = 'preview-prefix';
+            preSpan.textContent = prefix;
+            ctxEl.appendChild(preSpan);
+        }
+        const selSpan = document.createElement('span');
+        selSpan.className = 'preview-selected';
+        selSpan.textContent = text;
+        ctxEl.appendChild(selSpan);
+        if (suffix) {
+            const sufSpan = document.createElement('span');
+            sufSpan.className = 'preview-suffix';
+            sufSpan.textContent = suffix;
+            ctxEl.appendChild(sufSpan);
+        }
+
+        // slice 验证
+        const verify = Schema.verifyEvidenceSpan(state.rawText, start, end, text);
+        const verifyEl = document.getElementById('previewVerify');
+        while (verifyEl.firstChild) verifyEl.removeChild(verifyEl.firstChild);
+        const vIcon = document.createElement('span');
+        vIcon.className = 'verify-icon';
+        const vMsg = document.createElement('span');
+        if (verify.valid) {
+            verifyEl.className = 'verify-status';
+            vIcon.textContent = '✓';
+            vMsg.textContent = 'slice 验证通过：rawText.slice(' + start + ', ' + end + ') === 选中文字';
+        } else {
+            verifyEl.className = 'verify-status error';
+            vIcon.textContent = '✗';
+            vMsg.textContent = 'slice 验证失败：实际文本为 "' + (verify.actualText || '').slice(0, 50) + '..."';
+        }
+        verifyEl.appendChild(vIcon);
+        verifyEl.appendChild(vMsg);
+
+        // 非阻塞质量提示（金额/企业/日期）
+        renderEvidenceQualityHint(start, end);
+    }
+
+    /**
+     * 渲染证据非阻塞质量提示。
+     * 只提示，不阻止保存。
+     */
+    function renderEvidenceQualityHint(start, end) {
+        const fieldName = state.annotation && state.annotation.fields[state.currentFieldIndex]
+            ? state.annotation.fields[state.currentFieldIndex].field_name
+            : null;
+        const result = checkEvidenceQuality(fieldName, start, end);
+
+        const hintEl = document.getElementById('previewQualityHint');
+        while (hintEl.firstChild) hintEl.removeChild(hintEl.firstChild);
+
+        if (!result || !result.missing) {
+            hintEl.classList.add('hidden');
+            return;
+        }
+
+        hintEl.classList.remove('hidden');
+        const title = document.createElement('div');
+        title.className = 'quality-hint-title';
+        title.textContent = '⚠️ ' + result.label + ' 质量提示（非阻塞，可继续保存）';
+        hintEl.appendChild(title);
+
+        const sugg = document.createElement('div');
+        sugg.className = 'quality-hint-suggestion';
+        sugg.textContent = result.suggestion;
+        hintEl.appendChild(sugg);
+    }
+
+    /**
+     * 向左扩展 1 字：start -= 1（不低于 0），text 同步更新。
+     * 扩展后重新校验 slice 一致性。
+     */
+    function expandEvidenceLeft() {
+        let start = parseInt(document.getElementById('previewStart').value) || 0;
+        let end = parseInt(document.getElementById('previewEnd').value) || 0;
+        if (start <= 0) {
+            alert('已到达原文开头，无法继续向左扩展');
+            return;
+        }
+        start -= 1;
+        const newText = state.rawText.slice(start, end);
+        renderEvidencePreview(start, end, newText);
+    }
+
+    /**
+     * 向右扩展 1 字：end += 1（不超过 rawText.length），text 同步更新。
+     */
+    function expandEvidenceRight() {
+        let start = parseInt(document.getElementById('previewStart').value) || 0;
+        let end = parseInt(document.getElementById('previewEnd').value) || 0;
+        if (end >= state.rawText.length) {
+            alert('已到达原文末尾，无法继续向右扩展');
+            return;
+        }
+        end += 1;
+        const newText = state.rawText.slice(start, end);
+        renderEvidencePreview(start, end, newText);
+    }
+
+    /**
+     * 重新选择：关闭预览弹窗，等待用户在原文中重新选中文本后再次点击「添加证据」。
+     * 不保存当前预览内容。
+     */
+    function reselectEvidence() {
+        closeEvidencePreview();
+        // 提示用户重新选择
+        const infoEl = document.getElementById('selectionInfo');
+        if (infoEl) {
+            infoEl.textContent = '请在左侧原文中重新选中文本，再点击「添加证据」';
+        }
+        // 清除当前选区
+        const sel = window.getSelection();
+        if (sel) sel.removeAllRanges();
+    }
+
+    function closeEvidencePreview() {
+        document.getElementById('evidencePreviewModal').classList.add('hidden');
+        state.currentFieldIndex = -1;
+        state.currentValueIndex = -1;
+        state.editingEvidenceIndex = -1;
+    }
+
+    /**
+     * 确认保存证据（来自预览弹窗）。
+     * 保存前再次校验 slice，不通过禁止保存。
+     * 保存后非阻塞提示用户证据已添加（不使用 alert，避免打断流程）。
+     */
+    function confirmSaveEvidence() {
+        if (state.currentFieldIndex < 0 || state.currentValueIndex < 0) {
+            alert('内部错误：未记录目标字段/值索引');
+            return;
+        }
+
+        const start = parseInt(document.getElementById('previewStart').value) || 0;
+        const end = parseInt(document.getElementById('previewEnd').value) || 0;
+        const text = document.getElementById('previewText').value;
+        const role = document.getElementById('previewRole').value;
+
+        // 强制 slice 验证
+        const verify = Schema.verifyEvidenceSpan(state.rawText, start, end, text);
+        if (!verify.valid) {
+            alert('slice 验证失败，无法保存。必须满足 rawText.slice(start, end) === 选中文字。\n\n实际文本：' + (verify.actualText || '').slice(0, 50) + '...');
+            return;
+        }
+
+        const field = state.annotation.fields[state.currentFieldIndex];
+        const value = field.values[state.currentValueIndex];
 
         const newEvidence = {
-            role: Schema.EVIDENCE_ROLES.PRIMARY,
-            start: selection.start,
-            end: selection.end,
-            text: selection.text
+            role: role,
+            start: start,
+            end: end,
+            text: text
         };
 
-        value.acceptable_evidence_spans.push(newEvidence);
+        // 新增 vs 编辑
+        if (state.editingEvidenceIndex >= 0) {
+            value.acceptable_evidence_spans[state.editingEvidenceIndex] = newEvidence;
+        } else {
+            value.acceptable_evidence_spans.push(newEvidence);
+        }
+
+        closeEvidencePreview();
         renderFields();
         renderText(); // 更新高亮
         scheduleAutoSave();
@@ -1142,6 +1424,65 @@
         renderFields();
         renderText(); // 更新高亮
         scheduleAutoSave();
+    }
+
+    /**
+     * 点击已保存证据：滚动到对应原文位置并临时高亮。
+     * 如果 slice 不一致（原文已变化），显示"证据已失效"，不展示错误高亮。
+     */
+    function focusEvidenceInText(evIndex, fieldIndex, valueIndex) {
+        const field = state.annotation.fields[fieldIndex];
+        const value = field.values[valueIndex];
+        const evidence = value.acceptable_evidence_spans[evIndex];
+        if (!evidence) return;
+
+        // 哈希/slice 失效检测
+        const verify = Schema.verifyEvidenceSpan(state.rawText, evidence.start, evidence.end, evidence.text);
+        const itemEl = document.querySelector('.evidence-item[data-ev-index="' + evIndex + '"][data-field="' + fieldIndex + '"][data-value="' + valueIndex + '"]');
+
+        if (!verify.valid) {
+            // 证据已失效：标记但不展示错误高亮
+            if (itemEl) {
+                itemEl.classList.add('evidence-invalid');
+                // 移除旧的失效标签
+                const oldTag = itemEl.querySelector('.evidence-invalid-tag');
+                if (!oldTag) {
+                    const tag = document.createElement('span');
+                    tag.className = 'evidence-invalid-tag';
+                    tag.textContent = '证据已失效';
+                    itemEl.appendChild(tag);
+                }
+            }
+            alert('证据已失效：rawText.slice(start, end) !== evidence.text\n\n可能原因：原文已被重新导入或修改。请删除该证据后重新选择。\n\n实际文本：' + (verify.actualText || '').slice(0, 50) + '...');
+            return;
+        }
+
+        // 移除失效标记（如已恢复）
+        if (itemEl) {
+            itemEl.classList.remove('evidence-invalid');
+            const tag = itemEl.querySelector('.evidence-invalid-tag');
+            if (tag) tag.remove();
+        }
+
+        // 滚动到对应原文位置并临时高亮
+        const textEl = document.getElementById('rawText');
+        const highlights = textEl.querySelectorAll('.evidence-highlight');
+        let targetSpan = null;
+        // 通过 textContent 匹配（避免高亮 span 被拆分后偏移变化）
+        for (const hl of highlights) {
+            if (hl.textContent === evidence.text) {
+                targetSpan = hl;
+                break;
+            }
+        }
+        if (targetSpan) {
+            targetSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetSpan.classList.add('evidence-flash');
+            setTimeout(() => targetSpan.classList.remove('evidence-flash'), 1200);
+        } else {
+            // 高亮 span 未找到（可能因为重叠渲染被合并），回退到容器滚动
+            textEl.scrollTop = Math.max(0, (evidence.start / state.rawText.length) * textEl.scrollHeight - textEl.clientHeight / 2);
+        }
     }
 
     // ========== 证据编辑弹窗 ==========
@@ -1728,6 +2069,12 @@
     // ========== 暴露到全局（供 HTML 调用和测试访问） ==========
     window.closeEvidenceModal = closeEvidenceModal;
     window.saveEvidence = saveEvidence;
+    // 证据预览弹窗（HTML onclick 调用）
+    window.expandEvidenceLeft = expandEvidenceLeft;
+    window.expandEvidenceRight = expandEvidenceRight;
+    window.reselectEvidence = reselectEvidence;
+    window.closeEvidencePreview = closeEvidencePreview;
+    window.confirmSaveEvidence = confirmSaveEvidence;
     // 暴露 App 对象（state 供测试读取；函数供测试触发）
     window.App = {
         state: state,
@@ -1753,6 +2100,19 @@
         computeSha256: computeSha256,
         setLastActiveDoc: setLastActiveDoc,
         getLastActiveDoc: getLastActiveDoc,
+        switchToField: switchToField,
+        // 证据质量控制（P0 增量）
+        addEvidenceFromSelection: addEvidenceFromSelection,
+        renderEvidencePreview: renderEvidencePreview,
+        expandEvidenceLeft: expandEvidenceLeft,
+        expandEvidenceRight: expandEvidenceRight,
+        reselectEvidence: reselectEvidence,
+        closeEvidencePreview: closeEvidencePreview,
+        confirmSaveEvidence: confirmSaveEvidence,
+        focusEvidenceInText: focusEvidenceInText,
+        checkEvidenceQuality: checkEvidenceQuality,
+        inferEvidenceCategory: inferEvidenceCategory,
+        CONTEXT_RADIUS: CONTEXT_RADIUS,
         MAX_IMPORT_SIZE: MAX_IMPORT_SIZE
     };
 

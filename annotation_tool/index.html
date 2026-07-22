@@ -158,6 +158,77 @@
         </div>
     </div>
 
+    <!-- 证据预览弹窗（保存前确认，支持扩展/重新选择/非阻塞质量提示） -->
+    <div id="evidencePreviewModal" class="modal hidden">
+        <div class="modal-content modal-content-wide">
+            <div class="modal-header">
+                <h3>添加证据 — 预览确认</h3>
+                <button class="modal-close" onclick="closeEvidencePreview()">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- 证据角色选择（默认 primary，可改 qualifier 保存多段限定证据） -->
+                <div class="form-group">
+                    <label>证据角色</label>
+                    <select id="previewRole">
+                        <option value="primary">primary（主证据）</option>
+                        <option value="context">context（上下文）</option>
+                        <option value="qualifier">qualifier（限定条件：角色/金额类型/分包等）</option>
+                        <option value="derivation_input">derivation_input（推导输入）</option>
+                        <option value="contradiction">contradiction（冲突证据）</option>
+                    </select>
+                </div>
+
+                <!-- 偏移量与切片验证 -->
+                <div class="form-group form-group-row">
+                    <div class="form-group-inline">
+                        <label>start</label>
+                        <input type="number" id="previewStart" readonly>
+                    </div>
+                    <div class="form-group-inline">
+                        <label>end</label>
+                        <input type="number" id="previewEnd" readonly>
+                    </div>
+                    <div class="form-group-inline">
+                        <label>长度</label>
+                        <input type="number" id="previewLen" readonly>
+                    </div>
+                </div>
+
+                <!-- 上下文预览：前 20 字 + 选中（高亮）+ 后 20 字 -->
+                <div class="form-group">
+                    <label>上下文预览（前后各 20 字符）</label>
+                    <div id="previewContext" class="preview-context"></div>
+                </div>
+
+                <!-- 选中文字 -->
+                <div class="form-group">
+                    <label>选中文字</label>
+                    <textarea id="previewText" rows="3" readonly></textarea>
+                </div>
+
+                <!-- slice 验证 -->
+                <div id="previewVerify" class="verify-status">
+                    <span class="verify-icon">✓</span>
+                    <span>slice 验证通过：rawText.slice(start, end) === 选中文字</span>
+                </div>
+
+                <!-- 非阻塞质量提示（金额/企业/日期缺类型词时显示，不阻止保存） -->
+                <div id="previewQualityHint" class="quality-hint hidden"></div>
+
+                <!-- 操作按钮：扩展/重新选择 -->
+                <div class="preview-actions">
+                    <button class="btn btn-secondary btn-small" onclick="expandEvidenceLeft()">← 向左扩展1字</button>
+                    <button class="btn btn-secondary btn-small" onclick="expandEvidenceRight()">向右扩展1字 →</button>
+                    <button class="btn btn-secondary btn-small" onclick="reselectEvidence()">重新选择</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEvidencePreview()">取消</button>
+                <button class="btn btn-primary" onclick="confirmSaveEvidence()">保存证据</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 脚本 -->
     <script src="schema.js"></script>
     <script src="sample_data.js"></script>

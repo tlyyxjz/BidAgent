@@ -4,6 +4,66 @@
 
 ## [Unreleased] - 2026-07-22
 
+### 证据质量控制（证据不完整/高亮错位修复）
+
+#### 背景
+针对人工标注中"证据不完整或高亮错位"问题，新增证据保存前的预览与质量提示，支持多段证据、点击定位与失效检测，并补充真实鼠标操作测试。
+
+#### 修改（app.js / index.html / style.css / tests/e2e.spec.js）
+
+1. **保存证据前完整预览弹窗（#evidencePreviewModal）**
+   - 显示选中文字、前后各 20 字符上下文（CONTEXT_RADIUS=20）
+   - 显示 start / end / 长度（readonly）
+   - 显示 `rawText.slice(start, end)` 与选中文字的一致性验证结果
+   - 显示非阻塞质量提示（仅提示不阻止保存）
+
+2. **向左/向右扩展1字 + 重新选择按钮**
+   - `expandEvidenceLeft()` / `expandEvidenceRight()`：每次扩展 1 个字符，方便补齐标签、标点和单位（如"万元"、"采购人"）
+   - `reselectEvidence()`：关闭预览弹窗且不保存，等待用户重新选中文本
+
+3. **金额/企业/日期证据非阻塞质量提示**
+   - `EVIDENCE_QUALITY_KEYWORDS`：金额（预算/限价/中标/成交/合同/单价等）、企业（采购人/中标人/供应商/代理机构等）、日期（发布/截止/开标等）三类词表
+   - `inferEvidenceCategory(fieldName)`：字段名 → 质量检查类别映射
+   - `checkEvidenceQuality(fieldName, start, end)`：在"选中文字 + 前后 20 字符"窗口内检查是否含类型词，缺失时显示提示
+   - **只提示，不阻止保存，不强制固定格式**
+
+4. **多段证据支持**
+   - 证据角色选择：primary（主证据）/ qualifier（角色、金额类型、分包等限定证据）/ context / derivation_input / contradiction
+   - 一个字段的一个值可保存多段证据
+
+5. **点击已保存证据滚动 + 高亮 + 失效检测**
+   - `focusEvidenceInText(evIndex, fieldIndex, valueIndex)`：点击证据项 → `scrollIntoView({behavior:'smooth', block:'center'})` + 1.2s flash 闪烁动画
+   - 通过 `Schema.verifyEvidenceSpan(state.rawText, start, end, text)` 检查 slice 一致性
+   - **失效时**：证据项添加 `.evidence-invalid` 红色标记，弹窗提示"证据已失效"，**不展示错误高亮**
+   - 通过 `textContent` 匹配高亮 span（避免高亮被拆分后偏移变化）
+
+6. **新增 10 项真实鼠标操作 Playwright 测试（场景 27-36）**
+   - 27. 金额标签和数值完整选择（真实鼠标操作）
+   - 28. 公司角色和名称完整选择（真实鼠标操作）
+   - 29. 跨行选择证据（真实鼠标操作）
+   - 30. 重复文本选择第二处（真实鼠标操作）
+   - 31. 高亮后再次选择第二段证据（真实鼠标操作）
+   - 32. 导出再导入后仍逐字一致
+   - 33. 向左/向右扩展1字按钮正常工作
+   - 34. 重新选择按钮关闭预览弹窗且不保存
+   - 35. 点击已保存证据滚动并高亮原文
+   - 36. 证据失效检测（slice 不一致时显示"证据已失效"）
+   - 新增 `selectTextViaDomRange` 辅助函数：通过 DOM Range + TreeWalker 精确选中文本并触发 mouseup
+
+#### 测试结果
+
+- 35 项浏览器单元测试：全部通过 ✅
+- 36 项 Playwright 端到端测试（原 26 + 新增 10）：全部通过 ✅
+- GLM Schema 校验：7 条证据偏移量全部通过 ✅
+- 后端 519 项回归测试：全部通过 ✅
+
+### 不变项
+
+- JSON Schema（未修改 `backend/schemas.py`）
+- UTF-16 偏移逻辑（未修改 `validate_schema.py` / `common.py`）
+- 未修改 `backend/`
+- 未合并 `main` / `develop`
+
 ### P0 跨公告数据污染修复（人工验收反馈）
 
 #### 根因

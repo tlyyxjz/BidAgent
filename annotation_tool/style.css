@@ -880,3 +880,134 @@ body {
     font-weight: 500;
     margin: 0 16px 8px 16px;
 }
+
+/* ========== 证据预览弹窗 ========== */
+.modal-content-wide {
+    width: 720px;
+    max-width: 92vw;
+}
+
+.form-group-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.form-group-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.form-group-inline input {
+    padding: 4px 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    background-color: #f7fafc;
+    color: #2d3748;
+}
+
+/* 上下文预览：前 20 字 + 选中（高亮）+ 后 20 字 */
+.preview-context {
+    padding: 10px 12px;
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #4a5568;
+    max-height: 120px;
+    overflow: auto;
+}
+
+.preview-context .preview-prefix,
+.preview-context .preview-suffix {
+    color: #a0aec0;
+}
+
+.preview-context .preview-selected {
+    background-color: #fef3c7;
+    color: #92400e;
+    border-bottom: 2px solid #d69e2e;
+    border-radius: 2px;
+    padding: 1px 0;
+    font-weight: 600;
+}
+
+/* 非阻塞质量提示（黄色提示条，不阻止保存） */
+.quality-hint {
+    padding: 8px 12px;
+    background-color: #feebc8;
+    border: 1px solid #dd6b20;
+    border-radius: 4px;
+    color: #7b341e;
+    font-size: 12px;
+    line-height: 1.6;
+    margin-top: 8px;
+}
+
+.quality-hint.hidden {
+    display: none;
+}
+
+.quality-hint .quality-hint-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.quality-hint .quality-hint-suggestion {
+    color: #9c4221;
+}
+
+/* 预览弹窗操作按钮区 */
+.preview-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+/* 点击证据项后的临时高亮闪烁 */
+.evidence-highlight.evidence-flash {
+    animation: evidence-flash 1.2s ease-out;
+}
+
+@keyframes evidence-flash {
+    0%   { background-color: #fbd38d; box-shadow: 0 0 0 4px rgba(214, 158, 46, 0.4); }
+    100% { background-color: inherit; box-shadow: none; }
+}
+
+/* 证据失效标记 */
+.evidence-item.evidence-invalid {
+    opacity: 0.55;
+    background-color: #fff5f5;
+    border-color: #feb2b2;
+}
+
+.evidence-invalid-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    background-color: #c53030;
+    color: white;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+/* 证据项可点击提示 */
+.evidence-item {
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.evidence-item:hover {
+    background-color: #ebf8ff;
+}

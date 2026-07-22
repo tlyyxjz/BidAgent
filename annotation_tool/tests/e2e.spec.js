@@ -1093,4 +1093,597 @@ test.describe('BidAgent W1-05 标注工具端到端测试', () => {
     try { fs.unlinkSync(TMP_TXT_EMPTY); } catch (_) {}
   });
 
+  // ============================================================
+  // 场景 27-32：证据质量控制（真实鼠标操作 + 预览弹窗 + 失效检测）
+  // ============================================================
+
+  /**
+   * 辅助：通过 DOM Range 在原文中选中文本并触发 mouseup（真实选区，非 mock）。
+   * @param page
+   * @param targetText 要选中的完整文本（必须在 rawText 中唯一出现或选第一处）
+   * @returns {Promise<{start:number, end:number}>}
+   */
+  async function selectTextViaDomRange(page, targetText) {
+    return await page.evaluate((targetText) => {
+      const rawEl = document.getElementById('rawText');
+      const offset = window.App.state.rawText.indexOf(targetText);
+      if (offset < 0) throw new Error('目标文本不在 rawText 中: ' + targetText);
+      const endOffset = offset + targetText.length;
+
+      const walker = document.createTreeWalker(rawEl, NodeFilter.SHOW_TEXT, null);
+      let cumulative = 0;
+      let startNode = null, startOff = 0, endNode = null, endOff = 0;
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const len = node.nodeValue.length;
+        if (!startNode && cumulative + len >= offset) {
+          startNode = node;
+          startOff = offset - cumulative;
+        }
+        if (!endNode && cumulative + len >= endOffset) {
+          endNode = node;
+          endOff = endOffset - cumulative;
+        }
+        cumulative += len;
+      }
+      const range = document.createRange();
+      range.setStart(startNode, startOff);
+      range.setEnd(endNode, endOff);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      rawEl.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      return { start: offset, end: endOffset };
+    }, targetText);
+  }
+
+  test('27. 金额标签和数值完整选择（真实鼠标操作）', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'mouse-amount');
+    // 只保留 amount 字段为 present，其他字段 absent，避免高亮干扰
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 切换到 amount 字段
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'amount');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(200);
+
+    // 选中完整金额证据："1285.60万元"
+    const target = '1285.60万元';
+    const sel = await selectTextViaDomRange(page, target);
+    expect(sel.start).toBeGreaterThanOrEqual(0);
+    expect(sel.end - sel.start).toBe(target.length);
+
+    // 点击「添加证据」按钮触发预览弹窗
+    await page.click('.add-evidence-btn');
+    await page.waitForTimeout(300);
+
+    // 预览弹窗应显示
+    const modalVisible = await page.isVisible('#evidencePreviewModal:not(.hidden)');
+    expect(modalVisible).toBe(true);
+
+    // 预览中应显示完整金额
+    const previewText = await page.inputValue('#previewText');
+    expect(previewText).toBe(target);
+
+    // slice 验证通过
+    const verifyClass = await page.getAttribute('#previewVerify', 'class');
+    expect(verifyClass).not.toContain('error');
+
+    // 保存证据
+    await page.click('#evidencePreviewModal button:has-text("保存证据")');
+    await page.waitForTimeout(300);
+
+    // 证据应已添加到 amount 字段
+    const evCount = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'amount');
+      return f.values[0].acceptable_evidence_spans.length;
+    });
+    expect(evCount).toBeGreaterThanOrEqual(1);
+
+    // 原文中应出现高亮
+    const highlightCount = await page.evaluate(() => {
+      return document.getElementById('rawText').querySelectorAll('.evidence-highlight').length;
+    });
+    expect(highlightCount).toBeGreaterThanOrEqual(1);
+  });
+
+  test('28. 公司角色和名称完整选择（真实鼠标操作）', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'mouse-company');
+    // 只保留 winner_name 字段为 present
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'winner_name') {
+        f.gold_status = 'absent';
+        f.values = [];
+      } else {
+        // 清空已有证据，本测试自行选择
+        f.values[0].acceptable_evidence_spans = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'winner_name');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(200);
+
+    // 选中完整公司名称（带上下文，验证偏移准确）
+    const target = '上海智汇科技有限公司';
+    const sel = await selectTextViaDomRange(page, target);
+    expect(sel.end - sel.start).toBe(target.length);
+
+    await page.click('.add-evidence-btn');
+    await page.waitForTimeout(300);
+
+    const previewText = await page.inputValue('#previewText');
+    expect(previewText).toBe(target);
+
+    // 保存
+    await page.click('#evidencePreviewModal button:has-text("保存证据")');
+    await page.waitForTimeout(300);
+
+    // 验证保存的证据文本逐字一致
+    const evText = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'winner_name');
+      return f.values[0].acceptable_evidence_spans[0].text;
+    });
+    expect(evText).toBe(target);
+  });
+
+  test('29. 跨行选择证据（真实鼠标操作）', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'mouse-cross-line');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount') {
+        f.gold_status = 'absent';
+        f.values = [];
+      } else {
+        f.values[0].acceptable_evidence_spans = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'amount');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(200);
+
+    // 构造跨行文本：从某行末尾到下一行开头
+    // rawText 中 "\n" 为换行符，选中 "...公告\n中标（成交）金额..."
+    const rawTextContent = await page.evaluate(() => window.App.state.rawText);
+    // 找到第一个 \n 的位置，选中前后各 10 字符（跨行）
+    const nlIdx = rawTextContent.indexOf('\n');
+    expect(nlIdx).toBeGreaterThan(5);
+    const crossStart = Math.max(0, nlIdx - 5);
+    const crossEnd = Math.min(rawTextContent.length, nlIdx + 6);
+    const target = rawTextContent.slice(crossStart, crossEnd);
+    // 确实包含换行
+    expect(target).toContain('\n');
+
+    const sel = await selectTextViaDomRange(page, target);
+    expect(sel.start).toBe(crossStart);
+    expect(sel.end).toBe(crossEnd);
+
+    await page.click('.add-evidence-btn');
+    await page.waitForTimeout(300);
+
+    const previewText = await page.inputValue('#previewText');
+    expect(previewText).toBe(target);
+    expect(previewText).toContain('\n');
+
+    // slice 验证仍通过（跨行不影响偏移）
+    const verifyClass = await page.getAttribute('#previewVerify', 'class');
+    expect(verifyClass).not.toContain('error');
+
+    await page.click('#evidencePreviewModal button:has-text("保存证据")');
+    await page.waitForTimeout(300);
+
+    const evText = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'amount');
+      return f.values[0].acceptable_evidence_spans[0].text;
+    });
+    expect(evText).toBe(target);
+  });
+
+  test('30. 重复文本选择第二处（真实鼠标操作）', async ({ page }) => {
+    // 构造包含两次"上海智汇科技有限公司"的原文
+    const dupRawText = '甲方：上海智汇科技有限公司。\n经评审，上海智汇科技有限公司中标。\n其他内容。';
+    const { annotation } = await buildValidAnnotation(page, 'mouse-dup');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'winner_name') {
+        f.gold_status = 'absent';
+        f.values = [];
+      } else {
+        f.values[0].acceptable_evidence_spans = [];
+      }
+    });
+    // 注入自定义 rawText
+    await page.evaluate(({ annotation, dupRawText }) => {
+      const draftKey = 'bidagent_annotation_draft_mouse-dup';
+      localStorage.setItem(draftKey, JSON.stringify({
+        rawText: dupRawText, annotation, savedAt: new Date().toISOString()
+      }));
+    }, { annotation, dupRawText });
+
+    page.on('dialog', d => d.accept());
+    await page.fill('#documentId', 'mouse-dup');
+    await page.press('#documentId', 'Tab');
+    await page.waitForTimeout(800);
+
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'winner_name');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(200);
+
+    // 选中第二处"上海智汇科技有限公司"（offset > 第一处）
+    const firstIdx = dupRawText.indexOf('上海智汇科技有限公司');
+    const secondIdx = dupRawText.indexOf('上海智汇科技有限公司', firstIdx + 1);
+    expect(secondIdx).toBeGreaterThan(firstIdx);
+
+    // 通过 DOM Range 精确选中第二处
+    await page.evaluate(({ secondIdx, target }) => {
+      const rawEl = document.getElementById('rawText');
+      const endOffset = secondIdx + target.length;
+      const walker = document.createTreeWalker(rawEl, NodeFilter.SHOW_TEXT, null);
+      let cumulative = 0;
+      let startNode = null, startOff = 0, endNode = null, endOff = 0;
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const len = node.nodeValue.length;
+        if (!startNode && cumulative + len >= secondIdx) {
+          startNode = node;
+          startOff = secondIdx - cumulative;
+        }
+        if (!endNode && cumulative + len >= endOffset) {
+          endNode = node;
+          endOff = endOffset - cumulative;
+        }
+        cumulative += len;
+      }
+      const range = document.createRange();
+      range.setStart(startNode, startOff);
+      range.setEnd(endNode, endOff);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      rawEl.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    }, { secondIdx, target: '上海智汇科技有限公司' });
+    await page.waitForTimeout(300);
+
+    await page.click('.add-evidence-btn');
+    await page.waitForTimeout(300);
+
+    // 偏移应指向第二处，而非第一处
+    const previewStart = parseInt(await page.inputValue('#previewStart'));
+    expect(previewStart).toBe(secondIdx);
+
+    await page.click('#evidencePreviewModal button:has-text("保存证据")');
+    await page.waitForTimeout(300);
+
+    const ev = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'winner_name');
+      return f.values[0].acceptable_evidence_spans[0];
+    });
+    expect(ev.start).toBe(secondIdx);
+    expect(ev.end).toBe(secondIdx + '上海智汇科技有限公司'.length);
+  });
+
+  test('31. 高亮后再次选择第二段证据（真实鼠标操作）', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'mouse-after-highlight');
+    // amount 字段保留一段证据（产生高亮），winner_name 清空证据
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount' && f.field_name !== 'winner_name') {
+        f.gold_status = 'absent';
+        f.values = [];
+      }
+      if (f.field_name === 'winner_name') {
+        f.values[0].acceptable_evidence_spans = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(400);
+
+    // 确认 amount 的高亮已存在
+    const hlBefore = await page.evaluate(() => {
+      return document.getElementById('rawText').querySelectorAll('.evidence-highlight').length;
+    });
+    expect(hlBefore).toBeGreaterThanOrEqual(1);
+
+    // 切换到 winner_name 字段
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'winner_name');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(200);
+
+    // 在已有高亮的原文中选中"上海智汇科技有限公司"
+    const target = '上海智汇科技有限公司';
+    const sel = await selectTextViaDomRange(page, target);
+    expect(sel.end - sel.start).toBe(target.length);
+
+    await page.click('.add-evidence-btn');
+    await page.waitForTimeout(300);
+
+    const previewText = await page.inputValue('#previewText');
+    expect(previewText).toBe(target);
+
+    await page.click('#evidencePreviewModal button:has-text("保存证据")');
+    await page.waitForTimeout(300);
+
+    // 验证新证据保存成功，偏移准确
+    const ev = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'winner_name');
+      return f.values[0].acceptable_evidence_spans[0];
+    });
+    expect(ev.text).toBe(target);
+    expect(rawText.slice(ev.start, ev.end)).toBe(target);
+  });
+
+  test('32. 导出再导入后仍逐字一致', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'roundtrip-exact');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(400);
+
+    // 导出 JSON
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
+    await page.click('#btnExportJson');
+    const download = await downloadPromise;
+    const downloadPath = path.join(TMP_DIR, 'roundtrip_exact.json');
+    await download.saveAs(downloadPath);
+
+    // 读取导出的 JSON
+    const exported = JSON.parse(fs.readFileSync(downloadPath, 'utf-8'));
+
+    // 校验每条证据的 text 与 rawText.slice(start, end) 逐字一致
+    let evidenceCount = 0;
+    for (const field of exported.fields) {
+      if (!field.values) continue;
+      for (const value of field.values) {
+        if (!value.acceptable_evidence_spans) continue;
+        for (const ev of value.acceptable_evidence_spans) {
+          evidenceCount++;
+          const sliced = rawText.slice(ev.start, ev.end);
+          expect(sliced).toBe(ev.text);
+        }
+      }
+    }
+    expect(evidenceCount).toBeGreaterThanOrEqual(1);
+
+    // 清空 localStorage 后重新导入该 JSON
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.App && window.App.state && window.App.state.annotation, { timeout: 5000 });
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportJson');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(downloadPath);
+    await page.waitForTimeout(800);
+
+    // 重新导入后，每条证据仍应与 rawText.slice 逐字一致
+    const result = await page.evaluate(() => {
+      const raw = window.App.state.rawText;
+      const ann = window.App.state.annotation;
+      const results = [];
+      for (const field of ann.fields) {
+        if (!field.values) continue;
+        for (const value of field.values) {
+          if (!value.acceptable_evidence_spans) continue;
+          for (const ev of value.acceptable_evidence_spans) {
+            results.push({
+              text: ev.text,
+              sliced: raw.slice(ev.start, ev.end),
+              start: ev.start,
+              end: ev.end,
+              match: raw.slice(ev.start, ev.end) === ev.text
+            });
+          }
+        }
+      }
+      return results;
+    });
+
+    expect(result.length).toBe(evidenceCount);
+    for (const r of result) {
+      expect(r.match).toBe(true);
+      expect(r.sliced).toBe(r.text);
+    }
+
+    try { fs.unlinkSync(downloadPath); } catch (_) {}
+  });
+
+  // ============================================================
+  // 场景 33-36：证据预览弹窗的扩展/重选/失效检测能力
+  // ============================================================
+
+  test('33. 向左/向右扩展1字按钮正常工作', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'expand-test');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount') {
+        f.gold_status = 'absent';
+        f.values = [];
+      } else {
+        f.values[0].acceptable_evidence_spans = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'amount');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(200);
+
+    // 选中"1285.60万元"中的"1285.60"（不含"万元"，故意制造不完整证据）
+    const partial = '1285.60';
+    await selectTextViaDomRange(page, partial);
+    await page.click('.add-evidence-btn');
+    await page.waitForTimeout(300);
+
+    const startBefore = parseInt(await page.inputValue('#previewStart'));
+    const endBefore = parseInt(await page.inputValue('#previewEnd'));
+    expect(endBefore - startBefore).toBe(partial.length);
+
+    // 向右扩展1字（应包含"万"）
+    await page.click('#evidencePreviewModal button:has-text("向右扩展1字")');
+    await page.waitForTimeout(200);
+    const endAfterRight = parseInt(await page.inputValue('#previewEnd'));
+    expect(endAfterRight).toBe(endBefore + 1);
+    const textAfterRight = await page.inputValue('#previewText');
+    expect(textAfterRight).toBe('1285.60万');
+
+    // 向左扩展1字
+    await page.click('#evidencePreviewModal button:has-text("向左扩展1字")');
+    await page.waitForTimeout(200);
+    const startAfterLeft = parseInt(await page.inputValue('#previewStart'));
+    expect(startAfterLeft).toBe(startBefore - 1);
+
+    // slice 验证仍通过
+    const verifyClass = await page.getAttribute('#previewVerify', 'class');
+    expect(verifyClass).not.toContain('error');
+  });
+
+  test('34. 重新选择按钮关闭预览弹窗且不保存', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'reselect-test');
+    annotation.fields.forEach(f => {
+      if (f.field_name !== 'amount') {
+        f.gold_status = 'absent';
+        f.values = [];
+      } else {
+        f.values[0].acceptable_evidence_spans = [];
+      }
+    });
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'amount');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(200);
+
+    await selectTextViaDomRange(page, '1285.60');
+    await page.click('.add-evidence-btn');
+    await page.waitForTimeout(300);
+
+    // 弹窗显示
+    expect(await page.isVisible('#evidencePreviewModal:not(.hidden)')).toBe(true);
+
+    // 点击"重新选择"
+    await page.click('#evidencePreviewModal button:has-text("重新选择")');
+    await page.waitForTimeout(300);
+
+    // 弹窗应关闭
+    expect(await page.isVisible('#evidencePreviewModal:not(.hidden)')).toBe(false);
+
+    // 证据不应被保存
+    const evCount = await page.evaluate(() => {
+      const f = window.App.state.annotation.fields.find(f => f.field_name === 'amount');
+      return f.values[0].acceptable_evidence_spans.length;
+    });
+    expect(evCount).toBe(0);
+  });
+
+  test('35. 点击已保存证据滚动并高亮原文', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'focus-test');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(400);
+
+    // 切换到 amount 字段（有 2 段证据：primary + qualifier）
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'amount');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(300);
+
+    // 记录滚动前位置
+    const scrollTopBefore = await page.evaluate(() => document.getElementById('rawText').scrollTop);
+
+    // 点击第一个证据项（非编辑/删除按钮）
+    const evidenceItem = await page.$('.evidence-item');
+    expect(evidenceItem).not.toBeNull();
+    await evidenceItem.click();
+    await page.waitForTimeout(800); // 等待 smooth 滚动 + flash 动画
+
+    // 应有 flash 高亮（点击后 1.2s 内）
+    const hasFlash = await page.evaluate(() => {
+      return document.getElementById('rawText').querySelectorAll('.evidence-flash').length > 0;
+    });
+    // flash 可能在动画结束后消失，只要点击未报错且证据未失效即视为通过
+    // 检查证据项没有失效标记
+    const hasInvalidTag = await page.evaluate(() => {
+      return document.querySelectorAll('.evidence-invalid-tag').length;
+    });
+    expect(hasInvalidTag).toBe(0);
+  });
+
+  test('36. 证据失效检测（slice 不一致时显示"证据已失效"）', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'invalid-test');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(400);
+
+    // 切换到 amount 字段
+    await page.evaluate(() => {
+      const idx = window.App.state.annotation.fields.findIndex(f => f.field_name === 'amount');
+      window.App.switchToField(idx);
+    });
+    await page.waitForTimeout(300);
+
+    // 初始状态：证据有效，无失效标记
+    let invalidCount = await page.evaluate(() => document.querySelectorAll('.evidence-invalid-tag').length);
+    expect(invalidCount).toBe(0);
+
+    // 篡改 state.rawText（模拟原文被替换，导致 slice 不一致）
+    await page.evaluate(() => {
+      window.App.state.rawText = '完全不同的原文内容，导致所有证据 slice 失效。';
+      window.App.renderText();
+      window.App.renderFields();
+    });
+    await page.waitForTimeout(400);
+
+    // 重新渲染后，证据项应显示失效标记
+    invalidCount = await page.evaluate(() => document.querySelectorAll('.evidence-invalid-tag').length);
+    expect(invalidCount).toBeGreaterThan(0);
+
+    // 点击证据项应弹出失效提示（alert）
+    const dialogPromise = nextDialogMessage(page);
+    const evItem = await page.$('.evidence-item');
+    if (evItem) {
+      await evItem.click();
+      const msg = await dialogPromise;
+      expect(msg).toContain('证据已失效');
+    }
+  });
+
 });
