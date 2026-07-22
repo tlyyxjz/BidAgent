@@ -1,7 +1,7 @@
 /**
  * BidAgent W1-05 标注工具 - Playwright 端到端测试
  *
- * 覆盖 26 项真实 DOM 交互场景：
+ * 覆盖 53 项真实 DOM 交互场景：
  *  1. present 无 value，禁止导出
  *  2. present value 无 primary，禁止导出
  *  3. 非 present 残留 values，禁止导出
@@ -25,6 +25,14 @@
  *   24. 新 TXT 导入后完成度不得沿用上一篇
  *   25. 切换文件前的保存提示正常
  *   26. 导入空 TXT 或超大 TXT 时明确报错且不覆盖当前文档
+ * 27-36. 证据质量控制（真实鼠标操作 + 预览弹窗 + 失效检测）
+ * 37-48. P0-1/P0-2 阻塞缺陷修复验证（多值滚动 + 证据操作后字段保持）
+ * 49-53. JSON 导入/导出完整性修复（重置后无法导入 P0）
+ *   49. TXT → 标注 → 导出 JSON → 重置 → 先导入 TXT → 导入 JSON，成功
+ *   50. 重置后直接导入 JSON，显示明确的缺少原文提示
+ *   51. 导入错误 TXT 后再导入 JSON，显示哈希/偏移量不匹配
+ *   52. 同一 JSON 连续选择两次，change 事件正常触发
+ *   53. 完整标注包导出再导入，可恢复原文、字段和证据
  *
  * 沙箱注意：临时文件统一写入 os.tmpdir()，避免受限路径；
  *          测试 12 通过 BIDAGENT_OUTPUT_DIR 环境变量重定向 generate.py 的派生文件输出。
@@ -2138,6 +2146,290 @@ test.describe('BidAgent W1-05 标注工具端到端测试', () => {
       );
     });
     expect(stillHasUiId).toBe(true);
+  });
+
+  // ============================================================
+  // 场景 49-53：JSON 导入/导出完整性修复（重置后无法导入 P0）
+  // ============================================================
+
+  test('49. TXT → 标注 → 导出 JSON → 重置 → 先导入 TXT → 导入 JSON，成功', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'p0-roundtrip-49');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 导出 JSON
+    const exportPath = path.join(TMP_DIR, 'p0_roundtrip_49.json');
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
+    await page.click('#btnExportJson');
+    const download = await downloadPromise;
+    await download.saveAs(exportPath);
+    expect(fs.existsSync(exportPath)).toBe(true);
+
+    // 重置（confirm 对话框）
+    const resetDialog = nextDialogMessage(page, 10000);
+    await page.click('#btnReset');
+    await resetDialog;
+
+    // 验证 rawText 已清空
+    const rawTextAfterReset = await page.evaluate(() => window.App.state.rawText);
+    expect(rawTextAfterReset).toBe('');
+
+    // 导入同一 TXT（恢复原文）
+    const txtDialogPromise = nextDialogMessage(page, 15000);
+    const txtFileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    const txtFileChooser = await txtFileChooserPromise;
+    await txtFileChooser.setFiles(SAMPLE_TEXT_PATH);
+    const txtMsg = await txtDialogPromise;
+    expect(txtMsg).toContain('文本导入成功');
+
+    // 验证 rawText 已恢复
+    const rawTextAfterTxt = await page.evaluate(() => window.App.state.rawText);
+    expect(rawTextAfterTxt.length).toBeGreaterThan(0);
+
+    // 导入 JSON（应在 TXT 恢复原文后成功）
+    const jsonDialogPromise = nextDialogMessage(page, 15000);
+    const jsonFileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportJson');
+    const jsonFileChooser = await jsonFileChooserPromise;
+    await jsonFileChooser.setFiles(exportPath);
+    const jsonMsg = await jsonDialogPromise;
+    expect(jsonMsg).toContain('JSON 导入成功');
+
+    // 验证标注已恢复
+    const fieldCount = await page.evaluate(() => window.App.state.annotation.fields.length);
+    expect(fieldCount).toBe(6);
+
+    // 验证金额字段证据已恢复
+    const amountEvidence = await page.evaluate(() => {
+      const fields = window.App.state.annotation.fields;
+      const amountField = fields.find(f => f.field_name === 'amount');
+      return amountField ? amountField.values[0].acceptable_evidence_spans.length : 0;
+    });
+    expect(amountEvidence).toBe(2); // primary + qualifier
+
+    // 清理
+    try { fs.unlinkSync(exportPath); } catch (_) {}
+  });
+
+  test('50. 重置后直接导入 JSON，显示明确的缺少原文提示', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'p0-missing-50');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 导出 JSON
+    const exportPath = path.join(TMP_DIR, 'p0_missing_50.json');
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
+    await page.click('#btnExportJson');
+    const download = await downloadPromise;
+    await download.saveAs(exportPath);
+    expect(fs.existsSync(exportPath)).toBe(true);
+
+    // 重置（confirm 对话框）
+    const resetDialog = nextDialogMessage(page, 10000);
+    await page.click('#btnReset');
+    await resetDialog;
+
+    // 验证 rawText 已清空
+    const rawTextAfterReset = await page.evaluate(() => window.App.state.rawText);
+    expect(rawTextAfterReset).toBe('');
+
+    // 直接导入 JSON（无原文）→ 应显示"缺少匹配的 TXT 原文"
+    const jsonDialogPromise = nextDialogMessage(page, 15000);
+    const jsonFileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportJson');
+    const jsonFileChooser = await jsonFileChooserPromise;
+    await jsonFileChooser.setFiles(exportPath);
+    const jsonMsg = await jsonDialogPromise;
+
+    expect(jsonMsg).toContain('缺少匹配的 TXT 原文');
+    expect(jsonMsg).toContain('p0-missing-50');
+
+    // 验证当前草稿未被修改（仍为空）
+    const rawTextAfterFailedImport = await page.evaluate(() => window.App.state.rawText);
+    expect(rawTextAfterFailedImport).toBe('');
+
+    // 清理
+    try { fs.unlinkSync(exportPath); } catch (_) {}
+  });
+
+  test('51. 导入错误 TXT 后再导入 JSON，显示哈希/偏移量不匹配', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'p0-wrongtxt-51');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 导出 JSON（证据偏移量基于 SAMPLE_RAW_TEXT）
+    const exportPath = path.join(TMP_DIR, 'p0_wrongtxt_51.json');
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
+    await page.click('#btnExportJson');
+    const download = await downloadPromise;
+    await download.saveAs(exportPath);
+    expect(fs.existsSync(exportPath)).toBe(true);
+
+    // 重置
+    const resetDialog = nextDialogMessage(page, 10000);
+    await page.click('#btnReset');
+    await resetDialog;
+
+    // 导入错误的 TXT（内容与 JSON 中的证据偏移量不匹配）
+    const wrongTxtPath = path.join(TMP_DIR, 'p0_wrong_51.txt');
+    fs.writeFileSync(wrongTxtPath, '这是一段完全不同的原文内容，用于测试哈希和偏移量不匹配。', 'utf-8');
+
+    const txtDialogPromise = nextDialogMessage(page, 15000);
+    const txtFileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportText');
+    const txtFileChooser = await txtFileChooserPromise;
+    await txtFileChooser.setFiles(wrongTxtPath);
+    await txtDialogPromise;
+
+    // 验证 rawText 已变为错误内容
+    const rawTextAfterWrongTxt = await page.evaluate(() => window.App.state.rawText);
+    expect(rawTextAfterWrongTxt).toContain('完全不同的原文内容');
+
+    // 导入 JSON → 应因证据偏移量不匹配而失败
+    const jsonDialogPromise = nextDialogMessage(page, 15000);
+    const jsonFileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportJson');
+    const jsonFileChooser = await jsonFileChooserPromise;
+    await jsonFileChooser.setFiles(exportPath);
+    const jsonMsg = await jsonDialogPromise;
+
+    expect(jsonMsg).toContain('JSON 校验失败');
+    expect(jsonMsg).toMatch(/偏移量与原文不匹配|evidence/);
+
+    // 清理
+    try { fs.unlinkSync(exportPath); } catch (_) {}
+    try { fs.unlinkSync(wrongTxtPath); } catch (_) {}
+  });
+
+  test('52. 同一 JSON 连续选择两次，change 事件正常触发', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'p0-twice-52');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 导出 JSON
+    const exportPath = path.join(TMP_DIR, 'p0_twice_52.json');
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
+    await page.click('#btnExportJson');
+    const download = await downloadPromise;
+    await download.saveAs(exportPath);
+    expect(fs.existsSync(exportPath)).toBe(true);
+
+    // 第一次导入 JSON
+    const firstDialogPromise = nextDialogMessage(page, 15000);
+    const firstFileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportJson');
+    const firstFileChooser = await firstFileChooserPromise;
+    await firstFileChooser.setFiles(exportPath);
+    const firstMsg = await firstDialogPromise;
+    expect(firstMsg).toContain('JSON 导入成功');
+
+    // 第二次导入同一 JSON（验证 change 事件正常触发）
+    const secondDialogPromise = nextDialogMessage(page, 15000);
+    const secondFileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportJson');
+    const secondFileChooser = await secondFileChooserPromise;
+    await secondFileChooser.setFiles(exportPath);
+    const secondMsg = await secondDialogPromise;
+    expect(secondMsg).toContain('JSON 导入成功');
+
+    // 清理
+    try { fs.unlinkSync(exportPath); } catch (_) {}
+  });
+
+  test('53. 完整标注包导出再导入，可恢复原文、字段和证据', async ({ page }) => {
+    const { rawText, annotation } = await buildValidAnnotation(page, 'p0-bundle-53');
+    await injectState(page, annotation, rawText);
+    await page.reload();
+    await page.waitForSelector('#fieldsContainer .field-card');
+    await page.waitForTimeout(300);
+
+    // 记录原始状态用于后续比较
+    const originalFieldCount = annotation.fields.length;
+    const originalAmountValues = annotation.fields.find(f => f.field_name === 'amount').values.length;
+    const originalAmountEvidence = annotation.fields.find(f => f.field_name === 'amount').values[0].acceptable_evidence_spans.length;
+
+    // 导出标注包（bundle）
+    const bundlePath = path.join(TMP_DIR, 'p0_bundle_53.json');
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
+    await page.click('#btnExportBundle');
+    const download = await downloadPromise;
+    await download.saveAs(bundlePath);
+    expect(fs.existsSync(bundlePath)).toBe(true);
+
+    // 验证标注包格式
+    const bundleContent = JSON.parse(fs.readFileSync(bundlePath, 'utf-8'));
+    expect(bundleContent.manifest_version).toBe('1.0');
+    expect(bundleContent.annotation).toBeTruthy();
+    expect(bundleContent.meta).toBeTruthy();
+    expect(bundleContent.meta.raw_text).toBeTruthy();
+    expect(bundleContent.meta.content_hash).toBeTruthy();
+    // 验证标注包的 annotation 不含 ui_id
+    const bundleJsonStr = JSON.stringify(bundleContent.annotation);
+    expect(bundleJsonStr.indexOf('ui_id')).toBe(-1);
+
+    // 重置
+    const resetDialog = nextDialogMessage(page, 10000);
+    await page.click('#btnReset');
+    await resetDialog;
+
+    // 验证 rawText 已清空
+    const rawTextAfterReset = await page.evaluate(() => window.App.state.rawText);
+    expect(rawTextAfterReset).toBe('');
+
+    // 导入标注包
+    const bundleDialogPromise = nextDialogMessage(page, 15000);
+    const bundleFileChooserPromise = page.waitForEvent('filechooser');
+    await page.click('#btnImportJson');
+    const bundleFileChooser = await bundleFileChooserPromise;
+    await bundleFileChooser.setFiles(bundlePath);
+    const bundleMsg = await bundleDialogPromise;
+    expect(bundleMsg).toContain('标注包导入成功');
+    expect(bundleMsg).toContain('已恢复原文和标注');
+
+    // 验证原文已恢复
+    const restoredRawText = await page.evaluate(() => window.App.state.rawText);
+    expect(restoredRawText).toBe(rawText);
+
+    // 验证字段数量已恢复
+    const restoredFieldCount = await page.evaluate(() => window.App.state.annotation.fields.length);
+    expect(restoredFieldCount).toBe(originalFieldCount);
+
+    // 验证金额字段值和证据已恢复
+    const restoredAmount = await page.evaluate(() => {
+      const fields = window.App.state.annotation.fields;
+      const amountField = fields.find(f => f.field_name === 'amount');
+      return {
+        valuesCount: amountField.values.length,
+        evidenceCount: amountField.values[0].acceptable_evidence_spans.length
+      };
+    });
+    expect(restoredAmount.valuesCount).toBe(originalAmountValues);
+    expect(restoredAmount.evidenceCount).toBe(originalAmountEvidence);
+
+    // 验证导出 JSON（纯标注）不含 raw_text / meta / manifest_version
+    const pureExportPath = path.join(TMP_DIR, 'p0_pure_53.json');
+    const pureDownloadPromise = page.waitForEvent('download', { timeout: 5000 });
+    await page.click('#btnExportJson');
+    const pureDownload = await pureDownloadPromise;
+    await pureDownload.saveAs(pureExportPath);
+    const pureContent = JSON.parse(fs.readFileSync(pureExportPath, 'utf-8'));
+    expect(pureContent.manifest_version).toBeUndefined();
+    expect(pureContent.meta).toBeUndefined();
+    expect(pureContent.raw_text).toBeUndefined();
+    expect(pureContent.fields).toBeTruthy();
+
+    // 清理
+    try { fs.unlinkSync(bundlePath); } catch (_) {}
+    try { fs.unlinkSync(pureExportPath); } catch (_) {}
   });
 
 });

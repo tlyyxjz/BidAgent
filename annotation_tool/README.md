@@ -13,7 +13,7 @@
 | `sample_data.js` | Mock 示例数据（人工构造，非真实公告） |
 | `app.js` | 核心业务逻辑 |
 | `test.html` | 自动化测试页面（35+ 测试用例） |
-| `tests/` | Playwright 端到端测试目录（48 项交互场景） |
+| `tests/` | Playwright 端到端测试目录（53 项交互场景） |
 | `validate_schema.py` | Pydantic Schema 校验脚本（强制使用 GLM 真实 Schema，无本地 fallback） |
 | `README.md` | 使用说明文档 |
 
@@ -247,7 +247,7 @@ python annotation_tool/validate_schema.py
 
 ### Playwright 端到端测试（tests/）
 
-覆盖真实 DOM 交互的 48 项场景：
+覆盖真实 DOM 交互的 53 项场景：
 
 1. present 无 value，禁止导出
 2. present value 无 primary，禁止导出

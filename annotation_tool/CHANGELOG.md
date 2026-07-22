@@ -4,6 +4,66 @@
 
 ## [Unreleased] - 2026-07-22
 
+### P0 JSON 导入完整性修复（重置后无法导入）
+
+#### 背景
+人工测试发现：导出 JSON 后点击重置，JSON 无法重新导入。导出的 JSON 不包含 clean_raw_text，重置后 state.rawText 被清空，导致 evidence 切片校验全部失败。
+
+#### 根因
+1. **导出的 JSON 不包含 clean_raw_text**：`exportJson()` 只导出 `document_id, annotator_id, annotation_version, annotation_time, fields`（符合 Schema `extra="forbid"`），但 JSON 无法自恢复原文。
+2. **重置后 rawText 被清空**：`resetAnnotation()` 执行 `state.rawText = '';` 和 `clearStorage(docId)`，导致 rawText 为空。
+3. **JSON 导入因 evidence 切片不匹配而拒绝**：`importJsonFile()` 使用 `state.rawText`（空字符串）校验，`Schema.verifyEvidenceSpan('', start, end, text)` 返回 `actualText: ''`，与 `evidence.text` 不匹配，所有 evidence 校验失败。
+4. **文件 input 未清空 value**：虽然每次创建新 input，但为稳健性应在每次处理后清空 value。
+
+#### 修复（app.js / index.html / tests/e2e.spec.js）
+
+1. **新增"导出标注包"功能（exportBundle）**
+   - 导出 bundle JSON，包含 `manifest_version`、`exported_at`、`annotation`（纯净 Schema 格式）、`meta`（`raw_text`、`content_hash`、`source_file_name`）
+   - 导出前校验 `state.rawText` 非空，校验标注数据完整性
+   - 计算原文 SHA-256 哈希并写入 `meta.content_hash`
+   - `annotation` 仍使用 `stripUiMetadataForExport` 剥离 `ui_id`
+
+2. **修改 importJsonFile() 支持两种格式**
+   - **标注包（bundle）**：检测 `manifest_version` + `meta` + `annotation`，用 `meta.raw_text` 恢复原文，校验 `meta.content_hash` 与 `computeSha256(meta.raw_text)` 一致（不得跳过），然后校验 `annotation`
+   - **纯标注 JSON**：
+     - 若当前 `state.rawText` 非空，用它校验
+     - 若 `state.rawText` 为空，尝试从 localStorage 按 `data.document_id` 恢复原文
+     - 若均失败，明确提示"缺少匹配的 TXT 原文"，显示期望 `document_id` 和哈希前缀
+   - 校验失败显示具体原因（错误字段 + 消息 + 原文来源）
+   - 校验通过后更新 `state.rawText`（标注包或 localStorage 恢复时）、`state.annotation`、`state.docMeta`
+
+3. **修改 resetAnnotation() 明确提示**
+   - 重置前显示详细提示：清除原文、字段标注、证据、备注、localStorage 草稿、文档状态栏
+   - 若当前文档有标注数据，建议先"导出标注包"备份
+
+4. **文件 input 清空 value**
+   - TXT 和 JSON 导入的 `input.onchange` 处理后执行 `e.target.value = ''`
+   - 确保同一文件可再次选择触发 change 事件
+
+5. **新增 index.html 按钮**
+   - 工具栏新增"导出标注包"按钮（`#btnExportBundle`）
+
+6. **新增 5 项 Playwright 测试（tests/e2e.spec.js，场景 49-53）**
+   - 49. TXT → 标注 → 导出 JSON → 重置 → 先导入 TXT → 导入 JSON，成功
+   - 50. 重置后直接导入 JSON，显示明确的缺少原文提示
+   - 51. 导入错误 TXT 后再导入 JSON，显示哈希/偏移量不匹配
+   - 52. 同一 JSON 连续选择两次，change 事件正常触发
+   - 53. 完整标注包导出再导入，可恢复原文、字段和证据
+
+#### 测试结果
+
+- 35 项浏览器单元测试：全部通过 ✅
+- 53 项 Playwright 端到端测试（原 48 + 新增 5）：全部通过 ✅
+- 后端 519 项回归测试：全部通过 ✅
+
+### 不变项
+
+- JSON Schema（未修改 `backend/schemas.py`）
+- UTF-16 偏移逻辑（未修改 `validate_schema.py` / `common.py`）
+- 未修改 `backend/`
+- 未合并 `main` / `develop`
+- 不得为了允许导入而跳过哈希和证据切片校验
+
 ### P0-1 / P0-2 阻塞缺陷修复（多值滚动 + 证据操作后字段保持）
 
 #### 背景

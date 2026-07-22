@@ -1871,7 +1871,11 @@
 
     /**
      * 导入 JSON 标注文件。
-     * 校验失败时不覆盖当前草稿。
+     * 支持两种格式：
+     *   1. 标注包（bundle）：含 manifest_version + annotation + meta（raw_text/content_hash/source_file_name）
+     *   2. 纯标注 JSON：只含 AnnotationDocument Schema 字段
+     * 校验失败时不覆盖当前草稿，并显示具体原因。
+     * 不得为了允许导入而跳过哈希和证据切片校验。
      */
     function importJsonFile(file) {
         // 文件大小限制
@@ -1881,37 +1885,128 @@
         }
 
         const reader = new FileReader();
-        reader.onload = function(e) {
-            let data;
+        reader.onload = async function(e) {
+            let parsed;
             try {
-                data = JSON.parse(e.target.result);
+                parsed = JSON.parse(e.target.result);
             } catch (err) {
                 // 损坏 JSON 明确报错，不覆盖当前草稿
                 alert('JSON 解析失败：' + err.message + '\n\n文件可能已损坏。当前草稿未被修改。');
                 return;
             }
 
-            // 完整校验（校验失败不覆盖当前草稿）
-            const result = validateAnnotation(data, state.rawText);
+            // 检测是否为标注包（bundle）格式
+            const isBundle = !!(parsed && parsed.manifest_version && parsed.meta && parsed.annotation);
+
+            // 确定要导入的标注数据和期望的原文
+            let annotationData;
+            let bundleRawText = null;       // 标注包携带的原文
+            let bundleContentHash = null;   // 标注包携带的内容哈希
+            let bundleFileName = null;      // 标注包携带的源文件名
+            let expectedDocId = '';
+
+            if (isBundle) {
+                annotationData = parsed.annotation;
+                bundleRawText = parsed.meta.raw_text || '';
+                bundleContentHash = parsed.meta.content_hash || '';
+                bundleFileName = parsed.meta.source_file_name || '';
+                expectedDocId = annotationData.document_id || '';
+
+                // 校验标注包内的 content_hash 与 raw_text 一致（不得跳过）
+                if (bundleRawText && bundleContentHash) {
+                    const actualHash = await computeSha256(bundleRawText);
+                    if (actualHash !== bundleContentHash) {
+                        alert('标注包内容哈希不匹配：\n\n' +
+                              '  manifest 中记录的哈希: ' + bundleContentHash.slice(0, 12) + '...\n' +
+                              '  实际计算的哈希: ' + actualHash.slice(0, 12) + '...\n\n' +
+                              '文件可能已损坏或被篡改。当前草稿未被修改。');
+                        return;
+                    }
+                }
+            } else {
+                annotationData = parsed;
+                expectedDocId = annotationData.document_id || '';
+            }
+
+            // 确定校验用的原文：
+            //   1. 标注包 → 用 bundleRawText
+            //   2. 纯标注 JSON + 当前 rawText 非空 → 用 state.rawText
+            //   3. 纯标注 JSON + 当前 rawText 为空 → 尝试从 localStorage 按 document_id 恢复
+            //   4. 均失败 → 明确提示"请先导入匹配的 TXT 原文"
+            let rawTextForValidation = '';
+            let rawTextSource = ''; // 记录原文来源，用于提示
+
+            if (isBundle) {
+                rawTextForValidation = bundleRawText;
+                rawTextSource = 'bundle';
+            } else if (state.rawText && state.rawText.length > 0) {
+                rawTextForValidation = state.rawText;
+                rawTextSource = 'current';
+            } else if (expectedDocId) {
+                // 尝试从 localStorage 恢复原文
+                const draft = loadFromStorage(expectedDocId);
+                if (draft && draft.rawText) {
+                    rawTextForValidation = draft.rawText;
+                    rawTextSource = 'localStorage';
+                }
+            }
+
+            if (!rawTextForValidation) {
+                // 缺少原文，明确提示
+                alert(
+                    '导入失败：缺少匹配的 TXT 原文。\n\n' +
+                    'JSON 中的 document_id: ' + (expectedDocId || '(空)') + '\n' +
+                    '期望的内容哈希前缀: ' + (bundleContentHash ? bundleContentHash.slice(0, 12) + '...' : '(未知)') + '\n\n' +
+                    '请先导入匹配的 TXT 原文，或使用"导出标注包"功能导出包含原文的完整标注包。\n\n' +
+                    '当前草稿未被修改。'
+                );
+                return;
+            }
+
+            // 完整校验（校验失败不覆盖当前草稿，显示具体原因）
+            const result = validateAnnotation(annotationData, rawTextForValidation);
             if (!result.valid) {
                 const errorMessages = result.errors.map(err => '[' + err.field + '] ' + err.message);
-                alert('JSON 校验失败，已拒绝导入：\n\n' + errorMessages.join('\n') + '\n\n当前草稿未被修改。');
+                alert('JSON 校验失败，已拒绝导入：\n\n' + errorMessages.join('\n') +
+                      '\n\n原文来源: ' + rawTextSource +
+                      '\n当前草稿未被修改。');
                 return;
             }
 
             // annotation_version 兼容性提示
-            if (data.annotation_version && data.annotation_version !== Schema.ANNOTATION_VERSION) {
+            if (annotationData.annotation_version && annotationData.annotation_version !== Schema.ANNOTATION_VERSION) {
                 const proceed = confirm(
                     '标注版本不兼容：\n' +
-                    '  文件版本: ' + data.annotation_version + '\n' +
+                    '  文件版本: ' + annotationData.annotation_version + '\n' +
                     '  当前支持版本: ' + Schema.ANNOTATION_VERSION + '\n\n' +
                     '是否仍要导入？'
                 );
                 if (!proceed) return;
             }
 
-            // 校验通过，更新 state 和 localStorage
-            state.annotation = data;
+            // 纯标注 JSON 导入时，若当前 rawText 与 JSON 中 document_id 对应的 localStorage 草稿原文一致，
+            // 但 document_id 不同（重置后 document_id 可能已变），需要切换到 JSON 中的 document_id
+            const newDocId = annotationData.document_id;
+            const oldDocId = state.annotation.document_id;
+
+            // 校验通过，更新 state
+            state.annotation = annotationData;
+            // 标注包或 localStorage 恢复的原文需要同步到 state.rawText
+            if (isBundle) {
+                state.rawText = bundleRawText;
+                // 标注包恢复后，推断公告类型
+                state.docMeta = {
+                    noticeType: inferNoticeType(bundleRawText),
+                    annotationStatus: 'pending'
+                };
+            } else if (rawTextSource === 'localStorage') {
+                // 从 localStorage 恢复了原文，同步元数据
+                state.rawText = rawTextForValidation;
+                const existingMeta = loadDocMeta(newDocId);
+                state.docMeta = existingMeta || { noticeType: inferNoticeType(rawTextForValidation), annotationStatus: 'pending' };
+            }
+            // rawTextSource === 'current' 时，state.rawText 已是当前值，无需更新
+
             state.currentFieldIndex = 0;
             state.currentValueIndex = -1;
             state.editingEvidenceIndex = -1;
@@ -1919,17 +2014,103 @@
             state.valueCollapsed = {};
             state.pendingFocusUiId = null;
             ensureAllValuesHaveUiId(state.annotation);
+
+            // 清除重叠提示
+            const overlapWarning = document.getElementById('overlapWarning');
+            if (overlapWarning) overlapWarning.style.display = 'none';
+
             syncDocInfoFromState();
             renderFields();
             renderText(); // 更新高亮
             updateProgress();
             scheduleAutoSave();
-            alert('JSON 导入成功');
+            setLastActiveDoc(newDocId);
+
+            // 更新文档状态显示
+            if (isBundle) {
+                updateDocStatusDisplay(bundleFileName || '(标注包)', newDocId, bundleContentHash, true);
+            }
+
+            const successMsg = isBundle
+                ? '标注包导入成功（已恢复原文和标注）\n\ndocument_id: ' + newDocId + '\n原文来源: 标注包内置'
+                : (rawTextSource === 'localStorage'
+                    ? 'JSON 导入成功（已从本机草稿恢复原文）\n\ndocument_id: ' + newDocId + '\n原文来源: localStorage'
+                    : 'JSON 导入成功\n\ndocument_id: ' + newDocId + '\n原文来源: 当前已加载原文');
+            alert(successMsg);
         };
         reader.onerror = function() {
             alert('文件读取失败。当前草稿未被修改。');
         };
         reader.readAsText(file, 'UTF-8');
+    }
+
+    /**
+     * 导出标注包（bundle JSON）。
+     * 包含 annotation（纯净 Schema 格式）+ meta（raw_text、content_hash、source_file_name）。
+     * 用于完整恢复原文和标注，解决"导出 JSON 后重置导致无法重新导入"问题。
+     */
+    function exportBundle() {
+        // 从表单同步最新值
+        state.annotation.annotation_time = new Date().toISOString();
+        state.annotation.document_id = document.getElementById('documentId').value;
+        state.annotation.annotator_id = document.getElementById('annotatorId').value;
+
+        // 导出前最终校验（使用当前 state.rawText）
+        if (!state.rawText) {
+            alert('导出失败：当前没有原文。请先导入 TXT 原文后再导出标注包。');
+            return;
+        }
+
+        const result = validateAnnotation(state.annotation, state.rawText);
+        if (!result.valid) {
+            const errorMessages = result.errors.map(err => '[' + err.field + '] ' + err.message);
+            alert('导出校验失败，请修正以下错误：\n\n' + errorMessages.join('\n'));
+            if (result.firstErrorFieldIndex >= 0) {
+                flashFieldError(result.firstErrorFieldIndex);
+            }
+            return;
+        }
+
+        // 计算原文内容哈希
+        computeSha256(state.rawText).then(contentHash => {
+            // 构建标注包：annotation（纯净 Schema）+ meta（原文恢复信息）
+            const bundle = {
+                manifest_version: '1.0',
+                exported_at: new Date().toISOString(),
+                annotation: {
+                    document_id: state.annotation.document_id,
+                    annotator_id: state.annotation.annotator_id,
+                    annotation_version: state.annotation.annotation_version,
+                    annotation_time: state.annotation.annotation_time,
+                    fields: stripUiMetadataForExport(state.annotation.fields)
+                },
+                meta: {
+                    source_file_name: getCurrentFileName() || '(unknown)',
+                    raw_text: state.rawText,
+                    content_hash: contentHash
+                }
+            };
+
+            const jsonStr = JSON.stringify(bundle, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bundle_' + (state.annotation.document_id || 'export') + '_' + Date.now() + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    /**
+     * 获取当前文档的文件名（从文档状态栏读取）。
+     */
+    function getCurrentFileName() {
+        const nameSpan = document.querySelector('#docStatusInfo .doc-status-name');
+        return nameSpan ? nameSpan.textContent : '';
     }
 
     /**
@@ -1982,10 +2163,24 @@
 
     /**
      * 重置标注：只清除当前文档的草稿，不影响其他文档。
+     * 重置前明确提示会清除什么。
      */
     function resetAnnotation() {
         const docId = state.annotation.document_id || 'default';
-        if (!confirm('确定要重置文档 "' + docId + '" 的所有标注吗？\n\n此操作只清除当前文档的草稿，不影响其他文档。操作不可撤销。')) {
+        const hasData = hasNonEmptyAnnotation(state.annotation);
+        const warningMsg =
+            '确定要重置文档 "' + docId + '" 吗？\n\n' +
+            '此操作将清除以下内容（不可撤销）：\n' +
+            '  • 当前文档的原文（rawText 清空）\n' +
+            '  • 所有字段标注、值、证据、备注\n' +
+            '  • 当前文档的 localStorage 草稿和元数据\n' +
+            '  • 文档状态栏的文件名/哈希/恢复状态\n\n' +
+            '此操作不影响其他文档的草稿。\n\n' +
+            (hasData
+                ? '⚠️ 当前文档已有标注数据，建议先"导出标注包"备份后再重置。'
+                : '当前文档无标注数据。');
+
+        if (!confirm(warningMsg)) {
             return;
         }
         const annotatorId = state.annotation.annotator_id || 'A';
@@ -2181,6 +2376,8 @@
             input.className = 'hidden-file-input';
             input.onchange = (e) => {
                 if (e.target.files[0]) importTextFile(e.target.files[0]);
+                // 清空 value，确保同一文件可再次选择触发 change
+                e.target.value = '';
             };
             input.click();
         });
@@ -2192,11 +2389,15 @@
             input.className = 'hidden-file-input';
             input.onchange = (e) => {
                 if (e.target.files[0]) importJsonFile(e.target.files[0]);
+                // 清空 value，确保同一 JSON 可再次选择触发 change
+                e.target.value = '';
             };
             input.click();
         });
 
         document.getElementById('btnExportJson').addEventListener('click', exportJson);
+        const btnExportBundle = document.getElementById('btnExportBundle');
+        if (btnExportBundle) btnExportBundle.addEventListener('click', exportBundle);
         document.getElementById('btnReset').addEventListener('click', resetAnnotation);
 
         // 证据弹窗
@@ -2243,6 +2444,8 @@
         importTextFile: importTextFile,
         importJsonFile: importJsonFile,
         exportJson: exportJson,
+        exportBundle: exportBundle,
+        getCurrentFileName: getCurrentFileName,
         resetAnnotation: resetAnnotation,
         inferNoticeType: inferNoticeType,
         sanitizeFileName: sanitizeFileName,
