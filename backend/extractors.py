@@ -48,6 +48,61 @@ logger = get_logger("backend.extractors")
 
 PROMPT_VERSION = "1.1"  # v1.1: 移除 evidence_text 要求，符合 A 组公平性
 
+# ============================================================
+# B 组提示词（v2.0）- 要求证据引用，用于消融实验对比
+# 对应 v4.1 §10.8 消融实验 B 组：要求 LLM 输出 evidence_text
+# ============================================================
+
+PROMPT_VERSION_B = "2.0"  # v2.0: B 组，要求 evidence_text
+
+_SYSTEM_PROMPT_B = """你是一个招投标公告结构化抽取助手。
+
+任务：从给定公告正文中抽取以下六类核心字段，每个字段可能有多值。
+重要：每个值必须引用原文证据片段（evidence_text），用于后续验证。
+
+字段定义：
+1. project_identifier - 项目编号（招标/采购编号）
+2. purchaser_name - 采购人名称
+3. winner_name - 中标人名称
+4. amount - 金额（含金额类型：budget/ceiling/award/contract/unit_price/unknown）
+5. publish_date - 发布日期（YYYY-MM-DD）
+6. bid_deadline - 投标截止日期（YYYY-MM-DD 或 ISO 8601 时间）
+
+输出要求：
+- 严格输出 JSON，不要添加 markdown 标记或额外解释
+- 字段不存在时省略该字段，不要输出 null
+- 多值字段使用数组，每个值独立记录
+- raw_value 保持原文形式，不得改写
+- normalized_value 给出归一化结果（金额单位为元，日期为 YYYY-MM-DD）
+- 仅依据原文，不要根据常识补全
+- 每个值必须提供 evidence_text：从原文中复制的证据片段（必须与原文完全一致，不得改写）
+- evidence_text 必须能在原文中找到（用于程序验证）
+- 如果无法在原文中找到证据，不要输出该值
+
+输出 JSON Schema：
+{
+  "fields": [
+    {
+      "field_name": "amount",
+      "support_level": "direct",
+      "values": [
+        {
+          "raw_value": "128.50万元",
+          "normalized_value": "1285000.00",
+          "amount_type": "award",
+          "currency": "CNY",
+          "lot_id": "包1",
+          "evidence_text": "预算金额：128.50万元"
+        }
+      ]
+    }
+  ]
+}
+
+support_level 可选值：direct / equivalent / inferred / unsupported / contradicted
+amount_type 可选值：budget / ceiling / award / contract / unit_price / unknown
+"""
+
 _SYSTEM_PROMPT = """你是一个招投标公告结构化抽取助手。
 
 任务：从给定公告正文中抽取以下六类核心字段，每个字段可能有多值。
@@ -99,16 +154,28 @@ _USER_PROMPT_TEMPLATE = """公告类型：{notice_type}
 请输出结构化 JSON。"""
 
 
-def build_prompt(notice_text: str, notice_type: str | None = None) -> tuple[str, str]:
+def build_prompt(
+    notice_text: str,
+    notice_type: str | None = None,
+    prompt_version: str = PROMPT_VERSION,
+) -> tuple[str, str]:
     """构造 (system_prompt, user_prompt)。
 
     返回 tuple 便于计算 prompt_hash 时拼接。
+
+    prompt_version:
+    - "1.1" (PROMPT_VERSION, A 组): 不要求 evidence_text，公平对比
+    - "2.0" (PROMPT_VERSION_B, B 组): 要求 evidence_text，用于证据验证
     """
+    if prompt_version == PROMPT_VERSION_B:
+        sys_prompt = _SYSTEM_PROMPT_B
+    else:
+        sys_prompt = _SYSTEM_PROMPT
     user = _USER_PROMPT_TEMPLATE.format(
         notice_type=notice_type or "未知",
         notice_text=notice_text,
     )
-    return _SYSTEM_PROMPT, user
+    return sys_prompt, user
 
 
 def compute_prompt_hash(system_prompt: str, user_prompt: str) -> str:
@@ -287,7 +354,9 @@ class DirectLLMBaseline:
         if not notice_text or not notice_text.strip():
             raise ValueError("notice_text 不能为空")
 
-        system_prompt, user_prompt = build_prompt(notice_text, notice_type)
+        system_prompt, user_prompt = build_prompt(
+            notice_text, notice_type, prompt_version=self._prompt_version
+        )
         prompt_hash = compute_prompt_hash(system_prompt, user_prompt)
         started_at = datetime.now()
         logger.info(
@@ -572,6 +641,7 @@ __all__ = [
     "LLMClient",
     "LLMResponse",
     "PROMPT_VERSION",
+    "PROMPT_VERSION_B",
     "StubLLMClient",
     "build_prompt",
     "compute_prompt_hash",

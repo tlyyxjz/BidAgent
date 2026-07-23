@@ -25,6 +25,7 @@ import pytest
 from backend.enums import CoreFieldName
 from backend.extractors import (
     PROMPT_VERSION,
+    PROMPT_VERSION_B,
     DirectLLMBaseline,
     LLMResponse,
     StubLLMClient,
@@ -70,6 +71,138 @@ class TestPromptConstruction:
     def test_prompt_version_constant(self):
         # v1.1: 移除 evidence_text 要求，符合 A 组公平性
         assert PROMPT_VERSION == "1.1"
+
+    # ===== W1-06 B 组（v2.0）测试 =====
+
+    def test_prompt_version_b_constant(self):
+        """B 组提示词版本常量。"""
+        assert PROMPT_VERSION_B == "2.0"
+
+    def test_build_prompt_group_b_contains_evidence_requirement(self):
+        """B 组 system prompt 必须明确要求 evidence_text。"""
+        sys_b, _ = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION_B)
+        assert "evidence_text" in sys_b
+        # 必须要求证据能在原文找到
+        assert "原文" in sys_b
+        assert "证据" in sys_b
+
+    def test_build_prompt_group_a_no_evidence_requirement(self):
+        """A 组 system prompt 不要求 evidence_text（公平性保留）。"""
+        sys_a, _ = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION)
+        # A 组不应在输出要求里强调 evidence_text
+        assert "不需要输出证据片段" in sys_a
+
+    def test_build_prompt_group_a_vs_b_differs(self):
+        """A/B 组 system prompt 必须不同。"""
+        sys_a, _ = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION)
+        sys_b, _ = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION_B)
+        assert sys_a != sys_b
+
+    def test_build_prompt_group_b_user_prompt_same_as_a(self):
+        """B 组 user prompt 模板与 A 组一致（公平性：输入相同）。"""
+        _, user_a = build_prompt("正文X", "tender", prompt_version=PROMPT_VERSION)
+        _, user_b = build_prompt("正文X", "tender", prompt_version=PROMPT_VERSION_B)
+        assert user_a == user_b
+
+    def test_build_prompt_default_is_group_a(self):
+        """build_prompt 默认走 A 组（向后兼容）。"""
+        sys_default, _ = build_prompt("正文", "tender")
+        sys_a, _ = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION)
+        assert sys_default == sys_a
+
+    def test_build_prompt_group_b_hash_differs_from_a(self):
+        """A/B 组 prompt_hash 必须不同（消融实验可区分）。"""
+        sys_a, user_a = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION)
+        sys_b, user_b = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION_B)
+        h_a = compute_prompt_hash(sys_a, user_a)
+        h_b = compute_prompt_hash(sys_b, user_b)
+        assert h_a != h_b
+
+    def test_build_prompt_group_b_hash_stable(self):
+        """B 组相同输入必须产生相同 hash。"""
+        sys1, user1 = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION_B)
+        sys2, user2 = build_prompt("正文", "tender", prompt_version=PROMPT_VERSION_B)
+        assert compute_prompt_hash(sys1, user1) == compute_prompt_hash(sys2, user2)
+
+
+# ============================================================
+# 测试套件 1.5：DirectLLMBaseline 的 prompt_version 传递
+# ============================================================
+
+
+class TestBaselinePromptVersionPropagation:
+    """验证 DirectLLMBaseline 正确传递 prompt_version 给 build_prompt。"""
+
+    @pytest.mark.asyncio
+    async def test_baseline_default_uses_group_a(self):
+        """默认走 A 组（向后兼容）。"""
+        captured = {}
+
+        def responder(sys_p: str, user_p: str) -> str:
+            captured["sys"] = sys_p
+            return json.dumps({"fields": []})
+
+        client = StubLLMClient(responder=responder)
+        baseline = DirectLLMBaseline(
+            client=client,
+            model_identifier="stub-1.0",
+            # 默认 prompt_version=PROMPT_VERSION
+        )
+        await baseline.extract_one("doc-1", "正文", "tender")
+        # A 组 system prompt 应包含"不需要输出证据片段"
+        assert "不需要输出证据片段" in captured["sys"]
+        assert baseline.prompt_version == PROMPT_VERSION
+
+    @pytest.mark.asyncio
+    async def test_baseline_group_b_uses_group_b_prompt(self):
+        """传 PROMPT_VERSION_B 走 B 组。"""
+        captured = {}
+
+        def responder(sys_p: str, user_p: str) -> str:
+            captured["sys"] = sys_p
+            return json.dumps({"fields": []})
+
+        client = StubLLMClient(responder=responder)
+        baseline = DirectLLMBaseline(
+            client=client,
+            model_identifier="stub-1.0",
+            prompt_version=PROMPT_VERSION_B,
+        )
+        await baseline.extract_one("doc-1", "正文", "tender")
+        # B 组 system prompt 应包含 evidence_text 要求
+        assert "evidence_text" in captured["sys"]
+        assert baseline.prompt_version == PROMPT_VERSION_B
+
+    @pytest.mark.asyncio
+    async def test_baseline_group_b_record_carries_prompt_version(self):
+        """B 组产出的 LLMExtractionRecord 应记录 prompt_version=2.0。"""
+        def responder(sys_p: str, user_p: str) -> str:
+            return json.dumps({"fields": []})
+
+        client = StubLLMClient(responder=responder)
+        baseline = DirectLLMBaseline(
+            client=client,
+            model_identifier="stub-1.0",
+            prompt_version=PROMPT_VERSION_B,
+        )
+        record = await baseline.extract_one("doc-1", "正文", "tender")
+        assert record.prompt_version == PROMPT_VERSION_B
+        assert record.success is True
+
+    @pytest.mark.asyncio
+    async def test_baseline_group_a_record_carries_prompt_version(self):
+        """A 组产出的 LLMExtractionRecord 应记录 prompt_version=1.1。"""
+        def responder(sys_p: str, user_p: str) -> str:
+            return json.dumps({"fields": []})
+
+        client = StubLLMClient(responder=responder)
+        baseline = DirectLLMBaseline(
+            client=client,
+            model_identifier="stub-1.0",
+            prompt_version=PROMPT_VERSION,
+        )
+        record = await baseline.extract_one("doc-1", "正文", "tender")
+        assert record.prompt_version == PROMPT_VERSION
 
 
 # ============================================================
