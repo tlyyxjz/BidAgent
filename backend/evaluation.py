@@ -198,15 +198,6 @@ def _field_value_set(field: AnnotatedField) -> set[str]:
     }
 
 
-def _system_value_set(field: LLMExtractedField) -> set[str]:
-    """提取系统字段的归一化值集合。"""
-    return {
-        normalize_value(field.field_name, v.normalized_value or v.raw_value)
-        for v in field.values
-        if (v.normalized_value or v.raw_value)
-    }
-
-
 def _check_unjustified(
     value: LLMExtractedValue,
     raw_text: str | None,
@@ -309,10 +300,19 @@ def evaluate_document(
             gold_field.gold_status == GoldStatus.ABSENT and len(system_set) > 0
         ) else 0
 
-        # W1-07 v2: 无依据输出检查
+        # W1-07 v2: 无依据输出检查（W2 统一为去重口径）
+        # 按归一化值去重，每个唯一值取第一个 value 对象检查 evidence_text
+        seen_norm: set[str] = set()
+        deduped_values: list[LLMExtractedValue] = []
+        for v in system_values_raw:
+            norm = normalize_value(fname, v.normalized_value or v.raw_value)
+            if norm and norm not in seen_norm:
+                seen_norm.add(norm)
+                deduped_values.append(v)
+
         unjustified_count = 0
         unjustified_values: list[str] = []
-        for v in system_values_raw:
+        for v in deduped_values:
             if _check_unjustified(v, raw_text):
                 unjustified_count += 1
                 unjustified_values.append(v.raw_value)
@@ -321,10 +321,10 @@ def evaluate_document(
         matched_value_count = len(matched)
         gold_value_total = len(gold_set)
 
-        # W1-07 v2: amount_type 校验（仅金额字段）
+        # W1-07 v2: amount_type 校验（仅金额字段，W2 统一为去重口径）
         amount_type_mismatch = 0
         if fname == CoreFieldName.AMOUNT and system_field:
-            for v in system_values_raw:
+            for v in deduped_values:
                 norm = normalize_value(fname, v.normalized_value or v.raw_value)
                 if norm in gold_amount_types:
                     gold_at = gold_amount_types[norm]
@@ -432,8 +432,8 @@ def evaluate_dataset(
             if r.is_correct is True and r.gold_status == GoldStatus.PRESENT:
                 m.system_correct_count += 1
         m.false_positive_on_absent += r.false_positive_on_absent
-        # W1-07 v2 新增聚合
-        m.system_value_total += r.system_output_count
+        # W1-07 v2 新增聚合（W2 统一为去重口径：用 system_value_count 而非 system_output_count）
+        m.system_value_total += r.system_value_count
         m.unjustified_count += r.unjustified_count
         m.matched_value_count += r.matched_value_count
         m.gold_value_total += r.gold_value_total
@@ -593,10 +593,13 @@ def safe_evaluate_dataset(
     system_identifier: str,
     dataset_split: str = "test",
     run_id: str | None = None,
+    raw_texts: dict[str, str] | None = None,
 ) -> EvaluationSummary:
     """安全版评测 - 跳过无效输入而非抛异常。
 
     用于生产环境批量评测，避免单条数据问题导致整体失败。
+
+    W2 新增：raw_texts 参数透传给 evaluate_dataset，支持无依据输出率检查。
     """
     gold_list: list[AnnotationDocument] = []
     for g in gold_docs:
@@ -634,6 +637,7 @@ def safe_evaluate_dataset(
         system_identifier=system_identifier,
         dataset_split=dataset_split,
         run_id=run_id,
+        raw_texts=raw_texts,
     )
 
 
