@@ -173,12 +173,20 @@ class DocumentFieldResult:
     gold_status: str
     gold_value_count: int
     system_value_count: int
-    matched_count: int  # 与金标匹配的值数量
+    matched_count: int  # 与金标匹配的值数量（去重后）
     system_output_count: int  # 系统输出值数量（原始计数，未去重）
     false_positive_on_absent: int  # 金标 absent 但系统有输出
     is_correct: bool | None  # 单值字段：是否完全匹配；多值字段：是否有至少一个匹配；None 表示不参与评测
     unmatched_system_values: list[str] = field(default_factory=list)
     unmatched_gold_values: list[str] = field(default_factory=list)
+    # W1-07 v2 新增：无依据输出率
+    unjustified_count: int = 0  # evidence_text 为空或无法在原文定位的值数
+    unjustified_values: list[str] = field(default_factory=list)  # 无依据的值（用于报告）
+    # W1-07 v2 新增：多值精确指标
+    matched_value_count: int = 0  # 与金标匹配的值数（用于精确 P/R）
+    gold_value_total: int = 0  # 金标值总数（多值字段）
+    # W1-07 v2 新增：amount_type 校验
+    amount_type_mismatch_count: int = 0
 
 
 def _field_value_set(field: AnnotatedField) -> set[str]:
@@ -199,13 +207,43 @@ def _system_value_set(field: LLMExtractedField) -> set[str]:
     }
 
 
+def _check_unjustified(
+    value: LLMExtractedValue,
+    raw_text: str | None,
+) -> bool:
+    """检查单个系统输出值是否"无依据"。
+
+    无依据定义（W1-07 v2 核心）：
+    - evidence_text 为空/None → 无依据（LLM 没引用任何证据）
+    - raw_text 为 None → 无法验证，视为有依据（保守，不冤枉）
+    - evidence_text 非空但 raw_text.find(evidence_text) < 0 → 无依据（引用的原文不存在）
+
+    返回 True 表示无依据。
+    """
+    ev_text = (value.evidence_text or "").strip()
+    if not ev_text:
+        return True  # 没引用证据 = 无依据
+    if raw_text is None:
+        return False  # 无原文可验证，保守判为有依据
+    # evidence_text 必须能在原文里找到
+    return raw_text.find(ev_text) < 0
+
+
 def evaluate_document(
     gold: AnnotationDocument,
     system: LLMExtractionRecord | LLMExtractionOutput | None,
+    raw_text: str | None = None,
 ) -> list[DocumentFieldResult]:
     """评测单文档，返回六个字段的结果列表。
 
     系统输出为 None 或失败记录时，所有字段按"系统未输出"处理。
+
+    W1-07 v2 新增：
+    - raw_text: 原文（clean_raw_text），用于检查无依据输出率。
+                None 时不检查无依据（保守，不冤枉）。
+    - 无依据输出率：evidence_text 为空或无法在原文定位的值数
+    - 多值精确指标：matched_value_count / gold_value_total / system_value_total
+    - amount_type 校验：金额字段 amount_type 与金标不一致的值数
     """
     document_id = gold.document_id
 
@@ -223,6 +261,15 @@ def evaluate_document(
         for sf in system_output.fields:
             system_fields_map[sf.field_name] = sf
 
+    # 金标 amount_type 映射（用于校验金额字段类型）
+    gold_amount_types: dict[str, str | None] = {}
+    if gold_field_amount := next(
+        (f for f in gold.fields if f.field_name == CoreFieldName.AMOUNT), None
+    ):
+        for v in gold_field_amount.values:
+            norm = normalize_value(CoreFieldName.AMOUNT, v.normalized_value or v.raw_value)
+            gold_amount_types[norm] = v.amount_type
+
     results: list[DocumentFieldResult] = []
     for gold_field in gold.fields:
         fname = gold_field.field_name
@@ -230,6 +277,7 @@ def evaluate_document(
         system_field = system_fields_map.get(fname)
         # 修复：system_value_count 用原始计数（未去重），matched 用集合交集
         system_raw_values: list[str] = []
+        system_values_raw: list[LLMExtractedValue] = []  # 保留原始值对象，用于无依据检查
         if system_field:
             for v in system_field.values:
                 val = v.normalized_value or v.raw_value
@@ -237,6 +285,7 @@ def evaluate_document(
                     system_raw_values.append(
                         normalize_value(fname, val)
                     )
+                    system_values_raw.append(v)
         system_set = set(system_raw_values)
         system_value_count_raw = len(system_raw_values)  # 原始计数（含重复）
 
@@ -260,6 +309,30 @@ def evaluate_document(
             gold_field.gold_status == GoldStatus.ABSENT and len(system_set) > 0
         ) else 0
 
+        # W1-07 v2: 无依据输出检查
+        unjustified_count = 0
+        unjustified_values: list[str] = []
+        for v in system_values_raw:
+            if _check_unjustified(v, raw_text):
+                unjustified_count += 1
+                unjustified_values.append(v.raw_value)
+
+        # W1-07 v2: 多值精确指标（按值数，非"至少1个匹配"）
+        matched_value_count = len(matched)
+        gold_value_total = len(gold_set)
+
+        # W1-07 v2: amount_type 校验（仅金额字段）
+        amount_type_mismatch = 0
+        if fname == CoreFieldName.AMOUNT and system_field:
+            for v in system_values_raw:
+                norm = normalize_value(fname, v.normalized_value or v.raw_value)
+                if norm in gold_amount_types:
+                    gold_at = gold_amount_types[norm]
+                    sys_at = v.amount_type
+                    # 金标有 amount_type 且系统有 amount_type 但不一致
+                    if gold_at and sys_at and gold_at != sys_at:
+                        amount_type_mismatch += 1
+
         results.append(
             DocumentFieldResult(
                 document_id=document_id,
@@ -273,6 +346,12 @@ def evaluate_document(
                 is_correct=is_correct,
                 unmatched_system_values=sorted(unmatched_system),
                 unmatched_gold_values=sorted(unmatched_gold),
+                # W1-07 v2 新增
+                unjustified_count=unjustified_count,
+                unjustified_values=unjustified_values,
+                matched_value_count=matched_value_count,
+                gold_value_total=gold_value_total,
+                amount_type_mismatch_count=amount_type_mismatch,
             )
         )
 
@@ -290,21 +369,27 @@ def evaluate_dataset(
     system_identifier: str,
     dataset_split: str = "test",
     run_id: str | None = None,
+    raw_texts: dict[str, str] | None = None,
 ) -> EvaluationSummary:
     """评测整个数据集，返回 EvaluationSummary。
 
     要求 gold_docs 与 system_records 的 document_id 一一对应。
     缺失系统记录按失败处理。
+
+    W1-07 v2 新增：
+    - raw_texts: {document_id: clean_raw_text} 映射，用于检查无依据输出率。
+                 None 时不检查无依据（保守，unjustified_count 保持 0）。
     """
     if not gold_docs:
         raise ValueError("gold_docs 不能为空")
 
     logger.info(
-        "evaluate_dataset start gold_count={} system_count={} system_id={} split={}",
+        "evaluate_dataset start gold_count={} system_count={} system_id={} split={} raw_texts={}",
         len(gold_docs),
         len(system_records),
         system_identifier,
         dataset_split,
+        len(raw_texts) if raw_texts else 0,
     )
 
     # 按 document_id 索引系统记录
@@ -319,7 +404,8 @@ def evaluate_dataset(
         sys_record = sys_map.get(gold.document_id)
         if sys_record is not None:
             matched_doc_count += 1
-        results = evaluate_document(gold, sys_record)
+        raw_text = raw_texts.get(gold.document_id) if raw_texts else None
+        results = evaluate_document(gold, sys_record, raw_text=raw_text)
         all_results.extend(results)
 
     # 按字段聚合
@@ -346,6 +432,12 @@ def evaluate_dataset(
             if r.is_correct is True and r.gold_status == GoldStatus.PRESENT:
                 m.system_correct_count += 1
         m.false_positive_on_absent += r.false_positive_on_absent
+        # W1-07 v2 新增聚合
+        m.system_value_total += r.system_output_count
+        m.unjustified_count += r.unjustified_count
+        m.matched_value_count += r.matched_value_count
+        m.gold_value_total += r.gold_value_total
+        m.amount_type_mismatch_count += r.amount_type_mismatch_count
 
     # run_id 默认用时间戳
     if run_id is None:
@@ -361,13 +453,15 @@ def evaluate_dataset(
     )
 
     logger.info(
-        "evaluate_dataset done run_id={} docs={} matched={} macro_p={:.4f} macro_r={:.4f} macro_f1={:.4f}",
+        "evaluate_dataset done run_id={} docs={} matched={} macro_p={:.4f} macro_r={:.4f} macro_f1={:.4f} "
+        "unjustified={}",
         run_id,
         len(gold_docs),
         matched_doc_count,
         summary.macro_precision,
         summary.macro_recall,
         summary.macro_f1,
+        sum(m.unjustified_count for m in summary.field_metrics),
     )
     return summary
 
@@ -444,6 +538,16 @@ def export_summary_csv(summary: EvaluationSummary, path: str | Path) -> Path:
         "recall",
         "f1",
         "false_omission_rate_on_absent",
+        # W1-07 v2 新增
+        "system_value_total",
+        "unjustified_count",
+        "unjustified_rate",
+        "matched_value_count",
+        "gold_value_total",
+        "precision_multi",
+        "recall_multi",
+        "f1_multi",
+        "amount_type_mismatch_count",
     ]
 
     with path.open("w", encoding="utf-8-sig", newline="") as f:

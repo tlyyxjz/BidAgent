@@ -310,7 +310,14 @@ class LLMExtractionRecord(BaseModel):
 
 
 class FieldMetrics(BaseModel):
-    """单字段评测指标 - Precision / Recall / F1 / 空值误报率。"""
+    """单字段评测指标 - Precision / Recall / F1 / 空值误报率 / 无依据输出率。
+
+    W1-07 新增指标（v2）：
+    - unjustified_count: 系统输出值中 evidence_text 为空或无法在原文定位的数量
+    - unjustified_rate: 无依据输出比例 = unjustified / system_value_total
+    - 多值字段精确指标：precision_multi / recall_multi（按值数比例，非"至少1个匹配"）
+    - amount_type_mismatch_count: 金额字段 amount_type 与金标不一致的值数
+    """
     model_config = ConfigDict(extra="forbid")
 
     field_name: str
@@ -331,10 +338,32 @@ class FieldMetrics(BaseModel):
         default=0, ge=0,
         description="金标 absent 但系统输出了值（空值误报）",
     )
+    # W1-07 v2 新增：无依据输出率（核心指标）
+    system_value_total: int = Field(
+        default=0, ge=0,
+        description="系统输出值总数（所有字段值的原始计数，含重复）",
+    )
+    unjustified_count: int = Field(
+        default=0, ge=0,
+        description="无依据输出值数（evidence_text 为空或无法在原文定位）",
+    )
+    # W1-07 v2 新增：多值字段精确指标
+    matched_value_count: int = Field(
+        default=0, ge=0,
+        description="系统值与金标值匹配的数量（用于精确 P/R）",
+    )
+    gold_value_total: int = Field(
+        default=0, ge=0,
+        description="金标值总数（多值字段的值数总和）",
+    )
+    amount_type_mismatch_count: int = Field(
+        default=0, ge=0,
+        description="金额字段 amount_type 与金标不一致的值数",
+    )
 
     @property
     def precision(self) -> float:
-        """Precision = correct / output_total。"""
+        """Precision = correct / output_total（字段级）。"""
         if self.system_output_count == 0:
             return 0.0
         return self.system_correct_count / self.system_output_count
@@ -361,6 +390,38 @@ class FieldMetrics(BaseModel):
             return 0.0
         return self.false_positive_on_absent / self.gold_absent_count
 
+    @property
+    def unjustified_rate(self) -> float:
+        """无依据输出率 = unjustified / system_value_total（项目核心指标）。
+
+        衡量 LLM "瞎编"比例：输出了值但 evidence_text 为空或在原文找不到。
+        """
+        if self.system_value_total == 0:
+            return 0.0
+        return self.unjustified_count / self.system_value_total
+
+    @property
+    def precision_multi(self) -> float:
+        """多值字段精确 Precision = matched / system_value_total。"""
+        if self.system_value_total == 0:
+            return 0.0
+        return self.matched_value_count / self.system_value_total
+
+    @property
+    def recall_multi(self) -> float:
+        """多值字段精确 Recall = matched / gold_value_total。"""
+        if self.gold_value_total == 0:
+            return 0.0
+        return self.matched_value_count / self.gold_value_total
+
+    @property
+    def f1_multi(self) -> float:
+        """多值字段精确 F1。"""
+        p, r = self.precision_multi, self.recall_multi
+        if p + r == 0:
+            return 0.0
+        return 2 * p * r / (p + r)
+
     def to_dict(self) -> dict[str, object]:
         """导出含派生指标的字典。"""
         return {
@@ -377,6 +438,16 @@ class FieldMetrics(BaseModel):
             "false_omission_rate_on_absent": round(
                 self.false_omission_rate_on_absent, 4
             ),
+            # W1-07 v2 新增
+            "system_value_total": self.system_value_total,
+            "unjustified_count": self.unjustified_count,
+            "unjustified_rate": round(self.unjustified_rate, 4),
+            "matched_value_count": self.matched_value_count,
+            "gold_value_total": self.gold_value_total,
+            "precision_multi": round(self.precision_multi, 4),
+            "recall_multi": round(self.recall_multi, 4),
+            "f1_multi": round(self.f1_multi, 4),
+            "amount_type_mismatch_count": self.amount_type_mismatch_count,
         }
 
 

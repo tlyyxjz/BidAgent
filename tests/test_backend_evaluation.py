@@ -103,6 +103,11 @@ def _make_absent_field(field_name: str) -> AnnotatedField:
     return AnnotatedField(field_name=field_name, gold_status=GoldStatus.ABSENT)
 
 
+def _make_na_field(field_name: str) -> AnnotatedField:
+    """构造 not_applicable 字段。"""
+    return AnnotatedField(field_name=field_name, gold_status=GoldStatus.NOT_APPLICABLE)
+
+
 def _make_system_record(
     doc_id: str,
     fields: list[LLMExtractedField],
@@ -805,3 +810,717 @@ class TestEndToEnd:
         assert json_path.exists()
         assert csv_path.exists()
         assert summary.document_count == 3
+
+
+# ============================================================
+# 测试套件 9：W1-07 v2 新增指标（无依据输出率/多值精确/amount_type）
+# ============================================================
+
+
+class TestCheckUnjustified:
+    """W1-07 v2: _check_unjustified 单元测试。
+
+    无依据定义：
+    - evidence_text 为空/None → 无依据
+    - raw_text 为 None → 无法验证，视为有依据（保守）
+    - evidence_text 非空但原文找不到 → 无依据
+    """
+
+    def test_empty_evidence_is_unjustified(self):
+        """evidence_text 为空 → 无依据。"""
+        from backend.evaluation import _check_unjustified
+        v = LLMExtractedValue(raw_value="100", evidence_text="")
+        assert _check_unjustified(v, "原文包含 100 元") is True
+
+    def test_none_evidence_is_unjustified(self):
+        """evidence_text 为 None → 无依据。"""
+        from backend.evaluation import _check_unjustified
+        v = LLMExtractedValue(raw_value="100", evidence_text=None)
+        assert _check_unjustified(v, "原文包含 100 元") is True
+
+    def test_whitespace_only_evidence_is_unjustified(self):
+        """evidence_text 全是空白 → 无依据（trim 后为空）。"""
+        from backend.evaluation import _check_unjustified
+        v = LLMExtractedValue(raw_value="100", evidence_text="   \t\n  ")
+        assert _check_unjustified(v, "原文包含 100 元") is True
+
+    def test_evidence_not_in_raw_text_is_unjustified(self):
+        """evidence_text 非空但原文找不到 → 无依据。"""
+        from backend.evaluation import _check_unjustified
+        v = LLMExtractedValue(raw_value="100", evidence_text="这条证据原文里不存在")
+        assert _check_unjustified(v, "原文包含 100 元") is True
+
+    def test_evidence_in_raw_text_is_justified(self):
+        """evidence_text 非空且能在原文找到 → 有依据。"""
+        from backend.evaluation import _check_unjustified
+        v = LLMExtractedValue(raw_value="100", evidence_text="100 元")
+        assert _check_unjustified(v, "原文包含 100 元预算") is False
+
+    def test_none_raw_text_is_justified_conservative(self):
+        """raw_text=None → 无法验证，保守判为有依据（不冤枉）。"""
+        from backend.evaluation import _check_unjustified
+        v = LLMExtractedValue(raw_value="100", evidence_text="任意证据")
+        assert _check_unjustified(v, None) is False
+
+
+class TestEvaluateDocumentUnjustified:
+    """W1-07 v2: evaluate_document 的 unjustified_count 字段。"""
+
+    def test_unjustified_count_empty_evidence(self):
+        """系统输出值 evidence_text 为空 → unjustified_count=1。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元",
+                    normalized_value="1000000.00",
+                    evidence_text="",  # 空 evidence
+                )],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="预算金额 100 万元")
+        r = results[0]
+        assert r.unjustified_count == 1
+        assert r.unjustified_values == ["100万元"]
+        # 值匹配金标但 evidence 空 → 值是对的但没引用证据
+        assert r.matched_count == 1
+        assert r.is_correct is True
+
+    def test_unjustified_count_evidence_not_in_raw_text(self):
+        """系统输出值 evidence_text 非空但原文找不到 → unjustified_count=1。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元",
+                    normalized_value="1000000.00",
+                    evidence_text="这条证据原文里不存在",  # 不在原文
+                )],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="预算金额 100 万元")
+        r = results[0]
+        assert r.unjustified_count == 1
+
+    def test_unjustified_count_no_raw_text_is_zero(self):
+        """raw_text=None + evidence_text 非空 → 保守判为有依据(unjustified=0)。
+
+        注意：evidence_text 为空时仍算无依据（LLM 没引用证据 = 瞎编）。
+        "保守"只适用于 evidence_text 非空但无原文可验证的情况。
+        """
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元",
+                    normalized_value="1000000.00",
+                    evidence_text="100 万元",  # 非空，但无原文可验证
+                )],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text=None)
+        r = results[0]
+        assert r.unjustified_count == 0  # 保守，不冤枉
+
+    def test_unjustified_count_empty_evidence_always_unjustified(self):
+        """evidence_text 为空 → 无论 raw_text 是否 None 都算无依据。
+
+        设计原则：LLM 没引用证据 = 瞎编，不管有没有原文。
+        """
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元",
+                    normalized_value="1000000.00",
+                    evidence_text="",  # 空 evidence
+                )],
+            )],
+        )
+        # raw_text=None 时，evidence_text 为空仍然算无依据
+        results = evaluate_document(gold, system, raw_text=None)
+        r = results[0]
+        assert r.unjustified_count == 1
+        # raw_text 非空时，evidence_text 为空也仍然算无依据
+        results2 = evaluate_document(gold, system, raw_text="预算 100 万元")
+        r2 = results2[0]
+        assert r2.unjustified_count == 1
+
+    def test_unjustified_count_partial_in_multi_value(self):
+        """多值字段：部分值无依据 → unjustified_count=部分。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.WINNER_NAME, [
+                ("甲公司", "甲"),
+                ("乙公司", "乙"),
+                ("丙公司", "丙"),
+            ])],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.WINNER_NAME,
+                values=[
+                    LLMExtractedValue(raw_value="甲公司", normalized_value="甲", evidence_text="甲公司"),
+                    LLMExtractedValue(raw_value="乙公司", normalized_value="乙", evidence_text=""),  # 无依据
+                    LLMExtractedValue(raw_value="丙公司", normalized_value="丙", evidence_text="丙公司"),
+                ],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="中标人：甲公司、乙公司、丙公司")
+        r = results[0]
+        assert r.unjustified_count == 1
+        assert r.unjustified_values == ["乙公司"]
+
+    def test_unjustified_count_all_justified(self):
+        """所有值都有 evidence 且在原文 → unjustified_count=0。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元",
+                    normalized_value="1000000.00",
+                    evidence_text="100 万元",
+                )],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="预算 100 万元整")
+        r = results[0]
+        assert r.unjustified_count == 0
+
+
+class TestMultiValuePrecisionRecall:
+    """W1-07 v2: 多值字段精确 P/R（按值数比例，非"至少1个匹配"）。"""
+
+    def test_precision_multi_recall_multi(self):
+        """系统输出 3 值匹配 2，金标有 4 值 → precision_multi=2/3, recall_multi=2/4。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.WINNER_NAME, [
+                ("甲公司", "甲"),
+                ("乙公司", "乙"),
+                ("丙公司", "丙"),
+                ("丁公司", "丁"),
+            ])],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.WINNER_NAME,
+                values=[
+                    LLMExtractedValue(raw_value="甲公司", normalized_value="甲", evidence_text="甲公司"),
+                    LLMExtractedValue(raw_value="乙公司", normalized_value="乙", evidence_text="乙公司"),
+                    LLMExtractedValue(raw_value="戊公司", normalized_value="戊", evidence_text="戊公司"),  # 误报
+                ],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="中标人：甲公司、乙公司、丙公司、丁公司、戊公司")
+        r = results[0]
+        # matched_value_count = 2 (甲、乙), gold_value_total = 4, system_value_total = 3
+        assert r.matched_value_count == 2
+        assert r.gold_value_total == 4
+        assert r.system_output_count == 3  # 原始计数（含重复）
+        # is_correct 用旧逻辑（至少1个匹配），仍是 True，但精确指标揭示真相
+        assert r.is_correct is True
+
+    def test_multi_value_zero_match(self):
+        """多值字段系统全错 → matched_value_count=0, precision_multi=0。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.WINNER_NAME, [("甲公司", "甲")])],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.WINNER_NAME,
+                values=[LLMExtractedValue(raw_value="乙公司", normalized_value="乙", evidence_text="乙公司")],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="中标人：甲公司、乙公司")
+        r = results[0]
+        assert r.matched_value_count == 0
+        assert r.gold_value_total == 1
+        # is_correct 用旧逻辑（至少1个匹配），0 匹配 → False
+        assert r.is_correct is False
+
+
+class TestAmountTypeMismatch:
+    """W1-07 v2: 金额字段 amount_type 与金标不一致校验。"""
+
+    def test_amount_type_match(self):
+        """金额字段 amount_type 与金标一致 → mismatch_count=0。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(
+                CoreFieldName.AMOUNT,
+                [("100万元", "1000000.00")],
+                amount_type=AmountType.AWARD,
+            )],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元",
+                    normalized_value="1000000.00",
+                    amount_type=AmountType.AWARD,  # 一致
+                    evidence_text="100 万元",
+                )],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="中标金额 100 万元")
+        r = results[0]
+        assert r.amount_type_mismatch_count == 0
+
+    def test_amount_type_mismatch(self):
+        """金额字段 amount_type 与金标不一致 → mismatch_count=1。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(
+                CoreFieldName.AMOUNT,
+                [("100万元", "1000000.00")],
+                amount_type=AmountType.AWARD,  # 金标：中标金额
+            )],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元",
+                    normalized_value="1000000.00",
+                    amount_type=AmountType.BUDGET,  # 系统：预算（错）
+                    evidence_text="100 万元",
+                )],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="中标金额 100 万元")
+        r = results[0]
+        assert r.amount_type_mismatch_count == 1
+
+    def test_amount_type_mismatch_skipped_for_non_amount(self):
+        """非金额字段不校验 amount_type。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.WINNER_NAME, [("甲公司", "甲")])],
+        )
+        # LLMExtractedValue 的 amount_type 是 str，可任意值
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.WINNER_NAME,
+                values=[LLMExtractedValue(
+                    raw_value="甲公司",
+                    normalized_value="甲",
+                    amount_type="budget",  # 字段不是 amount，不应触发校验
+                    evidence_text="甲公司",
+                )],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="中标人：甲公司")
+        r = results[0]
+        assert r.amount_type_mismatch_count == 0
+
+    def test_amount_type_mismatch_skipped_when_gold_none(self):
+        """金标 amount_type 为 None 时不校验。"""
+        # _make_present_field 的 amount_type 默认 None
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(
+                CoreFieldName.AMOUNT,
+                [("100万元", "1000000.00")],
+                # amount_type=None
+            )],
+        )
+        system = _make_system_record(
+            "d1",
+            [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元",
+                    normalized_value="1000000.00",
+                    amount_type=AmountType.BUDGET,  # 系统有，但金标 None
+                    evidence_text="100 万元",
+                )],
+            )],
+        )
+        results = evaluate_document(gold, system, raw_text="金额 100 万元")
+        r = results[0]
+        assert r.amount_type_mismatch_count == 0
+
+
+class TestEvaluateDatasetRawTexts:
+    """W1-07 v2: evaluate_dataset 的 raw_texts 聚合。"""
+
+    def test_dataset_aggregates_unjustified(self):
+        """数据集级 unjustified_count 聚合正确。"""
+        gold_docs = [
+            _make_gold("d1", [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])]),
+            _make_gold("d2", [_make_present_field(CoreFieldName.AMOUNT, [("200万元", "2000000.00")])]),
+        ]
+        system_records = [
+            _make_system_record("d1", [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元", normalized_value="1000000.00", evidence_text="",
+                )],
+            )]),
+            _make_system_record("d2", [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="200万元", normalized_value="2000000.00", evidence_text="200 万元",
+                )],
+            )]),
+        ]
+        raw_texts = {
+            "d1": "预算 100 万元",
+            "d2": "预算 200 万元",
+        }
+        summary = evaluate_dataset(
+            gold_docs=gold_docs,
+            system_records=system_records,
+            system_identifier="v2-test",
+            raw_texts=raw_texts,
+        )
+        m = next(m for m in summary.field_metrics if m.field_name == CoreFieldName.AMOUNT)
+        # d1 的值 evidence 为空 → unjustified=1；d2 的值 evidence 在原文 → unjustified=0
+        assert m.unjustified_count == 1
+        assert m.system_value_total == 2
+
+    def test_dataset_without_raw_texts_keeps_zero(self):
+        """不传 raw_texts + evidence_text 非空 → 保守判为有依据(unjustified=0)。
+
+        注意：evidence_text 为空时仍算无依据。要测试"保守"行为，
+        必须用 evidence_text 非空但无原文可验证的场景。
+        """
+        gold_docs = [
+            _make_gold("d1", [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])]),
+        ]
+        system_records = [
+            _make_system_record("d1", [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元", normalized_value="1000000.00",
+                    evidence_text="100 万元",  # 非空，但无原文可验证
+                )],
+            )]),
+        ]
+        # 不传 raw_texts → evidence_text 非空但无法验证 → 保守判为有依据
+        summary = evaluate_dataset(
+            gold_docs=gold_docs,
+            system_records=system_records,
+            system_identifier="v2-test-no-raw",
+        )
+        m = next(m for m in summary.field_metrics if m.field_name == CoreFieldName.AMOUNT)
+        assert m.unjustified_count == 0  # 保守
+        assert m.system_value_total == 1
+
+    def test_dataset_aggregates_amount_type_mismatch(self):
+        """数据集级 amount_type_mismatch_count 聚合正确。"""
+        gold_docs = [
+            _make_gold("d1", [_make_present_field(
+                CoreFieldName.AMOUNT,
+                [("100万元", "1000000.00")],
+                amount_type=AmountType.AWARD,
+            )]),
+            _make_gold("d2", [_make_present_field(
+                CoreFieldName.AMOUNT,
+                [("200万元", "2000000.00")],
+                amount_type=AmountType.AWARD,
+            )]),
+        ]
+        system_records = [
+            _make_system_record("d1", [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元", normalized_value="1000000.00",
+                    amount_type=AmountType.BUDGET,  # 错
+                    evidence_text="100 万元",
+                )],
+            )]),
+            _make_system_record("d2", [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="200万元", normalized_value="2000000.00",
+                    amount_type=AmountType.AWARD,  # 对
+                    evidence_text="200 万元",
+                )],
+            )]),
+        ]
+        summary = evaluate_dataset(
+            gold_docs=gold_docs,
+            system_records=system_records,
+            system_identifier="v2-at-test",
+            raw_texts={"d1": "100 万元", "d2": "200 万元"},
+        )
+        m = next(m for m in summary.field_metrics if m.field_name == CoreFieldName.AMOUNT)
+        assert m.amount_type_mismatch_count == 1
+
+
+class TestFieldMetricsV2Properties:
+    """W1-07 v2: FieldMetrics 派生属性计算。"""
+
+    def test_unjustified_rate(self):
+        """unjustified_rate = unjustified_count / system_value_total。"""
+        from backend.schemas import FieldMetrics
+        m = FieldMetrics(field_name=CoreFieldName.AMOUNT)
+        m.system_value_total = 4
+        m.unjustified_count = 1
+        assert m.unjustified_rate == 0.25
+
+    def test_unjustified_rate_zero_denominator(self):
+        """system_value_total=0 → unjustified_rate=0（避免除零）。"""
+        from backend.schemas import FieldMetrics
+        m = FieldMetrics(field_name=CoreFieldName.AMOUNT)
+        m.system_value_total = 0
+        m.unjustified_count = 0
+        assert m.unjustified_rate == 0.0
+
+    def test_precision_multi(self):
+        """precision_multi = matched / system_value_total。"""
+        from backend.schemas import FieldMetrics
+        m = FieldMetrics(field_name=CoreFieldName.WINNER_NAME)
+        m.system_value_total = 4
+        m.matched_value_count = 3
+        assert m.precision_multi == 0.75
+
+    def test_recall_multi(self):
+        """recall_multi = matched / gold_value_total。"""
+        from backend.schemas import FieldMetrics
+        m = FieldMetrics(field_name=CoreFieldName.WINNER_NAME)
+        m.gold_value_total = 5
+        m.matched_value_count = 2
+        assert m.recall_multi == 0.4
+
+    def test_f1_multi(self):
+        """f1_multi = 2*P*R/(P+R)。"""
+        from backend.schemas import FieldMetrics
+        m = FieldMetrics(field_name=CoreFieldName.WINNER_NAME)
+        m.system_value_total = 4  # P = 3/4 = 0.75
+        m.gold_value_total = 5    # R = 3/5 = 0.6
+        m.matched_value_count = 3
+        # F1 = 2*0.75*0.6 / (0.75+0.6) = 0.9/1.35 = 0.6667
+        assert abs(m.f1_multi - (2 * 0.75 * 0.6 / (0.75 + 0.6))) < 1e-9
+
+    def test_f1_multi_zero_when_no_match(self):
+        """matched=0 → f1_multi=0。"""
+        from backend.schemas import FieldMetrics
+        m = FieldMetrics(field_name=CoreFieldName.WINNER_NAME)
+        m.system_value_total = 2
+        m.gold_value_total = 2
+        m.matched_value_count = 0
+        assert m.f1_multi == 0.0
+
+    def test_to_dict_includes_v2_fields(self):
+        """to_dict 包含所有 v2 新增字段。"""
+        from backend.schemas import FieldMetrics
+        m = FieldMetrics(field_name=CoreFieldName.AMOUNT)
+        m.system_value_total = 4
+        m.unjustified_count = 1
+        m.matched_value_count = 3
+        m.gold_value_total = 5
+        m.amount_type_mismatch_count = 2
+        d = m.to_dict()
+        # 必须包含 v2 新增的所有字段
+        assert "system_value_total" in d
+        assert "unjustified_count" in d
+        assert "unjustified_rate" in d
+        assert "matched_value_count" in d
+        assert "gold_value_total" in d
+        assert "precision_multi" in d
+        assert "recall_multi" in d
+        assert "f1_multi" in d
+        assert "amount_type_mismatch_count" in d
+        assert d["unjustified_rate"] == 0.25
+        assert d["precision_multi"] == 0.75
+        assert d["recall_multi"] == 0.6
+
+
+class TestExportCsvV2:
+    """W1-07 v2: CSV 导出包含 v2 新增列。"""
+
+    def test_csv_includes_v2_headers(self, tmp_path: Path):
+        """CSV headers 包含所有 v2 新增列。"""
+        gold_docs = [
+            _make_gold("d1", [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])]),
+        ]
+        system_records = [
+            _make_system_record("d1", [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元", normalized_value="1000000.00",
+                    amount_type=AmountType.AWARD, evidence_text="100 万元",
+                )],
+            )]),
+        ]
+        summary = evaluate_dataset(
+            gold_docs=gold_docs,
+            system_records=system_records,
+            system_identifier="csv-v2",
+            raw_texts={"d1": "100 万元"},
+        )
+        csv_path = tmp_path / "v2.csv"
+        export_summary_csv(summary, csv_path)
+
+        with csv_path.open(encoding="utf-8-sig") as f:
+            reader = csv.reader(f)
+            headers = next(reader)
+            rows = list(reader)
+
+        # 验证 v2 新增 headers 存在
+        v2_headers = [
+            "system_value_total", "unjustified_count", "unjustified_rate",
+            "matched_value_count", "gold_value_total",
+            "precision_multi", "recall_multi", "f1_multi",
+            "amount_type_mismatch_count",
+        ]
+        for h in v2_headers:
+            assert h in headers, f"CSV 缺少 v2 header: {h}"
+
+        # 找到 amount 字段那行（CSV 按 CoreFieldName.ALL 顺序输出，第一行可能是 project_identifier）
+        idx = {h: i for i, h in enumerate(headers)}
+        amount_row = None
+        for row in rows:
+            if row[idx["field_name"]] == CoreFieldName.AMOUNT:
+                amount_row = row
+                break
+        assert amount_row is not None, "CSV 中未找到 amount 字段行"
+
+        # 验证 amount 字段行的 v2 数据正确
+        assert amount_row[idx["system_value_total"]] == "1"
+        assert amount_row[idx["unjustified_count"]] == "0"
+        assert amount_row[idx["unjustified_rate"]] == "0.0"
+        assert amount_row[idx["matched_value_count"]] == "1"
+        assert amount_row[idx["gold_value_total"]] == "1"
+        assert amount_row[idx["amount_type_mismatch_count"]] == "0"
+
+    def test_json_includes_v2_fields(self, tmp_path: Path):
+        """JSON 导出包含 v2 新增字段。"""
+        gold_docs = [
+            _make_gold("d1", [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])]),
+        ]
+        system_records = [
+            _make_system_record("d1", [LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元", normalized_value="1000000.00",
+                    amount_type=AmountType.AWARD, evidence_text="",
+                )],
+            )]),
+        ]
+        summary = evaluate_dataset(
+            gold_docs=gold_docs,
+            system_records=system_records,
+            system_identifier="json-v2",
+            raw_texts={"d1": "100 万元"},
+        )
+        json_path = tmp_path / "v2.json"
+        export_summary_json(summary, json_path)
+
+        data = json.loads(json_path.read_text(encoding="utf-8"))
+        amount_field = next(f for f in data["fields"] if f["field_name"] == CoreFieldName.AMOUNT)
+        # system_value_total=1, unjustified_count=1（evidence 为空）→ rate=1.0
+        assert amount_field["system_value_total"] == 1
+        assert amount_field["unjustified_count"] == 1
+        assert amount_field["unjustified_rate"] == 1.0
+
+
+# ============================================================
+# 测试套件 10：边缘情况补充（提升覆盖率）
+# ============================================================
+
+
+class TestNormalizeValueEdgeCases:
+    """normalize_value 边缘情况：金额无数字、日期无匹配。"""
+
+    def test_amount_no_digits_returns_original(self):
+        """金额字段值不含数字 → 返回去空白后的原值（fallback）。"""
+        # "abc万元" 去单位后 "abc"，re.search 找不到数字 → 返回原值
+        result = normalize_value(CoreFieldName.AMOUNT, "abc万元")
+        # 期望返回原值 s（去空白后）
+        assert result == "abc万元"
+
+    def test_amount_decimal_conversion_failure(self):
+        """金额字段值 Decimal 转换异常 → 返回原值。"""
+        # 构造一个能匹配 re.search 但 Decimal 转换失败的情况很难
+        # 因为 [\d.]+ 匹配的总是有效数字。这里测试多个小数点的边缘情况
+        result = normalize_value(CoreFieldName.AMOUNT, "1.2.3万元")
+        # Decimal("1.2.3") 会抛 InvalidOperation → 返回原值
+        assert result == "1.2.3万元"
+
+    def test_date_no_match_returns_original(self):
+        """日期字段值无法匹配任何格式 → 返回原值。"""
+        result = normalize_value(CoreFieldName.PUBLISH_DATE, "无日期")
+        assert result == "无日期"
+
+
+class TestEvaluateDocumentEdgeCases:
+    """evaluate_document 边缘情况。"""
+
+    def test_evaluate_with_llm_extraction_output_directly(self):
+        """直接传 LLMExtractionOutput（不包在 Record 里）→ 正常评测。"""
+        gold = _make_gold(
+            "d1",
+            [_make_present_field(CoreFieldName.AMOUNT, [("100万元", "1000000.00")])],
+        )
+        # 直接传 LLMExtractionOutput（第三个分支：isinstance 不是 Record）
+        direct_output = LLMExtractionOutput(fields=[
+            LLMExtractedField(
+                field_name=CoreFieldName.AMOUNT,
+                values=[LLMExtractedValue(
+                    raw_value="100万元", normalized_value="1000000.00",
+                    evidence_text="100 万元",
+                )],
+            ),
+        ])
+        results = evaluate_document(gold, direct_output, raw_text="100 万元")
+        r = results[0]
+        assert r.matched_count == 1
+        assert r.is_correct is True
+
+    def test_gold_other_status_counted(self):
+        """金标 not_applicable 状态 → gold_other_count 增加。"""
+        gold = _make_gold(
+            "d1",
+            [_make_na_field(CoreFieldName.WINNER_NAME)],
+        )
+        system = _make_system_record("d1", [])
+        results = evaluate_document(gold, system)
+        r = results[0]
+        assert r.gold_status == GoldStatus.NOT_APPLICABLE
+        assert r.is_correct is None  # 不参与主评测
+
+        # 在 dataset 级别验证 gold_other_count
+        summary = evaluate_dataset(
+            gold_docs=[gold],
+            system_records=[system],
+            system_identifier="edge-test",
+        )
+        m = next(m for m in summary.field_metrics if m.field_name == CoreFieldName.WINNER_NAME)
+        assert m.gold_other_count == 1
