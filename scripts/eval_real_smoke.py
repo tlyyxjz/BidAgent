@@ -31,6 +31,24 @@ if str(PROJECT_ROOT) not in sys.path:
 os.environ.setdefault("SECRET_KEY", "a" * 64)
 os.environ.setdefault("ADMIN_SECRET", "admin123")
 
+# 绕过 backend/__init__.py 的完整初始化链（避免数据库等重依赖）
+import importlib.util as _ilu
+import types as _types
+_be_dir = str(PROJECT_ROOT / "backend")
+_be_pkg = _types.ModuleType("backend")
+_be_pkg.__path__ = [_be_dir]
+sys.modules["backend"] = _be_pkg
+def _load_mod(_name, _path):
+    _spec = _ilu.spec_from_file_location(_name, _path)
+    _mod = _ilu.module_from_spec(_spec)
+    sys.modules[_name] = _mod
+    _spec.loader.exec_module(_mod)
+    return _mod
+_load_mod("backend.enums", _be_dir + r"\enums.py")
+_W1_07_DIR = str(Path(__file__).parent)
+_load_mod("backend.schemas", _W1_07_DIR + r"\schemas.py")
+_load_mod("backend.evaluation", _W1_07_DIR + r"\evaluation.py")
+
 from backend.enums import CoreFieldName, GoldStatus, AmountType, EvidenceRole
 from backend.schemas import (
     AnnotatedField,
@@ -61,6 +79,9 @@ RECORDS_PATH = Path(r"C:\Users\Lenovo\Desktop\标注_对比\DeepSeekBaseline报�
 OUT_DIR = Path(r"C:\Users\Lenovo\Desktop\W1-07评测报告")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
+# 整理后的7篇标准原文目录（转换后的数据）
+RAW_TXT_DIR = Path(r"C:\Users\Lenovo\Desktop\W1-09_标注原文_整理后")
+
 # document_id 映射：标注.zip 文件名 → DeepSeek Baseline document_id
 DOC_ID_MAP = {
     "tender_02": "02_tender_002",
@@ -69,6 +90,7 @@ DOC_ID_MAP = {
     "award_02": "05_award_002",
     "award_03": "06_award_003",
     "correction_01": "07_correction_001",
+    "correction_02": "08_correction_002",
 }
 
 ANNOTATION_VERSION = "1.0"
@@ -87,6 +109,11 @@ def load_raw_text(gold_file: Path) -> str:
     while raw_start < len(lines) and not lines[raw_start].strip():
         raw_start += 1
     return "\n".join(lines[raw_start:]).strip()
+
+
+def load_standard_raw_text(file_path: Path) -> str:
+    """从标准原文文件读取全文（首行标题，空行后正文）。"""
+    return file_path.read_text(encoding="utf-8").strip()
 
 
 def find_evidence(raw_text: str, value: str) -> EvidenceSpan:
@@ -159,7 +186,7 @@ def build_gold_docs() -> list[AnnotationDocument]:
     gold_docs = []
 
     # --- tender_02 (DDWK2026024 东北大学) ---
-    raw = load_raw_text(GOLD_DIR / "tender_02.txt")
+    raw = load_standard_raw_text(RAW_TXT_DIR / "tender_02.txt")
     fields = [
         make_present_field("project_identifier", [("DDWK2026024", None, None)], raw),
         make_present_field("purchaser_name", [("东北大学", None, None)], raw),
@@ -174,7 +201,7 @@ def build_gold_docs() -> list[AnnotationDocument]:
     ))
 
     # --- tender_03 (QDQZZB-260702 中国海洋大学) ---
-    raw = load_raw_text(GOLD_DIR / "tender_03.txt")
+    raw = load_standard_raw_text(RAW_TXT_DIR / "tender_03.txt")
     fields = [
         make_present_field("project_identifier", [("QDQZZB-260702", None, None)], raw),
         make_present_field("purchaser_name", [("中国海洋大学", None, None)], raw),
@@ -189,7 +216,7 @@ def build_gold_docs() -> list[AnnotationDocument]:
     ))
 
     # --- award_01 (GC-HCD260669 美的空调) ---
-    raw = load_raw_text(GOLD_DIR / "award_01.txt")
+    raw = load_standard_raw_text(RAW_TXT_DIR / "award_01.txt")
     fields = [
         make_present_field("project_identifier", [("GC-HCD260669", None, None)], raw),
         make_present_field("purchaser_name", [("中央国家机关政府采购中心", None, None)], raw),
@@ -204,7 +231,7 @@ def build_gold_docs() -> list[AnnotationDocument]:
     ))
 
     # --- award_02 (GC-HCD260670 复印机 5中标人6金额) ---
-    raw = load_raw_text(GOLD_DIR / "award_02.txt")
+    raw = load_standard_raw_text(RAW_TXT_DIR / "award_02.txt")
     winners = [
         ("北京立思辰计算机技术有限公司", None, None),
         ("惠普贸易（上海）有限公司", None, None),
@@ -234,7 +261,7 @@ def build_gold_docs() -> list[AnnotationDocument]:
     ))
 
     # --- award_03 (GC-HCD260671 打印机 3中标人4金额) ---
-    raw = load_raw_text(GOLD_DIR / "award_03.txt")
+    raw = load_standard_raw_text(RAW_TXT_DIR / "award_03.txt")
     winners = [
         ("联想（北京）有限公司", None, None),
         ("京瓷办公信息系统（中国）有限公司", None, None),
@@ -260,7 +287,7 @@ def build_gold_docs() -> list[AnnotationDocument]:
     ))
 
     # --- correction_01 (物资2026-001 更正公告) ---
-    raw = load_raw_text(GOLD_DIR / "correction_01.txt")
+    raw = load_standard_raw_text(RAW_TXT_DIR / "correction_01.txt")
     fields = [
         make_present_field("project_identifier", [("物资2026-001", None, None)], raw),
         make_present_field("purchaser_name", [("中国国际经济技术交流中心", None, None)], raw),
@@ -274,23 +301,35 @@ def build_gold_docs() -> list[AnnotationDocument]:
         annotation_version=ANNOTATION_VERSION, fields=fields,
     ))
 
+    # --- correction_02 (XNJZ-G-2026-010 大连民族大学 更正公告) ---
+    raw = load_standard_raw_text(RAW_TXT_DIR / "correction_02.txt")
+    fields = [
+        make_present_field("project_identifier", [("XNJZ-G-2026-010、TLYQ2026-06080", None, None)], raw),
+        make_present_field("purchaser_name", [("大连民族大学", None, None)], raw),
+        make_absent_field("winner_name"),
+        make_absent_field("amount"),
+        make_present_field("publish_date", [("2026年07月12日", "2026-07-12", None)], raw),
+        make_absent_field("bid_deadline"),
+    ]
+    gold_docs.append(AnnotationDocument(
+        document_id="08_correction_002", annotator_id="标注员A",
+        annotation_version=ANNOTATION_VERSION, fields=fields,
+    ))
+
     return gold_docs
 
 
 def collect_raw_texts() -> dict[str, str]:
     """W1-07 v2: 收集所有金标篇目的原文，按 document_id 映射。
 
-    用于 evaluate_dataset 的 raw_texts 参数，启用无依据输出率检查。
-
-    重要：必须使用 Baseline 实际输入的原文（种子公告目录），
-    而非标注目录的文本。否则 evidence_text 会因文本差异被误判为无依据。
+    使用整理后的7篇标准原文（转换后的数据），用于 evaluate_dataset 的
+    raw_texts 参数，启用无依据输出率检查。
     """
     raw_texts = {}
-    for _, doc_id in DOC_ID_MAP.items():
-        # 用种子公告目录的原文（和 Baseline 输入一致）
-        seed_file = SEED_DIR / f"{doc_id}.txt"
-        if seed_file.exists():
-            raw_texts[doc_id] = load_raw_text(seed_file)
+    for short_name, doc_id in DOC_ID_MAP.items():
+        raw_file = RAW_TXT_DIR / f"{short_name}.txt"
+        if raw_file.exists():
+            raw_texts[doc_id] = load_standard_raw_text(raw_file)
     return raw_texts
 
 
