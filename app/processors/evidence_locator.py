@@ -147,8 +147,8 @@ class EvidenceLocator:
             )
 
         if levels is None:
-            # Day 2 默认 L1 → L2 → L3 → L4
-            levels = [MatchType.EXACT, MatchType.STRIPPED, MatchType.NO_PUNCT, MatchType.SUBSTRING]
+            # Day 2 默认 L1 → L2 → L3 → L4 → L5(UNSUPPORTED)
+            levels = [MatchType.EXACT, MatchType.STRIPPED, MatchType.NO_PUNCT, MatchType.SUBSTRING, MatchType.NOT_FOUND]
 
         # 依次尝试各级匹配
         for level in levels:
@@ -160,6 +160,26 @@ class EvidenceLocator:
                 result = self._match_no_punct(candidate_text, search_from)
             elif level == MatchType.SUBSTRING:
                 result = self._match_substring(candidate_text, search_from)
+            elif level == MatchType.NOT_FOUND:
+                # L5：所有级别失败，返回 UNSUPPORTED 标记
+                elapsed_ms = (time.perf_counter() - start_time) * 1000
+                unsupported_location = EvidenceLocation(
+                    start=-1,
+                    end=-1,
+                    text="",
+                    match_type=MatchType.NOT_FOUND,
+                    confidence=0.0,
+                    normalized_start=-1,
+                    normalized_end=-1,
+                    support_level=SupportLevel.UNSUPPORTED,
+                )
+                return LocateResult(
+                    found=False,
+                    location=unsupported_location,
+                    search_from=search_from,
+                    elapsed_ms=elapsed_ms,
+                    error="unsupported: no evidence found in raw text",
+                )
             else:
                 continue
 
@@ -482,18 +502,48 @@ class EvidenceLocator:
         1. 按标点/空白切分候选文本
         2. 过滤掉长度<2的片段
         3. 如果切分后片段数<=1，且文本较长，用滑动窗口提取子串
-        4. 按长度降序排序（优先长片段，更具有区分性）
-        5. 返回前 10 个
+        4. 额外尝试"去除首尾额外字符后的连续片段"（修复 L4 MISS bug）
+        5. 按长度降序排序（优先长片段，更具有区分性）
+        6. 返回前 15 个
 
         用于 L4 匹配：当 L1-L3 都失败时，用核心子串在原文中查找。
+
+        修复历史：
+        - v1.0: 只按标点切分，遇到含连字符的编号（如 QDQZZB-260702）会误切
+        - v1.1: 加滑动窗口，但窗口边界可能切错
+        - v1.2: 加"去除首尾额外字符"策略，保留候选中间的连字符/点号等
         """
         if not candidate:
             return []
 
-        # 切分：按标点和空白
+        # 切分：按标点和空白（注意：连字符 - 在字符集中，会切分 QDQZZB-260702）
         parts = re.split(r"[\s\u3000-\u303F\uFF00-\uFFEF!-/:-@\[-`{-~\u2018-\u201F\u2026]+", candidate)
         # 过滤长度<2的片段
         parts = [p for p in parts if len(p) >= 2]
+
+        # 修复 L4 MISS：尝试"去除首尾额外字符后的连续片段"
+        # 例如候选 "根据公告QDQZZB-260702的内容"，提取 ASCII 片段 "QDQZZB-260702"
+        # 用正则提取所有 ASCII 字母数字+连字符的连续片段（长度>=4）
+        ascii_pattern = re.compile(r"[A-Za-z0-9][A-Za-z0-9\-]{2,}[A-Za-z0-9]")
+        for m in ascii_pattern.finditer(candidate):
+            ascii_part = m.group()
+            if len(ascii_part) >= 4 and ascii_part not in parts:
+                parts.append(ascii_part)
+
+        # 同时尝试"去除首尾额外字符后的连续片段"（用宽松切分）
+        loose_parts = re.split(r"[\s\u3000-\u303F\uFF00-\uFFEF\u2018-\u201F\u2026]+", candidate)
+        for lp in loose_parts:
+            # 进一步去除首尾的非字母数字字符
+            stripped = lp.strip("!-/:-@[-`{-~")
+            if len(stripped) >= 4 and stripped not in parts:
+                parts.append(stripped)
+
+        # 额外：提取数字+单位组合（如 "229.577666万元"）
+        amount_pattern = re.compile(r"\d+(?:\.\d+)?\s*(?:万元|亿元|元|万|亿)")
+        for m in amount_pattern.finditer(candidate):
+            amount_part = m.group()
+            if len(amount_part) >= 4 and amount_part not in parts:
+                parts.append(amount_part)
 
         # 如果切分后片段数<=1，且文本较长，用滑动窗口提取子串
         if len(parts) <= 1 and len(candidate) >= 6:
@@ -512,8 +562,8 @@ class EvidenceLocator:
             if p not in seen:
                 seen.add(p)
                 unique_parts.append(p)
-        # 取前 10 个
-        return unique_parts[:10]
+        # 取前 15 个
+        return unique_parts[:15]
 
     def _match_substring(
         self,
