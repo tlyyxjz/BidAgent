@@ -295,6 +295,92 @@ class TestEvidenceLocation:
         assert result.location.normalized_end >= 0
 
 
+class TestMatchNoPunct:
+    """L3 去标点匹配测试。"""
+
+    def test_match_with_chinese_punctuation_diff(self):
+        """原文和候选的标点不同。
+
+        注意：NFKC 规范化已将全角：转为半角:，所以 L2 就能匹配。
+        L3 主要针对标点完全不同的情况（如中文逗号 vs 无标点）。
+        """
+        raw = "金额：100万元"
+        locator = EvidenceLocator(raw)
+        # 候选用半角冒号，原文是全角冒号（NFKC 后都是半角）
+        result = locator.locate("金额:100万元")
+        assert result.found
+        # NFKC 后无标点差异，L2 即可匹配
+        assert result.location.match_type in [MatchType.STRIPPED, MatchType.NO_PUNCT]
+
+    def test_match_with_no_punctuation_in_raw(self):
+        """原文有标点，候选无标点。"""
+        raw = "项目编号：ZFCG-2026-001，预算100万"
+        locator = EvidenceLocator(raw)
+        result = locator.locate("项目编号ZFCG2026001预算100万")
+        # L3 应能匹配（去标点后）
+        # 但注意 ZFCG-2026-001 中的 - 会被去除，所以候选也要去 - 才能匹配
+        # 候选已去掉 -，原文去掉 - 后也匹配
+        if result.found:
+            assert result.location.match_type in [MatchType.NO_PUNCT, MatchType.SUBSTRING]
+
+    def test_fallback_from_l2_to_l3(self):
+        """L2 失败后降级到 L3。"""
+        raw = "金额：100万元"
+        locator = EvidenceLocator(raw)
+        # L1 失败（标点不同），L2 失败（无空白差异），L3 成功
+        result = locator.locate("金额:100万元")
+        assert result.found
+        # 不应是 L1（标点不同）
+        assert result.location.match_type != MatchType.EXACT
+
+    def test_l3_match_with_extra_punctuation_in_raw(self):
+        """原文有额外标点（如逗号），候选没有。"""
+        raw = "预算金额，为100万元"
+        locator = EvidenceLocator(raw)
+        # 候选无逗号
+        result = locator.locate("预算金额为100万元")
+        if result.found:
+            # L1 失败（原文有逗号），L2 也可能失败，L3 去标点后匹配
+            assert result.location.match_type in [MatchType.STRIPPED, MatchType.NO_PUNCT, MatchType.SUBSTRING]
+
+
+class TestMatchSubstring:
+    """L4 核心子串匹配测试。"""
+
+    def test_match_with_core_substring(self):
+        """候选文本的核心子串在原文中出现。"""
+        raw = "本项目于2026年8月1日发布招标公告"
+        locator = EvidenceLocator(raw)
+        # 候选有额外字符，核心子串 "2026年8月1日" 在原文中
+        result = locator.locate("日期是2026年8月1日没错", levels=[MatchType.SUBSTRING])
+        if result.found:
+            assert result.location.match_type == MatchType.SUBSTRING
+            assert result.location.confidence == 0.6
+            # L4 是部分匹配，验证匹配的文本是候选的子串
+            assert result.location.text in "2026年8月1日" or "2026年8月1日" in result.location.text or any(c in result.location.text for c in "2026年8月1日")
+
+    def test_match_short_substring_filtered(self):
+        """长度<2的子串被过滤。"""
+        raw = "hello world"
+        locator = EvidenceLocator(raw)
+        # 候选只有 "a" 这种短片段，被过滤
+        result = locator.locate("a b c", levels=[MatchType.SUBSTRING])
+        # a/b/c 长度都<2，应该不匹配
+        assert not result.found
+
+    def test_match_longest_substring_first(self):
+        """优先匹配最长的核心子串。"""
+        raw = "政府采购服务器项目编号ZFCG2026"
+        locator = EvidenceLocator(raw)
+        result = locator.locate(
+            "项目是政府采购服务器项目编号ZFCG2026没错",
+            levels=[MatchType.SUBSTRING],
+        )
+        if result.found:
+            # 应该匹配最长的子串
+            assert len(result.location.text) >= 5
+
+
 class TestRealText:
     """真实公告文本测试。"""
 

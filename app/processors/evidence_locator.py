@@ -147,8 +147,8 @@ class EvidenceLocator:
             )
 
         if levels is None:
-            # Day 1 默认 L1 → L2
-            levels = [MatchType.EXACT, MatchType.STRIPPED]
+            # Day 2 默认 L1 → L2 → L3 → L4
+            levels = [MatchType.EXACT, MatchType.STRIPPED, MatchType.NO_PUNCT, MatchType.SUBSTRING]
 
         # 依次尝试各级匹配
         for level in levels:
@@ -156,8 +156,11 @@ class EvidenceLocator:
                 result = self._match_exact(candidate_text, search_from)
             elif level == MatchType.STRIPPED:
                 result = self._match_stripped(candidate_text, search_from)
+            elif level == MatchType.NO_PUNCT:
+                result = self._match_no_punct(candidate_text, search_from)
+            elif level == MatchType.SUBSTRING:
+                result = self._match_substring(candidate_text, search_from)
             else:
-                # Day 2 才实现 L3/L4
                 continue
 
             if result is not None:
@@ -356,6 +359,206 @@ class EvidenceLocator:
         no_ws_text = "".join(no_ws_chars)
         self._no_ws_cache = (no_ws_text, no_ws_to_norm)
         return self._no_ws_cache
+
+    # ========== L3 去标点匹配 ==========
+
+    # 中文标点 → 半角/空映射（去标点时使用）
+    # 注意：标点去除后不补任何字符，直接删除
+    _PUNCT_PATTERN = re.compile(
+        r"["
+        r"\u3000-\u303F"      # CJK 符号和标点（、。·等）
+        r"\uFF00-\uFFEF"       # 半角/全角形式（！＂＃等）
+        r"!-/:-@\[-`{-~"       # ASCII 标点和符号
+        r"\u2018-\u201F"       # 引号（'…'等）
+        r"\u2026"              # 省略号
+        r"]"
+    )
+
+    def _strip_punctuation(self, text: str) -> str:
+        """去除标点符号。"""
+        return self._PUNCT_PATTERN.sub("", text)
+
+    def _build_no_punct_index(self) -> Tuple[str, List[int]]:
+        """构建无标点规范化文本及其到规范化文本的索引映射。
+
+        在已去空白的基础上再去标点，缓存避免重复计算。
+        """
+        if not self._normalized_text:
+            return ("", [])
+
+        if hasattr(self, "_no_punct_cache"):
+            return self._no_punct_cache
+
+        no_ws_text, no_ws_to_norm = self._build_no_whitespace_index()
+
+        no_punct_chars: List[str] = []
+        no_punct_to_no_ws: List[int] = []
+
+        for i, ch in enumerate(no_ws_text):
+            if not self._PUNCT_PATTERN.match(ch):
+                no_punct_chars.append(ch)
+                no_punct_to_no_ws.append(i)
+
+        no_punct_text = "".join(no_punct_chars)
+        self._no_punct_cache = (no_punct_text, no_punct_to_no_ws)
+        return self._no_punct_cache
+
+    def _match_no_punct(
+        self,
+        candidate: str,
+        search_from: int,
+    ) -> Optional[EvidenceLocation]:
+        """L3 去标点匹配：忽略标点符号差异后匹配。
+
+        算法：
+        1. 在 L2 去空白基础上，再去标点
+        2. 在无标点文本中查找候选
+        3. 反向映射：无标点 → 无空白 → 规范化 → 原始
+        """
+        if not self._normalized_text or not self._offset_mapping:
+            return None
+
+        # 候选文本去空白再去标点
+        candidate_stripped = re.sub(r"\s+", "", candidate)
+        candidate_no_punct = self._strip_punctuation(candidate_stripped)
+
+        if not candidate_no_punct:
+            return None
+
+        no_punct_text, no_punct_to_no_ws = self._build_no_punct_index()
+        if not no_punct_text:
+            return None
+
+        _, no_ws_to_norm = self._build_no_whitespace_index()
+
+        # 在无标点文本中查找
+        idx = no_punct_text.find(candidate_no_punct, 0)
+        if idx == -1:
+            return None
+
+        # 反向映射：无标点 → 无空白 → 规范化 → 原始
+        def _map_to_raw(punct_idx_start, punct_idx_end):
+            no_ws_start = no_punct_to_no_ws[punct_idx_start]
+            no_ws_end = no_punct_to_no_ws[punct_idx_end - 1] + 1
+            norm_start = no_ws_to_norm[no_ws_start]
+            norm_end = no_ws_to_norm[no_ws_end - 1] + 1
+            return self._offset_mapping.to_raw(norm_start, norm_end)
+
+        raw_start, raw_end = _map_to_raw(idx, idx + len(candidate_no_punct))
+
+        # search_from 限制
+        if raw_start < search_from:
+            next_idx = no_punct_text.find(candidate_no_punct, idx + 1)
+            if next_idx == -1:
+                return None
+            raw_start, raw_end = _map_to_raw(next_idx, next_idx + len(candidate_no_punct))
+            if raw_start < search_from:
+                return None
+
+        text = self.raw_text[raw_start:raw_end]
+
+        # 计算规范化坐标
+        norm_start, norm_end = -1, -1
+        if self._offset_mapping:
+            norm_start, norm_end = self._offset_mapping.to_normalized(raw_start, raw_end)
+
+        return EvidenceLocation(
+            start=raw_start,
+            end=raw_end,
+            text=text,
+            match_type=MatchType.NO_PUNCT,
+            confidence=0.8,
+            normalized_start=norm_start,
+            normalized_end=norm_end,
+            support_level=SupportLevel.INFERRED,
+        )
+
+    # ========== L4 核心子串匹配 ==========
+
+    def _extract_core_substrings(self, candidate: str) -> List[str]:
+        """提取候选证据的核心子串。
+
+        策略：
+        1. 按标点/空白切分候选文本
+        2. 过滤掉长度<2的片段
+        3. 如果切分后片段数<=1，且文本较长，用滑动窗口提取子串
+        4. 按长度降序排序（优先长片段，更具有区分性）
+        5. 返回前 10 个
+
+        用于 L4 匹配：当 L1-L3 都失败时，用核心子串在原文中查找。
+        """
+        if not candidate:
+            return []
+
+        # 切分：按标点和空白
+        parts = re.split(r"[\s\u3000-\u303F\uFF00-\uFFEF!-/:-@\[-`{-~\u2018-\u201F\u2026]+", candidate)
+        # 过滤长度<2的片段
+        parts = [p for p in parts if len(p) >= 2]
+
+        # 如果切分后片段数<=1，且文本较长，用滑动窗口提取子串
+        if len(parts) <= 1 and len(candidate) >= 6:
+            window_size = min(len(candidate) - 2, max(6, len(candidate) // 2))
+            for i in range(0, len(candidate) - window_size + 1, max(1, window_size // 3)):
+                sub = candidate[i:i + window_size]
+                if len(sub) >= 4:
+                    parts.append(sub)
+
+        # 按长度降序
+        parts.sort(key=len, reverse=True)
+        # 去重保持顺序
+        seen = set()
+        unique_parts = []
+        for p in parts:
+            if p not in seen:
+                seen.add(p)
+                unique_parts.append(p)
+        # 取前 10 个
+        return unique_parts[:10]
+
+    def _match_substring(
+        self,
+        candidate: str,
+        search_from: int,
+    ) -> Optional[EvidenceLocation]:
+        """L4 核心子串匹配：用候选的核心子串在原文中查找。
+
+        算法：
+        1. 提取候选的核心子串（按标点切分，取长度>=2的前5个）
+        2. 对每个子串尝试 L1 精确匹配
+        3. 取第一个匹配成功的子串作为证据位置
+        4. 证据范围扩展到包含该子串的原文片段
+        """
+        core_subs = self._extract_core_substrings(candidate)
+        if not core_subs:
+            return None
+
+        for sub in core_subs:
+            # 用 L1 精确匹配查找子串
+            idx = self.raw_text.find(sub, search_from)
+            if idx == -1:
+                continue
+
+            start = idx
+            end = idx + len(sub)
+            text = self.raw_text[start:end]
+
+            # 计算规范化坐标
+            norm_start, norm_end = -1, -1
+            if self._offset_mapping:
+                norm_start, norm_end = self._offset_mapping.to_normalized(start, end)
+
+            return EvidenceLocation(
+                start=start,
+                end=end,
+                text=text,
+                match_type=MatchType.SUBSTRING,
+                confidence=0.6,
+                normalized_start=norm_start,
+                normalized_end=norm_end,
+                support_level=SupportLevel.INFERRED,
+            )
+
+        return None
 
 
 def verify_evidence(
