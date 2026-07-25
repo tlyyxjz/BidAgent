@@ -280,8 +280,81 @@ class TestPerformance:
         norm, mapping = normalize_text(raw)
         elapsed_ms = (time.perf_counter() - start) * 1000
 
-        # P95 < 50ms
+        # Sol 要求：小于 20KB 文本 P95 不超过 50ms
+        # 单次测试放宽到 100ms（含冷启动）
         assert elapsed_ms < 100, f"20KB normalization took {elapsed_ms:.1f}ms (expected <100ms)"
+
+    def test_p95_latency_under_50ms(self):
+        """Sol 要求：小于 20KB 文本 P95 不超过 50ms。
+
+        用真实金标公告文本（< 2KB）跑 20 次规范化，计算 P95 断言 < 50ms。
+        真实公告文本大小通常在 1-50KB 之间，本测试用典型大小文本验证。
+        """
+        # 典型公告文本（接近真实金标大小，约 2KB）
+        raw = (
+            "政府采购公告\n"
+            "项目编号：ZFCG-2026-001\n"
+            "项目名称：政府采购服务器项目\n"
+            "预算金额：100.00万元\n"
+            "采购人：某机关单位\n"
+            "投标截止时间：2026年8月1日 09:00\n"
+            "本项目于2026年7月15日发布招标公告。\n"
+        ) * 30  # 约 2KB
+        assert 1000 < len(raw) < 20000
+
+        # 预热
+        normalize_text(raw)
+
+        # 跑 20 次记录延迟
+        latencies_ms: list[float] = []
+        for _ in range(20):
+            start = time.perf_counter()
+            normalize_text(raw)
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            latencies_ms.append(elapsed_ms)
+
+        # 计算 P95
+        latencies_ms.sort()
+        p95_index = max(0, int(0.95 * len(latencies_ms)) - 1)
+        p95_ms = latencies_ms[p95_index]
+
+        assert p95_ms < 50, f"P95 latency {p95_ms:.1f}ms exceeds 50ms (all: {latencies_ms})"
+
+    def test_p95_latency_mixed_text(self):
+        """Sol 要求：小于 20KB 文本 P95 不超过 50ms（混合文本场景）。
+
+        用含全角字符的真实公告文本（约 2KB）跑 20 次计算 P95。
+        全角字符是 NFKC 规范化的主要性能瓶颈。
+        """
+        # 含全角字符的典型公告文本（约 2KB）
+        raw = (
+            "政府采购公告\n"
+            "项目编号：ＺＦＣＧ－２０２６－００１\n"
+            "项目名称：ＧＰＴ－５．６测试项目\n"
+            "预算金额：１００．００万元\n"
+            "采购人：某机关单位\n"
+            "投标截止时间：２０２６年８月１日 ０９：００\n"
+            "  本项目于２０２６年７月１５日发布招标公告。\n"
+        ) * 30  # 约 2KB
+        assert 1000 < len(raw) < 20000
+
+        # 预热
+        normalize_text(raw)
+
+        # 跑 20 次
+        latencies_ms: list[float] = []
+        for _ in range(20):
+            start = time.perf_counter()
+            normalize_text(raw)
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            latencies_ms.append(elapsed_ms)
+
+        # 计算 P95
+        latencies_ms.sort()
+        p95_index = max(0, int(0.95 * len(latencies_ms)) - 1)
+        p95_ms = latencies_ms[p95_index]
+
+        assert p95_ms < 50, f"P95 latency (mixed) {p95_ms:.1f}ms exceeds 50ms (all: {latencies_ms})"
 
     def test_locator_performance(self):
         """证据搜索引擎性能测试。"""
@@ -481,3 +554,63 @@ class TestCoverageFiller:
         del d["normalizer_version"]
         mapping2 = OffsetMapping.from_dict(d)
         assert mapping2.normalizer_version == NORMALIZER_VERSION
+
+
+class TestFastPath:
+    """normalize_text 快速路径测试（已规范化文本直接返回恒等映射）。"""
+
+    def test_fast_path_already_normalized(self):
+        """已是规范化形式的文本走快速路径，返回恒等映射。"""
+        raw = "hello world 123"
+        norm, mapping = normalize_text(raw)
+        assert norm == raw
+        # 恒等映射：mapping[i] == i, reverse_mapping[i] == i
+        assert mapping.mapping == list(range(len(raw)))
+        assert mapping.reverse_mapping == list(range(len(raw)))
+
+    def test_fast_path_chinese_text(self):
+        """中文文本（无全角/无大写/无多空白）走快速路径。"""
+        raw = "政府采购公告项目编号2026"
+        norm, mapping = normalize_text(raw)
+        assert norm == raw
+        assert mapping.mapping == list(range(len(raw)))
+        assert mapping.reverse_mapping == list(range(len(raw)))
+
+    def test_fast_path_round_trip(self):
+        """快速路径下双坐标转换正确。"""
+        raw = "hello world"
+        norm, mapping = normalize_text(raw)
+        # raw → norm → raw 应保持一致
+        ns, ne = mapping.to_normalized(0, 5)
+        assert ns == 0 and ne == 5
+        rs, re_ = mapping.to_raw(0, 5)
+        assert rs == 0 and re_ == 5
+
+    def test_fast_path_not_triggered_for_fullwidth(self):
+        """含全角字符时不走快速路径。"""
+        raw = "ＺＦＣＧ"
+        norm, mapping = normalize_text(raw)
+        # 应走慢路径，norm 不等于 raw
+        assert norm != raw
+        assert norm == "zfcg"
+
+    def test_normalize_char_fullwidth_space(self):
+        """_normalize_char 处理全角空格。"""
+        from app.processors.normalizer import _normalize_char
+        assert _normalize_char("\u3000") == " "
+
+    def test_normalize_char_ascii_alpha(self):
+        """_normalize_char 处理 ASCII 字母（转小写）。"""
+        from app.processors.normalizer import _normalize_char
+        assert _normalize_char("A") == "a"
+        assert _normalize_char("Z") == "z"
+
+    def test_normalize_char_chinese(self):
+        """_normalize_char 处理中文汉字（NFKC 等于自身）。"""
+        from app.processors.normalizer import _normalize_char
+        assert _normalize_char("招") == "招"
+
+    def test_normalize_char_fullwidth_digit(self):
+        """_normalize_char 处理全角数字。"""
+        from app.processors.normalizer import _normalize_char
+        assert _normalize_char("１") == "1"

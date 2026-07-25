@@ -26,13 +26,17 @@ import re
 import time
 import unicodedata
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 # 规范化器版本号（规则变更时必须升级）
 NORMALIZER_VERSION = "1.0"
 
 # 全角空格（U+3000）单独处理
 _FULLWIDTH_SPACE = "\u3000"
+
+# NFKC 规范化结果缓存（按字符缓存，避免重复 unicodedata.normalize 调用）
+# 性能优化：20KB 全角文本场景下，unicodedata.normalize 是主要瓶颈
+_NFKC_CACHE: Dict[str, str] = {}
 
 # 连续空白正则（匹配 1 个或多个空白字符，包括空格、制表符、全角空格等，但不含换行）
 _WHITESPACE_RUN = re.compile(r"[ \t\u3000\r\f\v]{2,}")
@@ -197,17 +201,70 @@ def normalize_text(raw_text: str) -> Tuple[str, OffsetMapping]:
 
     start_time = time.perf_counter()
 
-    # 第一步：逐字符规范化
+    # 快速路径：文本已经是规范化形式，直接返回恒等映射
+    # 性能优化：避免对已规范化文本逐字符循环
+    if is_normalized(raw_text):
+        n_raw = len(raw_text)
+        mapping = list(range(n_raw))
+        reverse_mapping = list(range(n_raw))
+        elapsed_ms = (time.perf_counter() - start_time) * 1000
+        result = OffsetMapping(
+            mapping=mapping,
+            reverse_mapping=reverse_mapping,
+            normalized_text=raw_text,
+            raw_text=raw_text,
+            normalizer_version=NORMALIZER_VERSION,
+        )
+        return (raw_text, result)
+
+    # 慢路径：逐字符规范化（带缓存，避免重复 unicodedata.normalize 调用）
+    n_raw = len(raw_text)
     norm_chars: List[str] = []
     init_map: List[int] = []  # norm_chars 索引 → raw_text 索引
 
-    for raw_idx, ch in enumerate(raw_text):
-        norm = _normalize_char(ch)
-        for c in norm:
-            norm_chars.append(c)
+    for raw_idx in range(n_raw):
+        ch = raw_text[raw_idx]
+        # 快速路径：ASCII 范围
+        if ch < "\u0080":
+            if "A" <= ch <= "Z":
+                norm_chars.append(chr(ord(ch) + 32))
+            else:
+                norm_chars.append(ch)
             init_map.append(raw_idx)
+            continue
 
-    # 第二步：行首行尾空白去除 + 行内连续空白压缩
+        # 全角空格快速路径
+        if ch == _FULLWIDTH_SPACE:
+            norm_chars.append(" ")
+            init_map.append(raw_idx)
+            continue
+
+        # 空白字符直接保留（后面统一处理压缩）
+        if ch == "\n" or ch == "\r" or ch == "\t" or ch == "\f" or ch == "\v" or ch == " ":
+            norm_chars.append(ch)
+            init_map.append(raw_idx)
+            continue
+
+        # 全角字符：查缓存
+        norm = _NFKC_CACHE.get(ch)
+        if norm is None:
+            norm = unicodedata.normalize("NFKC", ch)
+            _NFKC_CACHE[ch] = norm
+
+        if len(norm) == 1:
+            # 英文字母转小写（ASCII 范围）
+            if "A" <= norm <= "Z":
+                norm = chr(ord(norm) + 32)
+                _NFKC_CACHE[ch] = norm  # 更新缓存
+            norm_chars.append(norm)
+            init_map.append(raw_idx)
+        else:
+            # NFKC 可能展开为多字符（罕见情况）
+            for c in norm:
+                norm_chars.append(c)
+                init_map.append(raw_idx)
+
+    # 第二步：行首行尾空白去除 + 行内连续空白压缩（单次遍历）
     final_chars: List[str] = []
     final_to_init: List[int] = []
 
@@ -225,10 +282,14 @@ def normalize_text(raw_text: str) -> Tuple[str, OffsetMapping]:
             i += 1
             continue
 
-        if ch in " \t\r\f\v":
+        if ch == " " or ch == "\t" or ch == "\r" or ch == "\f" or ch == "\v":
             j = i
-            while j < n and norm_chars[j] in " \t\r\f\v":
-                j += 1
+            while j < n:
+                cj = norm_chars[j]
+                if cj == " " or cj == "\t" or cj == "\r" or cj == "\f" or cj == "\v":
+                    j += 1
+                else:
+                    break
 
             is_line_start = in_leading_ws
             is_line_end = (j >= n) or (norm_chars[j] == "\n")
@@ -247,25 +308,26 @@ def normalize_text(raw_text: str) -> Tuple[str, OffsetMapping]:
         in_leading_ws = False
         i += 1
 
-    # 构建 normalized_index → raw_index 映射
-    # 同时记录哪些位置是压缩空白（用于反向映射时跳过）
-    mapping: List[int] = []
-    is_compressed_whitespace: List[bool] = []
-    for fi in final_to_init:
-        raw_idx = init_map[fi]
-        ch = norm_chars[fi]
-        mapping.append(raw_idx)
-        # 压缩空白字符标记为 True（不设置反向映射）
-        is_compressed_whitespace.append(ch in " \t\r\f\v")
+    # 第三步：构建映射表（单次遍历，合并 mapping 和 reverse_mapping 构建）
+    n_final = len(final_chars)
+    mapping: List[int] = [0] * n_final
+    is_compressed_whitespace: List[bool] = [False] * n_final
+
+    for fi in range(n_final):
+        raw_idx = init_map[final_to_init[fi]]
+        mapping[fi] = raw_idx
+        ch_fi = norm_chars[final_to_init[fi]]
+        if ch_fi == " " or ch_fi == "\t" or ch_fi == "\r" or ch_fi == "\f" or ch_fi == "\v":
+            is_compressed_whitespace[fi] = True
 
     normalized_text = "".join(final_chars)
 
     # 构建反向映射：raw_index → normalized_index
     # 压缩空白的 raw 字符保持 -1（表示被删除）
-    n_raw = len(raw_text)
     reverse_mapping: List[int] = [-1] * n_raw
 
-    for norm_idx, raw_idx in enumerate(mapping):
+    for norm_idx in range(n_final):
+        raw_idx = mapping[norm_idx]
         if 0 <= raw_idx < n_raw:
             if reverse_mapping[raw_idx] == -1 and not is_compressed_whitespace[norm_idx]:
                 reverse_mapping[raw_idx] = norm_idx
