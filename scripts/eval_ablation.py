@@ -41,7 +41,13 @@ WORK_DIR = Path(r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-ag
 RAW_DIR = WORK_DIR / "_w2_raw"
 ANNOT_DIR = WORK_DIR / "_w2_annotations"
 
-from app.llm.extractor import call_extraction_llm, compute_prompt_hash
+from app.llm.extractor import (
+    call_extraction_llm,
+    call_extraction_llm_no_evidence,
+    compute_prompt_hash,
+    EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+    EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
+)
 from app.llm.extraction_schemas import CORE_FIELD_NAMES, ExtractionResult, FieldExtraction
 from app.processors.evidence_locator import EvidenceLocator
 from app.processors.field_validator import (
@@ -105,11 +111,13 @@ class ExpSummary:
     fields_correct: int
     fields_evaluable: int
     field_precision: float
-    evidence_precision: float  # 正确证据 / 系统输出证据总数
+    evidence_precision: float  # C 组字段级证据验证率 (已验证证据字段 / 有证据字段)
     model_id: str
     prompt_hash: str
     total_tokens: int
     latency_ms_avg: float
+    invalid_docs_count: int = 0  # P2: LLM 失败被排除的文档数
+    invalid_docs: list = field(default_factory=list)  # P2: 失败文档 ID 列表
 
 
 def load_gold_doc(doc_prefix: str) -> Optional[GoldDoc]:
@@ -176,19 +184,25 @@ def _value_correct(field_name: str, pred_value: str, gold_field: GoldField) -> b
 # ========== A 组：Direct LLM（直接输出字段，无证据要求）==========
 
 async def run_group_a(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], dict]:
-    """A 组：直接调用 LLM，不要求证据。
+    """A 组：直接调用 LLM，不要求证据（Sol 要求 W2-08 A 组用独立无证据 prompt）。
 
-    实现方式：调用 call_extraction_llm (它会输出候选证据)，但评测时忽略证据，
-    只看字段值。这样保证三组用同一底层模型/同一 prompt，仅评测口径不同。
+    修复 (P1)：原实现复用 call_extraction_llm (有证据 prompt) 仅评测时忽略证据，
+    导致 LLM 仍被要求输出证据，不符合 "Direct LLM 无证据要求" 的实验目的。
+    现改用 call_extraction_llm_no_evidence，使用独立的无证据 prompt + few-shot。
     """
-    result = await call_extraction_llm(raw_text)
+    result = await call_extraction_llm_no_evidence(raw_text)
+    # A 组 LLM 失败检测（与 B 组一致）
+    is_invalid = bool(result.error) or result.total_tokens == 0 or len(result.fields) == 0
     meta = {
         "model_id": result.model_id,
         "prompt_hash": result.prompt_hash,
         "total_tokens": result.total_tokens,
         "latency_ms": result.latency_ms,
         "error": result.error,
+        "invalid": is_invalid,
     }
+    if is_invalid:
+        return [], meta
 
     pred_by_name = {f.field_name: f for f in result.fields}
     rows: list[GroupResult] = []
@@ -196,7 +210,7 @@ async def run_group_a(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
         pred = pred_by_name.get(gf.field_name)
         pred_status = pred.field_status if pred else "missing"
         has_value = bool(pred and pred.raw_value)
-        # A 组不评证据
+        # A 组不评证据 (无证据 prompt，candidate_evidences 必为空)
         correct = _value_correct(gf.field_name, pred.raw_value if pred else "", gf) if has_value else None
         if gf.gold_status == "absent":
             correct = (pred_status == "absent") if pred else True
@@ -205,7 +219,8 @@ async def run_group_a(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
             gold_status=gf.gold_status, pred_status=pred_status,
             has_value=has_value, has_evidence=False, evidence_verified=False,
             field_validated=False,
-            unjustified=has_value and not False,  # A 组：有值即算无依据 (无证据要求)
+            # A 组无证据要求：有值即算无依据 (对比 B/C 组通过证据降低无依据率)
+            unjustified=has_value,
             correct=correct,
         ))
     return rows, meta
@@ -214,15 +229,25 @@ async def run_group_a(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
 # ========== B 组：LLM + 候选证据（不验证）==========
 
 async def run_group_b(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], dict]:
-    """B 组：LLM 输出字段 + 候选证据，但不做程序验证。"""
+    """B 组：LLM 输出字段 + 候选证据，但不做程序验证。
+
+    修复 (P2)：添加 LLM 失败错误检测。
+    原实现 multi_lot_02 LLM 调用失败 (tokens=0) 被静默吞掉，6 字段全 missing
+    被算入评测，导致 B 组 fields_evaluable=37 (A/C 都是 42) 数据失真。
+    现检测 result.error / total_tokens==0 / fields 为空，标记 invalid 跳过评测。
+    """
     result = await call_extraction_llm(raw_text)
+    is_invalid = bool(result.error) or result.total_tokens == 0 or len(result.fields) == 0
     meta = {
         "model_id": result.model_id,
         "prompt_hash": result.prompt_hash,
         "total_tokens": result.total_tokens,
         "latency_ms": result.latency_ms,
         "error": result.error,
+        "invalid": is_invalid,
     }
+    if is_invalid:
+        return [], meta
 
     pred_by_name = {f.field_name: f for f in result.fields}
     locator = EvidenceLocator(raw_text)
@@ -313,7 +338,12 @@ async def run_group_c(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
 
 # ========== 汇总 ==========
 
-def summarize(group: str, all_rows: list[GroupResult], metas: list[dict]) -> ExpSummary:
+def summarize(
+    group: str,
+    all_rows: list[GroupResult],
+    metas: list[dict],
+    invalid_docs: list[str] = None,
+) -> ExpSummary:
     total = len(all_rows)
     with_value = sum(1 for r in all_rows if r.has_value)
     with_evidence = sum(1 for r in all_rows if r.has_evidence)
@@ -322,6 +352,7 @@ def summarize(group: str, all_rows: list[GroupResult], metas: list[dict]) -> Exp
     unjustified = sum(1 for r in all_rows if r.unjustified)
     correct = sum(1 for r in all_rows if r.correct is True)
     evaluable = sum(1 for r in all_rows if r.correct is not None)
+    invalid_docs = invalid_docs or []
 
     return ExpSummary(
         group=group,
@@ -336,12 +367,15 @@ def summarize(group: str, all_rows: list[GroupResult], metas: list[dict]) -> Exp
         fields_correct=correct,
         fields_evaluable=evaluable,
         field_precision=round(correct / max(evaluable, 1), 4),
-        # 证据精确率：已验证证据 / 有证据字段 (B 组无验证，按 has_evidence 算)
+        # C 组字段级证据验证率 (已验证证据字段 / 有证据字段)
+        # 命名澄清 (P3): 此处是字段级，非证据级，与 W2-09 证据级精确率口径不同
         evidence_precision=round(ev_verified / max(with_evidence, 1), 4) if group == "C" else 0.0,
         model_id=metas[0].get("model_id", "unknown") if metas else "unknown",
         prompt_hash=metas[0].get("prompt_hash", "") if metas else "",
         total_tokens=sum(m.get("total_tokens", 0) for m in metas),
         latency_ms_avg=round(sum(m.get("latency_ms", 0) for m in metas) / max(len(metas), 1), 1),
+        invalid_docs_count=len(invalid_docs),
+        invalid_docs=invalid_docs,
     )
 
 
@@ -377,27 +411,51 @@ async def main():
 
     all_rows_a, all_rows_b, all_rows_c = [], [], []
     metas_a, metas_b, metas_c = [], [], []
+    invalid_a, invalid_b, invalid_c = [], [], []
 
     for gd, rt in docs:
         print(f"\n--- {gd.document_id} ({len(rt)} 字符) ---")
         # A 组
-        t0 = time.perf_counter()
         rows_a, meta_a = await run_group_a(gd, rt)
-        print(f"  A: {len(rows_a)} 字段, tokens={meta_a['total_tokens']}, latency={meta_a['latency_ms']}ms, error={meta_a['error']}")
-        all_rows_a.extend(rows_a); metas_a.append(meta_a)
+        if meta_a.get("invalid"):
+            print(f"  A: [INVALID] tokens={meta_a['total_tokens']}, error={meta_a['error']} - 跳过评测")
+            invalid_a.append(gd.document_id)
+            metas_a.append(meta_a)
+        else:
+            print(f"  A: {len(rows_a)} 字段, tokens={meta_a['total_tokens']}, latency={meta_a['latency_ms']}ms, error={meta_a['error']}")
+            all_rows_a.extend(rows_a); metas_a.append(meta_a)
         # B 组
         rows_b, meta_b = await run_group_b(gd, rt)
-        print(f"  B: {len(rows_b)} 字段, tokens={meta_b['total_tokens']}, latency={meta_b['latency_ms']}ms")
-        all_rows_b.extend(rows_b); metas_b.append(meta_b)
+        if meta_b.get("invalid"):
+            print(f"  B: [INVALID] tokens={meta_b['total_tokens']}, error={meta_b['error']} - 跳过评测")
+            invalid_b.append(gd.document_id)
+            metas_b.append(meta_b)
+        else:
+            print(f"  B: {len(rows_b)} 字段, tokens={meta_b['total_tokens']}, latency={meta_b['latency_ms']}ms")
+            all_rows_b.extend(rows_b); metas_b.append(meta_b)
         # C 组
         rows_c, meta_c = await run_group_c(gd, rt)
-        print(f"  C: {len(rows_c)} 字段, tokens={meta_c['total_tokens']}, latency={meta_c['latency_ms']}ms")
-        all_rows_c.extend(rows_c); metas_c.append(meta_c)
+        if meta_c.get("invalid"):
+            print(f"  C: [INVALID] tokens={meta_c['total_tokens']}, error={meta_c['error']} - 跳过评测")
+            invalid_c.append(gd.document_id)
+            metas_c.append(meta_c)
+        else:
+            print(f"  C: {len(rows_c)} 字段, tokens={meta_c['total_tokens']}, latency={meta_c['latency_ms']}ms")
+            all_rows_c.extend(rows_c); metas_c.append(meta_c)
 
-    # 汇总
-    sum_a = summarize("A", all_rows_a, metas_a)
-    sum_b = summarize("B", all_rows_b, metas_b)
-    sum_c = summarize("C", all_rows_c, metas_c)
+    # 汇总 (传入 invalid_docs 用于报告)
+    sum_a = summarize("A", all_rows_a, metas_a, invalid_a)
+    sum_b = summarize("B", all_rows_b, metas_b, invalid_b)
+    sum_c = summarize("C", all_rows_c, metas_c, invalid_c)
+
+    # 打印 invalid docs 警告
+    if invalid_a or invalid_b or invalid_c:
+        print("\n" + "!" * 70)
+        print("警告: 检测到 LLM 调用失败的 invalid docs (已排除出评测)")
+        print(f"  A 组 invalid: {invalid_a}")
+        print(f"  B 组 invalid: {invalid_b}")
+        print(f"  C 组 invalid: {invalid_c}")
+        print("!" * 70)
 
     print("\n" + "=" * 70)
     print("汇总对比")

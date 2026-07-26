@@ -89,11 +89,14 @@ class DocMetric:
     fields_present: int  # gold_status == present/multi_value
     fields_found: int  # 系统找到证据的字段数
     evidences_pred: int
+    evidences_located: int  # P3: 被 locator 定位到原文的证据数
     evidences_matched: int
-    iou_list: list  # 所有匹配证据的 IoU
+    iou_list: list  # P3: 所有被定位证据的 IoU (含 IoU<0.5，未定位不算)
+    iou_list_matched: list  # P3: 仅 matched=True (IoU>=阈值) 的 IoU，用于对比
     recall: float  # fields_found / fields_present
-    precision: float  # evidences_matched / evidences_pred
-    iou_avg: float  # mean(iou_list)
+    precision: float  # 证据级精确率: evidences_matched / evidences_pred
+    iou_avg: float  # P3: sum(iou_list) / evidences_pred (未定位/未匹配算0，反映整体质量)
+    iou_avg_matched: float  # P3: mean(iou_list_matched) 仅匹配证据的平均 (原口径，用于对比)
 
 
 @dataclass
@@ -103,10 +106,12 @@ class OverallMetric:
     fields_present: int
     fields_found: int
     evidences_pred: int
+    evidences_located: int  # P3: 被 locator 定位到原文的证据数
     evidences_matched: int
-    recall: float  # 证据检出率
-    precision: float  # 证据精确率
-    iou_avg: float  # 平均 IoU
+    recall: float  # 证据检出率: fields_found / fields_present
+    precision: float  # 证据级精确率: evidences_matched / evidences_pred (与 W2-08 字段级口径不同)
+    iou_avg: float  # P3: sum(all_ious) / evidences_pred (未定位/未匹配算0)
+    iou_avg_matched: float  # P3: 仅 matched 证据的平均 IoU (原口径，用于对比)
     iou_p50: float
     iou_p95: float
     model_id: str
@@ -190,8 +195,10 @@ async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[DocMetric, dict]:
 
     field_metrics: list[FieldMetric] = []
     evidences_pred = 0
+    evidences_located = 0  # P3: 被 locator 定位到原文的证据数
     evidences_matched = 0
-    iou_list = []
+    iou_list = []  # P3: 所有被定位证据的 IoU (含 IoU<0.5)
+    iou_list_matched = []  # P3: 仅 matched=True 的 IoU
 
     for gf in gd.fields:
         gold_ev_count = len(gf.evidences)
@@ -207,15 +214,18 @@ async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[DocMetric, dict]:
             for ce in pred.candidate_evidences:
                 loc = locator.locate(ce.evidence_text, search_from=0)
                 if loc.found and loc.location is not None:
+                    evidences_located += 1  # P3: 定位成功
                     matched, iou = match_evidence(
                         loc.location.start, loc.location.end,
                         gf.evidences,
                     )
                     if iou > best_iou:
                         best_iou = iou
+                    # P3: 所有被定位的证据都计入 iou_list (含 IoU<0.5)
+                    iou_list.append(iou)
                     if matched:
                         matched_count += 1
-                        iou_list.append(iou)
+                        iou_list_matched.append(iou)
             evidences_matched += matched_count
 
         found = matched_count > 0
@@ -234,17 +244,25 @@ async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[DocMetric, dict]:
     fields_present = sum(1 for fm in field_metrics if fm.gold_status in ("present", "multi_value"))
     fields_found = sum(1 for fm in field_metrics if fm.found)
 
+    # P3: iou_avg 用 evidences_pred 做分母 (未定位/未匹配算0，反映整体质量)
+    # iou_avg_matched 用 iou_list_matched 做分母 (原口径，仅匹配证据)
+    iou_avg_overall = round(sum(iou_list) / max(evidences_pred, 1), 4) if evidences_pred else 0.0
+    iou_avg_matched = round(sum(iou_list_matched) / max(len(iou_list_matched), 1), 4) if iou_list_matched else 0.0
+
     return DocMetric(
         doc_id=gd.document_id,
         fields_total=len(field_metrics),
         fields_present=fields_present,
         fields_found=fields_found,
         evidences_pred=evidences_pred,
+        evidences_located=evidences_located,
         evidences_matched=evidences_matched,
         iou_list=[round(x, 4) for x in iou_list],
+        iou_list_matched=[round(x, 4) for x in iou_list_matched],
         recall=round(fields_found / max(fields_present, 1), 4),
         precision=round(evidences_matched / max(evidences_pred, 1), 4),
-        iou_avg=round(sum(iou_list) / max(len(iou_list), 1), 4) if iou_list else 0.0,
+        iou_avg=iou_avg_overall,
+        iou_avg_matched=iou_avg_matched,
     ), meta
 
 
@@ -294,8 +312,9 @@ async def main():
         dm, meta = await evaluate_doc(gd, rt)
         print(f"  字段 present: {dm.fields_present}, found: {dm.fields_found}, "
               f"recall={dm.recall:.2%}, precision={dm.precision:.2%}, "
-              f"iou_avg={dm.iou_avg:.4f}, tokens={meta['total_tokens']}, "
-              f"latency={meta['latency_ms']}ms")
+              f"iou_avg={dm.iou_avg:.4f} (overall), iou_avg_matched={dm.iou_avg_matched:.4f}, "
+              f"located={dm.evidences_located}/{dm.evidences_pred}, "
+              f"tokens={meta['total_tokens']}, latency={meta['latency_ms']}ms")
         doc_metrics.append(dm); metas.append(meta)
 
     # 汇总
@@ -303,8 +322,15 @@ async def main():
     total_present = sum(dm.fields_present for dm in doc_metrics)
     total_found = sum(dm.fields_found for dm in doc_metrics)
     total_pred = sum(dm.evidences_pred for dm in doc_metrics)
+    total_located = sum(dm.evidences_located for dm in doc_metrics)  # P3
     total_matched = sum(dm.evidences_matched for dm in doc_metrics)
     all_ious = sorted([x for dm in doc_metrics for x in dm.iou_list])
+    all_ious_matched = sorted([x for dm in doc_metrics for x in dm.iou_list_matched])  # P3
+
+    # P3: iou_avg 用 total_pred 做分母 (反映整体证据质量)
+    # iou_avg_matched 用 all_ious_matched 做分母 (原口径，仅匹配证据)
+    iou_avg_overall = round(sum(all_ious) / max(total_pred, 1), 4) if total_pred else 0.0
+    iou_avg_matched = round(sum(all_ious_matched) / max(len(all_ious_matched), 1), 4) if all_ious_matched else 0.0
 
     overall = OverallMetric(
         docs_count=len(doc_metrics),
@@ -312,12 +338,14 @@ async def main():
         fields_present=total_present,
         fields_found=total_found,
         evidences_pred=total_pred,
+        evidences_located=total_located,
         evidences_matched=total_matched,
         recall=round(total_found / max(total_present, 1), 4),
         precision=round(total_matched / max(total_pred, 1), 4),
-        iou_avg=round(sum(all_ious) / max(len(all_ious), 1), 4) if all_ious else 0.0,
-        iou_p50=round(percentile(all_ious, 0.5), 4),
-        iou_p95=round(percentile(all_ious, 0.95), 4),
+        iou_avg=iou_avg_overall,
+        iou_avg_matched=iou_avg_matched,
+        iou_p50=round(percentile(all_ious_matched, 0.5), 4),  # P3: p50/p95 用 matched 口径
+        iou_p95=round(percentile(all_ious_matched, 0.95), 4),
         model_id=metas[0].get("model_id", "unknown") if metas else "unknown",
         prompt_hash=metas[0].get("prompt_hash", "") if metas else "",
         total_tokens=sum(m.get("total_tokens", 0) for m in metas),

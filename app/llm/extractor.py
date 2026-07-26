@@ -173,15 +173,132 @@ EXTRACTION_FEWSHOT_EXAMPLES = [
 ]
 
 
-def compute_prompt_hash() -> str:
+# ========== W2-08 消融实验 A 组：无证据 System Prompt ==========
+# Sol 要求 (W2-08)：A 组 (Direct LLM) 必须使用独立的无证据 prompt，
+# 不能复用有证据 prompt 仅在评测时忽略证据 (那样 LLM 仍被要求输出证据，
+# 不符合 "Direct LLM 无证据要求" 的实验目的)。
+EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE = """你是一个政府采购公告字段抽取助手。从公告原文中抽取六类核心字段。
+
+需要抽取的六类核心字段：
+1. project_identifier：项目编号（招标编号、政府采购计划编号）
+2. purchaser_name：采购人（招标人、项目业主）
+3. winner_name：中标人（中标公司、成交供应商）
+4. amount：金额及类型（预算金额/控制价/中标金额/合同金额/单价）
+5. publish_date：发布日期（公告发布时间）
+6. bid_deadline：投标截止日期（投标文件递交截止时间）
+
+输出要求：
+1. 每个字段必须输出 field_status：
+   - present：字段存在且有值
+   - absent：字段不存在（如招标公告没有中标人）
+   - ambiguous：字段存在但含义模糊
+   - multi_value：多值字段（如多分包、多中标人）
+
+2. amount 字段必须输出：
+   - amount_type：金额类型（budget/ceiling/award/contract/unit_price）
+   - currency：货币（CNY/USD/EUR）
+
+3. 多值字段（multi_value）：
+   - 如多分包金额，每个分包单独输出一条
+   - 如多中标人，每个中标人单独输出一条
+
+输出格式为标准 JSON：
+{
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "field_status": "present",
+      "raw_value": "ZFCG-2026-001",
+      "amount_type": null,
+      "currency": null,
+      "lot_id": null
+    }
+  ]
+}
+
+约束：
+- 字段不存在的字段也要输出，field_status=absent
+- 不得编造原文中不存在的内容
+- 只返回 JSON，不要任何解释"""
+
+# Few-shot 示例（无证据版本：不输出 candidate_evidences 字段）
+EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE = [
+    {
+        "raw_text": "招标公告\n项目编号：ZFCG-2026-001\n项目名称：政府采购服务器项目\n预算金额：100.00万元\n采购人：某机关单位\n投标截止时间：2026年8月1日 09:00\n发布日期：2026年7月15日",
+        "result": {
+            "fields": [
+                {
+                    "field_name": "project_identifier",
+                    "field_status": "present",
+                    "raw_value": "ZFCG-2026-001",
+                    "amount_type": None,
+                    "currency": None,
+                    "lot_id": None,
+                },
+                {
+                    "field_name": "purchaser_name",
+                    "field_status": "present",
+                    "raw_value": "某机关单位",
+                    "amount_type": None,
+                    "currency": None,
+                    "lot_id": None,
+                },
+                {
+                    "field_name": "winner_name",
+                    "field_status": "absent",
+                    "raw_value": None,
+                    "amount_type": None,
+                    "currency": None,
+                    "lot_id": None,
+                },
+                {
+                    "field_name": "amount",
+                    "field_status": "present",
+                    "raw_value": "100.00万元",
+                    "amount_type": "budget",
+                    "currency": "CNY",
+                    "lot_id": None,
+                },
+                {
+                    "field_name": "publish_date",
+                    "field_status": "present",
+                    "raw_value": "2026年7月15日",
+                    "amount_type": None,
+                    "currency": None,
+                    "lot_id": None,
+                },
+                {
+                    "field_name": "bid_deadline",
+                    "field_status": "present",
+                    "raw_value": "2026年8月1日 09:00",
+                    "amount_type": None,
+                    "currency": None,
+                    "lot_id": None,
+                },
+            ]
+        },
+    }
+]
+
+
+def compute_prompt_hash(
+    system_prompt: str = None,
+    fewshot_examples: list = None,
+) -> str:
     """计算 prompt 哈希（Sol 要求：prompt 变更需记录 prompt_hash）。
+
+    Args:
+        system_prompt: system prompt，默认 EXTRACTION_SYSTEM_PROMPT
+        fewshot_examples: few-shot 示例列表，默认 EXTRACTION_FEWSHOT_EXAMPLES
 
     Returns:
         SHA256 哈希（前 16 字符）
     """
-    content = EXTRACTION_SYSTEM_PROMPT + json.dumps(
-        EXTRACTION_FEWSHOT_EXAMPLES, ensure_ascii=False
-    )
+    if system_prompt is None:
+        system_prompt = EXTRACTION_SYSTEM_PROMPT
+    if fewshot_examples is None:
+        fewshot_examples = EXTRACTION_FEWSHOT_EXAMPLES
+    content = system_prompt + json.dumps(fewshot_examples, ensure_ascii=False)
     return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
 
 
@@ -197,6 +314,30 @@ def build_extraction_prompt(raw_text: str) -> str:
     examples_text = "\n\n".join(
         f"公告原文：\n{ex['raw_text']}\n\n输出 JSON：\n{json.dumps(ex['result'], ensure_ascii=False)}"
         for ex in EXTRACTION_FEWSHOT_EXAMPLES
+    )
+    return f"""参考以下示例：
+
+{examples_text}
+
+现在请抽取这个公告的字段：
+公告原文：
+{raw_text}
+
+输出 JSON："""
+
+
+def build_extraction_prompt_no_evidence(raw_text: str) -> str:
+    """构建无证据版本的 user prompt（A 组消融实验专用）。
+
+    Args:
+        raw_text: 公告原文
+
+    Returns:
+        user prompt 字符串（few-shot 不含 candidate_evidences）
+    """
+    examples_text = "\n\n".join(
+        f"公告原文：\n{ex['raw_text']}\n\n输出 JSON：\n{json.dumps(ex['result'], ensure_ascii=False)}"
+        for ex in EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE
     )
     return f"""参考以下示例：
 
@@ -392,6 +533,94 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
             fields=[],
             model_id=model_id,
             prompt_hash=compute_prompt_hash(),
+            total_tokens=0,
+            latency_ms=latency_ms,
+            error=str(exc),
+        )
+
+
+async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
+    """调用 LLM 抽取字段（无证据版本，A 组消融实验专用）。
+
+    与 call_extraction_llm 的区别：
+    - 使用 EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE（不要求 candidate_evidences）
+    - 使用 EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE
+    - prompt_hash 不同（区分 A/B/C 三组）
+
+    Args:
+        raw_text: 公告原文
+
+    Returns:
+        ExtractionResult（candidate_evidences 为空列表）
+    """
+    if not settings.DEEPSEEK_API_KEY:
+        raise RuntimeError("DEEPSEEK_API_KEY not configured")
+
+    start_time = time.perf_counter()
+    model_id = settings.LLM_MODEL
+    no_evidence_hash = compute_prompt_hash(
+        EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+        EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
+    )
+
+    headers = {
+        "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": settings.LLM_MODEL,
+        "messages": [
+            {"role": "system", "content": EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE},
+            {"role": "user", "content": build_extraction_prompt_no_evidence(raw_text)},
+        ],
+        "temperature": 0.1,
+        "max_tokens": 8000,
+        "response_format": {"type": "json_object"},
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
+            response = await client.post(
+                f"{settings.DEEPSEEK_BASE_URL}/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+            response.raise_for_status()
+
+        data = response.json()
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        total_tokens = data.get("usage", {}).get("total_tokens", 0)
+
+        parsed_json = data["choices"][0]["message"]["content"]
+        parsed_json = json.loads(parsed_json)
+
+        result = parse_extraction_response(
+            parsed_json, model_id, latency_ms, total_tokens
+        )
+        # 覆盖 prompt_hash 为无证据版本
+        result.prompt_hash = no_evidence_hash
+
+        logger.info(
+            "LLM no-evidence extraction OK model={} fields={} tokens={} latency={}ms",
+            model_id,
+            len(result.fields),
+            total_tokens,
+            latency_ms,
+        )
+        return result
+
+    except Exception as exc:
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        logger.error(
+            "LLM no-evidence extraction failed model={} latency={}ms error={}",
+            model_id,
+            latency_ms,
+            str(exc),
+        )
+        return ExtractionResult(
+            fields=[],
+            model_id=model_id,
+            prompt_hash=no_evidence_hash,
             total_tokens=0,
             latency_ms=latency_ms,
             error=str(exc),

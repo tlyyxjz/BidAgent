@@ -14,9 +14,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.llm.extractor import (
+    EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
     EXTRACTION_SYSTEM_PROMPT,
+    EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
     build_extraction_prompt,
+    build_extraction_prompt_no_evidence,
     call_extraction_llm,
+    call_extraction_llm_no_evidence,
     compute_prompt_hash,
     parse_extraction_response,
 )
@@ -336,3 +340,217 @@ class TestCallExtractionLLM:
         assert result.total_tokens == 500
         # mock 环境下 perf_counter 可能极快返回 0，只校验非负
         assert result.latency_ms >= 0
+
+
+# ========== W2-08 A 组无证据 prompt 测试 ==========
+
+
+class TestNoEvidencePrompt:
+    """无证据 prompt 常量完整性测试 (P1 修复)。"""
+
+    def test_no_evidence_prompt_exists(self):
+        """无证据 prompt 常量存在。"""
+        assert EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE is not None
+        assert isinstance(EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE, str)
+        assert len(EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE) > 100
+
+    def test_no_evidence_prompt_contains_six_fields(self):
+        """无证据 prompt 仍包含六类核心字段定义。"""
+        for field_name in CORE_FIELD_NAMES:
+            assert field_name in EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE
+
+    def test_no_evidence_prompt_no_candidate_evidences_requirement(self):
+        """Sol 要求 (P1)：A 组 prompt 不应要求 candidate_evidences。"""
+        # 无证据 prompt 不应包含 "candidate_evidences" 输出要求
+        # (原 prompt 有 "每个字段必须提供候选证据" 的要求)
+        assert "必须提供候选证据" not in EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE
+        assert "candidate_evidences" not in EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE
+
+    def test_no_evidence_prompt_no_evidence_role(self):
+        """无证据 prompt 不应要求证据角色标注。"""
+        # 原 prompt 有 primary/context/qualifier 角色要求
+        assert "primary" not in EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE or "primary" in "amount_type"
+        # amount_type 不含 primary，所以这条断言验证 prompt 简化了
+
+    def test_no_evidence_fewshot_exists(self):
+        """无证据 few-shot 示例存在。"""
+        assert EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE is not None
+        assert len(EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE) > 0
+        ex = EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE[0]
+        assert "raw_text" in ex
+        assert "result" in ex
+        assert "fields" in ex["result"]
+
+    def test_no_evidence_fewshot_no_candidate_evidences(self):
+        """无证据 few-shot 的 fields 不含 candidate_evidences 字段。"""
+        for ex in EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE:
+            for f in ex["result"]["fields"]:
+                # 无证据 few-shot 不输出 candidate_evidences
+                assert "candidate_evidences" not in f or f["candidate_evidences"] == []
+
+    def test_no_evidence_fewshot_has_six_fields(self):
+        """无证据 few-shot 仍包含六类核心字段。"""
+        ex = EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE[0]
+        field_names = [f["field_name"] for f in ex["result"]["fields"]]
+        for name in CORE_FIELD_NAMES:
+            assert name in field_names
+
+
+class TestComputePromptHashNoEvidence:
+    """compute_prompt_hash 带参数测试 (P1 修复)。"""
+
+    def test_default_hash_stable(self):
+        """默认 hash (无参数) 与原行为一致。"""
+        h1 = compute_prompt_hash()
+        h2 = compute_prompt_hash()
+        assert h1 == h2
+        assert len(h1) == 16
+
+    def test_no_evidence_hash_stable(self):
+        """无证据 hash 稳定。"""
+        h1 = compute_prompt_hash(
+            EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+            EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
+        )
+        h2 = compute_prompt_hash(
+            EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+            EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
+        )
+        assert h1 == h2
+        assert len(h1) == 16
+
+    def test_no_evidence_hash_differs_from_default(self):
+        """Sol 要求 (P1)：A 组 prompt_hash 必须与 B/C 组不同。"""
+        h_default = compute_prompt_hash()
+        h_no_evidence = compute_prompt_hash(
+            EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+            EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
+        )
+        assert h_default != h_no_evidence
+
+    def test_different_prompts_different_hash(self):
+        """不同 prompt 产生不同 hash。"""
+        h1 = compute_prompt_hash("prompt_a", [])
+        h2 = compute_prompt_hash("prompt_b", [])
+        assert h1 != h2
+
+
+class TestBuildExtractionPromptNoEvidence:
+    """build_extraction_prompt_no_evidence 测试 (P1 修复)。"""
+
+    def test_build_includes_raw_text(self):
+        """构建的 prompt 包含原文。"""
+        raw = "测试公告原文内容"
+        prompt = build_extraction_prompt_no_evidence(raw)
+        assert raw in prompt
+
+    def test_build_includes_fewshot(self):
+        """构建的 prompt 包含 few-shot 示例。"""
+        prompt = build_extraction_prompt_no_evidence("测试")
+        # few-shot 示例的原文应出现在 prompt 中
+        ex_raw = EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE[0]["raw_text"]
+        assert ex_raw in prompt
+
+    def test_build_no_candidate_evidences_in_fewshot(self):
+        """构建的 prompt 的 few-shot 不含 candidate_evidences。"""
+        prompt = build_extraction_prompt_no_evidence("测试")
+        # few-shot 不应输出 candidate_evidences 字段
+        # (原 build_extraction_prompt 的 few-shot 含 candidate_evidences)
+        assert "candidate_evidences" not in prompt
+
+
+class TestCallExtractionLLMNoEvidence:
+    """call_extraction_llm_no_evidence 测试 (P1 修复)。"""
+
+    @pytest.mark.asyncio
+    async def test_call_no_evidence_no_api_key_raises(self):
+        """无 API key 抛异常。"""
+        with patch("app.llm.extractor.settings") as mock_settings:
+            mock_settings.DEEPSEEK_API_KEY = ""
+            with pytest.raises(RuntimeError, match="not configured"):
+                await call_extraction_llm_no_evidence("测试文本")
+
+    @pytest.mark.asyncio
+    async def test_call_no_evidence_api_failure_returns_error(self):
+        """Sol 要求：失败时记录错误，不静默丢弃。"""
+        with patch("app.llm.extractor.settings") as mock_settings:
+            mock_settings.DEEPSEEK_API_KEY = "test-key"
+            mock_settings.LLM_MODEL = "test-model"
+            mock_settings.LLM_TIMEOUT_SECONDS = 10
+            mock_settings.DEEPSEEK_BASE_URL = "https://test"
+
+            with patch("httpx.AsyncClient") as mock_client_cls:
+                mock_client = AsyncMock()
+                mock_client.__aenter__.return_value = mock_client
+                mock_client.post.side_effect = Exception("API 错误")
+                mock_client_cls.return_value = mock_client
+
+                result = await call_extraction_llm_no_evidence("测试文本")
+
+        assert isinstance(result, ExtractionResult)
+        assert result.error is not None
+        assert "API 错误" in result.error
+        assert result.fields == []
+        assert result.model_id == "test-model"
+        assert result.prompt_hash != ""
+        assert result.total_tokens == 0
+
+    @pytest.mark.asyncio
+    async def test_call_no_evidence_success(self):
+        """成功调用返回解析后的结果 (无证据版本)。"""
+        # 无证据 LLM 返回的 JSON 不含 candidate_evidences
+        mock_response_data = {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {
+                                "fields": [
+                                    {
+                                        "field_name": "project_identifier",
+                                        "field_status": "present",
+                                        "raw_value": "ZFCG-2026-001",
+                                        # 无证据版本不输出 candidate_evidences
+                                    }
+                                ]
+                            },
+                            ensure_ascii=False,
+                        )
+                    }
+                }
+            ],
+            "usage": {"total_tokens": 400},
+        }
+
+        with patch("app.llm.extractor.settings") as mock_settings:
+            mock_settings.DEEPSEEK_API_KEY = "test-key"
+            mock_settings.LLM_MODEL = "test-model"
+            mock_settings.LLM_TIMEOUT_SECONDS = 10
+            mock_settings.DEEPSEEK_BASE_URL = "https://test"
+
+            with patch("httpx.AsyncClient") as mock_client_cls:
+                mock_client = AsyncMock()
+                mock_client.__aenter__.return_value = mock_client
+                mock_resp = MagicMock()
+                mock_resp.raise_for_status = MagicMock()
+                mock_resp.json.return_value = mock_response_data
+                mock_client.post.return_value = mock_resp
+                mock_client_cls.return_value = mock_client
+
+                result = await call_extraction_llm_no_evidence("招标公告")
+
+        assert result.error is None
+        assert len(result.fields) == 1
+        assert result.fields[0].raw_value == "ZFCG-2026-001"
+        assert result.fields[0].candidate_evidences == []  # 无证据版本
+        assert result.model_id == "test-model"
+        assert result.total_tokens == 400
+        assert result.latency_ms >= 0
+        # prompt_hash 应为无证据版本 (与默认不同)
+        default_hash = compute_prompt_hash()
+        assert result.prompt_hash != default_hash
+        no_ev_hash = compute_prompt_hash(
+            EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+            EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
+        )
+        assert result.prompt_hash == no_ev_hash
