@@ -349,7 +349,7 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
             {"role": "user", "content": build_extraction_prompt(raw_text)},
         ],
         "temperature": 0.1,
-        "max_tokens": 2000,
+        "max_tokens": 8000,
         "response_format": {"type": "json_object"},
     }
 
