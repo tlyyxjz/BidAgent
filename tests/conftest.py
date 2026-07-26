@@ -56,11 +56,25 @@ async def _reset_db_and_rate_limit(monkeypatch):
 
     M-2 修复（第四轮）：mock 掉 is_safe_url / is_safe_url_async 避免测试做真实
     DNS 解析（避免 reddit.com 解析到保留 IPv6 被拦截导致测试不稳定）。
+
+    W2 修复（测试环境稳定性）：teardown 阶段用 try/except 包裹 drop_all，
+    避免因 basetemp 残留文件清理失败（PermissionError）连锁中断后续测试的
+    fixture setup，导致 120 errors。setup 阶段 drop_all 同样容错，防止
+    "no such table" / "table already exists" 异常。
     """
     Path("data").mkdir(parents=True, exist_ok=True)
+    # setup：先 drop（容错：表可能不存在），再 create
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+        try:
+            await conn.run_sync(Base.metadata.drop_all)
+        except Exception as e:
+            # 表可能不存在（首个测试或前次 teardown 已清理），忽略
+            print(f"[conftest setup] drop_all warning: {e}")
+        try:
+            await conn.run_sync(Base.metadata.create_all)
+        except Exception as e:
+            # 表可能已存在（前次 setup 中断），忽略
+            print(f"[conftest setup] create_all warning: {e}")
     reset_memory_counter()
 
     # mock SSRF 校验：测试环境跳过真实 DNS 解析
@@ -77,9 +91,13 @@ async def _reset_db_and_rate_limit(monkeypatch):
     monkeypatch.setattr("app.core.scraper.is_safe_url", _mock_safe)
 
     yield
-    # 测试后清理
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # teardown：drop_all 容错，避免 PermissionError 中断后续测试
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+    except Exception as e:
+        # teardown 失败不应影响后续测试，下个 setup 会重新 drop+create
+        print(f"[conftest teardown] drop_all warning: {e}")
 
 
 @pytest.fixture
