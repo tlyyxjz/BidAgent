@@ -275,15 +275,27 @@ async def run_group_b(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
 # ========== C 组：LLM + 程序证据验证 + 确定性字段校验 ==========
 
 async def run_group_c(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], dict]:
-    """C 组：LLM 输出 + EvidenceLocator 验证 + FieldValidator 校验。"""
+    """C 组：LLM 输出 + EvidenceLocator 验证 + FieldValidator 校验。
+
+    修复 (P0-1)：原实现缺少 LLM 失败检测 (无 invalid 标志)，
+    导致 main() 中 `if meta_c.get("invalid")` 分支为 dead path，
+    即使 LLM 调用失败 (tokens=0/error) 仍按空字段参与评测。
+    现对齐 run_group_a / run_group_b 的 invalid 检测逻辑：
+    result.error / total_tokens==0 / fields 为空 时标记 invalid 跳过评测。
+    """
     result = await call_extraction_llm(raw_text)
+    # C 组 LLM 失败检测（与 A/B 组一致）
+    is_invalid = bool(result.error) or result.total_tokens == 0 or len(result.fields) == 0
     meta = {
         "model_id": result.model_id,
         "prompt_hash": result.prompt_hash,
         "total_tokens": result.total_tokens,
         "latency_ms": result.latency_ms,
         "error": result.error,
+        "invalid": is_invalid,
     }
+    if is_invalid:
+        return [], meta
 
     pred_by_name = {f.field_name: f for f in result.fields}
     locator = EvidenceLocator(raw_text)

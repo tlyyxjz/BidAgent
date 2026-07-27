@@ -83,3 +83,8 @@ build/
 # ==== 系统 ====
 .DS_Store
 Thumbs.db
+# 测试产物
+playwright-report/
+test-results/
+annotation_tool/tests/playwright-report/
+annotation_tool/tests/test-results/

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -117,3 +117,89 @@ async def test_close_resets_state():
     slot.driver.stop.assert_awaited_once()
     assert not pool.started
     assert pool.free_count == 0
+
+# ========== 部分启动失败清理测试 (#26 修复) ==========
+
+
+class TestBrowserPoolStartFailure:
+    """start() 部分槽位 launch 失败时清理已启动槽位 (#26 修复)。
+
+    现有测试全部用 make_started_pool 绕过 start()，本类直接 mock
+    async_playwright 链式调用，覆盖外层 except → self.close() 清理路径。
+    """
+
+    @pytest.mark.asyncio
+    async def test_start_failure_cleans_launched_slots(self):
+        """第 2 个 slot launch 失败时，第 1 个 slot 的 browser.close / driver.stop 被调用。"""
+        pool = BrowserPool(size=2, acquire_timeout=0.02)
+
+        driver0 = AsyncMock()
+        driver1 = AsyncMock()
+        browser0 = AsyncMock()
+        driver0.chromium.launch.return_value = browser0
+        driver1.chromium.launch.side_effect = RuntimeError("launch failed")
+
+        pw_mock = MagicMock()
+        pw_mock.start = AsyncMock(side_effect=[driver0, driver1])
+
+        with patch("app.core.browser_pool.async_playwright", return_value=pw_mock):
+            with pytest.raises(RuntimeError, match="launch failed"):
+                await pool.start()
+
+        # 第 1 个 slot 的 browser 和 driver 被外层 close() 清理
+        browser0.close.assert_awaited_once()
+        driver0.stop.assert_awaited_once()
+        # 第 2 个 slot 的 driver 被内层 except stop
+        driver1.stop.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_start_failure_raises_exception(self):
+        """launch 失败时异常向上抛出。"""
+        pool = BrowserPool(size=1, acquire_timeout=0.02)
+        driver0 = AsyncMock()
+        driver0.chromium.launch.side_effect = RuntimeError("launch failed")
+
+        pw_mock = MagicMock()
+        pw_mock.start = AsyncMock(return_value=driver0)
+
+        with patch("app.core.browser_pool.async_playwright", return_value=pw_mock):
+            with pytest.raises(RuntimeError, match="launch failed"):
+                await pool.start()
+
+    @pytest.mark.asyncio
+    async def test_start_failure_pool_state_clean(self):
+        """异常后 pool 状态为初始状态，可重试。"""
+        pool = BrowserPool(size=2, acquire_timeout=0.02)
+
+        driver0 = AsyncMock()
+        driver1 = AsyncMock()
+        browser0 = AsyncMock()
+        driver0.chromium.launch.return_value = browser0
+        driver1.chromium.launch.side_effect = RuntimeError("launch failed")
+
+        pw_mock = MagicMock()
+        pw_mock.start = AsyncMock(side_effect=[driver0, driver1])
+
+        with patch("app.core.browser_pool.async_playwright", return_value=pw_mock):
+            with pytest.raises(RuntimeError):
+                await pool.start()
+
+        # 状态重置为初始
+        assert pool.started is False
+        assert pool._slots == []
+        assert pool._queue is None
+        assert pool._semaphore is None
+        assert pool.free_count == 0
+        assert pool.busy_count == 0
+
+        # 可重试：用成功 mock 再次 start
+        driver_ok = AsyncMock()
+        browser_ok = AsyncMock()
+        driver_ok.chromium.launch.return_value = browser_ok
+        pw_ok = MagicMock()
+        pw_ok.start = AsyncMock(return_value=driver_ok)
+        with patch("app.core.browser_pool.async_playwright", return_value=pw_ok):
+            await pool.start()
+        assert pool.started is True
+        assert pool.free_count == 2
+        await pool.close()

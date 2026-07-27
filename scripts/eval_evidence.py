@@ -95,7 +95,7 @@ class DocMetric:
     iou_list_matched: list  # P3: 仅 matched=True (IoU>=阈值) 的 IoU，用于对比
     recall: float  # fields_found / fields_present
     precision: float  # 证据级精确率: evidences_matched / evidences_pred
-    iou_avg: float  # P3: sum(iou_list) / evidences_pred (未定位/未匹配算0，反映整体质量)
+    iou_avg: float  # P3: sum(iou_list_matched) / evidences_pred (未定位/未匹配算0，反映整体质量)
     iou_avg_matched: float  # P3: mean(iou_list_matched) 仅匹配证据的平均 (原口径，用于对比)
 
 
@@ -110,13 +110,14 @@ class OverallMetric:
     evidences_matched: int
     recall: float  # 证据检出率: fields_found / fields_present
     precision: float  # 证据级精确率: evidences_matched / evidences_pred (与 W2-08 字段级口径不同)
-    iou_avg: float  # P3: sum(all_ious) / evidences_pred (未定位/未匹配算0)
+    iou_avg: float  # P3: sum(all_ious_matched) / evidences_pred (未定位/未匹配算0)
     iou_avg_matched: float  # P3: 仅 matched 证据的平均 IoU (原口径，用于对比)
     iou_p50: float
     iou_p95: float
     model_id: str
     prompt_hash: str
     total_tokens: int
+    invalid_docs: list  # P0-2: LLM 失败的 doc_id 列表 (向前兼容: 新增字段)
 
 
 def load_gold_doc(doc_prefix: str) -> Optional[GoldDoc]:
@@ -178,17 +179,26 @@ def match_evidence(
     return matched, best_iou
 
 
-async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[DocMetric, dict]:
-    """评测单篇。"""
+async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[Optional[DocMetric], dict]:
+    """评测单篇。
+
+    P0-2 修复: 检测 LLM 失败 (result.error / total_tokens==0 / fields 为空)，
+    标记 meta["invalid"]=True 并返回 None，main() 据此跳过该 doc 不计入指标。
+    对齐 eval_ablation.py 的 P0-1 修复做法。
+    """
     # 调 LLM 抽取
     result = await call_extraction_llm(raw_text)
+    is_invalid = bool(result.error) or result.total_tokens == 0 or len(result.fields) == 0
     meta = {
         "model_id": result.model_id,
         "prompt_hash": result.prompt_hash,
         "total_tokens": result.total_tokens,
         "latency_ms": result.latency_ms,
         "error": result.error,
+        "invalid": is_invalid,
     }
+    if is_invalid:
+        return None, meta
 
     locator = EvidenceLocator(raw_text)
     pred_by_name = {f.field_name: f for f in result.fields}
@@ -244,9 +254,9 @@ async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[DocMetric, dict]:
     fields_present = sum(1 for fm in field_metrics if fm.gold_status in ("present", "multi_value"))
     fields_found = sum(1 for fm in field_metrics if fm.found)
 
-    # P3: iou_avg 用 evidences_pred 做分母 (未定位/未匹配算0，反映整体质量)
+    # P1-18: iou_avg 用 iou_list_matched 求和 (未匹配算0) / evidences_pred 做分母 (未定位算0)
     # iou_avg_matched 用 iou_list_matched 做分母 (原口径，仅匹配证据)
-    iou_avg_overall = round(sum(iou_list) / max(evidences_pred, 1), 4) if evidences_pred else 0.0
+    iou_avg_overall = round(sum(iou_list_matched) / max(evidences_pred, 1), 4) if evidences_pred else 0.0
     iou_avg_matched = round(sum(iou_list_matched) / max(len(iou_list_matched), 1), 4) if iou_list_matched else 0.0
 
     return DocMetric(
@@ -307,15 +317,25 @@ async def main():
 
     doc_metrics: list[DocMetric] = []
     metas: list[dict] = []
+    invalid_docs: list[str] = []  # P0-2: LLM 失败的 doc_id 列表
     for gd, rt in docs:
         print(f"--- {gd.document_id} ({len(rt)} 字符) ---")
         dm, meta = await evaluate_doc(gd, rt)
+        if meta.get("invalid") or dm is None:
+            # P0-2: LLM 失败 (error/tokens=0/fields 空)，跳过评测避免指标虚低
+            print(f"  [INVALID] tokens={meta['total_tokens']}, error={meta['error']} - 跳过评测")
+            invalid_docs.append(gd.document_id)
+            continue
         print(f"  字段 present: {dm.fields_present}, found: {dm.fields_found}, "
               f"recall={dm.recall:.2%}, precision={dm.precision:.2%}, "
               f"iou_avg={dm.iou_avg:.4f} (overall), iou_avg_matched={dm.iou_avg_matched:.4f}, "
               f"located={dm.evidences_located}/{dm.evidences_pred}, "
               f"tokens={meta['total_tokens']}, latency={meta['latency_ms']}ms")
         doc_metrics.append(dm); metas.append(meta)
+
+    # P0-2: 打印 invalid 警告 (recall/precision 分母已排除 invalid 篇)
+    if invalid_docs:
+        print(f"\n⚠️ {len(invalid_docs)} 篇 LLM 失败 (已排除出指标计算): {invalid_docs}")
 
     # 汇总
     total_fields = sum(dm.fields_total for dm in doc_metrics)
@@ -327,9 +347,9 @@ async def main():
     all_ious = sorted([x for dm in doc_metrics for x in dm.iou_list])
     all_ious_matched = sorted([x for dm in doc_metrics for x in dm.iou_list_matched])  # P3
 
-    # P3: iou_avg 用 total_pred 做分母 (反映整体证据质量)
+    # P1-18: iou_avg 用 all_ious_matched 求和 (未匹配算0) / total_pred 做分母 (未定位算0)
     # iou_avg_matched 用 all_ious_matched 做分母 (原口径，仅匹配证据)
-    iou_avg_overall = round(sum(all_ious) / max(total_pred, 1), 4) if total_pred else 0.0
+    iou_avg_overall = round(sum(all_ious_matched) / max(total_pred, 1), 4) if total_pred else 0.0
     iou_avg_matched = round(sum(all_ious_matched) / max(len(all_ious_matched), 1), 4) if all_ious_matched else 0.0
 
     overall = OverallMetric(
@@ -349,6 +369,7 @@ async def main():
         model_id=metas[0].get("model_id", "unknown") if metas else "unknown",
         prompt_hash=metas[0].get("prompt_hash", "") if metas else "",
         total_tokens=sum(m.get("total_tokens", 0) for m in metas),
+        invalid_docs=invalid_docs,
     )
 
     print("\n" + "=" * 70)

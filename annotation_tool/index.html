@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidAgent 金标标注工具</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 顶部工具栏 -->
+    <header class="toolbar">
+        <div class="toolbar-left">
+            <h1>BidAgent 金标标注工具</h1>
+            <span class="version-tag">v1.0 · W1-05</span>
+        </div>
+        <div class="toolbar-center">
+            <label class="annotation-status">
+                标注状态：
+                <select id="annotationStatus">
+                    <option value="pending">待标</option>
+                    <option value="done">已标</option>
+                    <option value="review">待仲裁</option>
+                </select>
+            </label>
+            <span id="autoSaveIndicator" class="save-indicator">● 自动保存已启用（仅保存在当前浏览器本机）</span>
+        </div>
+        <div class="toolbar-right">
+            <button id="btnImportText" class="btn btn-secondary">导入 TXT</button>
+            <button id="btnImportJson" class="btn btn-secondary">导入 JSON</button>
+            <button id="btnExportJson" class="btn btn-primary">导出 JSON</button>
+            <button id="btnExportBundle" class="btn btn-primary">导出标注包</button>
+            <button id="btnReset" class="btn btn-danger">重置</button>
+        </div>
+    </header>
+
+    <!-- 文档信息栏 -->
+    <div class="doc-info-bar">
+        <div class="doc-info-item">
+            <span class="label">文档 ID：</span>
+            <input type="text" id="documentId" placeholder="version_xxx" value="sample-001">
+        </div>
+        <div class="doc-info-item">
+            <span class="label">标注员：</span>
+            <input type="text" id="annotatorId" placeholder="A / B / arbitrator" value="A">
+        </div>
+        <div class="doc-info-item">
+            <span class="label">规范版本：</span>
+            <input type="text" id="annotationVersion" value="1.0" readonly>
+        </div>
+        <div class="doc-info-item">
+            <span class="label">公告类型：</span>
+            <select id="noticeType">
+                <option value="tender">招标公告</option>
+                <option value="award">中标公告</option>
+                <option value="correction">更正公告</option>
+                <option value="other">其他</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 文档状态栏：显示当前文档的文件名/document_id/内容哈希/是否恢复草稿 -->
+    <div id="docStatusInfo" class="doc-status-bar">
+        <div class="doc-status-item">
+            <span class="label">文件名：</span>
+            <span class="doc-status-name">sample-001.txt</span>
+        </div>
+        <div class="doc-status-item">
+            <span class="label">document_id：</span>
+            <span class="doc-status-id">sample-001</span>
+        </div>
+        <div class="doc-status-item">
+            <span class="label">内容哈希：</span>
+            <span class="doc-status-hash">(未计算)</span>
+        </div>
+        <div class="doc-status-item">
+            <span class="label">恢复草稿：</span>
+            <span class="doc-status-restored restored-no">否</span>
+        </div>
+    </div>
+
+    <!-- 主体双栏布局 -->
+    <main class="main-container">
+        <!-- 左侧：原文展示区 -->
+        <section class="text-panel">
+            <div class="panel-header">
+                <h2>原文（clean_raw_text）</h2>
+                <div class="selection-info">
+                    <span id="selectionInfo">未选中文本</span>
+                </div>
+            </div>
+            <div id="overlapWarning" class="overlap-warning" style="display:none;"></div>
+            <div id="textContainer" class="text-container">
+                <pre id="rawText" class="raw-text"></pre>
+            </div>
+            <div class="text-footer">
+                <span id="charCount">字符数：0</span>
+                <span class="hint">提示：鼠标选中文本后，点击字段的「添加证据」按钮；文件导入上限 5 MB</span>
+            </div>
+        </section>
+
+        <!-- 右侧：字段标注区 -->
+        <section class="fields-panel">
+            <div class="panel-header">
+                <h2>六类核心字段标注</h2>
+                <div class="progress-info">
+                    <span id="progressText">0 / 6 已完成</span>
+                </div>
+            </div>
+            <!-- 字段导航区：六字段紧凑列表，点击切换当前编辑字段 -->
+            <nav id="fieldsNav" class="fields-nav" aria-label="字段导航">
+                <!-- 导航项由 JS 动态生成 -->
+            </nav>
+            <!-- 字段编辑器：只显示当前选中字段的完整编辑器 -->
+            <div id="fieldsContainer" class="fields-container">
+                <!-- 当前字段卡片由 JS 动态生成 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- 证据编辑弹窗 -->
+    <div id="evidenceModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑证据</h3>
+                <button class="modal-close" onclick="closeEvidenceModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>证据角色</label>
+                    <select id="evidenceRole">
+                        <option value="primary">primary（主证据）</option>
+                        <option value="context">context（上下文）</option>
+                        <option value="qualifier">qualifier（限定条件）</option>
+                        <option value="derivation_input">derivation_input（推导输入）</option>
+                        <option value="contradiction">contradiction（冲突证据）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>起始偏移（含）</label>
+                    <input type="number" id="evidenceStart" min="0">
+                </div>
+                <div class="form-group">
+                    <label>结束偏移（不含）</label>
+                    <input type="number" id="evidenceEnd" min="1">
+                </div>
+                <div class="form-group">
+                    <label>证据文本</label>
+                    <textarea id="evidenceText" rows="4" readonly></textarea>
+                </div>
+                <div id="evidenceVerify" class="verify-status">
+                    <span class="verify-icon">✓</span>
+                    <span>偏移量验证通过：text.slice(start, end) === evidence_text</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEvidenceModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveEvidence()">保存证据</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 证据预览弹窗（保存前确认，支持扩展/重新选择/非阻塞质量提示） -->
+    <div id="evidencePreviewModal" class="modal hidden">
+        <div class="modal-content modal-content-wide">
+            <div class="modal-header">
+                <h3>添加证据 — 预览确认</h3>
+                <button class="modal-close" onclick="closeEvidencePreview()">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- 证据角色选择（默认 primary，可改 qualifier 保存多段限定证据） -->
+                <div class="form-group">
+                    <label>证据角色</label>
+                    <select id="previewRole">
+                        <option value="primary">primary（主证据）</option>
+                        <option value="context">context（上下文）</option>
+                        <option value="qualifier">qualifier（限定条件：角色/金额类型/分包等）</option>
+                        <option value="derivation_input">derivation_input（推导输入）</option>
+                        <option value="contradiction">contradiction（冲突证据）</option>
+                    </select>
+                </div>
+
+                <!-- 偏移量与切片验证 -->
+                <div class="form-group form-group-row">
+                    <div class="form-group-inline">
+                        <label>start</label>
+                        <input type="number" id="previewStart" readonly>
+                    </div>
+                    <div class="form-group-inline">
+                        <label>end</label>
+                        <input type="number" id="previewEnd" readonly>
+                    </div>
+                    <div class="form-group-inline">
+                        <label>长度</label>
+                        <input type="number" id="previewLen" readonly>
+                    </div>
+                </div>
+
+                <!-- 上下文预览：前 20 字 + 选中（高亮）+ 后 20 字 -->
+                <div class="form-group">
+                    <label>上下文预览（前后各 20 字符）</label>
+                    <div id="previewContext" class="preview-context"></div>
+                </div>
+
+                <!-- 选中文字 -->
+                <div class="form-group">
+                    <label>选中文字</label>
+                    <textarea id="previewText" rows="3" readonly></textarea>
+                </div>
+
+                <!-- slice 验证 -->
+                <div id="previewVerify" class="verify-status">
+                    <span class="verify-icon">✓</span>
+                    <span>slice 验证通过：rawText.slice(start, end) === 选中文字</span>
+                </div>
+
+                <!-- 非阻塞质量提示（金额/企业/日期缺类型词时显示，不阻止保存） -->
+                <div id="previewQualityHint" class="quality-hint hidden"></div>
+
+                <!-- 操作按钮：扩展/重新选择 -->
+                <div class="preview-actions">
+                    <button class="btn btn-secondary btn-small" onclick="expandEvidenceLeft()">← 向左扩展1字</button>
+                    <button class="btn btn-secondary btn-small" onclick="expandEvidenceRight()">向右扩展1字 →</button>
+                    <button class="btn btn-secondary btn-small" onclick="reselectEvidence()">重新选择</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEvidencePreview()">取消</button>
+                <button class="btn btn-primary" onclick="confirmSaveEvidence()">保存证据</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="schema.js"></script>
+    <script src="sample_data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

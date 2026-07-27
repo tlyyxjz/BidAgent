@@ -527,3 +527,89 @@ class TestQueryInterfaces:
             f for f in fields if f.field_name == "project_identifier"
         ]
         assert len(all_fields) == 2
+
+# ========== 多值字段 3 中标人测试 (#52 修复) ==========
+
+
+class TestMultiValueThreeBidders:
+    """3 个中标人独立存储测试 (#52 修复)。
+
+    参考 test_multi_value_not_flattened 的入库路径：field_status=multi_value
+    时 create_field_with_evidence 跳过 _deprecate_old_versions，多条记录均
+    保持 is_current=True，可独立查询。
+    """
+
+    @pytest.mark.asyncio
+    async def test_three_winners_stored_independently(self, db_session: AsyncSession):
+        """3 个 winner_name 独立存储（不被压平为单值）。"""
+        tender_id = db_session._test_tender_id  # type: ignore
+        ev = EvidenceInput(evidence_text="证据", raw_start=0, raw_end=2)
+        winners = ["甲公司", "乙公司", "丙公司"]
+        for winner in winners:
+            field_input = FieldInput(
+                field_name="winner_name",
+                field_status="multi_value",
+                raw_value=winner,
+                support_level="direct",
+                evidences=[(ev, "primary")],
+            )
+            await create_field_with_evidence(db_session, tender_id, field_input)
+        await db_session.commit()
+
+        fields = await get_tender_fields(db_session, tender_id)
+        winner_fields = [f for f in fields if f.field_name == "winner_name"]
+        assert len(winner_fields) == 3
+        assert {f.raw_value for f in winner_fields} == set(winners)
+
+    @pytest.mark.asyncio
+    async def test_three_winners_queryable_separately(self, db_session: AsyncSession):
+        """可独立查询每个 winner（get_field_with_evidence）。"""
+        tender_id = db_session._test_tender_id  # type: ignore
+        ev = EvidenceInput(evidence_text="证据", raw_start=0, raw_end=2)
+        winners = ["甲公司", "乙公司", "丙公司"]
+        for winner in winners:
+            field_input = FieldInput(
+                field_name="winner_name",
+                field_status="multi_value",
+                raw_value=winner,
+                support_level="direct",
+                evidences=[(ev, "primary")],
+            )
+            await create_field_with_evidence(db_session, tender_id, field_input)
+        await db_session.commit()
+
+        fields = await get_tender_fields(db_session, tender_id)
+        winner_fields = [f for f in fields if f.field_name == "winner_name"]
+        assert len(winner_fields) == 3
+        for wf in winner_fields:
+            field_result, evidence_links = await get_field_with_evidence(
+                db_session, wf.id
+            )
+            assert field_result.id == wf.id
+            assert field_result.raw_value in winners
+            assert len(evidence_links) == 1
+            assert evidence_links[0][1].evidence_role == "primary"
+
+    @pytest.mark.asyncio
+    async def test_three_winners_field_status_multi_value(
+        self, db_session: AsyncSession
+    ):
+        """每个 winner 字段的 field_status=multi_value。"""
+        tender_id = db_session._test_tender_id  # type: ignore
+        ev = EvidenceInput(evidence_text="证据", raw_start=0, raw_end=2)
+        for winner in ["甲公司", "乙公司", "丙公司"]:
+            field_input = FieldInput(
+                field_name="winner_name",
+                field_status="multi_value",
+                raw_value=winner,
+                support_level="direct",
+                evidences=[(ev, "primary")],
+            )
+            await create_field_with_evidence(db_session, tender_id, field_input)
+        await db_session.commit()
+
+        fields = await get_tender_fields(db_session, tender_id)
+        winner_fields = [f for f in fields if f.field_name == "winner_name"]
+        assert len(winner_fields) == 3
+        for wf in winner_fields:
+            assert wf.field_status == "multi_value"

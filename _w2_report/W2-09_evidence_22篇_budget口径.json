@@ -3,19 +3,20 @@
     "docs_count": 22,
     "fields_total": 132,
     "fields_present": 103,
-    "fields_found": 76,
+    "fields_found": 72,
     "evidences_pred": 127,
     "evidences_located": 127,
-    "evidences_matched": 83,
-    "recall": 0.7379,
-    "precision": 0.6535,
-    "iou_avg": 0.6189,
-    "iou_avg_matched": 0.8848,
-    "iou_p50": 1.0,
+    "evidences_matched": 77,
+    "recall": 0.699,
+    "precision": 0.6063,
+    "iou_avg": 0.5307,
+    "iou_avg_matched": 0.8752,
+    "iou_p50": 0.9583,
     "iou_p95": 1.0,
     "model_id": "deepseek-v4-flash",
     "prompt_hash": "6c10d5ccdd0287d4",
-    "total_tokens": 81033
+    "total_tokens": 82951,
+    "invalid_docs": []
   },
   "docs": [
     {
@@ -23,14 +24,15 @@
       "fields_total": 6,
       "fields_present": 5,
       "fields_found": 2,
-      "evidences_pred": 5,
-      "evidences_located": 5,
+      "evidences_pred": 6,
+      "evidences_located": 6,
       "evidences_matched": 2,
       "iou_list": [
         0.6875,
         0.0,
         0.5652,
         0.3929,
+        0.0,
         0.0
       ],
       "iou_list_matched": [
@@ -38,8 +40,8 @@
         0.5652
       ],
       "recall": 0.4,
-      "precision": 0.4,
-      "iou_avg": 0.3291,
+      "precision": 0.3333,
+      "iou_avg": 0.2088,
       "iou_avg_matched": 0.6264
     },
     {
@@ -63,60 +65,58 @@
       ],
       "recall": 0.2,
       "precision": 0.1667,
-      "iou_avg": 0.1858,
+      "iou_avg": 0.1204,
       "iou_avg_matched": 0.7222
     },
     {
       "doc_id": "04_award_001",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 4,
-      "evidences_pred": 6,
-      "evidences_located": 6,
-      "evidences_matched": 4,
+      "fields_found": 2,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 2,
       "iou_list": [
         0.6316,
-        0.75,
+        0.48,
         0.6316,
         0.3846,
-        1.0,
-        0.0
+        0.4167
       ],
       "iou_list_matched": [
         0.6316,
-        0.75,
-        0.6316,
-        1.0
+        0.6316
       ],
-      "recall": 0.8,
-      "precision": 0.6667,
-      "iou_avg": 0.5663,
-      "iou_avg_matched": 0.7533
+      "recall": 0.4,
+      "precision": 0.4,
+      "iou_avg": 0.2526,
+      "iou_avg_matched": 0.6316
     },
     {
       "doc_id": "05_award_002",
       "fields_total": 6,
       "fields_present": 5,
       "fields_found": 3,
-      "evidences_pred": 5,
-      "evidences_located": 5,
+      "evidences_pred": 6,
+      "evidences_located": 6,
       "evidences_matched": 3,
       "iou_list": [
-        0.6316,
+        0.7059,
         0.75,
         0.5517,
         0.3846,
-        0.0
+        0.0,
+        0.4167
       ],
       "iou_list_matched": [
-        0.6316,
+        0.7059,
         0.75,
         0.5517
       ],
       "recall": 0.6,
-      "precision": 0.6,
-      "iou_avg": 0.4636,
-      "iou_avg_matched": 0.6444
+      "precision": 0.5,
+      "iou_avg": 0.3346,
+      "iou_avg_matched": 0.6692
     },
     {
       "doc_id": "06_award_003",
@@ -127,20 +127,20 @@
       "evidences_located": 5,
       "evidences_matched": 2,
       "iou_list": [
-        0.6316,
+        0.7059,
         0.75,
         0.381,
         0.3846,
-        0.4167
+        0.0
       ],
       "iou_list_matched": [
-        0.6316,
+        0.7059,
         0.75
       ],
       "recall": 0.4,
       "precision": 0.4,
-      "iou_avg": 0.5128,
-      "iou_avg_matched": 0.6908
+      "iou_avg": 0.2912,
+      "iou_avg_matched": 0.7279
     },
     {
       "doc_id": "07_correction_001",
@@ -149,22 +149,21 @@
       "fields_found": 1,
       "evidences_pred": 5,
       "evidences_located": 5,
-      "evidences_matched": 2,
+      "evidences_matched": 1,
       "iou_list": [
         0.4762,
         0.0,
-        0.6471,
+        0.3929,
         0.6875,
-        0.2727
+        0.2812
       ],
       "iou_list_matched": [
-        0.6471,
         0.6875
       ],
       "recall": 0.25,
-      "precision": 0.4,
-      "iou_avg": 0.4167,
-      "iou_avg_matched": 0.6673
+      "precision": 0.2,
+      "iou_avg": 0.1375,
+      "iou_avg_matched": 0.6875
     },
     {
       "doc_id": "08_correction_002",
@@ -184,113 +183,107 @@
       ],
       "recall": 0.3333,
       "precision": 0.3333,
-      "iou_avg": 0.3749,
+      "iou_avg": 0.2439,
       "iou_avg_matched": 0.7317
     },
     {
       "doc_id": "award_05_43a28fb1c8af",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 5,
+      "fields_found": 4,
       "evidences_pred": 7,
       "evidences_located": 7,
-      "evidences_matched": 5,
+      "evidences_matched": 4,
       "iou_list": [
         0.8947,
         0.0,
         1.0,
         0.7857,
-        1.0,
-        0.5152,
+        0.52,
+        0.0,
         0.0
       ],
       "iou_list_matched": [
         0.8947,
         1.0,
         0.7857,
-        1.0,
-        0.5152
+        0.52
       ],
-      "recall": 1.0,
-      "precision": 0.7143,
-      "iou_avg": 0.5994,
-      "iou_avg_matched": 0.8391
+      "recall": 0.8,
+      "precision": 0.5714,
+      "iou_avg": 0.4572,
+      "iou_avg_matched": 0.8001
     },
     {
       "doc_id": "award_06_92954883b056",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 4,
-      "evidences_pred": 6,
-      "evidences_located": 6,
-      "evidences_matched": 5,
+      "fields_found": 5,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 6,
       "iou_list": [
         0.9444,
         1.0,
         1.0,
         1.0,
         0.96,
-        0.0
+        0.0,
+        0.8235
       ],
       "iou_list_matched": [
         0.9444,
         1.0,
         1.0,
         1.0,
-        0.96
+        0.96,
+        0.8235
       ],
-      "recall": 0.8,
-      "precision": 0.8333,
-      "iou_avg": 0.8174,
-      "iou_avg_matched": 0.9809
+      "recall": 1.0,
+      "precision": 0.8571,
+      "iou_avg": 0.8183,
+      "iou_avg_matched": 0.9547
     },
     {
       "doc_id": "award_07_9b6cbd76b3ce",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 5,
-      "evidences_pred": 8,
-      "evidences_located": 8,
-      "evidences_matched": 6,
+      "fields_found": 2,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 2,
       "iou_list": [
-        0.9375,
+        0.4348,
         1.0,
+        0.2778,
         1.0,
-        1.0,
-        1.0,
-        0.0,
-        0.8235,
         0.0
       ],
       "iou_list_matched": [
-        0.9375,
         1.0,
-        1.0,
-        1.0,
-        1.0,
-        0.8235
+        1.0
       ],
-      "recall": 1.0,
-      "precision": 0.75,
-      "iou_avg": 0.7201,
-      "iou_avg_matched": 0.9602
+      "recall": 0.4,
+      "precision": 0.4,
+      "iou_avg": 0.4,
+      "iou_avg_matched": 1.0
     },
     {
       "doc_id": "award_08_e339df68c603",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 5,
+      "fields_found": 4,
       "evidences_pred": 8,
       "evidences_located": 8,
-      "evidences_matched": 6,
+      "evidences_matched": 5,
       "iou_list": [
         0.9574,
         1.0,
         1.0,
         1.0,
+        0.0,
         1.0,
         0.0,
-        0.8485,
         0.0
       ],
       "iou_list_matched": [
@@ -298,40 +291,42 @@
         1.0,
         1.0,
         1.0,
-        1.0,
-        0.8485
+        1.0
       ],
-      "recall": 1.0,
-      "precision": 0.75,
-      "iou_avg": 0.7257,
-      "iou_avg_matched": 0.9677
+      "recall": 0.8,
+      "precision": 0.625,
+      "iou_avg": 0.6197,
+      "iou_avg_matched": 0.9915
     },
     {
       "doc_id": "award_09_b77f9502c7cc",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 4,
-      "evidences_pred": 6,
-      "evidences_located": 6,
-      "evidences_matched": 4,
+      "fields_found": 5,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 6,
       "iou_list": [
         1.0,
         1.0,
-        0.4706,
         1.0,
         0.9583,
+        1.0,
+        0.8235,
         0.0
       ],
       "iou_list_matched": [
         1.0,
         1.0,
         1.0,
-        0.9583
+        0.9583,
+        1.0,
+        0.8235
       ],
-      "recall": 0.8,
-      "precision": 0.6667,
-      "iou_avg": 0.7382,
-      "iou_avg_matched": 0.9896
+      "recall": 1.0,
+      "precision": 0.8571,
+      "iou_avg": 0.826,
+      "iou_avg_matched": 0.9636
     },
     {
       "doc_id": "correction_04_14622f154f7c",
@@ -361,38 +356,42 @@
       "fields_total": 6,
       "fields_present": 3,
       "fields_found": 3,
-      "evidences_pred": 3,
-      "evidences_located": 3,
-      "evidences_matched": 3,
+      "evidences_pred": 4,
+      "evidences_located": 4,
+      "evidences_matched": 4,
       "iou_list": [
         1.0,
         1.0,
+        0.8485,
         0.75
       ],
       "iou_list_matched": [
         1.0,
         1.0,
+        0.8485,
         0.75
       ],
       "recall": 1.0,
       "precision": 1.0,
-      "iou_avg": 0.9167,
-      "iou_avg_matched": 0.9167
+      "iou_avg": 0.8996,
+      "iou_avg_matched": 0.8996
     },
     {
       "doc_id": "correction_06_a5d58685dc3b",
       "fields_total": 6,
       "fields_present": 5,
       "fields_found": 4,
-      "evidences_pred": 5,
-      "evidences_located": 5,
+      "evidences_pred": 7,
+      "evidences_located": 7,
       "evidences_matched": 4,
       "iou_list": [
         0.973,
         0.8043,
         1.0,
         0.3864,
-        1.0
+        0.1136,
+        1.0,
+        0.3947
       ],
       "iou_list_matched": [
         0.973,
@@ -401,193 +400,188 @@
         1.0
       ],
       "recall": 0.8,
-      "precision": 0.8,
-      "iou_avg": 0.8327,
+      "precision": 0.5714,
+      "iou_avg": 0.5396,
       "iou_avg_matched": 0.9443
     },
     {
       "doc_id": "multi_lot_02_d6aa0c202dda",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 4,
+      "fields_found": 5,
       "evidences_pred": 5,
       "evidences_located": 5,
-      "evidences_matched": 4,
+      "evidences_matched": 5,
       "iou_list": [
         1.0,
-        0.0,
+        0.6087,
         1.0,
         0.8649,
         1.0
       ],
       "iou_list_matched": [
         1.0,
+        0.6087,
         1.0,
         0.8649,
         1.0
       ],
-      "recall": 0.8,
-      "precision": 0.8,
-      "iou_avg": 0.773,
-      "iou_avg_matched": 0.9662
+      "recall": 1.0,
+      "precision": 1.0,
+      "iou_avg": 0.8947,
+      "iou_avg_matched": 0.8947
     },
     {
       "doc_id": "multi_winner_03_8a1d36728598",
       "fields_total": 6,
       "fields_present": 5,
       "fields_found": 4,
-      "evidences_pred": 8,
-      "evidences_located": 8,
-      "evidences_matched": 5,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 4,
       "iou_list": [
-        1.0,
+        0.8947,
         0.0,
         0.0,
         0.7,
         0.52,
-        1.0,
         0.8485,
         0.0
       ],
       "iou_list_matched": [
-        1.0,
+        0.8947,
         0.7,
         0.52,
-        1.0,
         0.8485
       ],
       "recall": 0.8,
-      "precision": 0.625,
-      "iou_avg": 0.5086,
-      "iou_avg_matched": 0.8137
+      "precision": 0.5714,
+      "iou_avg": 0.4233,
+      "iou_avg_matched": 0.7408
     },
     {
       "doc_id": "tender_06_4e47868721c5",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 4,
-      "evidences_pred": 8,
-      "evidences_located": 8,
-      "evidences_matched": 5,
+      "fields_found": 3,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 3,
       "iou_list": [
         1.0,
         0.0,
-        0.7143,
         0.0,
         0.0,
         0.8485,
-        1.0,
         0.9474
       ],
       "iou_list_matched": [
         1.0,
-        0.7143,
         0.8485,
-        1.0,
         0.9474
       ],
-      "recall": 0.8,
-      "precision": 0.625,
-      "iou_avg": 0.5638,
-      "iou_avg_matched": 0.902
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.466,
+      "iou_avg_matched": 0.932
     },
     {
       "doc_id": "tender_07_b6a0e4b7d456",
       "fields_total": 6,
       "fields_present": 5,
       "fields_found": 4,
-      "evidences_pred": 5,
-      "evidences_located": 5,
-      "evidences_matched": 4,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 5,
       "iou_list": [
         1.0,
         0.0,
         0.5192,
+        0.8485,
         1.0,
         1.0
       ],
       "iou_list_matched": [
         1.0,
         0.5192,
+        0.8485,
         1.0,
         1.0
       ],
       "recall": 0.8,
-      "precision": 0.8,
-      "iou_avg": 0.7038,
-      "iou_avg_matched": 0.8798
+      "precision": 0.8333,
+      "iou_avg": 0.728,
+      "iou_avg_matched": 0.8735
     },
     {
       "doc_id": "tender_08_205c9f889e74",
       "fields_total": 6,
       "fields_present": 5,
       "fields_found": 4,
-      "evidences_pred": 6,
-      "evidences_located": 6,
+      "evidences_pred": 7,
+      "evidences_located": 7,
       "evidences_matched": 4,
       "iou_list": [
         1.0,
         0.0,
         1.0,
-        0.8649,
-        0.0,
-        1.0
+        0.4667,
+        0.4595,
+        0.75,
+        0.8235
       ],
       "iou_list_matched": [
         1.0,
         1.0,
-        0.8649,
-        1.0
+        0.75,
+        0.8235
       ],
       "recall": 0.8,
-      "precision": 0.6667,
-      "iou_avg": 0.6441,
-      "iou_avg_matched": 0.9662
+      "precision": 0.5714,
+      "iou_avg": 0.5105,
+      "iou_avg_matched": 0.8934
     },
     {
       "doc_id": "tender_09_87f5169dbd94",
       "fields_total": 6,
       "fields_present": 5,
       "fields_found": 5,
-      "evidences_pred": 8,
-      "evidences_located": 8,
-      "evidences_matched": 6,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 5,
       "iou_list": [
         1.0,
         1.0,
-        0.8824,
         1.0,
         0.8485,
-        0.0,
-        1.0,
-        0.0
+        1.0
       ],
       "iou_list_matched": [
         1.0,
         1.0,
-        0.8824,
         1.0,
         0.8485,
         1.0
       ],
       "recall": 1.0,
-      "precision": 0.75,
-      "iou_avg": 0.7164,
-      "iou_avg_matched": 0.9551
+      "precision": 1.0,
+      "iou_avg": 0.9697,
+      "iou_avg_matched": 0.9697
     },
     {
       "doc_id": "tender_10_ef627e9af4ae",
       "fields_total": 6,
       "fields_present": 5,
-      "fields_found": 4,
-      "evidences_pred": 6,
-      "evidences_located": 6,
-      "evidences_matched": 4,
+      "fields_found": 5,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 5,
       "iou_list": [
         1.0,
         1.0,
         0.4314,
         0.5098,
+        0.8485,
         0.0,
         1.0
       ],
@@ -595,12 +589,13 @@
         1.0,
         1.0,
         0.5098,
+        0.8485,
         1.0
       ],
-      "recall": 0.8,
-      "precision": 0.6667,
-      "iou_avg": 0.6569,
-      "iou_avg_matched": 0.8775
+      "recall": 1.0,
+      "precision": 0.7143,
+      "iou_avg": 0.6226,
+      "iou_avg_matched": 0.8717
     }
   ]
 }

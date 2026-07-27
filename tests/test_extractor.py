@@ -17,6 +17,7 @@ from app.llm.extractor import (
     EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
     EXTRACTION_SYSTEM_PROMPT,
     EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+    _strip_markdown_fence,
     build_extraction_prompt,
     build_extraction_prompt_no_evidence,
     call_extraction_llm,
@@ -554,3 +555,40 @@ class TestCallExtractionLLMNoEvidence:
             EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
         )
         assert result.prompt_hash == no_ev_hash
+
+# ========== markdown fence 剥离测试 (#42 修复) ==========
+
+
+class TestStripMarkdownFence:
+    """_strip_markdown_fence 测试 (#42 修复)。"""
+
+    def test_plain_json(self):
+        """无 fence 包裹，原样返回（仅 strip 前后空白）。"""
+        raw = '{"field_name": "project_identifier"}'
+        assert _strip_markdown_fence(raw) == raw
+
+    def test_json_with_fence(self):
+        """```json...``` 包裹，剥离后可解析。"""
+        raw = '```json\n{"field_name": "project_identifier"}\n```'
+        stripped = _strip_markdown_fence(raw)
+        assert stripped == '{"field_name": "project_identifier"}'
+        assert json.loads(stripped)["field_name"] == "project_identifier"
+
+    def test_json_with_plain_fence(self):
+        """```...``` 包裹，剥离后可解析。"""
+        raw = '```\n{"field_name": "winner_name"}\n```'
+        stripped = _strip_markdown_fence(raw)
+        assert stripped == '{"field_name": "winner_name"}'
+        assert json.loads(stripped)["field_name"] == "winner_name"
+
+    def test_json_with_whitespace(self):
+        """带前后空白，剥离后可解析。"""
+        raw = '\n  ```json\n{"a": 1}\n```\n  '
+        stripped = _strip_markdown_fence(raw)
+        assert stripped == '{"a": 1}'
+        assert json.loads(stripped) == {"a": 1}
+
+    def test_already_valid_json(self):
+        """已是有效 JSON，不变。"""
+        raw = '{"a": 1, "b": 2}'
+        assert _strip_markdown_fence(raw) == raw

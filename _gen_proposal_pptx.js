@@ -534,10 +534,6 @@ addAgentSlide(11, '③④', '数据加工 + 质量保障 Agent',
     });
   });
   // 底部
-  s.addText('已剔除伪造的联邦学习代码（PPT 不讲联邦学习，避免答辩翻车）', {
-    x: 0.5, y: 6.3, w: 9, h: 0.3,
-    fontFace: BODY_FONT, fontSize: 11, color: GREY, align: 'left', italic: true
-  });
   s.addText('代码：app/agents/finance_agent.py + app/processors/{boq_engine,risk_engine,supplier_risk}.py', {
     x: 0.5, y: 6.6, w: 9, h: 0.3,
     fontFace: 'Consolas', fontSize: 11, color: NAVY, align: 'left'
@@ -655,7 +651,7 @@ addTechSlide(4, 'BOQ 异常检测', '20 类基准价格库识别报价偏离',
 
 addTechSlide(5, '废标风险预警 + 供应商信用评分', '18 条规则 + 三维度加权评分',
   '废标风险难发现；供应商信用评估依赖人工经验',
-  '废标风险预警：18 条规则覆盖排他性资质/付款风险/交货期/资质门槛，含否定语境检测\n供应商信用评分：活跃度 30% + 中标率 40% + 偏离度 30% 加权\n已剔除伪造联邦学习代码',
+  '废标风险预警：18 条规则覆盖排他性资质/付款风险/交货期/资质门槛，含否定语境检测\n供应商信用评分：活跃度 30% + 中标率 40% + 偏离度 30% 加权',
   '18 + 3', '规则 + 评分维度',
   'app/processors/{risk_engine,supplier_risk}.py');
 
@@ -746,7 +742,7 @@ addTechSlide(6, '推送幂等 + 安全防护', 'at-least-once + content_hash + S
     x: 0.5, y: 5.6, w: 9, h: 0.4,
     fontFace: HEADER_FONT, fontSize: 16, bold: true, color: NAVY, align: 'left'
   });
-  s.addText('recall 66.99%  ·  precision 61.98%  ·  iou_avg 0.5962  ·  iou_avg_matched 0.8876  ·  P50/P95=1.0', {
+  s.addText('recall 69.90%  ·  precision 60.63%  ·  iou_avg 0.5307  ·  P50=0.96/P95=1.0', {
     x: 0.5, y: 6.0, w: 9, h: 0.4,
     fontFace: BODY_FONT, fontSize: 13, color: NAVY, align: 'left'
   });
@@ -773,7 +769,7 @@ addTechSlide(6, '推送幂等 + 安全防护', 'at-least-once + content_hash + S
     '异步函数用 run_in_executor 卸载同步 CPU/IO 任务',
     '增量数据查询用 SQL NOT EXISTS 避免 N+1',
     'LIKE 查询参数转义 %/_/\ 防通配符注入',
-    'LLM 语义缓存用 TTLCache 防 memory leak',
+    'LLM 语义缓存用 dict+TTL+LRU 防 memory leak',
     'PushLog 用 add_all() 批量插入',
     '数据库连接池显式配置 pool_size/max_overflow/pool_recycle',
     '单文件 ≤ 300 行',
@@ -869,7 +865,7 @@ addTechSlide(6, '推送幂等 + 安全防护', 'at-least-once + content_hash + S
     },
     {
       title: 'AI 反幻觉',
-      items: ['5 级降级匹配定位', '原文事实比对', '无依据字段不展示', 'IoU 0.89 边界质量', 'unjustified ↓97%']
+      items: ['5 级降级匹配定位', '原文事实比对', '无依据字段不展示', 'IoU 0.5307 边界质量', 'unjustified ↓97%']
     },
   ];
   cols.forEach((c, i) => {

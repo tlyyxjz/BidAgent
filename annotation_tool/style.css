@@ -1,0 +1,1058 @@
+/* ========== 全局样式 ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    color: #1a202c;
+    background-color: #f7fafc;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ========== 顶部工具栏 ========== */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background-color: #1a365d;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toolbar-left h1 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.version-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    background-color: #d69e2e;
+    color: #1a365d;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.toolbar-center {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.annotation-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.annotation-status select {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #4a5568;
+    background-color: #2d3748;
+    color: white;
+    font-size: 13px;
+}
+
+.save-indicator {
+    font-size: 12px;
+    color: #68d391;
+}
+
+.toolbar-right {
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #d69e2e;
+    color: #1a365d;
+}
+
+.btn-primary:hover {
+    background-color: #b7791f;
+}
+
+.btn-secondary {
+    background-color: #4a5568;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #2d3748;
+}
+
+.btn-danger {
+    background-color: #c53030;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #9b2c2c;
+}
+
+.btn-small {
+    padding: 3px 10px;
+    font-size: 12px;
+}
+
+/* ========== 文档信息栏 ========== */
+.doc-info-bar {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 10px 20px;
+    background-color: white;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.doc-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.doc-info-item .label {
+    color: #718096;
+    font-weight: 500;
+}
+
+.doc-info-item input,
+.doc-info-item select {
+    padding: 4px 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 13px;
+    min-width: 120px;
+}
+
+.doc-info-item input[readonly] {
+    background-color: #f7fafc;
+    color: #718096;
+}
+
+/* ========== 文档状态栏（文件名/document_id/内容哈希/恢复草稿） ========== */
+.doc-status-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 8px 20px;
+    background-color: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12px;
+    color: #4a5568;
+    flex-shrink: 0;
+}
+
+.doc-status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.doc-status-item .label {
+    color: #718096;
+    font-weight: 500;
+}
+
+.doc-status-name,
+.doc-status-id,
+.doc-status-hash {
+    font-family: 'Consolas', 'Monaco', monospace;
+    color: #2d3748;
+    word-break: break-all;
+}
+
+.doc-status-restored {
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 11px;
+}
+
+.doc-status-restored.restored-yes {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.doc-status-restored.restored-no {
+    background-color: #edf2f7;
+    color: #718096;
+}
+
+/* ========== 主体双栏布局 ========== */
+.main-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ========== 面板通用样式 ========== */
+.text-panel,
+.fields-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background-color: #edf2f7;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.panel-header h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.selection-info,
+.progress-info {
+    font-size: 12px;
+    color: #718096;
+}
+
+/* ========== 左侧文本面板 ========== */
+.text-panel {
+    width: 50%;
+    border-right: 1px solid #e2e8f0;
+    background-color: white;
+}
+
+.text-container {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px;
+}
+
+.raw-text {
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #1a202c;
+    user-select: text;
+    cursor: text;
+}
+
+.raw-text::selection {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.text-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background-color: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+    font-size: 12px;
+    color: #718096;
+    flex-shrink: 0;
+}
+
+.text-footer .hint {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* ========== 右侧字段面板 ========== */
+.fields-panel {
+    width: 50%;
+    background-color: #f7fafc;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========== 字段导航区 ========== */
+.fields-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: #edf2f7;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.field-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background-color: white;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1.4;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.field-nav-item:hover {
+    background-color: #ebf8ff;
+    border-color: #90cdf4;
+}
+
+.field-nav-item.active {
+    background-color: #3182ce;
+    border-color: #2c5282;
+    color: white;
+}
+
+.field-nav-item.active .status-badge {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.field-nav-item.active .nav-field-meta {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.nav-field-name {
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.nav-field-meta {
+    font-size: 11px;
+    color: #718096;
+    margin-left: auto;
+}
+
+.fields-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ========== 字段卡片 ========== */
+.field-card {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: visible;
+    transition: box-shadow 0.2s;
+}
+
+.field-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.field-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background-color: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.field-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.field-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #2d3748;
+}
+
+.status-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.status-present {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.status-absent {
+    background-color: #fed7d7;
+    color: #742a2a;
+}
+
+.status-not_applicable {
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.status-ambiguous {
+    background-color: #feebc8;
+    color: #7b341e;
+}
+
+.status-attachment_only {
+    background-color: #bee3f8;
+    color: #2a4365;
+}
+
+.status-unreadable {
+    background-color: #e9d8fd;
+    color: #44337a;
+}
+
+.field-status-select {
+    padding: 3px 6px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 12px;
+    background-color: white;
+}
+
+.field-card-body {
+    padding: 12px 14px;
+}
+
+/* ========== 字段值 ========== */
+.values-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.value-item {
+    padding: 10px;
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+}
+
+.value-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.value-index {
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.value-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.value-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.value-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.value-field.full-width {
+    grid-column: 1 / -1;
+}
+
+.value-field label {
+    font-size: 11px;
+    color: #718096;
+    font-weight: 500;
+}
+
+.value-field input,
+.value-field select {
+    padding: 4px 6px;
+    border: 1px solid #cbd5e0;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.value-field input:focus,
+.value-field select:focus {
+    outline: none;
+    border-color: #d69e2e;
+}
+
+/* ========== 证据列表 ========== */
+.evidence-section {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.evidence-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.evidence-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.evidence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.evidence-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 8px;
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.evidence-role-tag {
+    flex-shrink: 0;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.evidence-role-primary {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.evidence-text-preview {
+    flex: 1;
+    color: #2d3748;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evidence-offset {
+    flex-shrink: 0;
+    color: #718096;
+    font-size: 11px;
+    font-family: Consolas, monospace;
+}
+
+.evidence-item-actions {
+    flex-shrink: 0;
+    display: flex;
+    gap: 4px;
+}
+
+.icon-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: #718096;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    background-color: #e2e8f0;
+    color: #2d3748;
+}
+
+.icon-btn.delete:hover {
+    background-color: #fed7d7;
+    color: #c53030;
+}
+
+/* ========== 添加按钮 ========== */
+.add-value-btn,
+.add-evidence-btn {
+    width: 100%;
+    padding: 6px;
+    border: 1px dashed #cbd5e0;
+    border-radius: 4px;
+    background-color: #f7fafc;
+    color: #718096;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-value-btn:hover,
+.add-evidence-btn:hover {
+    border-color: #d69e2e;
+    color: #b7791f;
+    background-color: #fefcbf;
+}
+
+.add-evidence-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ========== 备注 ========== */
+.note-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.note-section label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 4px;
+}
+
+.note-section textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 12px;
+    resize: vertical;
+    min-height: 40px;
+    font-family: inherit;
+}
+
+.note-section textarea:focus {
+    outline: none;
+    border-color: #d69e2e;
+}
+
+/* ========== 弹窗 ========== */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #718096;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #2d3748;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.form-group textarea {
+    resize: vertical;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #d69e2e;
+}
+
+.verify-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: #f0fff4;
+    border: 1px solid #9ae6b4;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #22543d;
+}
+
+.verify-status.error {
+    background-color: #fff5f5;
+    border-color: #feb2b2;
+    color: #742a2a;
+}
+
+.verify-icon {
+    font-weight: bold;
+}
+
+/* ========== 隐藏文件输入 ========== */
+.hidden-file-input {
+    display: none;
+}
+
+/* ========== 滚动条样式 ========== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* ========== 证据高亮回显（按角色着色） ========== */
+.evidence-highlight {
+    background-color: #fef3c7;
+    border-bottom: 2px solid #d69e2e;
+    border-radius: 2px;
+    padding: 1px 0;
+}
+
+.evidence-highlight.evidence-role-primary {
+    background-color: #c6f6d5;
+    border-bottom-color: #38a169;
+}
+
+.evidence-highlight.evidence-role-context {
+    background-color: #bee3f8;
+    border-bottom-color: #3182ce;
+}
+
+.evidence-highlight.evidence-role-qualifier {
+    background-color: #feebc8;
+    border-bottom-color: #dd6b20;
+}
+
+.evidence-highlight.evidence-role-derivation_input {
+    background-color: #e9d8fd;
+    border-bottom-color: #805ad5;
+}
+
+.evidence-highlight.evidence-role-contradiction {
+    background-color: #fed7d7;
+    border-bottom-color: #c53030;
+}
+
+/* ========== 字段校验错误高亮 ========== */
+.field-card-error {
+    border: 2px solid #c53030 !important;
+    box-shadow: 0 0 0 3px rgba(197, 48, 48, 0.2) !important;
+    animation: field-error-flash 0.4s ease-out;
+}
+
+@keyframes field-error-flash {
+    0%   { background-color: #fff5f5; }
+    100% { background-color: white; }
+}
+
+/* ========== 证据重叠警告 ========== */
+.overlap-warning {
+    padding: 8px 14px;
+    background-color: #feebc8;
+    border: 1px solid #dd6b20;
+    border-radius: 4px;
+    color: #7b341e;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 0 16px 8px 16px;
+}
+
+/* ========== 证据预览弹窗 ========== */
+.modal-content-wide {
+    width: 720px;
+    max-width: 92vw;
+}
+
+.form-group-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.form-group-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.form-group-inline input {
+    padding: 4px 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    background-color: #f7fafc;
+    color: #2d3748;
+}
+
+/* 上下文预览：前 20 字 + 选中（高亮）+ 后 20 字 */
+.preview-context {
+    padding: 10px 12px;
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #4a5568;
+    max-height: 120px;
+    overflow: auto;
+}
+
+.preview-context .preview-prefix,
+.preview-context .preview-suffix {
+    color: #a0aec0;
+}
+
+.preview-context .preview-selected {
+    background-color: #fef3c7;
+    color: #92400e;
+    border-bottom: 2px solid #d69e2e;
+    border-radius: 2px;
+    padding: 1px 0;
+    font-weight: 600;
+}
+
+/* 非阻塞质量提示（黄色提示条，不阻止保存） */
+.quality-hint {
+    padding: 8px 12px;
+    background-color: #feebc8;
+    border: 1px solid #dd6b20;
+    border-radius: 4px;
+    color: #7b341e;
+    font-size: 12px;
+    line-height: 1.6;
+    margin-top: 8px;
+}
+
+.quality-hint.hidden {
+    display: none;
+}
+
+.quality-hint .quality-hint-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.quality-hint .quality-hint-suggestion {
+    color: #9c4221;
+}
+
+/* 预览弹窗操作按钮区 */
+.preview-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+/* 点击证据项后的临时高亮闪烁 */
+.evidence-highlight.evidence-flash {
+    animation: evidence-flash 1.2s ease-out;
+}
+
+@keyframes evidence-flash {
+    0%   { background-color: #fbd38d; box-shadow: 0 0 0 4px rgba(214, 158, 46, 0.4); }
+    100% { background-color: inherit; box-shadow: none; }
+}
+
+/* 证据失效标记 */
+.evidence-item.evidence-invalid {
+    opacity: 0.55;
+    background-color: #fff5f5;
+    border-color: #feb2b2;
+}
+
+.evidence-invalid-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    background-color: #c53030;
+    color: white;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+/* 证据项可点击提示 */
+.evidence-item {
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.evidence-item:hover {
+    background-color: #ebf8ff;
+}
+
+/* ========== 值项折叠/展开（P0-1/P0-2 状态保持） ========== */
+.value-item.collapsed .value-fields,
+.value-item.collapsed .evidence-section {
+    display: none;
+}
+
+.value-collapse-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #718096;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+}
+
+.value-collapse-btn:hover {
+    background-color: #e2e8f0;
+    color: #2d3748;
+}
+
+/* 新增值项临时高亮（addFieldValue 后自动聚焦） */
+.value-item.value-just-added {
+    animation: value-flash 1.2s ease-out;
+}
+
+@keyframes value-flash {
+    0%   { background-color: #fef3c7; box-shadow: 0 0 0 3px rgba(214, 158, 46, 0.3); }
+    100% { background-color: #f7fafc; box-shadow: none; }
+}
+
+/* 值项 raw_value 输入框标识（供自动聚焦定位） */
+.value-field input[data-field-key="raw_value"] {
+    /* 无额外样式，仅用 data 属性定位 */
+}

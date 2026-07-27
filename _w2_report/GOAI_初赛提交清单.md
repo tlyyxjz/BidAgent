@@ -40,7 +40,7 @@
 2. W2-05 证据入库验证（16/16 金标过，96 字段 153 证据 0 错误）
 3. W2-01 LLM 候选证据冒烟测试（3 篇，18/18 证据命中）
 4. W2-08 消融实验 A/B/C 三组对比（22 篇 budget 口径，C 组 unjustified_rate=1.94%，field_precision=94.49%，evidence_precision=100%）
-5. W2-09 证据定位指标（22 篇 budget 口径全部成功：recall 73.79%, precision 65.35%, IoU 0.6189, P50/P95=1.0）
+5. W2-09 证据定位指标（22 篇 budget 口径全部成功，iou 新逻辑：recall 69.90%, precision 60.63%, IoU 0.5307, P50=0.96/P95=1.0）
 6. 22 篇 vs 7 篇结果差异分析（field_precision 反常原因）
 7. W2-08 与 W2-09 指标口径对比
 8. 待人工复测项 6 项

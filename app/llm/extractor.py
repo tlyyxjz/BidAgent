@@ -40,6 +40,42 @@ from app.utils.logger import get_logger
 
 logger = get_logger("llm_extractor")
 
+# ========== 工具函数 ==========
+
+
+def _strip_markdown_fence(content: str) -> str:
+    """剥离 markdown 代码块 fence（```json ... ``` / ``` ... ```）。
+
+    部分 LLM 即使设置了 response_format=json_object 仍可能用 markdown fence
+    包裹 JSON 输出，直接 json.loads 会抛 JSONDecodeError (#42 修复)。
+
+    Args:
+        content: LLM 返回的原始字符串
+
+    Returns:
+        剥离 fence 后的字符串；若不含 fence 则原样返回（仅 strip 前后空白）
+    """
+    if not content:
+        return content
+    text = content.strip()
+    # 不含 fence，原样返回
+    if "```" not in text:
+        return text
+    # 去除开头的 ```json / ``` 标记（取首行之后的内容）
+    if text.startswith("```"):
+        newline_idx = text.find("\n")
+        if newline_idx != -1:
+            text = text[newline_idx + 1:]
+        else:
+            # 单行 fence（罕见）：仅去掉开头 ```
+            text = text[3:]
+    # 去除结尾的 ```
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
+
 # ========== W2-01 抽取 System Prompt ==========
 
 EXTRACTION_SYSTEM_PROMPT = """你是一个政府采购公告字段抽取助手。从公告原文中抽取六类核心字段，并为每个字段提供候选证据。
@@ -505,7 +541,7 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
             data = resp.json()
 
         content = data["choices"][0]["message"]["content"]
-        parsed_json = json.loads(content)
+        parsed_json = json.loads(_strip_markdown_fence(content))
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         total_tokens = data.get("usage", {}).get("total_tokens", 0)
 
@@ -592,7 +628,7 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
         total_tokens = data.get("usage", {}).get("total_tokens", 0)
 
         parsed_json = data["choices"][0]["message"]["content"]
-        parsed_json = json.loads(parsed_json)
+        parsed_json = json.loads(_strip_markdown_fence(parsed_json))
 
         result = parse_extraction_response(
             parsed_json, model_id, latency_ms, total_tokens

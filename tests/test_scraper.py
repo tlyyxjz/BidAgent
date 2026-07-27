@@ -300,3 +300,107 @@ class TestScraperErrorHandling:
                 await scraper.scrape(
                     {"url": "https://example.com/fail", "selectors": {"x": "y"}}
                 )
+
+
+
+class TestHttp403Stop:
+    """#34 修复：HTTP 403 必须立即停止，不得换 UA/代理重试。"""
+
+    async def test_403_stops_immediately(self) -> None:
+        """403 时立即停止，重试次数为 0（get_random_proxy 只调用 1 次）。"""
+        page = _MockPage()
+        mock_response = MagicMock()
+        mock_response.status = 403
+        page.goto = AsyncMock(return_value=mock_response)
+
+        scraper = Scraper(headless=True, timeout_ms=1000)
+        # 设置代理池使 max_attempts=3，验证 403 不触发重试
+        with patch(
+            "app.core.scraper.get_proxy_pool",
+            return_value=["http://p1", "http://p2", "http://p3"],
+        ):
+            with patch(
+                "app.core.scraper.get_random_proxy",
+                return_value="http://p1",
+            ) as mock_proxy:
+                with _patch_playwright(page):
+                    with pytest.raises(ScrapeError):
+                        await scraper.scrape(
+                            {"url": "https://example.com/forbidden", "selectors": {"x": "y"}}
+                        )
+        # 只调用 1 次 => 重试次数为 0
+        assert mock_proxy.call_count == 1
+
+    async def test_403_no_proxy_retry(self) -> None:
+        """403 时不调用 report_proxy_failure。"""
+        page = _MockPage()
+        mock_response = MagicMock()
+        mock_response.status = 403
+        page.goto = AsyncMock(return_value=mock_response)
+
+        scraper = Scraper(headless=True, timeout_ms=1000)
+        with patch(
+            "app.core.scraper.get_proxy_pool",
+            return_value=["http://p1", "http://p2"],
+        ):
+            with patch(
+                "app.core.scraper.get_random_proxy",
+                return_value="http://p1",
+            ):
+                with patch(
+                    "app.core.scraper.report_proxy_failure"
+                ) as mock_report:
+                    with _patch_playwright(page):
+                        with pytest.raises(ScrapeError):
+                            await scraper.scrape(
+                                {"url": "https://example.com/forbidden", "selectors": {"x": "y"}}
+                            )
+        mock_report.assert_not_called()
+
+    async def test_403_no_ua_change(self) -> None:
+        """403 时不更换 UA（get_random_user_agent 只调用 1 次）。"""
+        page = _MockPage()
+        mock_response = MagicMock()
+        mock_response.status = 403
+        page.goto = AsyncMock(return_value=mock_response)
+
+        scraper = Scraper(headless=True, timeout_ms=1000)
+        with patch(
+            "app.core.scraper.get_proxy_pool",
+            return_value=["http://p1", "http://p2"],
+        ):
+            with patch(
+                "app.core.scraper.get_random_proxy",
+                return_value="http://p1",
+            ):
+                with patch(
+                    "app.core.scraper.get_random_user_agent",
+                    return_value="UA-1",
+                ) as mock_ua:
+                    with _patch_playwright(page):
+                        with pytest.raises(ScrapeError):
+                            await scraper.scrape(
+                                {"url": "https://example.com/forbidden", "selectors": {"x": "y"}}
+                            )
+        assert mock_ua.call_count == 1
+
+    async def test_200_normal_continues(self) -> None:
+        """200 正常响应不中断抓取流程。"""
+        page = _MockPage(
+            single_selectors={"#title": "Hello"},
+        )
+        mock_response = MagicMock()
+        mock_response.status = 200
+        page.goto = AsyncMock(return_value=mock_response)
+
+        scraper = Scraper(headless=True, timeout_ms=1000)
+        with _patch_playwright(page):
+            result = await scraper.scrape(
+                {
+                    "url": "https://example.com/ok",
+                    "selectors": {"title": "#title"},
+                }
+            )
+        assert result["url"] == "https://example.com/ok"
+        assert result["pages_scraped"] == 1
+        assert result["data"][0]["title"] == "Hello"

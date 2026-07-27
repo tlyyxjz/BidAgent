@@ -45,6 +45,10 @@ class ScrapeError(Exception):
     """抓取过程中的统一错误。"""
 
 
+class HttpForbiddenError(Exception):
+    """HTTP 403 Forbidden：被反爬封禁，必须停止抓取，不得换 UA/代理重试。"""
+
+
 class Scraper:
     """Playwright 异步抓取器。"""
 
@@ -132,6 +136,12 @@ class Scraper:
                     storage_state=storage_state,
                 )
                 return result
+            except HttpForbiddenError as exc:
+                # #34 修复：HTTP 403 表示被反爬封禁，必须立即停止，
+                # 不得换 UA/代理重试（重试会加重封禁）。
+                last_error = exc
+                logger.warning("HTTP 403 Forbidden, 停止抓取: %s", url)
+                break
             except PlaywrightTimeoutError as exc:
                 last_error = exc
                 logger.warning("抓取超时 url=%s attempt=%d proxy=%s", url, attempt, proxy)
@@ -301,7 +311,12 @@ class Scraper:
 
                 await page.route("**/*", _ssrf_guard)
 
-                await page.goto(url, wait_until="domcontentloaded")
+                # #34 修复：检查 HTTP 响应状态码，403 时抛专用异常停止抓取
+                # （Playwright page.goto 遇到 403 通常不抛异常，会渲染为错误页，
+                # 导致原逻辑误判为成功或被反爬封禁后仍换 UA/代理重试加重封禁）。
+                response = await page.goto(url, wait_until="domcontentloaded")
+                if response and response.status == 403:
+                    raise HttpForbiddenError(url)
 
                 if wait_for:
                     try:
