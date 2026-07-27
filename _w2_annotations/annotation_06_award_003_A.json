@@ -115,7 +115,7 @@
       "gold_status": "present",
       "values": [
         {
-          "raw_value": "177.449万",
+          "raw_value": "177.449000",
           "normalized_value": "1774490.00",
           "amount_type": "award",
           "currency": null,
@@ -125,14 +125,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 375,
+              "end": 385,
+              "text": "177.449000"
             }
           ]
         },
         {
-          "raw_value": "103.155万",
+          "raw_value": "103.155000",
           "normalized_value": "1031550.00",
           "amount_type": "award",
           "currency": null,
@@ -142,14 +142,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 468,
+              "end": 478,
+              "text": "103.155000"
             }
           ]
         },
         {
-          "raw_value": "122.0055万",
+          "raw_value": "122.005500",
           "normalized_value": "1220055.00",
           "amount_type": "award",
           "currency": null,
@@ -159,14 +159,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 561,
+              "end": 571,
+              "text": "122.005500"
             }
           ]
         },
         {
-          "raw_value": "114万",
+          "raw_value": "114.000000",
           "normalized_value": "1140000.00",
           "amount_type": "award",
           "currency": null,
@@ -176,14 +176,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 635,
+              "end": 645,
+              "text": "114.000000"
             }
           ]
         }
       ],
-      "note": ""
+      "note": "修正：原金标 amount 证据偏移量全部错误(start=0,end=1,text=中)。2026-07-27 修正为原文实际金额位置。"
     },
     {
       "field_name": "publish_date",

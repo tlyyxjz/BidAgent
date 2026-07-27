@@ -149,7 +149,7 @@
       "gold_status": "present",
       "values": [
         {
-          "raw_value": "2.1万",
+          "raw_value": "2.100000",
           "normalized_value": "21000.00",
           "amount_type": "award",
           "currency": null,
@@ -159,14 +159,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 442,
+              "end": 450,
+              "text": "2.100000"
             }
           ]
         },
         {
-          "raw_value": "5.7837万",
+          "raw_value": "5.783700",
           "normalized_value": "57837.00",
           "amount_type": "award",
           "currency": null,
@@ -176,14 +176,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 512,
+              "end": 520,
+              "text": "5.783700"
             }
           ]
         },
         {
-          "raw_value": "15.3972万",
+          "raw_value": "15.397200",
           "normalized_value": "153972.00",
           "amount_type": "award",
           "currency": null,
@@ -193,14 +193,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 593,
+              "end": 602,
+              "text": "15.397200"
             }
           ]
         },
         {
-          "raw_value": "10.1328万",
+          "raw_value": "10.132800",
           "normalized_value": "101328.00",
           "amount_type": "award",
           "currency": null,
@@ -210,14 +210,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 685,
+              "end": 694,
+              "text": "10.132800"
             }
           ]
         },
         {
-          "raw_value": "123.8958万",
+          "raw_value": "123.895800",
           "normalized_value": "1238958.00",
           "amount_type": "award",
           "currency": null,
@@ -227,14 +227,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 756,
+              "end": 766,
+              "text": "123.895800"
             }
           ]
         },
         {
-          "raw_value": "218.94万",
+          "raw_value": "218.940000",
           "normalized_value": "2189400.00",
           "amount_type": "award",
           "currency": null,
@@ -244,14 +244,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 847,
+              "end": 857,
+              "text": "218.940000"
             }
           ]
         }
       ],
-      "note": ""
+      "note": "修正：原金标 amount 证据偏移量全部错误(start=0,end=1,text=中)。2026-07-27 修正为原文实际金额位置。"
     },
     {
       "field_name": "publish_date",

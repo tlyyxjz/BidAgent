@@ -81,7 +81,7 @@
       "gold_status": "present",
       "values": [
         {
-          "raw_value": "386.8648万",
+          "raw_value": "386.864800",
           "normalized_value": "3868648.00",
           "amount_type": "award",
           "currency": null,
@@ -91,14 +91,14 @@
           "acceptable_evidence_spans": [
             {
               "role": "primary",
-              "start": 0,
-              "end": 1,
-              "text": "中"
+              "start": 301,
+              "end": 311,
+              "text": "386.864800"
             }
           ]
         }
       ],
-      "note": ""
+      "note": "修正：原金标 amount 证据偏移量全部错误(start=0,end=1,text=中)。2026-07-27 修正为原文实际金额位置。"
     },
     {
       "field_name": "publish_date",
