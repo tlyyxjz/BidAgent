@@ -1,0 +1,2328 @@
+{
+  "annotator": "k3-v3",
+  "annotations": [
+    {
+      "document_id": "02_tender_002",
+      "source_txt": "02_tender_002.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "DDWK2026024",
+          "evidence_text": "项目编号：DDWK2026024",
+          "char_start": 177,
+          "char_end": 193,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "东北大学",
+          "evidence_text": "名 称：东北大学",
+          "char_start": 1390,
+          "char_end": 1398,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": "900.000000",
+          "evidence_text": "预算金额：900.000000 万元（人民币）",
+          "char_start": 213,
+          "char_end": 236,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "2026年07月12日 11:54 来源：中国政府采购网",
+          "char_start": 22,
+          "char_end": 50,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-08-03 09:30",
+          "evidence_text": "提交投标文件截止时间：2026年08月03日 09点30分（北京时间）",
+          "char_start": 966,
+          "char_end": 1001,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "03_tender_003",
+      "source_txt": "03_tender_003.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "QDQZZB-260702",
+          "evidence_text": "项目编号：QDQZZB-260702",
+          "char_start": 201,
+          "char_end": 219,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "中国海洋大学",
+          "evidence_text": "名 称：中国海洋大学",
+          "char_start": 1947,
+          "char_end": 1957,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "229.577666",
+            "229.577666"
+          ],
+          "evidence_text": [
+            "预算金额：229.577666 万元（人民币）",
+            "最高限价（如有）：229.577666 万元（人民币）"
+          ],
+          "char_start": [
+            265,
+            290
+          ],
+          "char_end": [
+            288,
+            317
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "2026年07月12日 09:24 来源：中国政府采购网",
+          "char_start": 33,
+          "char_end": 61,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-07-23 09:30",
+          "evidence_text": "截止时间：2026年07月23日 09点30分（北京时间）",
+          "char_start": 1693,
+          "char_end": 1722,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "04_award_001",
+      "source_txt": "04_award_001.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "GC-HCD260669",
+          "evidence_text": "项目编号：GC-HCD260669",
+          "char_start": 127,
+          "char_end": 144,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "中央国家机关政府采购中心",
+          "evidence_text": "名 称：中央国家机关政府采购中心",
+          "char_start": 963,
+          "char_end": 979,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": "广东美的制冷设备有限公司",
+          "evidence_text": "供应商名称： 广东美的制冷设备有限公司",
+          "char_start": 246,
+          "char_end": 265,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "757.700000",
+            "386.864800"
+          ],
+          "evidence_text": [
+            "预算金额：757.700000万元",
+            "中标（成交）金额： 人民币386.864800 万元"
+          ],
+          "char_start": [
+            195,
+            288
+          ],
+          "char_end": [
+            212,
+            314
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:[7577000.0]"
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "2026年07月12日 17:51 来源：中国政府采购网",
+          "char_start": 29,
+          "char_end": 57,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "05_award_002",
+      "source_txt": "05_award_002.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "GC-HCD260670",
+          "evidence_text": "项目编号：GC-HCD260670",
+          "char_start": 129,
+          "char_end": 146,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "中央国家机关政府采购中心",
+          "evidence_text": "名 称：中央国家机关政府采购中心",
+          "char_start": 2482,
+          "char_end": 2498,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": [
+            "北京立思辰计算机技术有限公司",
+            "惠普贸易（上海）有限公司",
+            "理光（中国）投资有限公司",
+            "京瓷办公信息系统（中国）有限公司",
+            "东芝泰格信息系统（深圳）有限公司"
+          ],
+          "evidence_text": [
+            "供应商名称： 北京立思辰计算机技术有限公司",
+            "供应商名称： 惠普贸易（上海）有限公司",
+            "供应商名称： 理光（中国）投资有限公司",
+            "供应商名称： 京瓷办公信息系统（中国）有限公司",
+            "供应商名称： 东芝泰格信息系统（深圳）有限公司"
+          ],
+          "char_start": [
+            369,
+            461,
+            531,
+            613,
+            777
+          ],
+          "char_end": [
+            390,
+            480,
+            550,
+            636,
+            800
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "713.500000",
+            "2.100000",
+            "5.783700",
+            "15.397200",
+            "10.132800",
+            "123.895800",
+            "218.940000"
+          ],
+          "evidence_text": [
+            "预算金额：713.500000万元",
+            "中标（成交）金额： 人民币2.100000 万元",
+            "中标（成交）金额： 人民币5.783700 万元",
+            "中标（成交）金额： 人民币15.397200 万元",
+            "中标（成交）金额： 人民币10.132800 万元",
+            "中标（成交）金额： 人民币123.895800 万元",
+            "中标（成交）金额： 人民币218.940000 万元"
+          ],
+          "char_start": [
+            198,
+            429,
+            499,
+            580,
+            672,
+            743,
+            834
+          ],
+          "char_end": [
+            215,
+            453,
+            523,
+            605,
+            697,
+            769,
+            860
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:[7135000.0]"
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "2026年07月12日 17:51 来源：中国政府采购网",
+          "char_start": 30,
+          "char_end": 58,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "06_award_003",
+      "source_txt": "06_award_003.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "GC-HCD260671",
+          "evidence_text": "项目编号：GC-HCD260671",
+          "char_start": 129,
+          "char_end": 146,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "中央国家机关政府采购中心",
+          "evidence_text": "名 称：中央国家机关政府采购中心",
+          "char_start": 1882,
+          "char_end": 1898,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": [
+            "联想（北京）有限公司",
+            "京瓷办公信息系统（中国）有限公司",
+            "得力集团有限公司"
+          ],
+          "evidence_text": [
+            "供应商名称： 联想（北京）有限公司",
+            "供应商名称： 京瓷办公信息系统（中国）有限公司",
+            "供应商名称： 得力集团有限公司"
+          ],
+          "char_start": [
+            315,
+            396,
+            582
+          ],
+          "char_end": [
+            332,
+            419,
+            597
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "758.760000",
+            "177.449000",
+            "103.155000",
+            "122.005500",
+            "114.000000"
+          ],
+          "evidence_text": [
+            "预算金额：758.760000万元",
+            "中标（成交）金额： 人民币177.449000 万元",
+            "中标（成交）金额： 人民币103.155000 万元",
+            "中标（成交）金额： 人民币122.005500 万元",
+            "中标（成交）金额： 人民币114.000000 万元"
+          ],
+          "char_start": [
+            198,
+            362,
+            455,
+            548,
+            622
+          ],
+          "char_end": [
+            215,
+            388,
+            481,
+            574,
+            648
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:[7587600.0]"
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "2026年07月12日 17:50 来源：中国政府采购网",
+          "char_start": 30,
+          "char_end": 58,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "07_correction_001",
+      "source_txt": "07_correction_001.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "物资2026-001",
+          "evidence_text": "原公告的采购项目编号：物资2026-001",
+          "char_start": 84,
+          "char_end": 105,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "中国国际经济技术交流中心",
+          "evidence_text": "名 称：中国国际经济技术交流中心",
+          "char_start": 308,
+          "char_end": 324,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-15",
+          "evidence_text": "2026年07月15日 15:56 来源：中国政府采购网",
+          "char_start": 30,
+          "char_end": 58,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-08-05 09:30",
+          "evidence_text": "本项目投标截止时间和开标时间延期至2026年8月5日上午9：30。",
+          "char_start": 206,
+          "char_end": 239,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "08_correction_002",
+      "source_txt": "08_correction_002.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": [
+            "XNJZ-G-2026-010",
+            "TLYQ2026-06080"
+          ],
+          "evidence_text": [
+            "XNJZ-G-2026-010",
+            "TLYQ2026-06080"
+          ],
+          "char_start": [
+            114,
+            130
+          ],
+          "char_end": [
+            129,
+            144
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:['TLYQ2026-06080', 'XNJZ-G-2026-010']; value_only_in_A:['XNJZ-G-2026-010、TLYQ2026-06080']"
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "大连民族大学",
+          "evidence_text": "名 称：大连民族大学",
+          "char_start": 362,
+          "char_end": 372,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "2026年07月12日 08:54 来源：中国政府采购网",
+          "char_start": 49,
+          "char_end": 77,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "award_05_43a28fb1c8af",
+      "source_txt": "award_05.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "GC-HCD260670",
+          "evidence_text": "项目编号：GC-HCD260670",
+          "char_start": 1251,
+          "char_end": 1268,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "中央国家机关政府采购中心",
+          "evidence_text": "采购单位中央国家机关政府采购中心",
+          "char_start": 140,
+          "char_end": 156,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": [
+            "北京立思辰计算机技术有限公司",
+            "惠普贸易（上海）有限公司",
+            "理光（中国）投资有限公司",
+            "京瓷办公信息系统（中国）有限公司",
+            "东芝泰格信息系统（深圳）有限公司"
+          ],
+          "evidence_text": [
+            "供应商名称：北京立思辰计算机技术有限公司",
+            "供应商名称：惠普贸易（上海）有限公司",
+            "供应商名称：理光（中国）投资有限公司",
+            "供应商名称：京瓷办公信息系统（中国）有限公司",
+            "供应商名称：东芝泰格信息系统（深圳）有限公司"
+          ],
+          "char_start": [
+            1490,
+            1579,
+            1646,
+            1725,
+            1883
+          ],
+          "char_end": [
+            1510,
+            1597,
+            1664,
+            1747,
+            1905
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "713.500000",
+            "2.100000",
+            "5.783700",
+            "15.397200",
+            "10.132800",
+            "123.895800",
+            "218.940000"
+          ],
+          "evidence_text": [
+            "预算金额：713.500000万元",
+            "中标（成交）金额：人民币2.100000 万元",
+            "中标（成交）金额：人民币5.783700 万元",
+            "中标（成交）金额：人民币15.397200 万元",
+            "中标（成交）金额：人民币10.132800 万元",
+            "中标（成交）金额：人民币123.895800 万元",
+            "中标（成交）金额：人民币218.940000 万元"
+          ],
+          "char_start": [
+            1320,
+            1548,
+            1615,
+            1693,
+            1782,
+            1850,
+            1938
+          ],
+          "char_end": [
+            1337,
+            1571,
+            1638,
+            1717,
+            1806,
+            1875,
+            1963
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:[21000.0, 57837.0, 101328.0, 153972.0, 1238958.0, 2189400.0]; value_only_in_A:[20000.0, 50000.0, 100000.0, 150000.0, 1230000.0, 2180000.0]"
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "公告时间2026年07月12日 17:51",
+          "char_start": 164,
+          "char_end": 185,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "award_06_92954883b056",
+      "source_txt": "award_06.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "NJFJ2600661-05SGGH",
+          "evidence_text": "项目编号：NJFJ2600661-05SGGH",
+          "char_start": 442,
+          "char_end": 465,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "南京农业大学",
+          "evidence_text": "名 称：南京农业大学",
+          "char_start": 1214,
+          "char_end": 1224,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['南京永平建设项目管理有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": "河南冠鸿途建设工程有限公司",
+          "evidence_text": "供应商名称：河南冠鸿途建设工程有限公司",
+          "char_start": 573,
+          "char_end": 592,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": "741.8522110",
+          "evidence_text": "中标（成交）金额：741.8522110（万元）",
+          "char_start": 634,
+          "char_end": 658,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:[7418522.11]; value_only_in_A:[7410000.0]"
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-20",
+          "evidence_text": "公告时间：2026年07月20日 22:31",
+          "char_start": 209,
+          "char_end": 231,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "award_07_9b6cbd76b3ce",
+      "source_txt": "award_07.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "ZSLTC-2026-S033",
+          "evidence_text": "项目编号：ZSLTC-2026-S033",
+          "char_start": 483,
+          "char_end": 503,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "中国人民大学",
+          "evidence_text": "名 称：中国人民大学",
+          "char_start": 1696,
+          "char_end": 1706,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['中盛隆国际招标(北京)有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": "北京篮丰蔬菜配送有限公司",
+          "evidence_text": "供应商名称：北京篮丰蔬菜配送有限公司",
+          "char_start": 571,
+          "char_end": 589,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "0.0769040",
+            "0.0000000",
+            "0.0007460"
+          ],
+          "evidence_text": [
+            "中标（成交）金额：0.0769040（万元）",
+            "中标（成交）金额：0.0000000（万元）",
+            "中标（成交）金额：0.0007460（万元）"
+          ],
+          "char_start": [
+            615,
+            683,
+            751
+          ],
+          "char_end": [
+            637,
+            705,
+            773
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:[7.46]; value_only_in_A:[776.5, 49000.0]"
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-20",
+          "evidence_text": "公告时间：2026年07月20日 21:55",
+          "char_start": 144,
+          "char_end": 166,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "award_08_e339df68c603",
+      "source_txt": "award_08.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "OITC-G260310447",
+          "evidence_text": "项目编号：OITC-G260310447",
+          "char_start": 430,
+          "char_end": 450,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "北京大学",
+          "evidence_text": "名 称：北京大学",
+          "char_start": 986,
+          "char_end": 994,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['东方国际招标有限责任公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": "常州市圣烈机械有限公司",
+          "evidence_text": "供应商名称：常州市圣烈机械有限公司",
+          "char_start": 524,
+          "char_end": 541,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": "1679.8000000",
+          "evidence_text": "中标（成交）金额：1679.8000000（万元）",
+          "char_start": 562,
+          "char_end": 587,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:[100000.0]"
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-20",
+          "evidence_text": "公告时间：2026年07月20日 20:50",
+          "char_start": 146,
+          "char_end": 168,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "award_09_b77f9502c7cc",
+      "source_txt": "award_09.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "ZFCGHA2026040",
+          "evidence_text": "项目编号：ZFCGHA2026040",
+          "char_start": 449,
+          "char_end": 467,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "四川大学",
+          "evidence_text": "名 称：四川大学",
+          "char_start": 1271,
+          "char_end": 1279,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['联投项目管理(集团)有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": "成都市新好厨酒店用品商行",
+          "evidence_text": "供应商名称：成都市新好厨酒店用品商行",
+          "char_start": 527,
+          "char_end": 545,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": "68.6600000",
+          "evidence_text": "中标（成交）金额：68.6600000（万元）",
+          "char_start": 577,
+          "char_end": 600,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:[8239.0]"
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-20",
+          "evidence_text": "公告时间：2026年07月20日 20:21",
+          "char_start": 131,
+          "char_end": 153,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "correction_04_14622f154f7c",
+      "source_txt": "correction_04.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": [
+            "招服2026A00052",
+            "0773-2641GNSHFWGK1900"
+          ],
+          "evidence_text": [
+            "原公告的采购项目编号：招服2026A00052",
+            "0773-2641GNSHFWGK1900"
+          ],
+          "char_start": [
+            459,
+            488
+          ],
+          "char_end": [
+            482,
+            509
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:['0773-2641GNSHFWGK1900', '招服2026A00052']; value_only_in_A:['招服2026A00052(招标编号：0773-2641GNSHFWGK1900)']"
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "上海交通大学",
+          "evidence_text": "名 称：上海交通大学",
+          "char_start": 916,
+          "char_end": 926,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['中金招标有限责任公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-20",
+          "evidence_text": "2026年07月20日 10:08 来源：中国政府采购网",
+          "char_start": 42,
+          "char_end": 70,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:['2026-07-20']; value_only_in_A:['2026-07-16']"
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "correction_05_a87cdaff0797",
+      "source_txt": "correction_05.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": [
+            "XNJZ-G-2026-010",
+            "TLYQ2026-06080"
+          ],
+          "evidence_text": [
+            "XNJZ-G-2026-010",
+            "TLYQ2026-06080"
+          ],
+          "char_start": [
+            511,
+            527
+          ],
+          "char_end": [
+            526,
+            541
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:['TLYQ2026-06080', 'XNJZ-G-2026-010']; value_only_in_A:['XNJZ-G-2026-010、TLYQ2026-06080']"
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "大连民族大学",
+          "evidence_text": "名 称：大连民族大学",
+          "char_start": 740,
+          "char_end": 750,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['通利晟信管理咨询有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "公告时间2026年07月12日 08:54",
+          "char_start": 208,
+          "char_end": 229,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['2026-07-10']"
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "correction_06_a5d58685dc3b",
+      "source_txt": "correction_06.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "11000026210200173767-XM001",
+          "evidence_text": "原公告的采购项目编号：11000026210200173767-XM001",
+          "char_start": 98,
+          "char_end": 135,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "北京市残疾人社会保障和就业服务中心（北京市第八十六职业技能鉴定所）",
+          "evidence_text": "名 称：北京市残疾人社会保障和就业服务中心（北京市第八十六职业技能鉴定所）",
+          "char_start": 688,
+          "char_end": 725,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['北京国际工程咨询有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": "北京之渡教育科技有限公司",
+          "evidence_text": "供应商名称：北京之渡教育科技有限公司",
+          "char_start": 420,
+          "char_end": 438,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": "11.9789",
+          "evidence_text": "人民币小写：￥119789.00元",
+          "char_start": 500,
+          "char_end": 517,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-20",
+          "evidence_text": "2026年07月20日 来源：北京市政府采购网",
+          "char_start": 28,
+          "char_end": 51,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['2026-07-07']"
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "multi_lot_02_d6aa0c202dda",
+      "source_txt": "multi_lot_02.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "ZPDL(2026)77",
+          "evidence_text": "项目编号：ZPDL(2026)77",
+          "char_start": 699,
+          "char_end": 716,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "泽普县卫生健康委员会",
+          "evidence_text": "名 称：泽普县卫生健康委员会",
+          "char_start": 4117,
+          "char_end": 4131,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['喀什铭远建设工程项目管理咨询有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "384.760000",
+            "209.760000",
+            "40.000000",
+            "135.000000"
+          ],
+          "evidence_text": [
+            "预算金额（元）：3847600",
+            "预算金额（元）:2097600",
+            "预算金额（元）:400000",
+            "预算金额（元）:1350000"
+          ],
+          "char_start": [
+            765,
+            874,
+            1152,
+            1301
+          ],
+          "char_end": [
+            780,
+            889,
+            1166,
+            1316
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-19",
+          "evidence_text": "公告时间2026年07月19日 15:53",
+          "char_start": 183,
+          "char_end": 204,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-08-11 11:00",
+          "evidence_text": "提交投标文件截止时间：2026年08月11日 11:00（北京时间）",
+          "char_start": 2026,
+          "char_end": 2060,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "multi_winner_03_8a1d36728598",
+      "source_txt": "multi_winner_03.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "GC-HCD260671",
+          "evidence_text": "项目编号：GC-HCD260671",
+          "char_start": 998,
+          "char_end": 1015,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "中央国家机关政府采购中心",
+          "evidence_text": "采购单位中央国家机关政府采购中心",
+          "char_start": 140,
+          "char_end": 156,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "present",
+          "value": [
+            "联想（北京）有限公司",
+            "京瓷办公信息系统（中国）有限公司",
+            "得力集团有限公司"
+          ],
+          "evidence_text": [
+            "供应商名称：联想（北京）有限公司",
+            "供应商名称：京瓷办公信息系统（中国）有限公司",
+            "供应商名称：得力集团有限公司"
+          ],
+          "char_start": [
+            1183,
+            1261,
+            1441
+          ],
+          "char_end": [
+            1199,
+            1283,
+            1455
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "758.760000",
+            "177.449000",
+            "103.155000",
+            "122.005500",
+            "114.000000"
+          ],
+          "evidence_text": [
+            "预算金额：758.760000万元",
+            "中标（成交）金额：人民币177.449000 万元",
+            "中标（成交）金额：人民币103.155000 万元",
+            "中标（成交）金额：人民币122.005500 万元",
+            "中标（成交）金额：人民币114.000000 万元"
+          ],
+          "char_start": [
+            1067,
+            1228,
+            1318,
+            1408,
+            1479
+          ],
+          "char_end": [
+            1084,
+            1253,
+            1343,
+            1433,
+            1504
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "公告时间2026年07月12日 17:50",
+          "char_start": 164,
+          "char_end": 185,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "tender_06_4e47868721c5",
+      "source_txt": "tender_06.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "GC-HGX260698",
+          "evidence_text": "项目编号：GC-HGX260698",
+          "char_start": 602,
+          "char_end": 619,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "北京大学第三医院（北京大学第三临床医学院）",
+          "evidence_text": "名 称：北京大学第三医院（北京大学第三临床医学院）",
+          "char_start": 1753,
+          "char_end": 1778,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['中央国家机关政府采购中心']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "331.300000",
+            "331.300000"
+          ],
+          "evidence_text": [
+            "预算金额：331.300000万元",
+            "最高限价：331.300000万元"
+          ],
+          "char_start": [
+            661,
+            682
+          ],
+          "char_end": [
+            678,
+            699
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-16",
+          "evidence_text": "公告时间：2026年07月16日 09:50",
+          "char_start": 148,
+          "char_end": 170,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-08-06 09:00",
+          "evidence_text": "提交（上传）投标文件截止时间：2026年8月6日09时00分（北京时间）",
+          "char_start": 1078,
+          "char_end": 1114,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "tender_07_b6a0e4b7d456",
+      "source_txt": "tender_07.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": [
+            "HW20260341",
+            "ZKQ2026-020514384ZF(H)"
+          ],
+          "evidence_text": [
+            "项目编号：HW20260341",
+            "ZKQ2026-020514384ZF(H)"
+          ],
+          "char_start": [
+            815,
+            831
+          ],
+          "char_end": [
+            830,
+            853
+          ],
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:['HW20260341', 'ZKQ2026-020514384ZF(H)']; value_only_in_A:['HW20260341；ZKQ2026-020514384ZF(H)']"
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "华中科技大学",
+          "evidence_text": "名 称：华中科技大学",
+          "char_start": 2831,
+          "char_end": 2841,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['中科器湖北有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "490.000000",
+            "490.000000"
+          ],
+          "evidence_text": [
+            "预算金额：490.000000 万元（人民币）",
+            "最高限价（如有）：490.000000 万元（人民币）"
+          ],
+          "char_start": [
+            880,
+            905
+          ],
+          "char_end": [
+            903,
+            932
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-16",
+          "evidence_text": "公告时间：2026年07月16日 09:40",
+          "char_start": 229,
+          "char_end": 251,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-08-06 09:00",
+          "evidence_text": "提交投标文件截止时间：2026年08月06日 09点00分（北京时间）",
+          "char_start": 2349,
+          "char_end": 2384,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "tender_08_205c9f889e74",
+      "source_txt": "tender_08.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "331122263030010000010-JYZFCG2026-01",
+          "evidence_text": "项目编号：331122263030010000010-JYZFCG2026-01",
+          "char_start": 645,
+          "char_end": 685,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "缙云县教育局",
+          "evidence_text": "名 称：缙云县教育局",
+          "char_start": 2375,
+          "char_end": 2385,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['缙云县公共资源交易中心']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "91.000000",
+            "91.000000"
+          ],
+          "evidence_text": [
+            "预算金额（元）：910000",
+            "最高限价（元）：910000"
+          ],
+          "char_start": [
+            718,
+            734
+          ],
+          "char_end": [
+            732,
+            748
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-18",
+          "evidence_text": "公告时间2026年07月18日 18:14",
+          "char_start": 164,
+          "char_end": 185,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-08-07 09:00",
+          "evidence_text": "提交投标文件截止时间：2026年08月07日 09:00（北京时间）",
+          "char_start": 1292,
+          "char_end": 1326,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "tender_09_87f5169dbd94",
+      "source_txt": "tender_09.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "DDWK2026024",
+          "evidence_text": "项目编号：DDWK2026024",
+          "char_start": 694,
+          "char_end": 710,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "东北大学",
+          "evidence_text": "名 称：东北大学",
+          "char_start": 1905,
+          "char_end": 1913,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['辽宁浩亿招投标有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": "900.000000",
+          "evidence_text": "预算金额：900.000000 万元（人民币）",
+          "char_start": 730,
+          "char_end": 753,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-12",
+          "evidence_text": "公告时间2026年07月12日 11:54",
+          "char_start": 154,
+          "char_end": 175,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-08-03 09:30",
+          "evidence_text": "提交投标文件截止时间：2026年08月03日 09点30分（北京时间）",
+          "char_start": 1481,
+          "char_end": 1516,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    },
+    {
+      "document_id": "tender_10_ef627e9af4ae",
+      "source_txt": "tender_10.txt",
+      "fields": [
+        {
+          "field_name": "project_identifier",
+          "gold_status": "present",
+          "value": "XLYZQBZZD2026NYJCBWZGZXM（TQZD）",
+          "evidence_text": "项目编号：XLYZQBZZD2026NYJCBWZGZXM（TQZD）",
+          "char_start": 943,
+          "char_end": 978,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_K3:['XLYZQBZZD2026NYJCBWZGZXM(TQZD)']; value_only_in_A:['']"
+        },
+        {
+          "field_name": "purchaser_name",
+          "gold_status": "present",
+          "value": "云南省消防救援总队训练与战勤保障支队",
+          "evidence_text": "名 称：云南省消防救援总队训练与战勤保障支队",
+          "char_start": 2625,
+          "char_end": 2647,
+          "agree_with_first": false,
+          "diff_reason": "value_only_in_A:['云南金诺招标代理有限公司']"
+        },
+        {
+          "field_name": "winner_name",
+          "gold_status": "absent",
+          "value": [],
+          "evidence_text": [],
+          "char_start": [],
+          "char_end": [],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "amount",
+          "gold_status": "present",
+          "value": [
+            "67.893000",
+            "67.893000"
+          ],
+          "evidence_text": [
+            "预算金额：67.893000 万元（人民币）",
+            "最高限价（如有）：67.893000 万元（人民币）"
+          ],
+          "char_start": [
+            1026,
+            1050
+          ],
+          "char_end": [
+            1048,
+            1076
+          ],
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "publish_date",
+          "gold_status": "present",
+          "value": "2026-07-15",
+          "evidence_text": "公告时间2026年07月15日 16:28",
+          "char_start": 231,
+          "char_end": 252,
+          "agree_with_first": true,
+          "diff_reason": ""
+        },
+        {
+          "field_name": "bid_deadline",
+          "gold_status": "present",
+          "value": "2026-08-06 09:30",
+          "evidence_text": "提交投标文件截止时间：2026年08月06日 09点30分（北京时间）",
+          "char_start": 2394,
+          "char_end": 2429,
+          "agree_with_first": true,
+          "diff_reason": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_docs": 22,
+    "total_fields": 132,
+    "agree": 103,
+    "disagree": 29,
+    "agree_rate": 0.7803,
+    "reason_stat": {
+      "A漏标budget预算值": 3,
+      "双编号合并vs拆分口径": 4,
+      "A归一化精度丢失": 2,
+      "代理机构混入purchaser": 12,
+      "金额口径分歧+代理费混入": 1,
+      "代理费混入金额": 2,
+      "发布日期口径分歧": 1,
+      "A多标首次公告日期": 2,
+      "执行机构混入purchaser": 1,
+      "A值空缺": 1
+    },
+    "disagree_list": [
+      {
+        "document_id": "04_award_001",
+        "field_name": "amount",
+        "category": "A漏标budget预算值",
+        "category_note": "A仅标award，漏标budget 757.7万元",
+        "reasons": [
+          "value_only_in_K3:[7577000.0]"
+        ],
+        "k3_values": [
+          "757.700000",
+          "386.864800"
+        ],
+        "a_values": [
+          "3868648.00"
+        ]
+      },
+      {
+        "document_id": "05_award_002",
+        "field_name": "amount",
+        "category": "A漏标budget预算值",
+        "category_note": "A仅标6条award，漏标budget 713.5万元",
+        "reasons": [
+          "value_only_in_K3:[7135000.0]"
+        ],
+        "k3_values": [
+          "713.500000",
+          "2.100000",
+          "5.783700",
+          "15.397200",
+          "10.132800",
+          "123.895800",
+          "218.940000"
+        ],
+        "a_values": [
+          "21000.00",
+          "57837.00",
+          "153972.00",
+          "101328.00",
+          "1238958.00",
+          "2189400.00"
+        ]
+      },
+      {
+        "document_id": "06_award_003",
+        "field_name": "amount",
+        "category": "A漏标budget预算值",
+        "category_note": "A仅标4条award，漏标budget 758.76万元",
+        "reasons": [
+          "value_only_in_K3:[7587600.0]"
+        ],
+        "k3_values": [
+          "758.760000",
+          "177.449000",
+          "103.155000",
+          "122.005500",
+          "114.000000"
+        ],
+        "a_values": [
+          "1774490.00",
+          "1031550.00",
+          "1220055.00",
+          "1140000.00"
+        ]
+      },
+      {
+        "document_id": "08_correction_002",
+        "field_name": "project_identifier",
+        "category": "双编号合并vs拆分口径",
+        "category_note": "原文用顿号连接两个编号，K3按多值拆分，A合并为单值",
+        "reasons": [
+          "value_only_in_K3:['TLYQ2026-06080', 'XNJZ-G-2026-010']",
+          "value_only_in_A:['XNJZ-G-2026-010、TLYQ2026-06080']"
+        ],
+        "k3_values": [
+          "XNJZ-G-2026-010",
+          "TLYQ2026-06080"
+        ],
+        "a_values": [
+          "XNJZ-G-2026-010、TLYQ2026-06080"
+        ]
+      },
+      {
+        "document_id": "award_05_43a28fb1c8af",
+        "field_name": "amount",
+        "category": "A归一化精度丢失",
+        "category_note": "A的normalized_value丢失小数位(2.1→2, 5.7837→5等6处)，K3保留原始精度",
+        "reasons": [
+          "value_only_in_K3:[21000.0, 57837.0, 101328.0, 153972.0, 1238958.0, 2189400.0]",
+          "value_only_in_A:[20000.0, 50000.0, 100000.0, 150000.0, 1230000.0, 2180000.0]"
+        ],
+        "k3_values": [
+          "713.500000",
+          "2.100000",
+          "5.783700",
+          "15.397200",
+          "10.132800",
+          "123.895800",
+          "218.940000"
+        ],
+        "a_values": [
+          "713.500000万元",
+          "人民币2 万元",
+          "人民币5 万元",
+          "人民币15 万元",
+          "人民币10万元",
+          "人民币123 万元",
+          "中标（成交）金额：人民币218 万元"
+        ]
+      },
+      {
+        "document_id": "award_06_92954883b056",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将采购代理机构(南京永平)标为purchaser第二值，K3仅标采购人",
+        "reasons": [
+          "value_only_in_A:['南京永平建设项目管理有限公司']"
+        ],
+        "k3_values": [
+          "南京农业大学"
+        ],
+        "a_values": [
+          "南京农业大学",
+          "南京永平建设项目管理有限公司"
+        ]
+      },
+      {
+        "document_id": "award_06_92954883b056",
+        "field_name": "amount",
+        "category": "A归一化精度丢失",
+        "category_note": "A normalized_value为￥741万元，丢失小数(741.852211)",
+        "reasons": [
+          "value_only_in_K3:[7418522.11]",
+          "value_only_in_A:[7410000.0]"
+        ],
+        "k3_values": [
+          "741.8522110"
+        ],
+        "a_values": [
+          "￥741 万元（人民币）"
+        ]
+      },
+      {
+        "document_id": "award_07_9b6cbd76b3ce",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将中盛隆国际招标标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['中盛隆国际招标(北京)有限公司']"
+        ],
+        "k3_values": [
+          "中国人民大学"
+        ],
+        "a_values": [
+          "中国人民大学",
+          "中盛隆国际招标（北京）有限公司"
+        ]
+      },
+      {
+        "document_id": "award_07_9b6cbd76b3ce",
+        "field_name": "amount",
+        "category": "金额口径分歧+代理费混入",
+        "category_note": "A标概要总中标金额0.077650万+代理费4.9万；K3标正文3条award明细(0.076904/0/0.000746)；代理费非采购金额口径",
+        "reasons": [
+          "value_only_in_K3:[7.46]",
+          "value_only_in_A:[776.5, 49000.0]"
+        ],
+        "k3_values": [
+          "0.0769040",
+          "0.0000000",
+          "0.0007460"
+        ],
+        "a_values": [
+          "￥0.077650 万元（人民币）",
+          "0.0769040（万元）",
+          "0.0000000（万元）",
+          "4.900000 万元（人民币）"
+        ]
+      },
+      {
+        "document_id": "award_08_e339df68c603",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将东方国际招标标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['东方国际招标有限责任公司']"
+        ],
+        "k3_values": [
+          "北京大学"
+        ],
+        "a_values": [
+          "北京大学",
+          "东方国际招标有限责任公司"
+        ]
+      },
+      {
+        "document_id": "award_08_e339df68c603",
+        "field_name": "amount",
+        "category": "代理费混入金额",
+        "category_note": "A多标代理费10万元；K3仅标award 1679.8万元",
+        "reasons": [
+          "value_only_in_A:[100000.0]"
+        ],
+        "k3_values": [
+          "1679.8000000"
+        ],
+        "a_values": [
+          "￥1679.800000 万元（人民币）",
+          "10.000000 万元（人民币）"
+        ]
+      },
+      {
+        "document_id": "award_09_b77f9502c7cc",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将联投项目管理标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['联投项目管理(集团)有限公司']"
+        ],
+        "k3_values": [
+          "四川大学"
+        ],
+        "a_values": [
+          "四川大学",
+          "联投项目管理（集团）有限公司"
+        ]
+      },
+      {
+        "document_id": "award_09_b77f9502c7cc",
+        "field_name": "amount",
+        "category": "代理费混入金额",
+        "category_note": "A多标代理费0.8239万元；K3仅标award 68.66万元",
+        "reasons": [
+          "value_only_in_A:[8239.0]"
+        ],
+        "k3_values": [
+          "68.6600000"
+        ],
+        "a_values": [
+          "￥68.660000 万元（人民币）",
+          "0.823900 万元（人民币）"
+        ]
+      },
+      {
+        "document_id": "correction_04_14622f154f7c",
+        "field_name": "project_identifier",
+        "category": "双编号合并vs拆分口径",
+        "category_note": "原文含主编号+括号招标编号，K3拆两值，A合并单值",
+        "reasons": [
+          "value_only_in_K3:['0773-2641GNSHFWGK1900', '招服2026A00052']",
+          "value_only_in_A:['招服2026A00052(招标编号：0773-2641GNSHFWGK1900)']"
+        ],
+        "k3_values": [
+          "招服2026A00052",
+          "0773-2641GNSHFWGK1900"
+        ],
+        "a_values": [
+          "招服2026A00052（招标编号：0773-2641GNSHFWGK1900）"
+        ]
+      },
+      {
+        "document_id": "correction_04_14622f154f7c",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将中金招标标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['中金招标有限责任公司']"
+        ],
+        "k3_values": [
+          "上海交通大学"
+        ],
+        "a_values": [
+          "上海交通大学",
+          "中金招标有限责任公司"
+        ]
+      },
+      {
+        "document_id": "correction_04_14622f154f7c",
+        "field_name": "publish_date",
+        "category": "发布日期口径分歧",
+        "category_note": "A标首次公告日期2026-07-16(且含空值)，K3标本公告发布日期2026-07-20",
+        "reasons": [
+          "value_only_in_K3:['2026-07-20']",
+          "value_only_in_A:['2026-07-16']"
+        ],
+        "k3_values": [
+          "2026-07-20"
+        ],
+        "a_values": [
+          "",
+          "2026年07月16日"
+        ]
+      },
+      {
+        "document_id": "correction_05_a87cdaff0797",
+        "field_name": "project_identifier",
+        "category": "双编号合并vs拆分口径",
+        "category_note": "同08_correction_002",
+        "reasons": [
+          "value_only_in_K3:['TLYQ2026-06080', 'XNJZ-G-2026-010']",
+          "value_only_in_A:['XNJZ-G-2026-010、TLYQ2026-06080']"
+        ],
+        "k3_values": [
+          "XNJZ-G-2026-010",
+          "TLYQ2026-06080"
+        ],
+        "a_values": [
+          "XNJZ-G-2026-010、TLYQ2026-06080"
+        ]
+      },
+      {
+        "document_id": "correction_05_a87cdaff0797",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将通利晟信标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['通利晟信管理咨询有限公司']"
+        ],
+        "k3_values": [
+          "大连民族大学"
+        ],
+        "a_values": [
+          "大连民族大学",
+          "通利晟信管理咨询有限公司"
+        ]
+      },
+      {
+        "document_id": "correction_05_a87cdaff0797",
+        "field_name": "publish_date",
+        "category": "A多标首次公告日期",
+        "category_note": "A多标2026-07-10首次公告日期，K3仅标本公告发布日期",
+        "reasons": [
+          "value_only_in_A:['2026-07-10']"
+        ],
+        "k3_values": [
+          "2026-07-12"
+        ],
+        "a_values": [
+          "2026年07月12日 08:54",
+          "2026年07月10日"
+        ]
+      },
+      {
+        "document_id": "correction_06_a5d58685dc3b",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将北京国际工程咨询标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['北京国际工程咨询有限公司']"
+        ],
+        "k3_values": [
+          "北京市残疾人社会保障和就业服务中心（北京市第八十六职业技能鉴定所）"
+        ],
+        "a_values": [
+          "北京市残疾人社会保障和就业服务中心（北京市第八十六职业技能鉴定所）",
+          "北京国际工程咨询有限公司"
+        ]
+      },
+      {
+        "document_id": "correction_06_a5d58685dc3b",
+        "field_name": "publish_date",
+        "category": "A多标首次公告日期",
+        "category_note": "A多标2026-07-07首次公告日期",
+        "reasons": [
+          "value_only_in_A:['2026-07-07']"
+        ],
+        "k3_values": [
+          "2026-07-20"
+        ],
+        "a_values": [
+          "2026年07月20日",
+          "2026-07-07 10:53"
+        ]
+      },
+      {
+        "document_id": "multi_lot_02_d6aa0c202dda",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将喀什铭远标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['喀什铭远建设工程项目管理咨询有限公司']"
+        ],
+        "k3_values": [
+          "泽普县卫生健康委员会"
+        ],
+        "a_values": [
+          "泽普县卫生健康委员会",
+          "喀什铭远建设工程项目管理咨询有限公司"
+        ]
+      },
+      {
+        "document_id": "tender_06_4e47868721c5",
+        "field_name": "purchaser_name",
+        "category": "执行机构混入purchaser",
+        "category_note": "A将中央国家机关政府采购中心(执行机构)标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['中央国家机关政府采购中心']"
+        ],
+        "k3_values": [
+          "北京大学第三医院（北京大学第三临床医学院）"
+        ],
+        "a_values": [
+          "北京大学第三医院（北京大学第三临床医学院）",
+          "中央国家机关政府采购中心"
+        ]
+      },
+      {
+        "document_id": "tender_07_b6a0e4b7d456",
+        "field_name": "project_identifier",
+        "category": "双编号合并vs拆分口径",
+        "category_note": "原文分号连接两编号，K3拆两值，A合并单值",
+        "reasons": [
+          "value_only_in_K3:['HW20260341', 'ZKQ2026-020514384ZF(H)']",
+          "value_only_in_A:['HW20260341；ZKQ2026-020514384ZF(H)']"
+        ],
+        "k3_values": [
+          "HW20260341",
+          "ZKQ2026-020514384ZF(H)"
+        ],
+        "a_values": [
+          "HW20260341；ZKQ2026-020514384ZF(H)"
+        ]
+      },
+      {
+        "document_id": "tender_07_b6a0e4b7d456",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将中科器湖北标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['中科器湖北有限公司']"
+        ],
+        "k3_values": [
+          "华中科技大学"
+        ],
+        "a_values": [
+          "华中科技大学",
+          "中科器湖北有限公司"
+        ]
+      },
+      {
+        "document_id": "tender_08_205c9f889e74",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将缙云县公共资源交易中心标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['缙云县公共资源交易中心']"
+        ],
+        "k3_values": [
+          "缙云县教育局"
+        ],
+        "a_values": [
+          "缙云县教育局",
+          "缙云县公共资源交易中心"
+        ]
+      },
+      {
+        "document_id": "tender_09_87f5169dbd94",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将辽宁浩亿招投标标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['辽宁浩亿招投标有限公司']"
+        ],
+        "k3_values": [
+          "东北大学"
+        ],
+        "a_values": [
+          "东北大学",
+          "辽宁浩亿招投标有限公司"
+        ]
+      },
+      {
+        "document_id": "tender_10_ef627e9af4ae",
+        "field_name": "project_identifier",
+        "category": "A值空缺",
+        "category_note": "A的normalized_value为空字符串，K3标出完整编号",
+        "reasons": [
+          "value_only_in_K3:['XLYZQBZZD2026NYJCBWZGZXM(TQZD)']",
+          "value_only_in_A:['']"
+        ],
+        "k3_values": [
+          "XLYZQBZZD2026NYJCBWZGZXM（TQZD）"
+        ],
+        "a_values": [
+          ""
+        ]
+      },
+      {
+        "document_id": "tender_10_ef627e9af4ae",
+        "field_name": "purchaser_name",
+        "category": "代理机构混入purchaser",
+        "category_note": "A将云南金诺招标代理标为purchaser第二值",
+        "reasons": [
+          "value_only_in_A:['云南金诺招标代理有限公司']"
+        ],
+        "k3_values": [
+          "云南省消防救援总队训练与战勤保障支队"
+        ],
+        "a_values": [
+          "云南省消防救援总队训练与战勤保障支队",
+          "云南金诺招标代理有限公司"
+        ]
+      }
+    ]
+  }
+}

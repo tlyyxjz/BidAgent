@@ -1,0 +1,329 @@
+{
+  "model": "deepseek-v4-flash",
+  "temperature": 0.1,
+  "runs": [
+    {
+      "doc": "award_05",
+      "type": "multi",
+      "prompt": "baseline",
+      "ok": true,
+      "tokens": 7097,
+      "latency_ms": 24857,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "type": "multi",
+      "prompt": "v2",
+      "ok": true,
+      "tokens": 7889,
+      "latency_ms": 22759,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "type": "multi",
+      "prompt": "baseline",
+      "ok": true,
+      "tokens": 6659,
+      "latency_ms": 26826,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "type": "multi",
+      "prompt": "v2",
+      "ok": true,
+      "tokens": 7648,
+      "latency_ms": 29084,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "type": "multi",
+      "prompt": "baseline",
+      "ok": true,
+      "tokens": 4591,
+      "latency_ms": 13374,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "type": "multi",
+      "prompt": "v2",
+      "ok": true,
+      "tokens": 6054,
+      "latency_ms": 12222,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "04_award_001",
+      "type": "single",
+      "prompt": "baseline",
+      "ok": true,
+      "tokens": 3244,
+      "latency_ms": 9685,
+      "winners": [
+        "广东美的制冷设备有限公司"
+      ],
+      "gold_count": 1,
+      "found_count": 1,
+      "matched": [
+        "广东美的制冷设备有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "04_award_001",
+      "type": "single",
+      "prompt": "v2",
+      "ok": true,
+      "tokens": 4506,
+      "latency_ms": 7596,
+      "winners": [
+        "广东美的制冷设备有限公司"
+      ],
+      "gold_count": 1,
+      "found_count": 1,
+      "matched": [
+        "广东美的制冷设备有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_08",
+      "type": "single",
+      "prompt": "baseline",
+      "ok": true,
+      "tokens": 2612,
+      "latency_ms": 5657,
+      "winners": [
+        "常州市圣烈机械有限公司"
+      ],
+      "gold_count": 1,
+      "found_count": 1,
+      "matched": [
+        "常州市圣烈机械有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_08",
+      "type": "single",
+      "prompt": "v2",
+      "ok": true,
+      "tokens": 3974,
+      "latency_ms": 5602,
+      "winners": [
+        "常州市圣烈机械有限公司"
+      ],
+      "gold_count": 1,
+      "found_count": 1,
+      "matched": [
+        "常州市圣烈机械有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_09",
+      "type": "single",
+      "prompt": "baseline",
+      "ok": true,
+      "tokens": 2921,
+      "latency_ms": 6351,
+      "winners": [
+        "成都市新好厨酒店用品商行"
+      ],
+      "gold_count": 1,
+      "found_count": 1,
+      "matched": [
+        "成都市新好厨酒店用品商行"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_09",
+      "type": "single",
+      "prompt": "v2",
+      "ok": true,
+      "tokens": 4306,
+      "latency_ms": 6157,
+      "winners": [
+        "成都市新好厨酒店用品商行"
+      ],
+      "gold_count": 1,
+      "found_count": 1,
+      "matched": [
+        "成都市新好厨酒店用品商行"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "synthetic_joint",
+      "type": "joint",
+      "prompt": "v2",
+      "ok": true,
+      "tokens": 3440,
+      "latency_ms": 5446,
+      "winners": [
+        "{\"main\": \"甲建设集团有限公司\", \"partners\": [\"乙信息技术有限公司\"]}"
+      ],
+      "merged_violation": false,
+      "raw_fields": [
+        {
+          "field_name": "winner_name",
+          "field_status": "present",
+          "raw_value": {
+            "main": "甲建设集团有限公司",
+            "partners": [
+              "乙信息技术有限公司"
+            ]
+          },
+          "amount_type": null,
+          "currency": null,
+          "lot_id": null,
+          "candidate_evidences": [
+            {
+              "evidence_text": "中标人：甲建设集团有限公司（联合体牵头人）、乙信息技术有限公司（联合体成员）",
+              "role": "primary"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

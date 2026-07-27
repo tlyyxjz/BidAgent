@@ -1,0 +1,827 @@
+{
+  "model": "deepseek-v4-flash",
+  "temperature": 0.1,
+  "n_runs": 5,
+  "runs": [
+    {
+      "doc": "award_05",
+      "prompt": "baseline",
+      "run": 1,
+      "ok": true,
+      "tokens": 5855,
+      "latency_ms": 16223,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "baseline",
+      "run": 2,
+      "ok": true,
+      "tokens": 7096,
+      "latency_ms": 28061,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "baseline",
+      "run": 3,
+      "ok": true,
+      "tokens": 6041,
+      "latency_ms": 18957,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "baseline",
+      "run": 4,
+      "ok": true,
+      "tokens": 9050,
+      "latency_ms": 38530,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "baseline",
+      "run": 5,
+      "ok": true,
+      "tokens": 6346,
+      "latency_ms": 21053,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "v2",
+      "run": 1,
+      "ok": true,
+      "tokens": 7604,
+      "latency_ms": 19758,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "v2",
+      "run": 2,
+      "ok": true,
+      "tokens": 7521,
+      "latency_ms": 16084,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "v2",
+      "run": 3,
+      "ok": true,
+      "tokens": 7129,
+      "latency_ms": 13304,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "v2",
+      "run": 4,
+      "ok": true,
+      "tokens": 7205,
+      "latency_ms": 14537,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "award_05",
+      "prompt": "v2",
+      "run": 5,
+      "ok": true,
+      "tokens": 7437,
+      "latency_ms": 16688,
+      "winners": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "惠普贸易（上海）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "gold_count": 5,
+      "found_count": 6,
+      "matched": [
+        "北京立思辰计算机技术有限公司",
+        "惠普贸易（上海）有限公司",
+        "理光（中国）投资有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "东芝泰格信息系统（深圳）有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "baseline",
+      "run": 1,
+      "ok": true,
+      "tokens": 4928,
+      "latency_ms": 14340,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "baseline",
+      "run": 2,
+      "ok": true,
+      "tokens": 4637,
+      "latency_ms": 13925,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "baseline",
+      "run": 3,
+      "ok": true,
+      "tokens": 4453,
+      "latency_ms": 10030,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "baseline",
+      "run": 4,
+      "ok": true,
+      "tokens": 6094,
+      "latency_ms": 25405,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "baseline",
+      "run": 5,
+      "ok": true,
+      "tokens": 5211,
+      "latency_ms": 16173,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "v2",
+      "run": 1,
+      "ok": true,
+      "tokens": 6568,
+      "latency_ms": 14534,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "v2",
+      "run": 2,
+      "ok": true,
+      "tokens": 6368,
+      "latency_ms": 14746,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "v2",
+      "run": 3,
+      "ok": true,
+      "tokens": 7214,
+      "latency_ms": 23858,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "v2",
+      "run": 4,
+      "ok": true,
+      "tokens": 5820,
+      "latency_ms": 9120,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "multi_winner_03",
+      "prompt": "v2",
+      "run": 5,
+      "ok": true,
+      "tokens": 5986,
+      "latency_ms": 10821,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "baseline",
+      "run": 1,
+      "ok": true,
+      "tokens": 5334,
+      "latency_ms": 19587,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "baseline",
+      "run": 2,
+      "ok": true,
+      "tokens": 5154,
+      "latency_ms": 19151,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "baseline",
+      "run": 3,
+      "ok": true,
+      "tokens": 7140,
+      "latency_ms": 31536,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "baseline",
+      "run": 4,
+      "ok": true,
+      "tokens": 4698,
+      "latency_ms": 13328,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "baseline",
+      "run": 5,
+      "ok": true,
+      "tokens": 4993,
+      "latency_ms": 14907,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "v2",
+      "run": 1,
+      "ok": true,
+      "tokens": 5971,
+      "latency_ms": 11499,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "v2",
+      "run": 2,
+      "ok": true,
+      "tokens": 6336,
+      "latency_ms": 14309,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "v2",
+      "run": 3,
+      "ok": true,
+      "tokens": 7397,
+      "latency_ms": 24436,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "v2",
+      "run": 4,
+      "ok": true,
+      "tokens": 6916,
+      "latency_ms": 20343,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    },
+    {
+      "doc": "06_award_003",
+      "prompt": "v2",
+      "run": 5,
+      "ok": true,
+      "tokens": 6299,
+      "latency_ms": 14230,
+      "winners": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "gold_count": 3,
+      "found_count": 4,
+      "matched": [
+        "联想（北京）有限公司",
+        "京瓷办公信息系统（中国）有限公司",
+        "得力集团有限公司"
+      ],
+      "missing": [],
+      "extra": [],
+      "merged_violation": false,
+      "doc_recall": 1.0,
+      "exact_set": true
+    }
+  ]
+}
