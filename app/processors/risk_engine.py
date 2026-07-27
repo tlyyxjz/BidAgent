@@ -1,3 +1,9 @@
+# ﻿"""
+# 鐗堟潈澹版槑锛歅roprietary and Confidential. All rights reserved.
+# 鏈枃浠朵负 BidAgent Open Core 妯″紡涓嬬殑涓撴湁浠ｇ爜锛屼笉鍦?Apache License 2.0 鎺堟潈鑼冨洿鍐呫€?浠呬緵璇勪及銆佸鏈瓟杈╀笌鍟嗕笟鎺堟潈瀹㈡埛浣跨敤銆傛湭缁忎功闈㈣鍙紝涓嶅緱鐢ㄤ簬鍟嗕笟鐢熶骇鐜銆?
+# 濡傞渶鍟嗕笟鎺堟潈锛岃鑱旂郴锛?3566878907@163.com
+# Copyright 2026 寰愭禋閽? 鐜嬬ク鏄?(鏍囧皬鏅哄洟闃?. All rights reserved.
+
 """废标风险预警引擎。
 
 提供排他性条款、付款风险、交货期、资质门槛等多维度风险扫描，

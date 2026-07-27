@@ -1,0 +1,98 @@
+{
+  "document_id": "08_correction_002",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-24T04:33:16.643193+00:00",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "XNJZ-G-2026-010、TLYQ2026-06080",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 114,
+              "end": 144,
+              "text": "XNJZ-G-2026-010、TLYQ2026-06080"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "大连民族大学",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 5,
+              "end": 11,
+              "text": "大连民族大学"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月12日",
+          "normalized_value": "2026-07-12",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 49,
+              "end": 60,
+              "text": "2026年07月12日"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

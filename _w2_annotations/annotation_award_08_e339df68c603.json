@@ -1,0 +1,186 @@
+{
+  "document_id": "award_08_e339df68c603",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-24T14:07:58.999Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "OITC-G260310447",
+          "normalized_value": "OITC-G260310447",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 430,
+              "end": 475,
+              "text": "项目编号：OITC-G260310447 （招标文件编号：OITC-G260310447）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "北京大学",
+          "normalized_value": "北京大学",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 127,
+              "end": 136,
+              "text": "采购单位：北京大学"
+            },
+            {
+              "role": "primary",
+              "start": 986,
+              "end": 994,
+              "text": "名 称：北京大学"
+            },
+            {
+              "role": "primary",
+              "start": 979,
+              "end": 984,
+              "text": "采购人信息"
+            }
+          ]
+        },
+        {
+          "raw_value": "东方国际招标有限责任公司",
+          "normalized_value": "东方国际招标有限责任公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1038,
+              "end": 1047,
+              "text": "采购代理机构信息\n"
+            },
+            {
+              "role": "primary",
+              "start": 1048,
+              "end": 1064,
+              "text": "名 称：东方国际招标有限责任公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "常州市圣烈机械有限公司",
+          "normalized_value": "常州市圣烈机械有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 524,
+              "end": 541,
+              "text": "供应商名称：常州市圣烈机械有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥1679.800000 万元（人民币）",
+          "normalized_value": "￥1679.800000 万元（人民币）",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 202,
+              "end": 228,
+              "text": "总中标金额：￥1679.800000 万元（人民币）"
+            }
+          ]
+        },
+        {
+          "raw_value": "10.000000 万元（人民币）",
+          "normalized_value": "10.000000 万元（人民币）",
+          "amount_type": "unknown",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 857,
+              "end": 884,
+              "text": "本项目代理费总金额：10.000000 万元（人民币）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月20日 20:50 ",
+          "normalized_value": "2026年07月20日 20:50 ",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 31,
+              "end": 64,
+              "text": "2026年07月20日 20:50 来源：中国政府采购网 【打印】"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

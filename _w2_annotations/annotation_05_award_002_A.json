@@ -1,0 +1,287 @@
+{
+  "document_id": "05_award_002",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-24T04:33:16.643193+00:00",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "GC-HCD260670",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 134,
+              "end": 146,
+              "text": "GC-HCD260670"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "中央国家机关政府采购中心",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2486,
+              "end": 2498,
+              "text": "中央国家机关政府采购中心"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "北京立思辰计算机技术有限公司",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 376,
+              "end": 390,
+              "text": "北京立思辰计算机技术有限公司"
+            }
+          ]
+        },
+        {
+          "raw_value": "惠普贸易（上海）有限公司",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 468,
+              "end": 480,
+              "text": "惠普贸易（上海）有限公司"
+            }
+          ]
+        },
+        {
+          "raw_value": "理光（中国）投资有限公司",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 538,
+              "end": 550,
+              "text": "理光（中国）投资有限公司"
+            }
+          ]
+        },
+        {
+          "raw_value": "京瓷办公信息系统（中国）有限公司",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 620,
+              "end": 636,
+              "text": "京瓷办公信息系统（中国）有限公司"
+            }
+          ]
+        },
+        {
+          "raw_value": "东芝泰格信息系统（深圳）有限公司",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 784,
+              "end": 800,
+              "text": "东芝泰格信息系统（深圳）有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2.1万",
+          "normalized_value": "21000.00",
+          "amount_type": "award",
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 0,
+              "end": 1,
+              "text": "中"
+            }
+          ]
+        },
+        {
+          "raw_value": "5.7837万",
+          "normalized_value": "57837.00",
+          "amount_type": "award",
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 0,
+              "end": 1,
+              "text": "中"
+            }
+          ]
+        },
+        {
+          "raw_value": "15.3972万",
+          "normalized_value": "153972.00",
+          "amount_type": "award",
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 0,
+              "end": 1,
+              "text": "中"
+            }
+          ]
+        },
+        {
+          "raw_value": "10.1328万",
+          "normalized_value": "101328.00",
+          "amount_type": "award",
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 0,
+              "end": 1,
+              "text": "中"
+            }
+          ]
+        },
+        {
+          "raw_value": "123.8958万",
+          "normalized_value": "1238958.00",
+          "amount_type": "award",
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 0,
+              "end": 1,
+              "text": "中"
+            }
+          ]
+        },
+        {
+          "raw_value": "218.94万",
+          "normalized_value": "2189400.00",
+          "amount_type": "award",
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 0,
+              "end": 1,
+              "text": "中"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年7月12日",
+          "normalized_value": "2026-07-12",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2871,
+              "end": 2881,
+              "text": "2026年7月12日"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "not_applicable",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

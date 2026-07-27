@@ -1,0 +1,208 @@
+{
+  "document_id": "multi_lot_02_d6aa0c202dda",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-25T08:15:56.054Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "ZPDL(2026)77",
+          "normalized_value": "ZPDL(2026)77",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 699,
+              "end": 716,
+              "text": "项目编号：ZPDL(2026)77"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "泽普县卫生健康委员会",
+          "normalized_value": "泽普县卫生健康委员会",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 4108,
+              "end": 4131,
+              "text": "1.采购人信息\n\n名 称：泽普县卫生健康委员会"
+            }
+          ]
+        },
+        {
+          "raw_value": "喀什铭远建设工程项目管理咨询有限公司",
+          "normalized_value": "喀什铭远建设工程项目管理咨询有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "代理公司",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 4169,
+              "end": 4203,
+              "text": "2.采购代理机构信息\n\n名 称：喀什铭远建设工程项目管理咨询有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥384.760000万元（人民币）",
+          "normalized_value": "￥384.760000万元（人民币）",
+          "amount_type": null,
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 408,
+              "end": 430,
+              "text": "预算金额￥384.760000万元（人民币）"
+            },
+            {
+              "role": "primary",
+              "start": 765,
+              "end": 780,
+              "text": "预算金额（元）：3847600"
+            }
+          ]
+        },
+        {
+          "raw_value": "2097600",
+          "normalized_value": "2097600",
+          "amount_type": "budget",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 874,
+              "end": 889,
+              "text": "预算金额（元）:2097600"
+            }
+          ]
+        },
+        {
+          "raw_value": "400000",
+          "normalized_value": "400000",
+          "amount_type": null,
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1152,
+              "end": 1166,
+              "text": "预算金额（元）:400000"
+            }
+          ]
+        },
+        {
+          "raw_value": "1350000",
+          "normalized_value": "1350000",
+          "amount_type": null,
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1301,
+              "end": 1316,
+              "text": "预算金额（元）:1350000"
+            }
+          ]
+        }
+      ],
+      "note": "后三个不但是预算金额也是最高限价"
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月19日 15:53",
+          "normalized_value": "2026年07月19日 15:53",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 37,
+              "end": 74,
+              "text": "2026年07月19日 15:53 来源：中国政府采购网新疆分网 【打印】"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年08月11日 11:00（北京时间）",
+          "normalized_value": "2026年08月11日 11:00（北京时间）",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2026,
+              "end": 2060,
+              "text": "提交投标文件截止时间：2026年08月11日 11:00（北京时间）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    }
+  ]
+}

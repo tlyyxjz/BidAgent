@@ -1,0 +1,287 @@
+{
+  "document_id": "multi_winner_03_8a1d36728598",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-25T08:23:42.756Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "GC-HCD260671",
+          "normalized_value": "GC-HCD260671",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 998,
+              "end": 1015,
+              "text": "项目编号：GC-HCD260671"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "中央国家机关政府采购中心",
+          "normalized_value": "中央国家机关政府采购中心",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 274,
+              "end": 290,
+              "text": "采购单位中央国家机关政府采购中心"
+            }
+          ]
+        },
+        {
+          "raw_value": "中央国家机关政府采购中心",
+          "normalized_value": "中央国家机关政府采购中心",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 337,
+              "end": 355,
+              "text": "代理机构名称中央国家机关政府采购中心"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "联想（北京）有限公司",
+          "normalized_value": "联想（北京）有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "1",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1183,
+              "end": 1199,
+              "text": "供应商名称：联想（北京）有限公司"
+            }
+          ]
+        },
+        {
+          "raw_value": "京瓷办公信息系统（中国）有限公司",
+          "normalized_value": "京瓷办公信息系统（中国）有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "2",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1261,
+              "end": 1283,
+              "text": "供应商名称：京瓷办公信息系统（中国）有限公司"
+            }
+          ]
+        },
+        {
+          "raw_value": "京瓷办公信息系统（中国）有限公司",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "3",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1351,
+              "end": 1374,
+              "text": "供应商名称：京瓷办公信息系统（中国）有限公司\n"
+            }
+          ]
+        },
+        {
+          "raw_value": "得力集团有限公司",
+          "normalized_value": "得力集团有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "4",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1441,
+              "end": 1455,
+              "text": "供应商名称：得力集团有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥114.000000 万元（人民币）",
+          "normalized_value": "￥114.000000 万元（人民币）",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 211,
+              "end": 235,
+              "text": "总中标金额￥114.000000 万元（人民币）"
+            }
+          ]
+        },
+        {
+          "raw_value": "758.760000万元",
+          "normalized_value": "758.760000万元",
+          "amount_type": null,
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1067,
+              "end": 1084,
+              "text": "预算金额：758.760000万元"
+            }
+          ]
+        },
+        {
+          "raw_value": "人民币177.449000 万元",
+          "normalized_value": "人民币177.449000 万元",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": "1",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1228,
+              "end": 1254,
+              "text": "中标（成交）金额：人民币177.449000 万元\n"
+            }
+          ]
+        },
+        {
+          "raw_value": "人民币103.155000 万元",
+          "normalized_value": "人民币103.155000 万元",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": "2",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1318,
+              "end": 1343,
+              "text": "中标（成交）金额：人民币103.155000 万元"
+            }
+          ]
+        },
+        {
+          "raw_value": "人民币122.005500 万元",
+          "normalized_value": "人民币122.005500 万元",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": "3",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1408,
+              "end": 1433,
+              "text": "中标（成交）金额：人民币122.005500 万元"
+            }
+          ]
+        },
+        {
+          "raw_value": "人民币114.000000 万元",
+          "normalized_value": "人民币114.000000 万元",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": "4",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1479,
+              "end": 1504,
+              "text": "中标（成交）金额：人民币114.000000 万元"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月12日 17:50",
+          "normalized_value": "2026年07月12日 17:50",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 31,
+              "end": 64,
+              "text": "2026年07月12日 17:50 来源：中国政府采购网 【打印】"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

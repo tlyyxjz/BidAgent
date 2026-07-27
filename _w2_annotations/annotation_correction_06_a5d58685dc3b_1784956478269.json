@@ -1,0 +1,174 @@
+{
+  "document_id": "correction_06_a5d58685dc3b",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-25T05:14:38.268Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "11000026210200173767-XM001",
+          "normalized_value": "11000026210200173767-XM001",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 98,
+              "end": 134,
+              "text": "原公告的采购项目编号：11000026210200173767-XM00"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "北京市残疾人社会保障和就业服务中心（北京市第八十六职业技能鉴定所）",
+          "normalized_value": "北京市残疾人社会保障和就业服务中心（北京市第八十六职业技能鉴定所）",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 679,
+              "end": 725,
+              "text": "1.采购人信息\n\n名 称：北京市残疾人社会保障和就业服务中心（北京市第八十六职业技能鉴定所）"
+            }
+          ]
+        },
+        {
+          "raw_value": "北京国际工程咨询有限公司",
+          "normalized_value": "北京国际工程咨询有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 773,
+              "end": 801,
+              "text": "2.采购代理机构信息\n\n名 称：北京国际工程咨询有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "北京之渡教育科技有限公司",
+          "normalized_value": "北京之渡教育科技有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 420,
+              "end": 438,
+              "text": "供应商名称：北京之渡教育科技有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥119789.00元",
+          "normalized_value": "￥119789.00元",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 473,
+              "end": 517,
+              "text": "成交金额：\n\n人民币大写：壹拾壹万玖仟柒佰捌拾玖元\n\n人民币小写：￥119789.00元"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月20日",
+          "normalized_value": "2026年07月20日",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 28,
+              "end": 51,
+              "text": "2026年07月20日 来源：北京市政府采购网"
+            },
+            {
+              "role": "primary",
+              "start": 519,
+              "end": 557,
+              "text": "更正日期：2026年7月20日\n\n更正日期：2026-07-20 15:00"
+            }
+          ]
+        },
+        {
+          "raw_value": "2026-07-07 10:53",
+          "normalized_value": "2026-07-07 10:53",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 168,
+              "end": 191,
+              "text": "首次公告日期：2026-07-07 10:53"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

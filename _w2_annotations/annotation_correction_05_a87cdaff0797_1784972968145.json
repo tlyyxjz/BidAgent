@@ -1,0 +1,162 @@
+{
+  "document_id": "correction_05_a87cdaff0797",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-25T09:49:28.142Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "XNJZ-G-2026-010、TLYQ2026-06080",
+          "normalized_value": "XNJZ-G-2026-010、TLYQ2026-06080",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 500,
+              "end": 541,
+              "text": "原公告的采购项目编号：XNJZ-G-2026-010、TLYQ2026-06080"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "大连民族大学",
+          "normalized_value": "大连民族大学",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 190,
+              "end": 200,
+              "text": "采购单位大连民族大学"
+            },
+            {
+              "role": "primary",
+              "start": 321,
+              "end": 331,
+              "text": "采购单位大连民族大学"
+            },
+            {
+              "role": "primary",
+              "start": 731,
+              "end": 750,
+              "text": "1.采购人信息\n\n名 称：大连民族大学"
+            }
+          ]
+        },
+        {
+          "raw_value": "通利晟信管理咨询有限公司",
+          "normalized_value": "通利晟信管理咨询有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "代理",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 379,
+              "end": 397,
+              "text": "代理机构名称通利晟信管理咨询有限公司"
+            },
+            {
+              "role": "primary",
+              "start": 795,
+              "end": 824,
+              "text": "2.采购代理机构信息\n\n名 称：通利晟信管理咨询有限公司\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月12日 08:54",
+          "normalized_value": "2026年07月12日 08:54",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 50,
+              "end": 83,
+              "text": "2026年07月12日 08:54 来源：中国政府采购网 【打印】"
+            },
+            {
+              "role": "primary",
+              "start": 201,
+              "end": 229,
+              "text": "行政区域金州区公告时间2026年07月12日 08:54"
+            }
+          ]
+        },
+        {
+          "raw_value": "2026年07月10日",
+          "normalized_value": "2026年07月10日",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "首次更正",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 230,
+              "end": 262,
+              "text": "首次公告日期2026年07月10日更正日期2026年07月10日"
+            },
+            {
+              "role": "primary",
+              "start": 600,
+              "end": 619,
+              "text": "首次公告日期：2026年07月10日\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

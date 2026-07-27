@@ -1,0 +1,163 @@
+{
+  "document_id": "tender_07_b6a0e4b7d456",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-25T08:30:34.512Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "HW20260341；ZKQ2026-020514384ZF(H)",
+          "normalized_value": "HW20260341；ZKQ2026-020514384ZF(H)",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 815,
+              "end": 853,
+              "text": "项目编号：HW20260341；ZKQ2026-020514384ZF(H)"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "华中科技大学",
+          "normalized_value": "华中科技大学",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2822,
+              "end": 2841,
+              "text": "1.采购人信息\n\n名 称：华中科技大学"
+            }
+          ]
+        },
+        {
+          "raw_value": "中科器湖北有限公司",
+          "normalized_value": "中科器湖北有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2888,
+              "end": 2913,
+              "text": "2.采购代理机构信息\n\n名 称：中科器湖北有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥490.000000万元（人民币）",
+          "normalized_value": "￥490.000000万元（人民币）",
+          "amount_type": null,
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 429,
+              "end": 452,
+              "text": "预算金额：￥490.000000万元（人民币）"
+            },
+            {
+              "role": "primary",
+              "start": 880,
+              "end": 932,
+              "text": "预算金额：490.000000 万元（人民币）\n\n最高限价（如有）：490.000000 万元（人民币）"
+            }
+          ]
+        }
+      ],
+      "note": "预算金额也是最高限价"
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月16日 09:40 ",
+          "normalized_value": "2026年07月16日 09:40 ",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 25,
+              "end": 58,
+              "text": "2026年07月16日 09:40 来源：中国政府采购网 【打印】"
+            },
+            {
+              "role": "primary",
+              "start": 229,
+              "end": 251,
+              "text": "公告时间：2026年07月16日 09:40"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年08月06日 09点00分（北京时间）",
+          "normalized_value": "2026年08月06日 09点00分（北京时间）",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2349,
+              "end": 2384,
+              "text": "提交投标文件截止时间：2026年08月06日 09点00分（北京时间）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    }
+  ]
+}

@@ -1,3 +1,8 @@
+# Proprietary and Confidential. All rights reserved.
+# 本文件为 BidAgent Open Core 模式下的私有代码，不在 Apache License 2.0 授权范围内。
+# 仅供评估、学术答辩与商业授权客户使用。未经书面许可，不得用于商业生产环境。
+# 如需商业授权，请联系：13566878907@163.com
+# Copyright 2026 徐浞钊、王祎明（标小智团队）. All rights reserved.
 """BOQ 工程量清单智能校验引擎。
 
 提供清单提取、市场基准价格匹配、报价异常检测和归一化评分。

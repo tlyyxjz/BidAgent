@@ -1,0 +1,169 @@
+{
+  "document_id": "tender_08_205c9f889e74",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-25T08:35:04.048Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "331122263030010000010-JYZFCG2026-01",
+          "normalized_value": "331122263030010000010-JYZFCG2026-01",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 645,
+              "end": 685,
+              "text": "项目编号：331122263030010000010-JYZFCG2026-01"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "缙云县教育局",
+          "normalized_value": "缙云县教育局",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2366,
+              "end": 2385,
+              "text": "1.采购人信息\n\n名 称：缙云县教育局"
+            }
+          ]
+        },
+        {
+          "raw_value": "缙云县公共资源交易中心",
+          "normalized_value": "缙云县公共资源交易中心",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2478,
+              "end": 2505,
+              "text": "2.采购代理机构信息\n\n名 称：缙云县公共资源交易中心"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥91.000000万元（人民币）",
+          "normalized_value": "￥91.000000万元（人民币）",
+          "amount_type": null,
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 355,
+              "end": 376,
+              "text": "预算金额￥91.000000万元（人民币）"
+            },
+            {
+              "role": "primary",
+              "start": 718,
+              "end": 748,
+              "text": "预算金额（元）：910000\n\n最高限价（元）：910000"
+            },
+            {
+              "role": "primary",
+              "start": 794,
+              "end": 808,
+              "text": "预算金额（元）：910000"
+            }
+          ]
+        }
+      ],
+      "note": "预算金额也是最高限价"
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月18日 18:14",
+          "normalized_value": "2026年07月18日 18:14",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 32,
+              "end": 69,
+              "text": "2026年07月18日 18:14 来源：中国政府采购网浙江分网 【打印】"
+            },
+            {
+              "role": "primary",
+              "start": 157,
+              "end": 185,
+              "text": "行政区域浙江省公告时间2026年07月18日 18:14"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年08月07日 09:00（北京时间）",
+          "normalized_value": "2026年08月07日 09:00（北京时间）",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1292,
+              "end": 1326,
+              "text": "提交投标文件截止时间：2026年08月07日 09:00（北京时间）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    }
+  ]
+}

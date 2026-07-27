@@ -1,0 +1,186 @@
+{
+  "document_id": "award_09_b77f9502c7cc",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-24T14:11:09.579Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "ZFCGHA2026040",
+          "normalized_value": "ZFCGHA2026040",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 447,
+              "end": 490,
+              "text": "一、项目编号：ZFCGHA2026040 （招标文件编号：ZFCGHA2026040）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "四川大学",
+          "normalized_value": "四川大学",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 112,
+              "end": 121,
+              "text": "采购单位：四川大学"
+            },
+            {
+              "role": "primary",
+              "start": 1262,
+              "end": 1279,
+              "text": "1.采购人信息\n\n名 称：四川大学"
+            }
+          ]
+        },
+        {
+          "raw_value": "联投项目管理（集团）有限公司",
+          "normalized_value": "联投项目管理（集团）有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "代理公司",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1328,
+              "end": 1359,
+              "text": "2.采购代理机构信息\n\n名 称：联投项目管理（集团）有限公司\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "成都市新好厨酒店用品商行",
+          "normalized_value": "成都市新好厨酒店用品商行",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 515,
+              "end": 525,
+              "text": "三、中标（成交）信息"
+            },
+            {
+              "role": "primary",
+              "start": 527,
+              "end": 545,
+              "text": "供应商名称：成都市新好厨酒店用品商行"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥68.660000 万元（人民币）",
+          "normalized_value": "￥68.660000 万元（人民币）",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 195,
+              "end": 219,
+              "text": "总中标金额：￥68.660000 万元（人民币）"
+            },
+            {
+              "role": "primary",
+              "start": 577,
+              "end": 601,
+              "text": "中标（成交）金额：68.6600000（万元）\n"
+            }
+          ]
+        },
+        {
+          "raw_value": "0.823900 万元（人民币）",
+          "normalized_value": "0.823900 万元（人民币）",
+          "amount_type": "contract",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": "代理费",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 895,
+              "end": 1196,
+              "text": "1）本项目招标代理服务费按下列收费规则以各采购包中标金额作为基数进行计算后下浮20%收取。收费规则：100万元以下：1.5%；100-500（万元）：1.1%；500-1000（万元）：0.8%；1000-5000（万元）：0.5%；5000-10000（万元）：0.25%；10000-100000（万元）：0.05%；100000万元以上：0.01%注：①以上费率计算的收费为招标代理服务全过程的收费基准价格。②招标代理服务收费按差额定率累进法计算。（2）由各采购包中标（成交）供应商在领取中标通知书前向采购代理机构一次性缴纳招标代理服务费；\n\n本项目代理费总金额：0.823900 万元（人民币）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月20日 20:21",
+          "normalized_value": "2026年07月20日 20:21",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 23,
+              "end": 57,
+              "text": "2026年07月20日 20:21 来源：中国政府采购网 【打印】\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

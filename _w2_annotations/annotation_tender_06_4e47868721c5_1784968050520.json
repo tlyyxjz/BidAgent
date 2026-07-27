@@ -1,0 +1,157 @@
+{
+  "document_id": "tender_06_4e47868721c5",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-25T08:27:30.519Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "GC-HGX260698",
+          "normalized_value": "GC-HGX260698",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 600,
+              "end": 619,
+              "text": "1．项目编号：GC-HGX260698"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "北京大学第三医院（北京大学第三临床医学院）",
+          "normalized_value": "北京大学第三医院（北京大学第三临床医学院）",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1744,
+              "end": 1779,
+              "text": "1．采购人信息\n\n名 称：北京大学第三医院（北京大学第三临床医学院）\n"
+            }
+          ]
+        },
+        {
+          "raw_value": "中央国家机关政府采购中心",
+          "normalized_value": "中央国家机关政府采购中心",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "代理",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1818,
+              "end": 1846,
+              "text": "2．采购执行机构信息\n\n名 称：中央国家机关政府采购中心"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥331.300000万元（人民币）",
+          "normalized_value": "￥331.300000万元（人民币）",
+          "amount_type": null,
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 297,
+              "end": 320,
+              "text": "预算金额：￥331.300000万元（人民币）"
+            }
+          ]
+        }
+      ],
+      "note": "预算金额也是最高限价"
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月16日 09:50",
+          "normalized_value": "2026年07月16日 09:50",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 34,
+              "end": 67,
+              "text": "2026年07月16日 09:50 来源：中国政府采购网 【打印】"
+            },
+            {
+              "role": "primary",
+              "start": 148,
+              "end": 170,
+              "text": "公告时间：2026年07月16日 09:50"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年8月6日09时00分（北京时间）",
+          "normalized_value": "2026年8月6日09时00分（北京时间）",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1076,
+              "end": 1114,
+              "text": "1．提交（上传）投标文件截止时间：2026年8月6日09时00分（北京时间）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    }
+  ]
+}

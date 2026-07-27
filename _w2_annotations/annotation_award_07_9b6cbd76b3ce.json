@@ -1,0 +1,231 @@
+{
+  "document_id": "award_07_9b6cbd76b3ce",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-24T14:03:25.760Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "ZSLTC-2026-S033",
+          "normalized_value": "ZSLTC-2026-S033",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 483,
+              "end": 529,
+              "text": "项目编号：ZSLTC-2026-S033 （招标文件编号：ZSLTC-2026-S033）\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "中国人民大学",
+          "normalized_value": "中国人民大学",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 123,
+              "end": 134,
+              "text": "采购单位：中国人民大学"
+            },
+            {
+              "role": "primary",
+              "start": 1696,
+              "end": 1706,
+              "text": "名 称：中国人民大学"
+            }
+          ]
+        },
+        {
+          "raw_value": "中盛隆国际招标（北京）有限公司",
+          "normalized_value": "中盛隆国际招标（北京）有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1762,
+              "end": 1781,
+              "text": "名 称：中盛隆国际招标（北京）有限公司"
+            },
+            {
+              "role": "primary",
+              "start": 1751,
+              "end": 1760,
+              "text": ".采购代理机构信息"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "北京篮丰蔬菜配送有限公司",
+          "normalized_value": "北京篮丰蔬菜配送有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "1",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 571,
+              "end": 589,
+              "text": "供应商名称：北京篮丰蔬菜配送有限公司"
+            }
+          ]
+        },
+        {
+          "raw_value": "北京篮丰蔬菜配送有限公司",
+          "normalized_value": "北京篮丰蔬菜配送有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "2",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 571,
+              "end": 590,
+              "text": "供应商名称：北京篮丰蔬菜配送有限公司\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥0.077650 万元（人民币）",
+          "normalized_value": "￥0.077650 万元（人民币）",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 209,
+              "end": 232,
+              "text": "总中标金额：￥0.077650 万元（人民币）"
+            }
+          ]
+        },
+        {
+          "raw_value": "0.0769040（万元）",
+          "normalized_value": "0.0769040（万元）",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": "1",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 615,
+              "end": 637,
+              "text": "中标（成交）金额：0.0769040（万元）"
+            }
+          ]
+        },
+        {
+          "raw_value": "0.0000000（万元）",
+          "normalized_value": "0.0000000（万元）",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": "2",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 683,
+              "end": 705,
+              "text": "中标（成交）金额：0.0000000（万元）"
+            }
+          ]
+        },
+        {
+          "raw_value": "4.900000 万元（人民币）",
+          "normalized_value": "4.900000 万元（人民币）",
+          "amount_type": "unknown",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": "代理费",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1401,
+              "end": 1428,
+              "text": "本项目代理费总金额：4.900000 万元（人民币）\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月20日 21:55",
+          "normalized_value": "2026年07月20日 21:55",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 28,
+              "end": 62,
+              "text": "2026年07月20日 21:55 来源：中国政府采购网 【打印】\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

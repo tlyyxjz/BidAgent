@@ -1,0 +1,157 @@
+{
+  "document_id": "award_06_92954883b056",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-24T13:57:22.559Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "NJFJ2600661-05SGGH",
+          "normalized_value": "NJFJ2600661-05SGGH",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 442,
+              "end": 494,
+              "text": "项目编号：NJFJ2600661-05SGGH （招标文件编号：NJFJ2600661-05SGGH）\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "南京农业大学",
+          "normalized_value": "南京农业大学",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 188,
+              "end": 199,
+              "text": "采购单位：南京农业大学"
+            }
+          ]
+        },
+        {
+          "raw_value": "南京永平建设项目管理有限公司",
+          "normalized_value": "南京永平建设项目管理有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "代理机构",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 1284,
+              "end": 1302,
+              "text": "名 称：南京永平建设项目管理有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "河南冠鸿途建设工程有限公司",
+          "normalized_value": "河南冠鸿途建设工程有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 573,
+              "end": 592,
+              "text": "供应商名称：河南冠鸿途建设工程有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥741.852211 万元（人民币）",
+          "normalized_value": "￥741 万元（人民币）",
+          "amount_type": "award",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 241,
+              "end": 266,
+              "text": "总中标金额：￥741.852211 万元（人民币）"
+            },
+            {
+              "role": "primary",
+              "start": 634,
+              "end": 659,
+              "text": "中标（成交）金额：741.8522110（万元）\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月20日 22:31 ",
+          "normalized_value": "2026年07月20日 22:31 ",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 64,
+              "end": 98,
+              "text": "2026年07月20日 22:31 来源：中国政府采购网 【打印】\n"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}

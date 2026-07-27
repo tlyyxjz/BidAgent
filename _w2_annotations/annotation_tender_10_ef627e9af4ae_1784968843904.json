@@ -1,0 +1,169 @@
+{
+  "document_id": "tender_10_ef627e9af4ae",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-25T08:40:43.903Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 943,
+              "end": 978,
+              "text": "项目编号：XLYZQBZZD2026NYJCBWZGZXM（TQZD）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "云南省消防救援总队训练与战勤保障支队",
+          "normalized_value": "云南省消防救援总队训练与战勤保障支队",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 201,
+              "end": 223,
+              "text": "采购单位云南省消防救援总队训练与战勤保障支队"
+            },
+            {
+              "role": "primary",
+              "start": 2616,
+              "end": 2647,
+              "text": "1.采购人信息\n\n名 称：云南省消防救援总队训练与战勤保障支队"
+            }
+          ]
+        },
+        {
+          "raw_value": "云南金诺招标代理有限公司",
+          "normalized_value": "云南金诺招标代理有限公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "代理",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 631,
+              "end": 649,
+              "text": "代理机构名称云南金诺招标代理有限公司"
+            },
+            {
+              "role": "primary",
+              "start": 2698,
+              "end": 2726,
+              "text": "2.采购代理机构信息\n\n名 称：云南金诺招标代理有限公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "￥67.893000万元（人民币）",
+          "normalized_value": "￥67.893000万元（人民币）",
+          "amount_type": null,
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 453,
+              "end": 474,
+              "text": "预算金额￥67.893000万元（人民币）"
+            },
+            {
+              "role": "primary",
+              "start": 1026,
+              "end": 1077,
+              "text": "预算金额：67.893000 万元（人民币）\n\n最高限价（如有）：67.893000 万元（人民币）\n"
+            }
+          ]
+        }
+      ],
+      "note": "预算金额也是最高限价"
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年07月15日 16:28",
+          "normalized_value": "2026年07月15日 16:28",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 47,
+              "end": 80,
+              "text": "2026年07月15日 16:28 来源：中国政府采购网 【打印】"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "2026年08月06日 09点30分（北京时间）",
+          "normalized_value": "2026年08月06日 09点30分（北京时间）",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 2394,
+              "end": 2429,
+              "text": "提交投标文件截止时间：2026年08月06日 09点30分（北京时间）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    }
+  ]
+}

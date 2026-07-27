@@ -1,0 +1,150 @@
+{
+  "document_id": "correction_04_14622f154f7c",
+  "annotator_id": "A",
+  "annotation_version": "1.0",
+  "annotation_time": "2026-07-24T14:14:18.723Z",
+  "fields": [
+    {
+      "field_name": "project_identifier",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "招服2026A00052（招标编号：0773-2641GNSHFWGK1900）",
+          "normalized_value": "招服2026A00052（招标编号：0773-2641GNSHFWGK1900）",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 459,
+              "end": 510,
+              "text": "原公告的采购项目编号：招服2026A00052（招标编号：0773-2641GNSHFWGK1900）"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "purchaser_name",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "上海交通大学",
+          "normalized_value": "上海交通大学",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 184,
+              "end": 194,
+              "text": "采购单位上海交通大学"
+            },
+            {
+              "role": "primary",
+              "start": 907,
+              "end": 926,
+              "text": "1.采购人信息\n\n名 称：上海交通大学"
+            }
+          ]
+        },
+        {
+          "raw_value": "中金招标有限责任公司",
+          "normalized_value": "中金招标有限责任公司",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "代理公司",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 969,
+              "end": 995,
+              "text": "2.采购代理机构信息\n\n名 称：中金招标有限责任公司"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "winner_name",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "amount",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    },
+    {
+      "field_name": "publish_date",
+      "gold_status": "present",
+      "values": [
+        {
+          "raw_value": "",
+          "normalized_value": null,
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 42,
+              "end": 75,
+              "text": "2026年07月20日 10:08 来源：中国政府采购网 【打印】"
+            },
+            {
+              "role": "primary",
+              "start": 850,
+              "end": 867,
+              "text": "更正日期：2026年07月20日\n"
+            }
+          ]
+        },
+        {
+          "raw_value": "2026年07月16日",
+          "normalized_value": "2026年07月16日",
+          "amount_type": null,
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": "首次更正",
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 224,
+              "end": 256,
+              "text": "首次公告日期2026年07月16日更正日期2026年07月20日"
+            },
+            {
+              "role": "primary",
+              "start": 561,
+              "end": 579,
+              "text": "首次公告日期：2026年07月16日"
+            }
+          ]
+        }
+      ],
+      "note": ""
+    },
+    {
+      "field_name": "bid_deadline",
+      "gold_status": "absent",
+      "values": [],
+      "note": ""
+    }
+  ]
+}
