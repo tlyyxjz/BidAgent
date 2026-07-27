@@ -83,3 +83,12 @@ build/
 # ==== 系统 ====
 .DS_Store
 Thumbs.db
+
+# ==== 娴嬭瘯杩愯鏃舵畫鐣?====
+_pytest_run_tmp/
+*.bak
+conftest.py.bak
+
+# ==== 閲戣瀺涓撴湁鏁版嵁锛堝鍩哄噯浠锋牸搴擄級====
+app/processors/boq_baseline.json
+app/processors/*_baseline.json
