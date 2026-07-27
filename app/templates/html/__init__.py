@@ -6,5 +6,13 @@
 from app.templates.html.index import INDEX_HTML
 from app.templates.html.subscriptions import SUBSCRIPTIONS_HTML
 from app.templates.html.tenders import TENDERS_HTML
+from app.templates.html.detail import TENDER_DETAIL_HTML
+from app.templates.html.chat import CHAT_HTML
 
-__all__ = ["INDEX_HTML", "SUBSCRIPTIONS_HTML", "TENDERS_HTML"]
+__all__ = [
+    "INDEX_HTML",
+    "SUBSCRIPTIONS_HTML",
+    "TENDERS_HTML",
+    "TENDER_DETAIL_HTML",
+    "CHAT_HTML",
+]

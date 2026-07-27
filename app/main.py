@@ -22,6 +22,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.admin import admin_router
 from app.api.agents import router as agents_router
+from app.api.chat import router as chat_router
 from app.api.scrape import router as scrape_router
 from app.api.subscribe import router as subscribe_router
 from app.api.tender import router as tender_router
@@ -195,6 +196,8 @@ app.include_router(agents_router)
 app.include_router(subscribe_router)
 # /api/tenders 招标信息查询 + admin 注入
 app.include_router(tender_router)
+# /api/chat 聊天 Demo（W2-06，Mock 接口）
+app.include_router(chat_router)
 # /ui Web UI（命题 Demo 视频用，无需认证）
 app.include_router(ui_router)
 

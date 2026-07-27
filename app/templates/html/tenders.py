@@ -31,6 +31,20 @@ th { background: #f8f9ff; color: #1a1a2e; font-weight: 600; }
 .stat { background: #f8f9ff; padding: 16px; border-radius: 8px; text-align: center; }
 .stat-num { font-size: 24px; font-weight: bold; color: #1976d2; }
 .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+.demo-bar { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 14px 20px; border-radius: 10px; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: space-between; }
+.demo-bar-title { font-size: 14px; font-weight: 600; color: #1565c0; }
+.demo-bar-desc { font-size: 12px; color: #1976d2; margin-top: 2px; }
+.demo-bar-btns { display: flex; gap: 10px; }
+.demo-btn { padding: 8px 16px; background: #1976d2; color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 12px;
+            text-decoration: none; display: inline-block; }
+.demo-btn:hover { background: #1565c0; }
+.demo-btn-outline { padding: 8px 16px; background: white; color: #1976d2;
+                    border: 1px solid #1976d2; border-radius: 6px; cursor: pointer;
+                    font-size: 12px; text-decoration: none; display: inline-block; }
+.demo-btn-outline:hover { background: #e3f2fd; }
 </style>
 </head>
 <body>
@@ -39,6 +53,17 @@ th { background: #f8f9ff; color: #1a1a2e; font-weight: 600; }
     <a href="/ui" class="back-link">← 返回首页</a>
     <h1>招标信息查询</h1>
     <p style="color:#666; font-size:14px;">多维度过滤查询招标信息</p>
+  </div>
+
+  <div class="demo-bar">
+    <div>
+      <div class="demo-bar-title">🎯 W2-06 Demo 体验</div>
+      <div class="demo-bar-desc">字段高亮详情页 + 6 Agent 协作聊天，点击下方按钮直接体验</div>
+    </div>
+    <div class="demo-bar-btns">
+      <a href="/ui/chat" class="demo-btn-outline">💬 聊天 Demo</a>
+      <a href="/ui/tenders/0?doc=tender_06_4e47868721c5" class="demo-btn">🔍 字段高亮详情</a>
+    </div>
   </div>
 
   <div class="card">
@@ -148,7 +173,7 @@ async function searchTenders() {
       <div style="color:#666; font-size:13px; margin-bottom:8px;">共 ${total} 条，显示 ${items.length} 条</div>
       <table>
         <thead><tr>
-          <th>标题</th><th>地区</th><th>发布时间</th><th>平台</th><th>预算</th><th>链接</th>
+          <th>标题</th><th>地区</th><th>发布时间</th><th>平台</th><th>预算</th><th>操作</th>
         </tr></thead>
         <tbody>
           ${items.map(t => `
@@ -158,7 +183,11 @@ async function searchTenders() {
               <td>${(t.publish_time||'-').substring(0,10)}</td>
               <td>${t.source_platform || '-'}</td>
               <td>${t.budget_amount ? (t.budget_amount/10000).toFixed(2)+'万' : '-'}</td>
-              <td><a href="${t.source_url||'#'}" target="_blank" style="color:#1976d2;">查看</a></td>
+              <td>
+                <a href="/ui/tenders/${t.id}" style="color:#1976d2;">详情</a>
+                <span style="color:#ddd;margin:0 4px;">|</span>
+                <a href="${t.source_url||'#'}" target="_blank" style="color:#1976d2;">原文</a>
+              </td>
             </tr>
           `).join('')}
         </tbody>
