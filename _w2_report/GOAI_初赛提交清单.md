@@ -1,7 +1,7 @@
 # GOAI 初赛提交清单（2026-08-16 截止）
 
 > **生成时间**：2026-07-26
-> **最近更新**：2026-07-27（W2-07 金标扩展至 22 篇 + GitHub 仓库已公开 + PPT 定稿）
+> **最近更新**：2026-07-27（K3 仲裁 B 口径修复：amount=budget+award 多值 + W2-08/W2-09 重跑 + 路演讲稿/Demo 同步）
 > **团队**：标小智（徐浚钊、王祯明）
 > **赛事**：GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向
 
@@ -11,7 +11,7 @@
 |---|--------|--------|----------|----------|------|
 | 1 | 作品简介（500 字） | 必需 | ✅ 已完成 | GOAI_初赛提交材料_正式版.md 第一节 | 500 字整，含六 Agent/三金融能力/合规边界 |
 | 2 | 方案 PPT/PDF | 必需 | ✅ 已定稿 | _w2_report/proposal.pptx | 28 页 629.9KB，4:3 布局，含王祯明团队页，路线图含 W4 React 升级 |
-| 3 | 合规边界声明 | 建议附 | ✅ 已完成 | _w2_report/compliance.md | 5.4KB，含数据/隐私/AI 反幻觉/行业边界 |
+| 3 | 合规边界声明 | 建议附 | ❌ 假完成 | _w2_report/compliance.md | 文件不存在（commit bb50e4d 创建空文件，后续丢失），需 W3 补全 |
 | 4 | Demo 视频（90 秒） | 可选加分 | ⏳ 脚本就绪待录 | BidAgent_Demo_脚本.md | 90 秒 4 场景分镜，571 tests 数据已更新 |
 | 5 | 代码仓库链接 | 建议附 | ✅ 已公开 | GitHub: tlyyxjz/BidAgent | feature/glm-w2-evidence + feature/glm-w2-06 已推送 |
 | 6 | W2-06 前端字段高亮 Demo | 内部交付 | ✅ 已入库 | feature/glm-w2-06 分支 commit 79b2f35 | 12 项 Playwright + 9 项冒烟全过 |
@@ -39,8 +39,8 @@
 1. W2 任务完成情况表（W2-01~W2-10 状态）
 2. W2-05 证据入库验证（16/16 金标过，96 字段 153 证据 0 错误）
 3. W2-01 LLM 候选证据冒烟测试（3 篇，18/18 证据命中）
-4. W2-08 消融实验 A/B/C 三组对比（22 篇金标，C 组 unjustified_rate=2.91%，evidence_precision=100%）
-5. W2-09 证据定位指标（22 篇金标，recall 66.99%, precision 61.98%, IoU 0.5962/0.8876）
+4. W2-08 消融实验 A/B/C 三组对比（22 篇 budget 口径，C 组 unjustified_rate=1.94%，field_precision=94.49%，evidence_precision=100%）
+5. W2-09 证据定位指标（22 篇 budget 口径，16 篇成功+6 篇 API 失败：16 篇口径 recall 65.75%, precision 60.42%, IoU 0.5848）
 6. 22 篇 vs 7 篇结果差异分析（field_precision 反常原因）
 7. W2-08 与 W2-09 指标口径对比
 8. 待人工复测项 6 项
@@ -134,11 +134,11 @@
 - **均未推 main/develop**：符合硬约束 #36
 - **GitHub 仓库**：https://github.com/tlyyxjz/BidAgent（公开）
 
-### 待 commit（W2-07 金标扩展 + 22 篇重跑结果）
-- 22 篇金标文件（_w2_raw/ + _w2_annotations/）
-- 22 篇消融实验结果（_w2_d4_ablation_result_22.json）
-- 22 篇证据指标结果（_w2_d4_evidence_metric_result_22.json）
-- boq_engine.py / risk_engine.py 版权声明修复
-- W2 评测报告更新版（样本量 7→22）
-- K3 任务 prompt 合集 + 硬约束清单
-- 本提交清单更新版
+### 待 commit（K3 仲裁 B 口径修复 + W2-08/W2-09 重跑）
+- 3 篇金标 budget 修复（annotation_04/05/06_award_A.json，amount 增加 budget 值）
+- W2-08 消融实验 budget 口径结果（W2-08_ablation_22篇_budget口径.json + .log）
+- W2-09 证据定位 budget 口径结果（W2-09_evidence_22篇_budget口径.json + .log）
+- W2 评测报告更新版（budget 口径说明 + API 402 失败说明 + 16篇口径对比）
+- 路演讲稿同步（2.91%→1.94%，recall 74.76%→65.75% 16篇口径）
+- Demo 脚本同步（2.91%→1.94%，4 处）
+- 本提交清单更新版（compliance.md 假完成标记）

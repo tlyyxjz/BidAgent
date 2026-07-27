@@ -1,8 +1,8 @@
 {
   "document_id": "04_award_001",
   "annotator_id": "A",
-  "annotation_version": "1.0",
-  "annotation_time": "2026-07-24T04:33:16.643193+00:00",
+  "annotation_version": "1.1",
+  "annotation_time": "2026-07-27T14:50:00+08:00",
   "fields": [
     {
       "field_name": "project_identifier",
@@ -81,6 +81,23 @@
       "gold_status": "present",
       "values": [
         {
+          "raw_value": "757.700000",
+          "normalized_value": "7577000.00",
+          "amount_type": "budget",
+          "currency": null,
+          "original_unit": null,
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 200,
+              "end": 210,
+              "text": "757.700000"
+            }
+          ]
+        },
+        {
           "raw_value": "386.864800",
           "normalized_value": "3868648.00",
           "amount_type": "award",
@@ -98,7 +115,7 @@
           ]
         }
       ],
-      "note": "修正：原金标 amount 证据偏移量全部错误(start=0,end=1,text=中)。2026-07-27 修正为原文实际金额位置。"
+      "note": "修正：按 K3 仲裁建议(选B口径)在 amount values 前插入 budget 值,使 amount = [budget, award...],支持信用评分报价偏离度计算。budget=757.700000万元(原文\"预算金额\"段落),偏移量 200-210。原 award 偏移量保留不变(2026-07-27 commit 10ba132 修复)。 | 前次说明:修正：原金标 amount 证据偏移量全部错误(start=0,end=1,text=中)。2026-07-27 修正为原文实际金额位置。"
     },
     {
       "field_name": "publish_date",
