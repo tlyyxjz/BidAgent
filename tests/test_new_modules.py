@@ -31,7 +31,7 @@ from app.processors.simhash import (
 )
 
 
-pytestmark = pytest.mark.asyncio
+# pytestmark removed: 全局 asyncio 标记会对同步函数产生 PytestWarning
 
 
 # ==== SimHash 测试（命题第 3 项硬要求）====

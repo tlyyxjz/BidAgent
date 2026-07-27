@@ -10,6 +10,7 @@ S-4 拆分：HTML 字符串已迁移到 app/templates/html/，本文件只保留
 - /ui/chat               聊天 Demo 页（W2-06 6 Agent 协作）
 """
 
+import os
 from __future__ import annotations
 
 import json
@@ -28,14 +29,13 @@ from app.templates.html import (
 
 router = APIRouter(prefix="/ui", tags=["ui"])
 
-_GOLD_RAW_DIR = Path(
+# 金标数据目录：优先环境变量，回退到默认工作目录（解决部署时路径硬编码问题）
+_DEFAULT_GOLD_BASE = Path(
     r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent"
-    r"\work-mode-projects\6a57291a0778ce48bfe693d2\_w2_raw"
+    r"\work-mode-projects\6a57291a0778ce48bfe693d2"
 )
-_GOLD_ANNOT_DIR = Path(
-    r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent"
-    r"\work-mode-projects\6a57291a0778ce48bfe693d2\_w2_annotations"
-)
+_GOLD_RAW_DIR = Path(os.environ.get("BIDAGENT_GOLD_RAW_DIR", str(_DEFAULT_GOLD_BASE / "_w2_raw")))
+_GOLD_ANNOT_DIR = Path(os.environ.get("BIDAGENT_GOLD_ANNOT_DIR", str(_DEFAULT_GOLD_BASE / "_w2_annotations")))
 
 
 @router.get("", response_class=HTMLResponse)
