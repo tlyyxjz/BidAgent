@@ -666,7 +666,7 @@ addTechSlide(6, '推送幂等 + 安全防护', 'at-least-once + content_hash + S
   const s = pptx.addSlide();
   addSlideBase(s, '05 · 测试与质量保障');
   // 大数字
-  s.addText('609', {
+  s.addText('571', {
     x: 0.5, y: 1.5, w: 5, h: 1.5,
     fontFace: HEADER_FONT, fontSize: 100, bold: true, color: NAVY, align: 'center'
   });

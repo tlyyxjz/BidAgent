@@ -1,7 +1,7 @@
 # GOAI 初赛提交清单（2026-08-16 截止）
 
 > **生成时间**：2026-07-26
-> **最近更新**：2026-07-28（API 充值后 W2-09 22 篇全部成功补跑 + 路演讲稿同步完整口径）；2026-07-28 P0-4 compliance.md 已创建（4 大块：数据来源/隐私保护/AI 反幻觉/行业边界）
+> **最近更新**：2026-07-28（API 充值后 W2-09 22 篇全部成功补跑 + 路演讲稿同步完整口径）；2026-07-28 P0-4 compliance.md 已创建（4 大块：数据来源/隐私保护/AI 反幻觉/行业边界）；2026-07-28 GOAI 对照修复 5 项初赛提交材料问题（作品简介/PPT 测试数/README/.env.example/路演讲稿 IoU avg）
 > **团队**：标小智（徐浚钊、王祯明）
 > **赛事**：GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向
 
@@ -129,6 +129,9 @@
   - commit 3ba965b: fix(K3-P0): 按Sol规矩修复8项P0 - PPT/代码/测试/宣传
   - commit 2e37930: fix(P0-4): 创建compliance.md合规声明 - 4大块118行
   - commit 7c71147: fix(K3-Sol复查): 修复3项P0口径冲突+8项P1+2项P2+W2-05入库验证
+  - commit b243903: fix(Sol复查2): 修复P1-15成功路径遗漏+GOAI深层不一致
+  - commit 7ca1a47: fix(Sol复查3): 对照表补award口径标注
+  - commit (本次新 commit 待填): fix(GOAI对照): 修复5项初赛提交材料问题
   - commit e671e2d: fix(test): conftest.py 加 try/except 修复 120 errors 测试环境问题
 - **feature/glm-w2-06**（前端高亮，已 push 到 GitHub）
   - commit 79b2f35: feat(W2-06): 前端字段高亮 Demo + 6 Agent 协作聊天页
@@ -142,4 +145,7 @@
 - commit 3ba965b: P0 修复（W2-08/W2-09 budget 口径结果 + 代码修复 + 测试）
 - commit 2e37930: compliance.md 合规声明
 - commit 7c71147: Sol 复查修复（3 项 P0 口径冲突 + 8 项 P1 + 2 项 P2 + W2-05 入库验证）
+- commit b243903: Sol 复查2（P1-15 成功路径遗漏 + GOAI 深层不一致）
+- commit 7ca1a47: Sol 复查3（对照表补 award 口径标注）
+- commit (本次新 commit 待填): fix(GOAI对照): 修复5项初赛提交材料问题
 - 已 push 到 feature/glm-w2-evidence 分支
