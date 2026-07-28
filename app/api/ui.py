@@ -18,6 +18,7 @@ from app.templates.html import (
     SUBSCRIPTIONS_HTML,
     TENDERS_HTML,
 )
+from app.templates.html.evidence_demo import EVIDENCE_DEMO_HTML
 
 router = APIRouter(prefix="/ui", tags=["ui"])
 
@@ -38,3 +39,9 @@ async def ui_subscriptions() -> HTMLResponse:
 async def ui_tenders() -> HTMLResponse:
     """招标信息查询页面。"""
     return HTMLResponse(content=TENDERS_HTML)
+
+
+@router.get("/evidence", response_class=HTMLResponse)
+async def ui_evidence_demo() -> HTMLResponse:
+    """公告详情与证据验证页面（Demo 核心）."""
+    return HTMLResponse(content=EVIDENCE_DEMO_HTML)
