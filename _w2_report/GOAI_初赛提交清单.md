@@ -131,7 +131,7 @@
   - commit 7c71147: fix(K3-Sol复查): 修复3项P0口径冲突+8项P1+2项P2+W2-05入库验证
   - commit b243903: fix(Sol复查2): 修复P1-15成功路径遗漏+GOAI深层不一致
   - commit 7ca1a47: fix(Sol复查3): 对照表补award口径标注
-  - commit (本次新 commit 待填): fix(GOAI对照): 修复5项初赛提交材料问题
+  - commit 418238c: fix(GOAI对照): 修复5项初赛提交材料问题
   - commit e671e2d: fix(test): conftest.py 加 try/except 修复 120 errors 测试环境问题
 - **feature/glm-w2-06**（前端高亮，已 push 到 GitHub）
   - commit 79b2f35: feat(W2-06): 前端字段高亮 Demo + 6 Agent 协作聊天页
@@ -147,5 +147,5 @@
 - commit 7c71147: Sol 复查修复（3 项 P0 口径冲突 + 8 项 P1 + 2 项 P2 + W2-05 入库验证）
 - commit b243903: Sol 复查2（P1-15 成功路径遗漏 + GOAI 深层不一致）
 - commit 7ca1a47: Sol 复查3（对照表补 award 口径标注）
-- commit (本次新 commit 待填): fix(GOAI对照): 修复5项初赛提交材料问题
+- commit 418238c: fix(GOAI对照): 修复5项初赛提交材料问题
 - 已 push 到 feature/glm-w2-evidence 分支
