@@ -31,7 +31,7 @@ BidAgent 是一款面向中小企业和供应商的智能招投标信息聚合�
 
 - GitHub: https://github.com/tlyyxjz/BidAgent
 - 分支：feature/glm-w2-evidence
-- 测试：644 passed, 1 deselected, 0 failed
+- 测试：571 passed, 1 skipped（K3 独立复跑确认）
 
 ---
 
