@@ -28,7 +28,7 @@ from app.api.subscribe import router as subscribe_router
 from app.api.tender import router as tender_router
 from app.api.ui import router as ui_router
 from app.api.evidence_demo import router as evidence_demo_router
-from app.api.demo_api import router as demo_router
+from app.api.real_demo import router as real_demo_router
 from app.config import settings
 from app.core.rate_limit import limiter
 from app.models.database import engine, init_database
@@ -202,7 +202,7 @@ app.include_router(tender_router)
 app.include_router(ui_router)
 app.include_router(evidence_demo_router)
 # /api/demo Demo 数据接口（Turbo-W3 前端页面用，无需认证）
-app.include_router(demo_router)
+app.include_router(real_demo_router)
 
 # 静态文件服务（Web Demo 页面：notice_detail/version_history/org_profile）
 STATIC_DIR = Path("static")

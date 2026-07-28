@@ -155,7 +155,7 @@ async function loadData(){
   const p=new URLSearchParams(window.location.search);
   const sid=p.get('source')||'ccgp_001';
   try{
-    const r=await fetch(`/api/demo/sources/${encodeURIComponent(sid)}/versions`);
+    const r=await fetch(`/api/real/tenders/${encodeURIComponent(sid)}/versions`);
     if(!r.ok)throw new Error('加载失败');
     const d=await r.json();
     if(d.code!==200)throw new Error(d.msg||'加载失败');

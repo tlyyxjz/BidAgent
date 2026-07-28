@@ -191,7 +191,7 @@ async function loadData(){
   const p=new URLSearchParams(window.location.search);
   const oid=p.get('org')||'org_001';
   try{
-    const r=await fetch(`/api/demo/organizations/${encodeURIComponent(oid)}`);
+    const r=await fetch(`/api/real/tenders/${encodeURIComponent(oid)}/organization`);
     if(!r.ok)throw new Error('加载失败');
     const d=await r.json();
     if(d.code!==200)throw new Error(d.msg||'加载失败');
