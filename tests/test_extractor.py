@@ -369,9 +369,10 @@ class TestNoEvidencePrompt:
 
     def test_no_evidence_prompt_no_evidence_role(self):
         """无证据 prompt 不应要求证据角色标注。"""
-        # 原 prompt 有 primary/context/qualifier 角色要求
-        assert "primary" not in EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE or "primary" in "amount_type"
-        # amount_type 不含 primary，所以这条断言验证 prompt 简化了
+        # P1-16 修复：重写断言，确保 no_evidence prompt 不包含证据角色关键词
+        assert "primary" not in EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE
+        assert "context" not in EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE
+        assert "qualifier" not in EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE
 
     def test_no_evidence_fewshot_exists(self):
         """无证据 few-shot 示例存在。"""

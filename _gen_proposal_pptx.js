@@ -640,7 +640,7 @@ addTechSlide(2, 'SimHash 去重 + 反幻觉校验', '64位指纹去重 + 原文�
 addTechSlide(3, '证据验证闭环（W2 核心）', '5 级降级匹配 + IoU 评测 + 消融实验',
   'LLM 抽取的证据文本可能多空格/少标点，无法直接定位原文',
   '5 级降级匹配：L1 精确 → L2 去空白 → L3 去标点 → L4 核心子串 → L5 失败标记\n双坐标映射（normalized_index ↔ raw_index）\nIoU 边界质量评测 + A/B/C 三组消融实验（22 篇金标）',
-  'unjustified ↓97%', 'A(100%) → C(2.91%)',
+  'unjustified ↓97%', 'A(100%) → C(1.94%)',
   'app/processors/{normalizer,evidence_locator,field_validator}.py + scripts/eval_*.py');
 
 addTechSlide(4, 'BOQ 异常检测', '20 类基准价格库识别报价偏离',
@@ -666,11 +666,11 @@ addTechSlide(6, '推送幂等 + 安全防护', 'at-least-once + content_hash + S
   const s = pptx.addSlide();
   addSlideBase(s, '05 · 测试与质量保障');
   // 大数字
-  s.addText('571', {
+  s.addText('609', {
     x: 0.5, y: 1.5, w: 5, h: 1.5,
     fontFace: HEADER_FONT, fontSize: 100, bold: true, color: NAVY, align: 'center'
   });
-  s.addText('项测试全部通过', {
+  s.addText('项测试通过 · 1 项跳过', {
     x: 0.5, y: 3.0, w: 5, h: 0.5,
     fontFace: BODY_FONT, fontSize: 18, color: GREY, align: 'center'
   });
@@ -697,11 +697,11 @@ addTechSlide(6, '推送幂等 + 安全防护', 'at-least-once + content_hash + S
   s.addShape(pptx.ShapeType.roundRect, {
     x: 0.5, y: 5.0, w: 9, h: 1.3, fill: { color: NAVY }, line: { color: NAVY }, rectRadius: 0.1
   });
-  s.addText('extractor.py 覆盖率 100%', {
+  s.addText('extractor.py 覆盖率 98%', {
     x: 0.7, y: 5.15, w: 5, h: 0.5,
     fontFace: HEADER_FONT, fontSize: 18, bold: true, color: WHITE, align: 'left'
   });
-  s.addText('evidence_locator / field_validator / normalizer 全部 95%+', {
+  s.addText('evidence_locator / field_validator / normalizer 88-99%', {
     x: 0.7, y: 5.7, w: 8.6, h: 0.5,
     fontFace: BODY_FONT, fontSize: 14, color: ICE, align: 'left'
   });
@@ -720,8 +720,8 @@ addTechSlide(6, '推送幂等 + 安全防护', 'at-least-once + content_hash + S
   const rows = [
     ['fields_with_value', '103', '103', '103'],
     ['fields_with_evidence', '0', '103', '103'],
-    ['unjustified_rate', '100%', '0%', '2.91%'],
-    ['field_precision', '92.13%', '91.34%', '88.98%'],
+    ['unjustified_rate', '100%', '0%', '1.94%'],
+    ['field_precision', '93.70%', '93.70%', '94.49%'],
     ['evidence_precision', '0%', '0%', '100%'],
   ];
   const tableData = [headers, ...rows];
@@ -733,7 +733,7 @@ addTechSlide(6, '推送幂等 + 安全防护', 'at-least-once + content_hash + S
     colW: [3, 2, 2, 2]
   });
   // 结论
-  s.addText('结论：unjustified_rate A(100%) → C(2.91%)，证据验证显著抑制无依据输出', {
+  s.addText('结论：unjustified_rate A(100%) → C(1.94%)，证据验证显著抑制无依据输出', {
     x: 0.5, y: 5.0, w: 9, h: 0.5,
     fontFace: HEADER_FONT, fontSize: 14, bold: true, color: SUCCESS, align: 'left'
   });

@@ -11,7 +11,7 @@
 |---|--------|--------|----------|----------|------|
 | 1 | 作品简介（500 字） | 必需 | ✅ 已完成 | GOAI_初赛提交材料_正式版.md 第一节 | 500 字整，含六 Agent/三金融能力/合规边界 |
 | 2 | 方案 PPT/PDF | 必需 | ✅ 已定稿 | _w2_report/proposal.pptx | 28 页 629.9KB，4:3 布局，含王祯明团队页，路线图含 W4 React 升级 |
-| 3 | 合规边界声明 | 建议附 | ✅ 已创建（2026-07-28，118 行，5601 字节） | _w2_report/compliance.md | 文件不存在（commit bb50e4d 创建空文件，后续丢失），需 W3 补全 |
+| 3 | 合规边界声明 | 建议附 | ✅ 已创建（2026-07-28，117 行，5601 字节） | _w2_report/compliance.md | 4 大块：数据来源/隐私保护/AI 反幻觉/行业边界 |
 | 4 | Demo 视频（90 秒） | 可选加分 | ⏳ 脚本就绪待录 | BidAgent_Demo_脚本.md | 90 秒 4 场景分镜，571 tests 数据已更新 |
 | 5 | 代码仓库链接 | 建议附 | ✅ 已公开 | GitHub: tlyyxjz/BidAgent | feature/glm-w2-evidence + feature/glm-w2-06 已推送 |
 | 6 | W2-06 前端字段高亮 Demo | 内部交付 | ✅ 已入库 | feature/glm-w2-06 分支 commit 79b2f35 | 12 项 Playwright + 9 项冒烟全过 |
@@ -22,19 +22,19 @@
 
 | 编号 | 项目 | 假完成现象 | 修复后状态 |
 |------|------|-----------|-----------|
-| F1 | proposal.pptx | GOAI 提交材料标"已完成 30 页"，实际文件不存在 | ✅ 已生成 28 页 624KB PPT |
-| F2 | compliance.md | 同上，标"已完成"，实际文件不存在 | ✅ 已生成 5.5KB（118 行） |
-| F3 | 测试数 511 | Demo 脚本写"511 tests"，实际 571 | ⏳ 需更新 Demo 脚本 |
+| F1 | proposal.pptx | GOAI 提交材料标"已完成 30 页"，实际文件不存在 | ✅ 已生成 28 页 629.9KB PPT |
+| F2 | compliance.md | 同上，标"已完成"，实际文件不存在 | ✅ 已生成 5.5KB（117 行） |
+| F3 | 测试数 511 | Demo 脚本写"511 tests"，实际 571 | ✅ 已完成（511→571） |
 | F4 | 路演讲稿 | 还是 ScrapeFlow 时代（5 层架构），未更新到 BidAgent 六 Agent | ⏳ W3 任务 |
 | F5 | PPT 页脚 "null / 30" | slideNumber 在 addSlide 时为 null + 总页数硬编码 30 | ✅ 改用全局计数器，页脚显示 "X / 28" |
 | F6 | PPT 目录页码错 | 目录写 14-21/22-25 等，实际页码 14-19/20-23 等 | ✅ 已修正目录页码引用 |
-| F7 | 数据夸大 | compliance.md 实际 5.4KB，之前说 8KB | ✅ 已更正 |
+| F7 | 数据夸大 | compliance.md 实际 5.5KB，之前说 8KB | ✅ 已更正 |
 | F8 | 测试环境 120 errors | --basetemp 残留文件被 Windows 锁定 → pytest 清理失败 → 中断 fixture teardown → SQLite 表状态不一致 | ✅ conftest.py 加 try/except，571 passed 0 errors（commit e671e2d） |
 | F9 | W2-06 假完成初查误判 | 初查只查主项目目录，未考虑豆包 Turbo 在自己工作目录 6a6626ae8bb75fb682f059f9 工作 | ✅ 全盘搜索找到 11 个文件，迁移到主项目，12 Playwright + 9 冒烟全过（commit 79b2f35） |
 
 ### W2 评测报告
 
-文件：`_w2_report/W2_评测报告.md`（220 行 9.5KB），包含：
+文件：`_w2_report/W2_评测报告.md`（249 行 16.4KB），包含：
 
 1. W2 任务完成情况表（W2-01~W2-10 状态）
 2. W2-05 证据入库验证（16/16 金标过，96 字段 153 证据 0 错误）
@@ -43,8 +43,8 @@
 5. W2-09 证据定位指标（22 篇 budget 口径全部成功，iou 新逻辑：recall 69.90%, precision 60.63%, IoU 0.5307, P50=0.96/P95=1.0）
 6. 22 篇 vs 7 篇结果差异分析（field_precision 反常原因）
 7. W2-08 与 W2-09 指标口径对比
-8. 待人工复测项 6 项
-9. Git 信息（commit c5a6c9b，feature/glm-w2-evidence 分支）
+8. 待人工复测项 10 条（4 条已完成、6 条待查）
+9. Git 信息（commit 2e37930，feature/glm-w2-evidence 分支）
 10. 已知限制（LLM 随机性 / 预存在 warnings / .env 不入 git / 金标数量 / field_precision 反常）
 
 ## 三、全量回归测试结果
@@ -55,7 +55,7 @@
 
 - **0 errors / 0 failures**
 - 1 skipped = `test_w2_06_smoke.py`（独立脚本，加了 pytest skip 标记，用 `python tests/test_w2_06_smoke.py` 独立运行）
-- 30 个 warnings = `test_new_modules.py` 的 `@pytest.mark.asyncio` 标在同步函数上（预存在，本次修复完成）
+- 30 个 warnings = `test_new_modules.py` 的 `@pytest.mark.asyncio` 标在同步函数上（预存在，与本次修复无关）
 - 测试范围：排除 `test_browser_pool.py`（预存在超时问题）+ `test_w2_06_playwright.py`（需独立启后端跑）
 
 ## 四、PPT 28 页结构
@@ -125,7 +125,7 @@
 
 ### 当前分支结构
 - **feature/glm-w2-evidence**（W2 主线，已 push 到 GitHub）
-  - commit c5a6c9b: fix(W2-08/W2-09): 修复消融实验+证据指标4项假完成
+  - commit 2e37930: fix(P0-4): 创建compliance.md合规声明 - 4大块118行
   - commit e671e2d: fix(test): conftest.py 加 try/except 修复 120 errors 测试环境问题
 - **feature/glm-w2-06**（前端高亮，已 push 到 GitHub）
   - commit 79b2f35: feat(W2-06): 前端字段高亮 Demo + 6 Agent 协作聊天页

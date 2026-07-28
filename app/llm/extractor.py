@@ -572,6 +572,8 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
             total_tokens=0,
             latency_ms=latency_ms,
             error=str(exc),
+            temperature=0.1,
+            max_tokens=8000,
         )
 
 
@@ -635,6 +637,9 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
         )
         # 覆盖 prompt_hash 为无证据版本
         result.prompt_hash = no_evidence_hash
+        # P1-13 修复：强制清空 candidate_evidences，确保 no_evidence 模式下不携带证据
+        for f in result.fields:
+            f.candidate_evidences = []
 
         logger.info(
             "LLM no-evidence extraction OK model={} fields={} tokens={} latency={}ms",
@@ -660,4 +665,6 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
             total_tokens=0,
             latency_ms=latency_ms,
             error=str(exc),
+            temperature=0.1,
+            max_tokens=8000,
         )

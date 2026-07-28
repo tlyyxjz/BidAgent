@@ -74,6 +74,8 @@ class ExtractionResult(BaseModel):
     total_tokens: int = Field(0, description="总 token 数")
     latency_ms: int = Field(0, description="延迟毫秒")
     error: Optional[str] = Field(None, description="错误信息（失败时记录）")
+    temperature: float = 0.0  # P1-15: 记录请求参数（约束 #49）
+    max_tokens: int = 0       # P1-15: 记录请求参数（约束 #49）
 
 
 # 六类核心字段名（Sol 要求：不修改字段定义）
