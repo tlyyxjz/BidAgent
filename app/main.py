@@ -18,6 +18,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.admin import admin_router
@@ -27,6 +28,7 @@ from app.api.subscribe import router as subscribe_router
 from app.api.tender import router as tender_router
 from app.api.ui import router as ui_router
 from app.api.evidence_demo import router as evidence_demo_router
+from app.api.demo_api import router as demo_router
 from app.config import settings
 from app.core.rate_limit import limiter
 from app.models.database import engine, init_database
@@ -199,6 +201,13 @@ app.include_router(tender_router)
 # /ui Web UI（命题 Demo 视频用，无需认证）
 app.include_router(ui_router)
 app.include_router(evidence_demo_router)
+# /api/demo Demo 数据接口（Turbo-W3 前端页面用，无需认证）
+app.include_router(demo_router)
+
+# 静态文件服务（Web Demo 页面：notice_detail/version_history/org_profile）
+STATIC_DIR = Path("static")
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 # ==== 基础端点 ====

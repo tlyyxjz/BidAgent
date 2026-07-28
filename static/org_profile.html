@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1366, initial-scale=1">
+<title>组织画像 · 实体分析</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
+.header{background:white;padding:16px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:16px}
+.back-link{color:#1976d2;text-decoration:none;font-size:14px}
+h1{font-size:18px;color:#1a1a2e}
+.org-tag{font-size:12px;padding:2px 8px;border-radius:10px;background:#e3f2fd;color:#1565c0}
+.main-container{max-width:1200px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:white;border:1px solid #e8e8e8;border-radius:8px;padding:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+.card-title{font-size:15px;font-weight:600;color:#1a1a2e;display:flex;align-items:center;gap:8px}
+.card-icon{font-size:18px}
+.card-more{font-size:12px;color:#999;cursor:pointer}
+.card-more:hover{color:#1976d2}
+.card-full{grid-column:1/-1}
+.org-basic{display:flex;gap:24px;align-items:center}
+.org-avatar{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#1976d2,#1565c0);display:flex;align-items:center;justify-content:center;font-size:28px;color:white;font-weight:bold}
+.org-info{flex:1}
+.org-name{font-size:20px;font-weight:600;color:#1a1a2e;margin-bottom:6px}
+.org-meta{display:flex;gap:16px;font-size:13px;color:#666}
+.org-meta-item{display:flex;align-items:center;gap:4px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat-card{padding:14px;background:#f8f9ff;border-radius:8px;text-align:center}
+.stat-value{font-size:24px;font-weight:700;color:#1a1a2e}
+.stat-label{font-size:12px;color:#999;margin-top:4px}
+.stat-card.primary .stat-value{color:#1976d2}
+.stat-card.success .stat-value{color:#2e7d32}
+.stat-card.warning .stat-value{color:#f57c00}
+.stat-card.danger .stat-value{color:#c62828}
+.chart-container{height:220px;position:relative}
+.chart-svg{width:100%;height:100%}
+.bar{fill:#1976d2;opacity:.7;transition:opacity .2s}
+.bar:hover{opacity:1}
+.axis{stroke:#e0e0e0;stroke-width:1}
+.axis-label{fill:#999;font-size:10px}
+.purchaser-list{display:flex;flex-direction:column;gap:10px}
+.purchaser-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:#fafbfc;border-radius:6px}
+.purchaser-rank{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;background:#e3f2fd;color:#1565c0}
+.purchaser-rank.r1{background:#ffd54f;color:#e65100}
+.purchaser-rank.r2{background:#e0e0e0;color:#616161}
+.purchaser-rank.r3{background:#ffccbc;color:#bf360c}
+.purchaser-info{flex:1}
+.purchaser-name{font-size:13px;font-weight:500;color:#1a1a2e}
+.purchaser-count{font-size:12px;color:#999;margin-top:2px}
+.purchaser-bar{height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;margin-top:6px}
+.purchaser-bar-fill{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);border-radius:3px}
+.concentration{margin-top:12px;padding:10px 12px;background:#fff8e1;border-radius:6px;display:flex;justify-content:space-between;align-items:center}
+.concentration-label{font-size:12px;color:#e65100}
+.concentration-value{font-size:16px;font-weight:600;color:#e65100}
+.waste-list{display:flex;flex-direction:column;gap:10px}
+.waste-item{padding:12px;background:#fff5f5;border-radius:6px;border-left:3px solid #ef5350}
+.waste-title{font-size:13px;font-weight:500;color:#1a1a2e;margin-bottom:4px}
+.waste-meta{display:flex;gap:12px;font-size:11px;color:#999}
+.waste-reason{font-size:12px;color:#c62828;margin-top:6px}
+.completeness-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+.completeness-item:last-child{border-bottom:none}
+.completeness-label{color:#666}
+.completeness-value{font-weight:500;color:#1a1a2e}
+.completeness-score{text-align:center;padding:16px 0}
+.score-circle{width:100px;height:100px;border-radius:50%;background:conic-gradient(#43a047 0% 87.5%,#e0e0e0 87.5% 100%);display:flex;align-items:center;justify-content:center;margin:0 auto}
+.score-inner{width:80px;height:80px;border-radius:50%;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-value{font-size:24px;font-weight:700;color:#2e7d32}
+.score-label{font-size:11px;color:#999}
+.platform-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.platform-tag{padding:2px 8px;background:#e3f2fd;color:#1565c0;border-radius:4px;font-size:11px}
+.missing-list{margin-top:8px;padding:8px 12px;background:#fff8e1;border-radius:4px;font-size:12px;color:#e65100}
+@media(max-width:900px){.main-container{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <a href="/ui/tenders" class="back-link">← 返回列表</a>
+    <div><h1 id="orgName">组织画像</h1></div>
+    <span class="org-tag" id="orgType">医疗机构</span>
+  </div>
+</div>
+<div class="main-container">
+  <div class="card card-full">
+    <div class="org-basic">
+      <div class="org-avatar" id="orgAvatar">北</div>
+      <div class="org-info">
+        <div class="org-name" id="orgNameBig">加载中...</div>
+        <div class="org-meta">
+          <span class="org-meta-item">📍 <span id="orgRegion">--</span></span>
+          <span class="org-meta-item">🏢 <span id="orgType2">--</span></span>
+          <span class="org-meta-item">📊 数据更新：2026-07-27</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-full">
+    <div class="stats-grid">
+      <div class="stat-card primary"><div class="stat-value" id="statTotal">0</div><div class="stat-label">90天公告总数</div></div>
+      <div class="stat-card"><div class="stat-value" id="statTender">0</div><div class="stat-label">招标公告</div></div>
+      <div class="stat-card success"><div class="stat-value" id="statAward">0</div><div class="stat-label">中标公告</div></div>
+      <div class="stat-card danger"><div class="stat-value" id="statWaste">0</div><div class="stat-label">废标关联</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title"><span class="card-icon">📈</span>中标活跃度（90天）</span><span class="card-more">近90天</span></div>
+    <div class="chart-container"><svg class="chart-svg" id="activityChart"></svg></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title"><span class="card-icon">🏆</span>Top3 采购人集中度</span><span class="card-more">全部历史</span></div>
+    <div class="purchaser-list" id="purchaserList"></div>
+    <div class="concentration">
+      <span class="concentration-label">CR3 集中度</span>
+      <span class="concentration-value" id="cr3Value">--</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title"><span class="card-icon">⚠️</span>废标关联记录</span><span class="card-more">近半年</span></div>
+    <div class="waste-list" id="wasteList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title"><span class="card-icon">📊</span>数据完整性说明</span><span class="card-more">数据质量</span></div>
+    <div class="completeness-score">
+      <div class="score-circle"><div class="score-inner"><div class="score-value" id="scoreValue">--</div><div class="score-label">完整度</div></div></div>
+    </div>
+    <div id="completenessList"></div>
+    <div class="platform-tags" id="platformTags"></div>
+    <div class="missing-list" id="missingList"></div>
+  </div>
+</div>
+<script>
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function renderActivity(daily){
+  const svg=document.getElementById('activityChart');
+  const w=svg.clientWidth||500,h=220,pad={t:20,r:10,b:30,l:30};
+  const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const max=Math.max(...daily.map(d=>d.count),1);
+  const bw=cw/daily.length*0.7;
+  let paths='',labels='';
+  daily.forEach((d,i)=>{
+    const x=pad.l+i*(cw/daily.length)+(cw/daily.length-bw)/2;
+    const bh=(d.count/max)*ch;
+    const y=pad.t+ch-bh;
+    paths+=`<rect class="bar" x="${x}" y="${y}" width="${bw}" height="${bh}" rx="2"><title>${d.date}: ${d.count} 条</title></rect>`;
+    if(i%15===0)labels+=`<text class="axis-label" x="${x+bw/2}" y="${h-8}" text-anchor="middle">${d.date.slice(5)}</text>`;
+  });
+  svg.innerHTML=`<line class="axis" x1="${pad.l}" y1="${pad.t+ch}" x2="${w-pad.r}" y2="${pad.t+ch}"/>
+    <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}"/>
+    ${paths}${labels}`;
+}
+function renderPurchasers(list){
+  const el=document.getElementById('purchaserList');
+  const max=Math.max(...list.map(p=>p.count),1);
+  el.innerHTML=list.map((p,i)=>`<div class="purchaser-item">
+    <div class="purchaser-rank r${i+1}">${i+1}</div>
+    <div class="purchaser-info">
+      <div class="purchaser-name">${esc(p.name)}</div>
+      <div class="purchaser-count">${p.count} 条 · ${(p.ratio*100).toFixed(1)}%</div>
+      <div class="purchaser-bar"><div class="purchaser-bar-fill" style="width:${(p.ratio*100).toFixed(0)}%"></div></div>
+    </div>
+  </div>`).join('');
+}
+function renderWaste(list){
+  const el=document.getElementById('wasteList');
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#999;">暂无废标记录</div>';return}
+  el.innerHTML=list.map(w=>`<div class="waste-item">
+    <div class="waste-title">${esc(w.project_name)}</div>
+    <div class="waste-meta"><span>📅 ${w.waste_date}</span></div>
+    <div class="waste-reason">废标原因：${esc(w.reason)}</div>
+  </div>`).join('');
+}
+function renderCompleteness(dc){
+  document.getElementById('scoreValue').textContent=dc.completeness_score+'%';
+  const el=document.getElementById('completenessList');
+  el.innerHTML=`<div class="completeness-item"><span class="completeness-label">时间范围</span><span class="completeness-value">${dc.time_range}</span></div>
+    <div class="completeness-item"><span class="completeness-label">公告总数</span><span class="completeness-value">${dc.total_notices} 条</span></div>
+    <div class="completeness-item"><span class="completeness-label">招标公告</span><span class="completeness-value">${dc.tender_count} 条</span></div>
+    <div class="completeness-item"><span class="completeness-label">中标公告</span><span class="completeness-value">${dc.award_count} 条</span></div>
+    <div class="completeness-item"><span class="completeness-label">更正公告</span><span class="completeness-value">${dc.correction_count} 条</span></div>`;
+  document.getElementById('platformTags').innerHTML=dc.platforms.map(p=>`<span class="platform-tag">${p}</span>`).join('');
+  document.getElementById('missingList').textContent='⚠ 缺失字段：'+dc.missing_fields.join('、');
+}
+async function loadData(){
+  const p=new URLSearchParams(window.location.search);
+  const oid=p.get('org')||'org_001';
+  try{
+    const r=await fetch(`/api/demo/organizations/${encodeURIComponent(oid)}`);
+    if(!r.ok)throw new Error('加载失败');
+    const d=await r.json();
+    if(d.code!==200)throw new Error(d.msg||'加载失败');
+    const o=d.data;
+    document.getElementById('orgName').textContent=o.org_name;
+    document.getElementById('orgNameBig').textContent=o.org_name;
+    document.getElementById('orgAvatar').textContent=o.org_name.slice(0,1);
+    document.getElementById('orgRegion').textContent=o.region;
+    document.getElementById('orgType').textContent=o.org_type;
+    document.getElementById('orgType2').textContent=o.org_type;
+    const a=o.activity_90d;
+    document.getElementById('statTotal').textContent=a.total;
+    document.getElementById('statTender').textContent=a.tender_count;
+    document.getElementById('statAward').textContent=a.award_count;
+    document.getElementById('statWaste').textContent=o.waste_bid_count;
+    document.getElementById('cr3Value').textContent=(o.top3_concentration*100).toFixed(1)+'%';
+    renderActivity(a.daily);
+    renderPurchasers(o.top3_purchasers);
+    renderWaste(o.waste_bid_related);
+    renderCompleteness(o.data_completeness);
+  }catch(e){
+    document.querySelector('.main-container').innerHTML='<div style="text-align:center;padding:60px;color:#999;">加载失败: '+e.message+'</div>';
+  }
+}
+loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1366, initial-scale=1">
+<title>版本历史 · 变更追踪</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
+.header{background:white;padding:16px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header-left{display:flex;align-items:center;gap:16px}
+.back-link{color:#1976d2;text-decoration:none;font-size:14px}
+h1{font-size:18px;color:#1a1a2e}
+.source-info{font-size:12px;color:#999}
+.stats-bar{display:flex;gap:24px;padding:16px 24px;background:white;border-bottom:1px solid #f0f0f0}
+.stat-item{display:flex;flex-direction:column;gap:4px}
+.stat-label{font-size:12px;color:#999}
+.stat-value{font-size:20px;font-weight:600;color:#1a1a2e}
+.stat-value.primary{color:#1976d2}
+.stat-value.success{color:#2e7d32}
+.stat-value.warning{color:#f57c00}
+.main-container{max-width:900px;margin:0 auto;padding:24px}
+.timeline{position:relative;padding-left:40px}
+.timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:#e0e0e0}
+.version-card{background:white;border:1px solid #e8e8e8;border-radius:8px;padding:16px 20px;margin-bottom:20px;position:relative;transition:box-shadow .2s}
+.version-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.version-card::before{content:'';position:absolute;left:-32px;top:24px;width:12px;height:12px;border-radius:50%;background:#1976d2;border:3px solid white;box-shadow:0 0 0 2px #1976d2}
+.version-card.current::before{background:#43a047;box-shadow:0 0 0 2px #43a047}
+.version-card.create::before{background:#1976d2;box-shadow:0 0 0 2px #1976d2}
+.version-card.update_content::before{background:#1976d2}
+.version-card.update_material::before{background:#7b1fa2}
+.version-card.correction::before{background:#f57c00}
+.version-card.reissue::before{background:#c62828}
+.version-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.version-title{display:flex;align-items:center;gap:10px}
+.version-label{font-size:16px;font-weight:600;color:#1a1a2e}
+.version-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.badge-create{background:#e3f2fd;color:#1565c0}
+.badge-update_content{background:#e8f5e9;color:#2e7d32}
+.badge-update_material{background:#f3e5f5;color:#7b1fa2}
+.badge-correction{background:#fff3e0;color:#e65100}
+.badge-reissue{background:#ffebee;color:#c62828}
+.badge-current{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.version-date{font-size:12px;color:#999}
+.version-summary{font-size:13px;color:#555;margin-bottom:12px;line-height:1.6}
+.version-hashes{display:flex;gap:20px;padding:10px 12px;background:#f8f9ff;border-radius:6px;margin-bottom:12px;font-family:monospace;font-size:11px;color:#666}
+.hash-item{display:flex;flex-direction:column;gap:2px}
+.hash-label{font-size:10px;color:#999;font-family:sans-serif}
+.hash-value{color:#1a237e;font-family:monospace}
+.diff-summary{display:flex;gap:16px;margin-bottom:12px;font-size:12px}
+.diff-tag{padding:2px 8px;border-radius:4px;font-weight:500}
+.diff-add{background:#e8f5e9;color:#2e7d32}
+.diff-del{background:#ffebee;color:#c62828}
+.diff-mod{background:#fff3e0;color:#e65100}
+.material-section{border-top:1px solid #f0f0f0;padding-top:12px}
+.material-title{font-size:12px;font-weight:600;color:#666;margin-bottom:8px}
+.material-list{display:flex;flex-direction:column;gap:6px}
+.material-item{display:flex;align-items:center;gap:10px;padding:6px 10px;background:#fafbfc;border-radius:4px;font-size:12px}
+.material-icon{font-size:14px}
+.material-name{flex:1;color:#333}
+.material-action{font-size:11px;padding:1px 6px;border-radius:3px}
+.action-added{background:#e8f5e9;color:#2e7d32}
+.action-modified{background:#fff3e0;color:#e65100}
+.action-removed{background:#ffebee;color:#c62828}
+.material-size{font-size:11px;color:#999;font-family:monospace}
+.view-diff-btn{margin-top:10px;padding:6px 14px;background:#f5f7fa;border:1px solid #ddd;border-radius:4px;cursor:pointer;font-size:12px;color:#666;transition:all .15s}
+.view-diff-btn:hover{background:#e3f2fd;border-color:#1976d2;color:#1976d2}
+.diff-content{margin-top:10px;padding:12px;background:#1e1e1e;border-radius:6px;font-family:monospace;font-size:12px;line-height:1.6;display:none;max-height:300px;overflow:auto}
+.diff-content.show{display:block}
+.diff-line{padding:2px 8px}
+.diff-add{background:rgba(76,175,80,.2);color:#a5d6a7}
+.diff-del{background:rgba(244,67,54,.2);color:#ef9a9a}
+.diff-ctx{color:#999}
+@media(max-width:768px){.main-container{padding:16px}.timeline{padding-left:30px}.timeline::before{left:10px}.version-card::before{left:-27px}}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <a href="/ui/tenders" class="back-link">← 返回列表</a>
+    <div><h1>版本历史 · 变更追踪</h1><div class="source-info" id="sourceInfo">加载中...</div></div>
+  </div>
+</div>
+<div class="stats-bar" id="statsBar"></div>
+<div class="main-container">
+  <div class="timeline" id="timeline"></div>
+</div>
+<script>
+const CT={create:'初始创建',update_content:'内容更新',update_material:'附件更新',correction:'更正公告',reissue:'重新发布'};
+function fmtSize(b){if(b<1024)return b+' B';if(b<1024*1024)return(b/1024).toFixed(1)+' KB';return(b/1024/1024).toFixed(1)+' MB'}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function renderStats(d){
+  document.getElementById('sourceInfo').textContent=d.source_platform+' · '+d.source_url;
+  const s=document.getElementById('statsBar');
+  const added=d.versions.reduce((a,v)=>a+(v.diff_highlight?.added||0),0);
+  const removed=d.versions.reduce((a,v)=>a+(v.diff_highlight?.removed||0),0);
+  const mats=d.versions.reduce((a,v)=>a+(v.material_changes?.length||0),0);
+  s.innerHTML=`<div class="stat-item"><span class="stat-label">总版本数</span><span class="stat-value primary">${d.total_versions}</span></div>
+    <div class="stat-item"><span class="stat-label">当前版本</span><span class="stat-value success">v${d.current_version}.0</span></div>
+    <div class="stat-item"><span class="stat-label">内容变更行</span><span class="stat-value">+${added} / -${removed}</span></div>
+    <div class="stat-item"><span class="stat-label">附件变更</span><span class="stat-value warning">${mats} 次</span></div>`;
+}
+function renderTimeline(versions){
+  const tl=document.getElementById('timeline');
+  tl.innerHTML=versions.map((v,i)=>{
+    const isCur=i===0;
+    const ct=v.change_type;
+    const matHtml=v.material_changes?.length?`<div class="material-section">
+      <div class="material-title">📎 附件变更 (${v.material_changes.length})</div>
+      <div class="material-list">${v.material_changes.map(m=>`<div class="material-item">
+        <span class="material-icon">📄</span>
+        <span class="material-name">${esc(m.name)}</span>
+        <span class="material-action action-${m.action}">${m.action==='added'?'新增':m.action==='modified'?'修改':'删除'}</span>
+        <span class="material-size">${fmtSize(m.size)}</span>
+      </div>`).join('')}</div>
+    </div>`:'';
+    const diff=v.diff_highlight;
+    return `<div class="version-card ${ct}${isCur?' current':''}" id="v${v.version_id}">
+      <div class="version-header">
+        <div class="version-title">
+          <span class="version-label">${v.version_label}</span>
+          <span class="version-badge badge-${ct}">${CT[ct]||ct}</span>
+          ${isCur?'<span class="version-badge badge-current">当前版本</span>':''}
+        </div>
+        <span class="version-date">${v.publish_time.replace('T',' ')}</span>
+      </div>
+      <div class="version-summary">${esc(v.change_summary)}</div>
+      <div class="version-hashes">
+        <div class="hash-item"><span class="hash-label">content_sha256</span><span class="hash-value">${v.content_sha256}</span></div>
+        <div class="hash-item"><span class="hash-label">material_sha256</span><span class="hash-value">${v.material_sha256}</span></div>
+      </div>
+      <div class="diff-summary">
+        <span class="diff-tag diff-add">+ ${diff.added} 行新增</span>
+        <span class="diff-tag diff-del">- ${diff.removed} 行删除</span>
+        <span class="diff-tag diff-mod">~ ${diff.modified} 处修改</span>
+      </div>
+      ${matHtml}
+      <button class="view-diff-btn" onclick="toggleDiff(${v.version_id})">📝 查看 Diff</button>
+      <div class="diff-content" id="diff-${v.version_id}">
+        <div class="diff-line diff-add">+ 新增内容示例：项目名称：信息化系统建设项目</div>
+        <div class="diff-line diff-add">+ 预算金额：1,200,000.00 元</div>
+        <div class="diff-line diff-ctx">...</div>
+        <div class="diff-line diff-del">- 投标截止：2026年8月1日</div>
+        <div class="diff-line diff-add">+ 投标截止：2026年8月15日</div>
+        <div class="diff-line diff-ctx">...</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleDiff(vid){
+  const el=document.getElementById('diff-'+vid);
+  el.classList.toggle('show');
+}
+async function loadData(){
+  const p=new URLSearchParams(window.location.search);
+  const sid=p.get('source')||'ccgp_001';
+  try{
+    const r=await fetch(`/api/demo/sources/${encodeURIComponent(sid)}/versions`);
+    if(!r.ok)throw new Error('加载失败');
+    const d=await r.json();
+    if(d.code!==200)throw new Error(d.msg||'加载失败');
+    renderStats(d.data);
+    renderTimeline(d.data.versions);
+  }catch(e){
+    document.getElementById('timeline').innerHTML='<div style="text-align:center;padding:60px;color:#999;">加载失败: '+e.message+'</div>';
+  }
+}
+loadData();
+</script>
+</body>
+</html>
