@@ -1,4 +1,4 @@
-"""W2-01 LLM 字段抽取 prompt + 调用逻辑。
+﻿"""W2-01 LLM 字段抽取 prompt + 调用逻辑。
 
 对应总规划 v4.1 第六章 6.1 工作流程「LLM 输出字段值和候选证据列表」。
 
@@ -546,6 +546,8 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
         total_tokens = data.get("usage", {}).get("total_tokens", 0)
 
         result = parse_extraction_response(parsed_json, model_id, latency_ms, total_tokens)
+        # P1-15: 璁板綍璇锋眰鍙傛暟锛堢害鏉?#49锛?        result.temperature = 0.1
+        result.max_tokens = 8000
 
         logger.info(
             "LLM extraction success model={} fields={} tokens={} latency={}ms",
@@ -635,6 +637,9 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
         result = parse_extraction_response(
             parsed_json, model_id, latency_ms, total_tokens
         )
+        # P1-15: 记录请求参数（约束 #49）
+        result.temperature = 0.1
+        result.max_tokens = 8000
         # 覆盖 prompt_hash 为无证据版本
         result.prompt_hash = no_evidence_hash
         # P1-13 修复：强制清空 candidate_evidences，确保 no_evidence 模式下不携带证据

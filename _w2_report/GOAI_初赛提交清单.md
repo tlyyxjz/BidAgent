@@ -125,7 +125,10 @@
 
 ### 当前分支结构
 - **feature/glm-w2-evidence**（W2 主线，已 push 到 GitHub）
+  - commit 2b17993: fix(K3): 仲裁B口径修复 - amount=budget+award多值 + W2-08/W2-09重跑
+  - commit 3ba965b: fix(K3-P0): 按Sol规矩修复8项P0 - PPT/代码/测试/宣传
   - commit 2e37930: fix(P0-4): 创建compliance.md合规声明 - 4大块118行
+  - commit 7c71147: fix(K3-Sol复查): 修复3项P0口径冲突+8项P1+2项P2+W2-05入库验证
   - commit e671e2d: fix(test): conftest.py 加 try/except 修复 120 errors 测试环境问题
 - **feature/glm-w2-06**（前端高亮，已 push 到 GitHub）
   - commit 79b2f35: feat(W2-06): 前端字段高亮 Demo + 6 Agent 协作聊天页
@@ -134,11 +137,9 @@
 - **均未推 main/develop**：符合硬约束 #36
 - **GitHub 仓库**：https://github.com/tlyyxjz/BidAgent（公开）
 
-### 待 commit（K3 仲裁 B 口径修复 + W2-08/W2-09 重跑）
-- 3 篇金标 budget 修复（annotation_04/05/06_award_A.json，amount 增加 budget 值）
-- W2-08 消融实验 budget 口径结果（W2-08_ablation_22篇_budget口径.json + .log）
-- W2-09 证据定位 budget 口径结果（W2-09_evidence_22篇_budget口径.json + .log）
-- W2 评测报告更新版（budget 口径说明 + API 402 失败说明 + 16篇口径对比）
-- 路演讲稿同步（2.91%→1.94%，recall 74.76%→65.75% 16篇口径）
-- Demo 脚本同步（2.91%→1.94%，4 处）
-- 本提交清单更新版（compliance.md 假完成标记）
+### 已 commit（K3 仲裁 B 口径修复 + W2-08/W2-09 重跑）
+- commit 2b17993: 3 篇金标 budget 修复（annotation_04/05/06_award_A.json，amount 增加 budget 值）
+- commit 3ba965b: P0 修复（W2-08/W2-09 budget 口径结果 + 代码修复 + 测试）
+- commit 2e37930: compliance.md 合规声明
+- commit 7c71147: Sol 复查修复（3 项 P0 口径冲突 + 8 项 P1 + 2 项 P2 + W2-05 入库验证）
+- 已 push 到 feature/glm-w2-evidence 分支
