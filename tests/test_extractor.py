@@ -249,6 +249,120 @@ class TestParseResponse:
         result = parse_extraction_response(data, "test", 0)
         assert result.fields[0].field_status == "present"
 
+    def test_parse_dict_raw_value_normalized(self):
+        """K3-W3-03 方案A：raw_value 为 dict 时归一化为 JSON 字符串。
+
+        联合体场景下 LLM v2 prompt R4 输出 {"main":..., "partners":[...]}，
+        FieldExtraction.raw_value 是 Optional[str]，不收 dict。
+        原实现整篇炸掉（6 字段全丢），修复后应序列化为 JSON 字符串。
+        """
+        data = {
+            "fields": [
+                {
+                    "field_name": "winner_name",
+                    "field_status": "present",
+                    "raw_value": {"main": "公司A", "partners": ["公司B", "公司C"]},
+                    "candidate_evidences": [],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        assert len(result.fields) == 1
+        rv = result.fields[0].raw_value
+        assert isinstance(rv, str)
+        parsed = json.loads(rv)
+        assert parsed["main"] == "公司A"
+        assert parsed["partners"] == ["公司B", "公司C"]
+
+    def test_parse_list_raw_value_normalized(self):
+        """K3-W3-03 方案A：raw_value 为 list 时归一化为 JSON 字符串。
+
+        多中标人场景下 LLM 可能输出 ["公司A", "公司B"]，
+        修复后应序列化为 JSON 字符串。
+        """
+        data = {
+            "fields": [
+                {
+                    "field_name": "winner_name",
+                    "field_status": "multi_value",
+                    "raw_value": ["公司A", "公司B"],
+                    "candidate_evidences": [],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        assert len(result.fields) == 1
+        rv = result.fields[0].raw_value
+        assert isinstance(rv, str)
+        parsed = json.loads(rv)
+        assert parsed == ["公司A", "公司B"]
+
+    def test_parse_int_raw_value_coerced(self):
+        """K3-W3-03 方案A：raw_value 为非 str 标量时强转 str。
+
+        LLM 偶尔输出 int/float，修复后应强转为 str。
+        """
+        data = {
+            "fields": [
+                {
+                    "field_name": "amount",
+                    "field_status": "present",
+                    "raw_value": 1000000,
+                    "amount_type": "budget",
+                    "candidate_evidences": [],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        assert len(result.fields) == 1
+        assert result.fields[0].raw_value == "1000000"
+        assert isinstance(result.fields[0].raw_value, str)
+
+    def test_parse_field_validation_error_skipped(self):
+        """K3-W3-03 方案D：单字段构造失败时跳过，保留其他字段。
+
+        原实现单字段失败导致整篇 6 字段全丢，
+        修复后应跳过失败字段，保留可解析字段。
+
+        构造触发场景：candidate_evidences[].evidence_text 为 dict，
+        _validate_extraction 只检查 key 存在不检查类型，
+        但 pydantic CandidateEvidence 构造时 dict 不能转 str，抛 ValidationError。
+        """
+        data = {
+            "fields": [
+                {
+                    "field_name": "project_identifier",
+                    "field_status": "present",
+                    "raw_value": "ZFCG-2026-001",
+                    "candidate_evidences": [],
+                },
+                {
+                    "field_name": "amount",
+                    "field_status": "present",
+                    "raw_value": "100万元",
+                    "amount_type": "budget",
+                    # evidence_text 传 dict，绕过 _validate_extraction（只查 key 存在），
+                    # 在 CandidateEvidence 构造时触发 pydantic ValidationError
+                    "candidate_evidences": [
+                        {"evidence_text": {"nested": "value"}, "role": "primary"}
+                    ],
+                },
+                {
+                    "field_name": "purchaser_name",
+                    "field_status": "present",
+                    "raw_value": "某机关单位",
+                    "candidate_evidences": [],
+                },
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        # 失败字段被跳过，保留 2 个可解析字段
+        field_names = [f.field_name for f in result.fields]
+        assert "project_identifier" in field_names
+        assert "purchaser_name" in field_names
+        assert "amount" not in field_names
+        assert len(result.fields) == 2
+
 
 # ========== LLM 调用测试（mock） ==========
 
@@ -593,3 +707,100 @@ class TestStripMarkdownFence:
         """已是有效 JSON，不变。"""
         raw = '{"a": 1, "b": 2}'
         assert _strip_markdown_fence(raw) == raw
+
+
+# ========== K3-W3-03 raw_value 归一化 + per-field 容错测试 ==========
+
+
+class TestRawValueNormalization:
+    """K3-W3-03 方案 A：dict/list raw_value 归一化为 JSON 字符串。"""
+
+    def test_dict_raw_value_normalized_to_json_string(self):
+        """联合体 dict raw_value 不再炸 parse，转为可逆 JSON 字符串。"""
+        data = {
+            "fields": [
+                {
+                    "field_name": "winner_name",
+                    "field_status": "present",
+                    "raw_value": {"main": "甲建设集团有限公司", "partners": ["乙信息技术有限公司"]},
+                    "candidate_evidences": [
+                        {"evidence_text": "中标人：甲建设集团有限公司（联合体牵头人）", "role": "primary"}
+                    ],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        assert len(result.fields) == 1
+        rv = result.fields[0].raw_value
+        assert isinstance(rv, str)
+        parsed_back = json.loads(rv)
+        assert parsed_back["main"] == "甲建设集团有限公司"
+        assert parsed_back["partners"] == ["乙信息技术有限公司"]
+
+    def test_list_raw_value_normalized(self):
+        data = {
+            "fields": [
+                {"field_name": "winner_name", "field_status": "present",
+                 "raw_value": ["甲公司", "乙公司"], "candidate_evidences": []}
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        assert isinstance(result.fields[0].raw_value, str)
+        assert json.loads(result.fields[0].raw_value) == ["甲公司", "乙公司"]
+
+    def test_scalar_raw_value_coerced_to_str(self):
+        """int raw_value（LLM 把金额输出成数字）强转 str，不炸。"""
+        data = {
+            "fields": [
+                {"field_name": "amount", "field_status": "present",
+                 "raw_value": 2580, "amount_type": "award", "candidate_evidences": []}
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        assert result.fields[0].raw_value == "2580"
+
+    def test_str_raw_value_unchanged(self):
+        """正常 str 不受影响（防回归）。"""
+        data = {
+            "fields": [
+                {"field_name": "winner_name", "field_status": "present",
+                 "raw_value": "广东美的制冷设备有限公司", "candidate_evidences": []}
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        assert result.fields[0].raw_value == "广东美的制冷设备有限公司"
+
+    def test_none_raw_value_unchanged(self):
+        data = {
+            "fields": [
+                {"field_name": "winner_name", "field_status": "absent",
+                 "raw_value": None, "candidate_evidences": []}
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        assert result.fields[0].raw_value is None
+
+
+class TestPerFieldFaultTolerance:
+    """K3-W3-03 方案 D：单字段构造失败不拖垮整篇公告。"""
+
+    def test_broken_field_skipped_others_survive(self):
+        """evidence_text 非 str 的字段被跳过，其余字段正常解析。"""
+        data = {
+            "fields": [
+                {"field_name": "project_identifier", "field_status": "present",
+                 "raw_value": "ZFCG-2026-001",
+                 "candidate_evidences": [{"evidence_text": "项目编号：ZFCG-2026-001", "role": "primary"}]},
+                {"field_name": "winner_name", "field_status": "present",
+                 "raw_value": "某公司",
+                 "candidate_evidences": [{"evidence_text": {"bad": "type"}, "role": "primary"}]},
+                {"field_name": "amount", "field_status": "present",
+                 "raw_value": "100万元", "amount_type": "budget", "candidate_evidences": []},
+            ]
+        }
+        result = parse_extraction_response(data, "test", 0)
+        names = [f.field_name for f in result.fields]
+        assert "project_identifier" in names
+        assert "amount" in names
+        assert "winner_name" not in names
+        assert len(result.fields) == 2

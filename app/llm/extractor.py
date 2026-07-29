@@ -25,6 +25,7 @@ import time
 from typing import Any, Optional
 
 import httpx
+from pydantic import ValidationError
 
 from app.config import settings
 from app.llm.extraction_schemas import (
@@ -464,22 +465,42 @@ def parse_extraction_response(
 
     fields = []
     for field_data in data["fields"]:
-        evidences = [
-            CandidateEvidence(
-                evidence_text=ev["evidence_text"],
-                role=ev.get("role", "primary"),
+        # K3-W3-03 方案 A：raw_value 类型归一化
+        # v2 prompt R4 要求联合体输出 {"main":..., "partners":[...]} dict，
+        # 而 FieldExtraction.raw_value 是 Optional[str]，pydantic 2.x 不收 dict，
+        # 原实现在此整篇炸掉（6 字段全丢）。dict/list 序列化为 JSON 字符串
+        # （与 LLM 在多值语境下的自发输出形态一致），非 str 标量强转 str。
+        raw_value = field_data.get("raw_value")
+        if isinstance(raw_value, (dict, list)):
+            raw_value = json.dumps(raw_value, ensure_ascii=False)
+        elif raw_value is not None and not isinstance(raw_value, str):
+            raw_value = str(raw_value)
+
+        # K3-W3-03 方案 D：per-field 容错——单字段构造失败跳过并告警，
+        # 不拖垮整篇公告其余字段
+        try:
+            evidences = [
+                CandidateEvidence(
+                    evidence_text=ev["evidence_text"],
+                    role=ev.get("role", "primary"),
+                )
+                for ev in field_data.get("candidate_evidences", [])
+            ]
+            field_ext = FieldExtraction(
+                field_name=field_data["field_name"],
+                field_status=field_data.get("field_status", "present"),
+                raw_value=raw_value,
+                amount_type=field_data.get("amount_type"),
+                currency=field_data.get("currency"),
+                lot_id=field_data.get("lot_id"),
+                candidate_evidences=evidences,
             )
-            for ev in field_data.get("candidate_evidences", [])
-        ]
-        field_ext = FieldExtraction(
-            field_name=field_data["field_name"],
-            field_status=field_data.get("field_status", "present"),
-            raw_value=field_data.get("raw_value"),
-            amount_type=field_data.get("amount_type"),
-            currency=field_data.get("currency"),
-            lot_id=field_data.get("lot_id"),
-            candidate_evidences=evidences,
-        )
+        except ValidationError as e:
+            logger.warning(
+                "字段 parse 失败已跳过（field_name=%s）: %s",
+                field_data.get("field_name"), e,
+            )
+            continue
         fields.append(field_ext)
 
     return ExtractionResult(
