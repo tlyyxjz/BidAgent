@@ -1,4 +1,4 @@
-﻿"""W2-01 LLM 字段抽取 prompt + 调用逻辑。
+"""W2-01 LLM 字段抽取 prompt + 调用逻辑。
 
 对应总规划 v4.1 第六章 6.1 工作流程「LLM 输出字段值和候选证据列表」。
 
@@ -25,7 +25,6 @@ import time
 from typing import Any, Optional
 
 import httpx
-from pydantic import ValidationError
 
 from app.config import settings
 from app.llm.extraction_schemas import (
@@ -37,45 +36,10 @@ from app.llm.extraction_schemas import (
     ExtractionResult,
     FieldExtraction,
 )
+from app.processors.display_grade import compute_display_grade
 from app.utils.logger import get_logger
 
 logger = get_logger("llm_extractor")
-
-# ========== 工具函数 ==========
-
-
-def _strip_markdown_fence(content: str) -> str:
-    """剥离 markdown 代码块 fence（```json ... ``` / ``` ... ```）。
-
-    部分 LLM 即使设置了 response_format=json_object 仍可能用 markdown fence
-    包裹 JSON 输出，直接 json.loads 会抛 JSONDecodeError (#42 修复)。
-
-    Args:
-        content: LLM 返回的原始字符串
-
-    Returns:
-        剥离 fence 后的字符串；若不含 fence 则原样返回（仅 strip 前后空白）
-    """
-    if not content:
-        return content
-    text = content.strip()
-    # 不含 fence，原样返回
-    if "```" not in text:
-        return text
-    # 去除开头的 ```json / ``` 标记（取首行之后的内容）
-    if text.startswith("```"):
-        newline_idx = text.find("\n")
-        if newline_idx != -1:
-            text = text[newline_idx + 1:]
-        else:
-            # 单行 fence（罕见）：仅去掉开头 ```
-            text = text[3:]
-    # 去除结尾的 ```
-    if text.endswith("```"):
-        text = text[:-3]
-    return text.strip()
-
-
 
 # ========== W2-01 抽取 System Prompt ==========
 
@@ -465,42 +429,22 @@ def parse_extraction_response(
 
     fields = []
     for field_data in data["fields"]:
-        # K3-W3-03 方案 A：raw_value 类型归一化
-        # v2 prompt R4 要求联合体输出 {"main":..., "partners":[...]} dict，
-        # 而 FieldExtraction.raw_value 是 Optional[str]，pydantic 2.x 不收 dict，
-        # 原实现在此整篇炸掉（6 字段全丢）。dict/list 序列化为 JSON 字符串
-        # （与 LLM 在多值语境下的自发输出形态一致），非 str 标量强转 str。
-        raw_value = field_data.get("raw_value")
-        if isinstance(raw_value, (dict, list)):
-            raw_value = json.dumps(raw_value, ensure_ascii=False)
-        elif raw_value is not None and not isinstance(raw_value, str):
-            raw_value = str(raw_value)
-
-        # K3-W3-03 方案 D：per-field 容错——单字段构造失败跳过并告警，
-        # 不拖垮整篇公告其余字段
-        try:
-            evidences = [
-                CandidateEvidence(
-                    evidence_text=ev["evidence_text"],
-                    role=ev.get("role", "primary"),
-                )
-                for ev in field_data.get("candidate_evidences", [])
-            ]
-            field_ext = FieldExtraction(
-                field_name=field_data["field_name"],
-                field_status=field_data.get("field_status", "present"),
-                raw_value=raw_value,
-                amount_type=field_data.get("amount_type"),
-                currency=field_data.get("currency"),
-                lot_id=field_data.get("lot_id"),
-                candidate_evidences=evidences,
+        evidences = [
+            CandidateEvidence(
+                evidence_text=ev["evidence_text"],
+                role=ev.get("role", "primary"),
             )
-        except ValidationError as e:
-            logger.warning(
-                "字段 parse 失败已跳过（field_name=%s）: %s",
-                field_data.get("field_name"), e,
-            )
-            continue
+            for ev in field_data.get("candidate_evidences", [])
+        ]
+        field_ext = FieldExtraction(
+            field_name=field_data["field_name"],
+            field_status=field_data.get("field_status", "present"),
+            raw_value=field_data.get("raw_value"),
+            amount_type=field_data.get("amount_type"),
+            currency=field_data.get("currency"),
+            lot_id=field_data.get("lot_id"),
+            candidate_evidences=evidences,
+        )
         fields.append(field_ext)
 
     return ExtractionResult(
@@ -510,6 +454,28 @@ def parse_extraction_response(
         total_tokens=total_tokens,
         latency_ms=latency_ms,
     )
+
+
+# ========== W3-07 display_grade 接入 ==========
+
+def _populate_display_grades(
+    result: ExtractionResult,
+    source_role: str = "official_original",
+) -> None:
+    """原地为 result.fields 计算并写入 display_grade（调用方已设 support_level/cross_verified）.
+
+    说明：
+      - 当前 LLM 抽取阶段无法判断来源交叉验证，cross_verified 默认取字段原值。
+      - display_grade 只基于当前字段的 support_level + source_role + cross_verified + field_status
+        进行纯函数计算，不与数据库绑定。
+    """
+    for field in result.fields:
+        field.display_grade = compute_display_grade(
+            support_level=field.support_level,
+            source_role=source_role,
+            cross_verified=field.cross_verified,
+            field_status=field.field_status,
+        )
 
 
 # ========== LLM 调用 ==========
@@ -562,13 +528,11 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
             data = resp.json()
 
         content = data["choices"][0]["message"]["content"]
-        parsed_json = json.loads(_strip_markdown_fence(content))
+        parsed_json = json.loads(content)
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         total_tokens = data.get("usage", {}).get("total_tokens", 0)
 
         result = parse_extraction_response(parsed_json, model_id, latency_ms, total_tokens)
-        # P1-15: 璁板綍璇锋眰鍙傛暟锛堢害鏉?#49锛?        result.temperature = 0.1
-        result.max_tokens = 8000
 
         logger.info(
             "LLM extraction success model={} fields={} tokens={} latency={}ms",
@@ -577,6 +541,8 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
             result.total_tokens,
             result.latency_ms,
         )
+        # W3-07: 为每个字段计算 display_grade（默认 source_role=official_original，交叉验证在多源合并阶段赋值）
+        _populate_display_grades(result, source_role="official_original")
         return result
 
     except Exception as exc:
@@ -595,8 +561,6 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
             total_tokens=0,
             latency_ms=latency_ms,
             error=str(exc),
-            temperature=0.1,
-            max_tokens=8000,
         )
 
 
@@ -653,19 +617,13 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
         total_tokens = data.get("usage", {}).get("total_tokens", 0)
 
         parsed_json = data["choices"][0]["message"]["content"]
-        parsed_json = json.loads(_strip_markdown_fence(parsed_json))
+        parsed_json = json.loads(parsed_json)
 
         result = parse_extraction_response(
             parsed_json, model_id, latency_ms, total_tokens
         )
-        # P1-15: 记录请求参数（约束 #49）
-        result.temperature = 0.1
-        result.max_tokens = 8000
         # 覆盖 prompt_hash 为无证据版本
         result.prompt_hash = no_evidence_hash
-        # P1-13 修复：强制清空 candidate_evidences，确保 no_evidence 模式下不携带证据
-        for f in result.fields:
-            f.candidate_evidences = []
 
         logger.info(
             "LLM no-evidence extraction OK model={} fields={} tokens={} latency={}ms",
@@ -674,6 +632,8 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
             total_tokens,
             latency_ms,
         )
+        # W3-07: 同样填充 display_grade
+        _populate_display_grades(result, source_role="official_original")
         return result
 
     except Exception as exc:
@@ -691,6 +651,4 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
             total_tokens=0,
             latency_ms=latency_ms,
             error=str(exc),
-            temperature=0.1,
-            max_tokens=8000,
         )

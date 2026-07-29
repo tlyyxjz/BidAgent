@@ -136,6 +136,16 @@ class ExtractedField(Base):
     version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     is_current: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
+    # ==== W3-07 新增：展示等级 + 交叉验证状态 ====
+    # 展示等级（high/review/low）
+    display_grade: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="review"
+    )
+    # 是否被多源交叉验证过
+    cross_verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
     )

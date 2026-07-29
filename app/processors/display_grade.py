@@ -1,113 +1,105 @@
-"""展示等级计算 (v4.1 第 6.6 节).
+"""W3-07 display_grade 展示等级计算。
 
-输入三个质量维度:
-- support_level: direct / equivalent / inferred / unsupported / contradicted
-- source_quality: official_original / official_repost / authorized_original
-                  / commercial_repost / index_only / unknown
-- cross_verify_status: independent / consistent_unknown / same_origin
-                       / version_difference / conflict / single_source
+对应总规划 v4.1 第八章「展示等级」与第十章 10.7「选择性输出策略」。
 
-输出展示等级:
-- high: 可直接展示给用户
-- review: 需人工复核
-- low: 默认过滤或显著提示
+判定规则（v4.1 第八章，命题提示词）:
+  HIGH = "high"      → 可直接对外输出
+  REVIEW = "review"  → 复核后输出（默认）
+  LOW = "low"        → 仅审计视图可见
 
-规则要点 (v4.1 第 6.4 节):
-- 单一官方原始来源 + 直接原文证据可构成 high
-  (独立跨源验证是增强项, 非必要条件)
-- 推导字段 (inferred) 一律 review
-- 无证据 / 冲突 / 来源未知 一律 low
+输入说明：
+  support_level（app.processors.evidence_locator.SupportLevel）:
+    DIRECT    → 强证据（原文精确出现，v4.1 STRONG）
+    EQUIVALENT → 强证据（规范化后匹配，v4.1 STRONG）
+    INFERRED  → 中证据（L3/L4 推导，v4.1 MEDIUM）
+    UNSUPPORTED → 弱证据（无依据，v4.1 WEAK）
+    CONTRADICTED → 弱证据（冲突，v4.1 WEAK）
+  source_role（app.llm.extraction_schemas 中 lineage）:
+    official_original / official_repost / commercial_repost / unknown
+  cross_verified:
+    是否被多源交叉验证
+  field_status:
+    present / absent / ambiguous / unreadable / multi_value
 """
 from __future__ import annotations
 
-from enum import Enum
+from typing import Any, Union
+
+from app.processors.evidence_locator import SupportLevel
+
+GRADE_HIGH = "high"
+GRADE_REVIEW = "review"
+GRADE_LOW = "low"
+VALID_GRADES = (GRADE_HIGH, GRADE_REVIEW, GRADE_LOW)
+
+# SupportLevel → 强度映射（v4.1 第八章 STRONG/MEDIUM/WEAK）
+_STRENGTH_HIGH = {SupportLevel.DIRECT.value, SupportLevel.EQUIVALENT.value}
+_STRENGTH_MID = {SupportLevel.INFERRED.value}
+_STRENGTH_LOW = {SupportLevel.UNSUPPORTED.value, SupportLevel.CONTRADICTED.value}
+
+# 可视为"无数据 / 应降级"的字段状态
+_FIELD_STATUS_LOW = {"absent", "ambiguous", "unreadable"}
 
 
-RULE_VERSION = "display_grade_v1.0"
+# 兼容传入 SupportLevel 枚举或原始字符串
+def _sl_value(sl: Union[str, SupportLevel, None]) -> str:
+    if sl is None:
+        return SupportLevel.UNSUPPORTED.value
+    if isinstance(sl, SupportLevel):
+        return sl.value
+    return str(sl)
 
 
-class DisplayGrade(str, Enum):
-    HIGH = "high"
-    REVIEW = "review"
-    LOW = "low"
+def compute_display_grade(
+    support_level: Union[str, SupportLevel],
+    source_role: str,
+    cross_verified: bool = False,
+    field_status: str = "present",
+) -> str:
+    """计算字段展示等级.
 
+    判定顺序（v4.1 第八章「先降级规则，后升级」）:
+    1. 先判断 LOW 规则（排除性规则优先级最高）:
+       - field_status ∈ (absent, ambiguous, unreadable) → low
+       - support_level ∈ WEAK (unsupported, contradicted) → low
+       - source_role == "unknown" → low
+    2. 再判断 HIGH 规则:
+       - (support_level ∈ STRONG: direct/equivalent) AND
+         (source_role == "official_original") → high
+         （cross_verified=True 为 bonus，不改变 high 判定结果）
+    3. 其余 → review:
+       - support_level ∈ MEDIUM (inferred)
+       - source_role ∈ (official_repost, commercial_repost)
+       - support_level=STRONG 但 source_role=commercial_repost
+       - 任何 HIGH/LOW 边界之外的混合
 
-# 合法输入枚举（用于输入校验和测试）
-SUPPORT_LEVELS = {
-    "direct", "equivalent", "inferred", "unsupported", "contradicted",
-}
-SOURCE_QUALITIES = {
-    "official_original", "official_repost", "authorized_original",
-    "commercial_repost", "index_only", "unknown",
-}
-CROSS_VERIFY_STATUSES = {
-    "independent", "consistent_unknown", "same_origin",
-    "version_difference", "conflict", "single_source",
-}
+    Args:
+        support_level: SupportLevel 枚举或字符串值（direct/equivalent/...）
+        source_role: 来源角色 (official_original/official_repost/commercial_repost/unknown)
+        cross_verified: 是否被多源交叉验证（当前为 bonus 标记，不改变 grade）
+        field_status: 字段状态 present/absent/ambiguous/unreadable
 
-# 官方来源集合（high 候选）
-OFFICIAL_SOURCES = {
-    "official_original", "official_repost", "authorized_original",
-}
-
-
-def compute_display_grade(support_level, source_quality, cross_verify_status):
-    """根据三个质量维度计算展示等级.
-
-    规则 (v4.1 第 6.6 节):
-    - LOW 优先: 无证据 / 冲突 / 来源未知
-    - REVIEW: 推导 / 商业转载 / 索引 / 转载链 / 独立性未知
-    - HIGH: direct/equivalent + 官方来源 + 无冲突
-      (single_source + 官方原始来源 + 直接证据 = high)
+    Returns:
+        "high" | "review" | "low"
     """
-    # LOW 优先判定
-    if support_level in ("unsupported", "contradicted"):
-        return DisplayGrade.LOW
-    if cross_verify_status == "conflict":
-        return DisplayGrade.LOW
-    if source_quality == "unknown":
-        return DisplayGrade.LOW
+    sl = _sl_value(support_level).lower()
+    src = (source_role or "unknown").lower()
+    fs = (field_status or "present").lower()
 
-    # REVIEW 判定: 推导
-    if support_level == "inferred":
-        return DisplayGrade.REVIEW
-    # REVIEW 判定: 商业转载 / 索引
-    if source_quality in ("commercial_repost", "index_only"):
-        return DisplayGrade.REVIEW
-    # REVIEW 判定: 同源转载（独立性不足）
-    if cross_verify_status == "same_origin":
-        return DisplayGrade.REVIEW
+    # Step 1: LOW (排除规则)
+    if fs in _FIELD_STATUS_LOW:
+        return GRADE_LOW
+    if sl in _STRENGTH_LOW:
+        return GRADE_LOW
+    if src == "unknown":
+        return GRADE_LOW
 
-    # HIGH 判定: direct/equivalent + 官方来源 + 无冲突
-    if support_level in ("direct", "equivalent"):
-        if source_quality in OFFICIAL_SOURCES:
-            # single_source + 官方原始来源 + 直接证据 = high
-            # independent / consistent_unknown / version_difference 也算 high
-            if cross_verify_status in (
-                "independent", "consistent_unknown",
-                "single_source", "version_difference",
-            ):
-                return DisplayGrade.HIGH
-            return DisplayGrade.REVIEW
-        return DisplayGrade.REVIEW
+    # Step 2: HIGH
+    if sl in _STRENGTH_HIGH and src == "official_original":
+        return GRADE_HIGH
 
-    # 兜底：未匹配任何规则，标记待复核
-    return DisplayGrade.REVIEW
-
-
-def validate_inputs(support_level, source_quality, cross_verify_status):
-    """校验输入值是否在合法枚举内（用于测试和调试）."""
-    errors = []
-    if support_level not in SUPPORT_LEVELS:
-        errors.append(
-            f"support_level={support_level!r} 不在 {SUPPORT_LEVELS}"
-        )
-    if source_quality not in SOURCE_QUALITIES:
-        errors.append(
-            f"source_quality={source_quality!r} 不在 {SOURCE_QUALITIES}"
-        )
-    if cross_verify_status not in CROSS_VERIFY_STATUSES:
-        errors.append(
-            f"cross_verify_status={cross_verify_status!r} 不在 {CROSS_VERIFY_STATUSES}"
-        )
-    return errors
+    # Step 3: REVIEW (其余全部)
+    # - sl=MEDIUM (inferred)
+    # - sl=STRONG + official_repost
+    # - sl=STRONG + commercial_repost
+    return GRADE_REVIEW

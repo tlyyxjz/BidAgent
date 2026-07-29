@@ -1,0 +1,2529 @@
+{
+  "task": "W3-03",
+  "version": "v1",
+  "timestamp": "2026-07-29 15:41:36",
+  "overall": {
+    "docs_count": 90,
+    "fields_total": 540,
+    "fields_present": 394,
+    "fields_found": 278,
+    "evidences_pred": 566,
+    "evidences_located": 555,
+    "evidences_matched": 300,
+    "recall": 0.7056,
+    "precision": 0.53,
+    "iou_avg": 0.444,
+    "iou_avg_matched": 0.8378,
+    "iou_p50": 1.0,
+    "iou_p95": 1.0,
+    "model_id": "deepseek-v4-flash",
+    "prompt_hash": "6c10d5ccdd0287d4",
+    "total_tokens": 310700,
+    "invalid_docs": [],
+    "by_type": {
+      "tender": {
+        "docs": 30,
+        "fields_present": 150,
+        "fields_found": 111,
+        "evidences_pred": 224,
+        "evidences_matched": 118,
+        "recall": 0.74,
+        "precision": 0.5268
+      },
+      "award": {
+        "docs": 30,
+        "fields_present": 150,
+        "fields_found": 98,
+        "evidences_pred": 203,
+        "evidences_matched": 105,
+        "recall": 0.6533,
+        "precision": 0.5172
+      },
+      "correction": {
+        "docs": 30,
+        "fields_present": 94,
+        "fields_found": 69,
+        "evidences_pred": 139,
+        "evidences_matched": 77,
+        "recall": 0.734,
+        "precision": 0.554
+      }
+    }
+  },
+  "doc_metrics": [
+    {
+      "doc_id": "w3_tender_001",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 10,
+      "evidences_located": 10,
+      "evidences_matched": 6,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.3333,
+        0.0,
+        0.5238,
+        0.0,
+        0.8286,
+        0.2069
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.5238,
+        0.8286
+      ],
+      "recall": 1.0,
+      "precision": 0.6,
+      "iou_avg": 0.4635,
+      "iou_avg_matched": 0.7725
+    },
+    {
+      "doc_id": "w3_tender_002",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.7826,
+        0.0,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        0.7826,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.6667,
+      "iou_avg": 0.5185,
+      "iou_avg_matched": 0.7778
+    },
+    {
+      "doc_id": "w3_tender_003",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.0,
+        0.4231,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.8286
+      ],
+      "recall": 0.6,
+      "precision": 0.5714,
+      "iou_avg": 0.4755,
+      "iou_avg_matched": 0.8321
+    },
+    {
+      "doc_id": "w3_tender_004",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.6,
+        0.7727,
+        0.0,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6,
+        0.7727,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.6667,
+      "iou_avg": 0.5335,
+      "iou_avg_matched": 0.8003
+    },
+    {
+      "doc_id": "w3_tender_005",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 5,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.7727,
+        0.0,
+        0.6471,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.7727,
+        0.6471,
+        0.8286
+      ],
+      "recall": 1.0,
+      "precision": 0.8333,
+      "iou_avg": 0.7081,
+      "iou_avg_matched": 0.8497
+    },
+    {
+      "doc_id": "w3_tender_006",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 5,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.4231,
+        0.0,
+        0.8286,
+        0.2069
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.625,
+      "iou_avg": 0.5139,
+      "iou_avg_matched": 0.8222
+    },
+    {
+      "doc_id": "w3_tender_007",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.7826,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        0.7826,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.8,
+      "iou_avg": 0.6222,
+      "iou_avg_matched": 0.7778
+    },
+    {
+      "doc_id": "w3_tender_008",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.7826,
+        0.0,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        0.7826,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.6667,
+      "iou_avg": 0.5185,
+      "iou_avg_matched": 0.7778
+    },
+    {
+      "doc_id": "w3_tender_009",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.0,
+        0.7826,
+        0.0,
+        0.6471,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.7826,
+        0.6471,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.6667,
+      "iou_avg": 0.543,
+      "iou_avg_matched": 0.8146
+    },
+    {
+      "doc_id": "w3_tender_010",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 5,
+      "iou_list": [
+        1.0,
+        0.6,
+        0.7826,
+        0.6471,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6,
+        0.7826,
+        0.6471,
+        0.8286
+      ],
+      "recall": 1.0,
+      "precision": 1.0,
+      "iou_avg": 0.7716,
+      "iou_avg_matched": 0.7716
+    },
+    {
+      "doc_id": "w3_tender_011",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.7826,
+        0.0,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        0.7826,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.6667,
+      "iou_avg": 0.5185,
+      "iou_avg_matched": 0.7778
+    },
+    {
+      "doc_id": "w3_tender_012",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 10,
+      "evidences_located": 10,
+      "evidences_matched": 5,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.0,
+        0.0,
+        0.4231,
+        0.0,
+        0.2069,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.5,
+      "iou_avg": 0.4111,
+      "iou_avg_matched": 0.8222
+    },
+    {
+      "doc_id": "w3_tender_013",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 5,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.7826,
+        0.0,
+        0.5238,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        0.7826,
+        0.5238,
+        0.8286
+      ],
+      "recall": 1.0,
+      "precision": 0.8333,
+      "iou_avg": 0.6058,
+      "iou_avg_matched": 0.727
+    },
+    {
+      "doc_id": "w3_tender_014",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 6,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.0,
+        0.6471,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.6471,
+        0.8286
+      ],
+      "recall": 1.0,
+      "precision": 0.75,
+      "iou_avg": 0.5948,
+      "iou_avg_matched": 0.793
+    },
+    {
+      "doc_id": "w3_tender_015",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 10,
+      "evidences_located": 10,
+      "evidences_matched": 6,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.0,
+        0.0,
+        0.6471,
+        0.0,
+        0.8286,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.6471,
+        0.8286
+      ],
+      "recall": 1.0,
+      "precision": 0.6,
+      "iou_avg": 0.4758,
+      "iou_avg_matched": 0.793
+    },
+    {
+      "doc_id": "w3_tender_046",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 10,
+      "evidences_located": 10,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.7222,
+        0.0,
+        0.0,
+        0.0,
+        0.4231,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.7222
+      ],
+      "recall": 0.6,
+      "precision": 0.3,
+      "iou_avg": 0.2722,
+      "iou_avg_matched": 0.9074
+    },
+    {
+      "doc_id": "w3_tender_047",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.5385,
+        0.7222,
+        0.0,
+        0.4231,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5385,
+        0.7222
+      ],
+      "recall": 0.6,
+      "precision": 0.4286,
+      "iou_avg": 0.323,
+      "iou_avg_matched": 0.7536
+    },
+    {
+      "doc_id": "w3_tender_048",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.5455,
+        0.7059,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5455,
+        0.7059
+      ],
+      "recall": 0.6,
+      "precision": 0.6,
+      "iou_avg": 0.4503,
+      "iou_avg_matched": 0.7504
+    },
+    {
+      "doc_id": "w3_tender_049",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.7222,
+        0.0,
+        0.6471,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.7222,
+        0.6471
+      ],
+      "recall": 0.8,
+      "precision": 0.5,
+      "iou_avg": 0.4212,
+      "iou_avg_matched": 0.8423
+    },
+    {
+      "doc_id": "w3_tender_050",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 10,
+      "evidences_located": 10,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.8571,
+        0.4667,
+        0.0,
+        0.6471,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.8571,
+        0.6471
+      ],
+      "recall": 0.8,
+      "precision": 0.4,
+      "iou_avg": 0.3504,
+      "iou_avg_matched": 0.8761
+    },
+    {
+      "doc_id": "w3_tender_051",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.5385,
+        0.7059,
+        0.0,
+        0.4231,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5385,
+        0.7059
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.3741,
+      "iou_avg_matched": 0.7481
+    },
+    {
+      "doc_id": "w3_tender_052",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 5,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.5833,
+        0.0,
+        0.6471,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.5833,
+        0.6471
+      ],
+      "recall": 0.8,
+      "precision": 0.7143,
+      "iou_avg": 0.5329,
+      "iou_avg_matched": 0.7461
+    },
+    {
+      "doc_id": "w3_tender_053",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 10,
+      "evidences_located": 10,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.4667,
+        0.0,
+        0.0,
+        0.6471,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.6471
+      ],
+      "recall": 0.6,
+      "precision": 0.3,
+      "iou_avg": 0.2647,
+      "iou_avg_matched": 0.8824
+    },
+    {
+      "doc_id": "w3_tender_054",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.5238,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.5238
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.4206,
+      "iou_avg_matched": 0.8413
+    },
+    {
+      "doc_id": "w3_tender_055",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.4,
+      "precision": 0.4,
+      "iou_avg": 0.4,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_tender_059",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        0.5455,
+        0.2195,
+        0.0,
+        0.0,
+        0.4231,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5455
+      ],
+      "recall": 0.4,
+      "precision": 0.25,
+      "iou_avg": 0.1932,
+      "iou_avg_matched": 0.7727
+    },
+    {
+      "doc_id": "w3_tender_060",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 9,
+      "evidences_located": 9,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        0.1111,
+        1.0,
+        0.2195,
+        0.0,
+        0.0,
+        0.4231,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.4,
+      "precision": 0.2222,
+      "iou_avg": 0.2222,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_tender_056",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 12,
+      "evidences_located": 12,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.9048,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.7727,
+        0.4231,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.8095
+      ],
+      "iou_list_matched": [
+        0.9048,
+        1.0,
+        0.7727,
+        0.8095
+      ],
+      "recall": 0.8,
+      "precision": 0.3333,
+      "iou_avg": 0.2906,
+      "iou_avg_matched": 0.8718
+    },
+    {
+      "doc_id": "w3_tender_057",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 2,
+      "iou_list": [
+        0.9048,
+        0.0,
+        0.0,
+        0.5238,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        0.9048,
+        0.5238
+      ],
+      "recall": 0.4,
+      "precision": 0.2857,
+      "iou_avg": 0.2041,
+      "iou_avg_matched": 0.7143
+    },
+    {
+      "doc_id": "w3_tender_058",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 9,
+      "evidences_located": 9,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.9048,
+        1.0,
+        0.0,
+        0.0,
+        0.7826,
+        0.5238,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        0.9048,
+        1.0,
+        0.7826,
+        0.5238
+      ],
+      "recall": 0.8,
+      "precision": 0.4444,
+      "iou_avg": 0.3568,
+      "iou_avg_matched": 0.8028
+    },
+    {
+      "doc_id": "w3_award_016",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 2,
+      "iou_list": [
+        0.44,
+        0.0,
+        0.4167,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.4,
+      "precision": 0.3333,
+      "iou_avg": 0.3333,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_award_017",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 5,
+      "iou_list": [
+        0.4348,
+        0.5,
+        1.0,
+        1.0,
+        0.4167,
+        0.6471,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.5,
+        1.0,
+        1.0,
+        0.6471,
+        1.0
+      ],
+      "recall": 0.8,
+      "precision": 0.625,
+      "iou_avg": 0.5184,
+      "iou_avg_matched": 0.8294
+    },
+    {
+      "doc_id": "w3_award_018",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.44,
+        0.6,
+        1.0,
+        0.4167,
+        0.4231,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.6,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.4333,
+      "iou_avg_matched": 0.8667
+    },
+    {
+      "doc_id": "w3_award_019",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 2,
+      "iou_list": [
+        0.4286,
+        0.4706,
+        1.0,
+        0.4231,
+        1.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.4,
+      "precision": 0.4,
+      "iou_avg": 0.4,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_award_020",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.4286,
+        0.4706,
+        1.0,
+        1.0,
+        0.4167,
+        0.4231,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.375,
+      "iou_avg": 0.375,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_award_021",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 2,
+      "iou_list": [
+        0.4286,
+        0.4706,
+        1.0,
+        1.0,
+        0.0,
+        0.3333
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.4,
+      "precision": 0.3333,
+      "iou_avg": 0.3333,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_award_022",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.44,
+        0.5,
+        1.0,
+        0.4231,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.5,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.6,
+      "iou_avg": 0.5,
+      "iou_avg_matched": 0.8333
+    },
+    {
+      "doc_id": "w3_award_023",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.44,
+        0.5,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.5,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.6,
+      "iou_avg": 0.5,
+      "iou_avg_matched": 0.8333
+    },
+    {
+      "doc_id": "w3_award_024",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.44,
+        0.5,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.5,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.6,
+      "iou_avg": 0.5,
+      "iou_avg_matched": 0.8333
+    },
+    {
+      "doc_id": "w3_award_025",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.425,
+        0.4138,
+        1.0,
+        1.0,
+        0.3913,
+        0.0,
+        0.5238,
+        1.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.5238,
+        1.0
+      ],
+      "recall": 0.8,
+      "precision": 0.5,
+      "iou_avg": 0.4405,
+      "iou_avg_matched": 0.881
+    },
+    {
+      "doc_id": "w3_award_026",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 2,
+      "iou_list": [
+        0.45,
+        0.0,
+        1.0,
+        0.4231,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.4,
+      "precision": 0.3333,
+      "iou_avg": 0.3333,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_award_027",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.4348,
+        0.5,
+        1.0,
+        1.0,
+        0.4167,
+        0.4231,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.5,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.4375,
+      "iou_avg_matched": 0.875
+    },
+    {
+      "doc_id": "w3_award_028",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.44,
+        0.5,
+        1.0,
+        1.0,
+        0.4167,
+        0.0,
+        0.4231,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.5,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.4375,
+      "iou_avg_matched": 0.875
+    },
+    {
+      "doc_id": "w3_award_029",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.44,
+        0.5,
+        1.0,
+        0.4167,
+        0.0,
+        0.4231,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.5,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.4286,
+      "iou_avg": 0.3571,
+      "iou_avg_matched": 0.8333
+    },
+    {
+      "doc_id": "w3_award_030",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.4348,
+        0.5,
+        1.0,
+        0.0,
+        0.6471,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.5,
+        1.0,
+        0.6471,
+        1.0
+      ],
+      "recall": 0.8,
+      "precision": 0.5714,
+      "iou_avg": 0.4496,
+      "iou_avg_matched": 0.7868
+    },
+    {
+      "doc_id": "w3_award_061",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.9545,
+        0.4615,
+        0.6842,
+        1.0,
+        0.1429,
+        0.4231,
+        0.0,
+        0.8182
+      ],
+      "iou_list_matched": [
+        0.9545,
+        0.6842,
+        1.0,
+        0.8182
+      ],
+      "recall": 0.8,
+      "precision": 0.5,
+      "iou_avg": 0.4321,
+      "iou_avg_matched": 0.8642
+    },
+    {
+      "doc_id": "w3_award_062",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.92,
+        0.2,
+        1.0,
+        0.2308,
+        1.0,
+        0.5238,
+        0.0,
+        0.26
+      ],
+      "iou_list_matched": [
+        0.92,
+        1.0,
+        1.0,
+        0.5238
+      ],
+      "recall": 0.8,
+      "precision": 0.5,
+      "iou_avg": 0.4305,
+      "iou_avg_matched": 0.861
+    },
+    {
+      "doc_id": "w3_award_063",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.92,
+        0.6,
+        1.0,
+        0.6471,
+        0.1731
+      ],
+      "iou_list_matched": [
+        0.92,
+        0.6,
+        1.0,
+        0.6471
+      ],
+      "recall": 0.8,
+      "precision": 0.8,
+      "iou_avg": 0.6334,
+      "iou_avg_matched": 0.7918
+    },
+    {
+      "doc_id": "w3_award_064",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 5,
+      "iou_list": [
+        0.92,
+        0.6,
+        0.2,
+        1.0,
+        0.6471,
+        1.0
+      ],
+      "iou_list_matched": [
+        0.92,
+        0.6,
+        1.0,
+        0.6471,
+        1.0
+      ],
+      "recall": 1.0,
+      "precision": 0.8333,
+      "iou_avg": 0.6945,
+      "iou_avg_matched": 0.8334
+    },
+    {
+      "doc_id": "w3_award_065",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.9512,
+        0.5455,
+        1.0,
+        0.1579,
+        0.0,
+        0.25
+      ],
+      "iou_list_matched": [
+        0.9512,
+        0.5455,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.4161,
+      "iou_avg_matched": 0.8322
+    },
+    {
+      "doc_id": "w3_award_066",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 2,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.931,
+        0.5,
+        1.0,
+        0.0,
+        0.4231,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        0.931,
+        0.5,
+        1.0
+      ],
+      "recall": 0.4,
+      "precision": 0.4286,
+      "iou_avg": 0.3473,
+      "iou_avg_matched": 0.8103
+    },
+    {
+      "doc_id": "w3_award_067",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.0,
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "recall": 0.8,
+      "precision": 0.6667,
+      "iou_avg": 0.6667,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_award_068",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "recall": 0.8,
+      "precision": 0.5,
+      "iou_avg": 0.5,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_award_069",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 4,
+      "iou_list": [
+        0.92,
+        0.5455,
+        1.0,
+        0.0,
+        0.2464,
+        0.4231,
+        0.0,
+        0.9333
+      ],
+      "iou_list_matched": [
+        0.92,
+        0.5455,
+        1.0,
+        0.9333
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.4248,
+      "iou_avg_matched": 0.8497
+    },
+    {
+      "doc_id": "w3_award_070",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 5,
+      "iou_list": [
+        0.9459,
+        0.5,
+        1.0,
+        0.2308,
+        1.0,
+        0.6471,
+        0.0,
+        0.4607
+      ],
+      "iou_list_matched": [
+        0.9459,
+        0.5,
+        1.0,
+        1.0,
+        0.6471
+      ],
+      "recall": 0.8,
+      "precision": 0.625,
+      "iou_avg": 0.5116,
+      "iou_avg_matched": 0.8186
+    },
+    {
+      "doc_id": "w3_award_071",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.9355,
+        0.1176,
+        1.0,
+        1.0,
+        0.1176,
+        0.4231,
+        0.0,
+        0.1444
+      ],
+      "iou_list_matched": [
+        0.9355,
+        1.0,
+        1.0
+      ],
+      "recall": 0.6,
+      "precision": 0.375,
+      "iou_avg": 0.3669,
+      "iou_avg_matched": 0.9785
+    },
+    {
+      "doc_id": "w3_award_072",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 6,
+      "iou_list": [
+        0.92,
+        0.5,
+        0.7273,
+        1.0,
+        0.125,
+        0.6471,
+        0.0,
+        0.6667
+      ],
+      "iou_list_matched": [
+        0.92,
+        0.5,
+        0.7273,
+        1.0,
+        0.6471,
+        0.6667
+      ],
+      "recall": 1.0,
+      "precision": 0.75,
+      "iou_avg": 0.5576,
+      "iou_avg_matched": 0.7435
+    },
+    {
+      "doc_id": "w3_award_073",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 3,
+      "iou_list": [
+        0.92,
+        0.4706,
+        1.0,
+        0.1765,
+        0.6471,
+        0.1892
+      ],
+      "iou_list_matched": [
+        0.92,
+        1.0,
+        0.6471
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.4278,
+      "iou_avg_matched": 0.8557
+    },
+    {
+      "doc_id": "w3_award_074",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 5,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 5,
+      "iou_list": [
+        0.9444,
+        0.4615,
+        1.0,
+        1.0,
+        0.0,
+        0.6471,
+        0.0,
+        0.9286
+      ],
+      "iou_list_matched": [
+        0.9444,
+        1.0,
+        1.0,
+        0.6471,
+        0.9286
+      ],
+      "recall": 1.0,
+      "precision": 0.625,
+      "iou_avg": 0.565,
+      "iou_avg_matched": 0.904
+    },
+    {
+      "doc_id": "w3_award_075",
+      "notice_type": "award",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 1,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 1,
+      "iou_list": [
+        0.9444,
+        0.3529,
+        0.0,
+        0.0,
+        0.1905
+      ],
+      "iou_list_matched": [
+        0.9444
+      ],
+      "recall": 0.2,
+      "precision": 0.2,
+      "iou_avg": 0.1889,
+      "iou_avg_matched": 0.9444
+    },
+    {
+      "doc_id": "w3_correction_031",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 4,
+      "fields_found": 3,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.6,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5094
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6,
+        1.0,
+        0.5094
+      ],
+      "recall": 0.75,
+      "precision": 0.5714,
+      "iou_avg": 0.4442,
+      "iou_avg_matched": 0.7774
+    },
+    {
+      "doc_id": "w3_correction_032",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 6,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.6,
+        1.0,
+        0.4231,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6,
+        1.0
+      ],
+      "recall": 0.6667,
+      "precision": 0.5,
+      "iou_avg": 0.4333,
+      "iou_avg_matched": 0.8667
+    },
+    {
+      "doc_id": "w3_correction_033",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 1,
+      "evidences_pred": 3,
+      "evidences_located": 3,
+      "evidences_matched": 1,
+      "iou_list": [
+        1.0,
+        0.2963,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0
+      ],
+      "recall": 0.3333,
+      "precision": 0.3333,
+      "iou_avg": 0.3333,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_correction_034",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 1,
+      "evidences_pred": 3,
+      "evidences_located": 3,
+      "evidences_matched": 1,
+      "iou_list": [
+        1.0,
+        0.4667,
+        0.4231
+      ],
+      "iou_list_matched": [
+        1.0
+      ],
+      "recall": 0.3333,
+      "precision": 0.3333,
+      "iou_avg": 0.3333,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_correction_035",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 3,
+      "evidences_located": 3,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        0.4667,
+        0.6471
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6471
+      ],
+      "recall": 0.6667,
+      "precision": 0.6667,
+      "iou_avg": 0.549,
+      "iou_avg_matched": 0.8235
+    },
+    {
+      "doc_id": "w3_correction_036",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 4,
+      "evidences_located": 3,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.6471
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        0.6471
+      ],
+      "recall": 1.0,
+      "precision": 0.75,
+      "iou_avg": 0.5368,
+      "iou_avg_matched": 0.7157
+    },
+    {
+      "doc_id": "w3_correction_037",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 6,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.0,
+        1.0,
+        0.6471,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.6471
+      ],
+      "recall": 1.0,
+      "precision": 0.5,
+      "iou_avg": 0.4412,
+      "iou_avg_matched": 0.8824
+    },
+    {
+      "doc_id": "w3_correction_038",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 3,
+      "evidences_located": 3,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.6,
+        0.6471
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6,
+        0.6471
+      ],
+      "recall": 1.0,
+      "precision": 1.0,
+      "iou_avg": 0.749,
+      "iou_avg_matched": 0.749
+    },
+    {
+      "doc_id": "w3_correction_039",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 4,
+      "evidences_located": 4,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.4231,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5
+      ],
+      "recall": 0.6667,
+      "precision": 0.5,
+      "iou_avg": 0.375,
+      "iou_avg_matched": 0.75
+    },
+    {
+      "doc_id": "w3_correction_040",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.5238,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.5238
+      ],
+      "recall": 1.0,
+      "precision": 0.8,
+      "iou_avg": 0.6048,
+      "iou_avg_matched": 0.756
+    },
+    {
+      "doc_id": "w3_correction_041",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 2,
+      "fields_found": 0,
+      "evidences_pred": 3,
+      "evidences_located": 2,
+      "evidences_matched": 0,
+      "iou_list": [
+        0.4615,
+        0.4231
+      ],
+      "iou_list_matched": [],
+      "recall": 0.0,
+      "precision": 0.0,
+      "iou_avg": 0.0,
+      "iou_avg_matched": 0.0
+    },
+    {
+      "doc_id": "w3_correction_042",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 7,
+      "evidences_located": 5,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        0.4762,
+        1.0,
+        0.4231,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.6667,
+      "precision": 0.2857,
+      "iou_avg": 0.2857,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_correction_043",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 4,
+      "evidences_located": 3,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.4231
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5
+      ],
+      "recall": 0.6667,
+      "precision": 0.5,
+      "iou_avg": 0.375,
+      "iou_avg_matched": 0.75
+    },
+    {
+      "doc_id": "w3_correction_044",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 4,
+      "fields_found": 3,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        1.0
+      ],
+      "recall": 0.75,
+      "precision": 0.8,
+      "iou_avg": 0.7,
+      "iou_avg_matched": 0.875
+    },
+    {
+      "doc_id": "w3_correction_045",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 4,
+      "evidences_located": 4,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0
+      ],
+      "recall": 0.6667,
+      "precision": 0.75,
+      "iou_avg": 0.625,
+      "iou_avg_matched": 0.8333
+    },
+    {
+      "doc_id": "w3_correction_076",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 4,
+      "evidences_located": 4,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.6,
+        0.6471,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6,
+        0.6471
+      ],
+      "recall": 1.0,
+      "precision": 0.75,
+      "iou_avg": 0.5618,
+      "iou_avg_matched": 0.749
+    },
+    {
+      "doc_id": "w3_correction_077",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 3,
+      "evidences_located": 3,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        0.6,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6
+      ],
+      "recall": 0.6667,
+      "precision": 0.6667,
+      "iou_avg": 0.5333,
+      "iou_avg_matched": 0.8
+    },
+    {
+      "doc_id": "w3_correction_078",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 1,
+      "evidences_pred": 4,
+      "evidences_located": 3,
+      "evidences_matched": 1,
+      "iou_list": [
+        0.9333,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        0.9333
+      ],
+      "recall": 0.3333,
+      "precision": 0.25,
+      "iou_avg": 0.2333,
+      "iou_avg_matched": 0.9333
+    },
+    {
+      "doc_id": "w3_correction_079",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 6,
+      "evidences_located": 5,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.6667,
+      "precision": 0.3333,
+      "iou_avg": 0.3333,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_correction_080",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 3,
+      "evidences_located": 3,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.5294,
+        0.6471
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5294,
+        0.6471
+      ],
+      "recall": 1.0,
+      "precision": 1.0,
+      "iou_avg": 0.7255,
+      "iou_avg_matched": 0.7255
+    },
+    {
+      "doc_id": "w3_correction_081",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 7,
+      "evidences_located": 7,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.6667,
+        0.0,
+        0.7576,
+        0.6471,
+        0.4483,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6667,
+        0.7576,
+        0.6471
+      ],
+      "recall": 0.8,
+      "precision": 0.5714,
+      "iou_avg": 0.4388,
+      "iou_avg_matched": 0.7678
+    },
+    {
+      "doc_id": "w3_correction_082",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 3,
+      "evidences_located": 3,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.6471
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.6471
+      ],
+      "recall": 1.0,
+      "precision": 1.0,
+      "iou_avg": 0.8824,
+      "iou_avg_matched": 0.8824
+    },
+    {
+      "doc_id": "w3_correction_083",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 4,
+      "fields_found": 2,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.3617,
+        0.4231,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.5,
+      "precision": 0.3333,
+      "iou_avg": 0.3333,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_correction_084",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 2,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.4231,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0
+      ],
+      "recall": 0.6667,
+      "precision": 0.4,
+      "iou_avg": 0.4,
+      "iou_avg_matched": 1.0
+    },
+    {
+      "doc_id": "w3_correction_085",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.0,
+        0.6471,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.6471
+      ],
+      "recall": 1.0,
+      "precision": 0.6,
+      "iou_avg": 0.5294,
+      "iou_avg_matched": 0.8824
+    },
+    {
+      "doc_id": "w3_correction_086",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 6,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0
+      ],
+      "recall": 0.6667,
+      "precision": 0.5,
+      "iou_avg": 0.4167,
+      "iou_avg_matched": 0.8333
+    },
+    {
+      "doc_id": "w3_correction_087",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.5385,
+        1.0,
+        0.4231,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5385,
+        1.0
+      ],
+      "recall": 0.6667,
+      "precision": 0.6,
+      "iou_avg": 0.5077,
+      "iou_avg_matched": 0.8462
+    },
+    {
+      "doc_id": "w3_correction_088",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.1429,
+        1.0,
+        0.6471,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.6471
+      ],
+      "recall": 1.0,
+      "precision": 0.6,
+      "iou_avg": 0.5294,
+      "iou_avg_matched": 0.8824
+    },
+    {
+      "doc_id": "w3_correction_089",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 3,
+      "evidences_pred": 4,
+      "evidences_located": 4,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.5238,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.5238
+      ],
+      "recall": 1.0,
+      "precision": 0.75,
+      "iou_avg": 0.631,
+      "iou_avg_matched": 0.8413
+    },
+    {
+      "doc_id": "w3_correction_090",
+      "notice_type": "correction",
+      "fields_total": 6,
+      "fields_present": 3,
+      "fields_found": 2,
+      "evidences_pred": 6,
+      "evidences_located": 5,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.6,
+        1.0,
+        0.4231,
+        0.0
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.6,
+        1.0
+      ],
+      "recall": 0.6667,
+      "precision": 0.5,
+      "iou_avg": 0.4333,
+      "iou_avg_matched": 0.8667
+    }
+  ]
+}

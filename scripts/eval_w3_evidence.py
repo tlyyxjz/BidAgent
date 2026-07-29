@@ -242,20 +242,29 @@ async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[Optional[DocMetric],
         best_iou = 0.0
         if pred and pred_ev_count > 0 and gold_ev_count > 0:
             for ce in pred.candidate_evidences:
-                loc = locator.locate(ce.evidence_text, search_from=0)
-                if loc.found and loc.location is not None:
+                # W3-03 优化: 用 locate_all_occurrences 取所有出现位置,
+                # 与金标任一 span 匹配即算正确(避免 locator 取首次但金标是另一次)
+                all_locs = locator.locate_all_occurrences(ce.evidence_text, max_count=20)
+                if all_locs:
                     evidences_located += 1
-                    matched, iou = match_evidence(
-                        loc.location.start, loc.location.end,
-                        gf.evidences,
-                        body_offset,
-                    )
-                    if iou > best_iou:
-                        best_iou = iou
-                    iou_list.append(iou)
-                    if matched:
+                    best_iou_for_ce = 0.0
+                    matched_for_ce = False
+                    for loc in all_locs:
+                        m, iou = match_evidence(
+                            loc.start, loc.end,
+                            gf.evidences,
+                            body_offset,
+                        )
+                        if iou > best_iou_for_ce:
+                            best_iou_for_ce = iou
+                        if m:
+                            matched_for_ce = True
+                    if best_iou_for_ce > best_iou:
+                        best_iou = best_iou_for_ce
+                    iou_list.append(best_iou_for_ce)
+                    if matched_for_ce:
                         matched_count += 1
-                        iou_list_matched.append(iou)
+                        iou_list_matched.append(best_iou_for_ce)
             evidences_matched += matched_count
 
         found = matched_count > 0
