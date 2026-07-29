@@ -1,12 +1,250 @@
 [
   {
-    "annotation_version": "k3-w3-01-v1-fixed2",
-    "doc_count": 90,
+    "annotation_version": "k3-w3-01-v1-fixed3-consortium",
+    "doc_count": 92,
     "_is_meta": true,
     "fix_note": "补bid_deadline, project_name降为extra_fields",
     "fix_count": 90,
     "fix_note_v2": "修复w3_award_066 bid_deadline误判(发布时间误标为投标截止时间)",
-    "fix_count_v2": 1
+    "fix_count_v2": 1,
+    "fix_note_v3": "K3-W3-05 补抓2篇真实联合体中标公告(w3_award_consortium_001/002)，插于元数据后",
+    "fix_count_v3": 2
+  },
+  {
+    "document_id": "w3_award_consortium_001",
+    "file": "w3_award_consortium_001.txt",
+    "notice_type": "award",
+    "title": "巴里坤县大河古城遗址展示利用建设项目（全过程跟踪审计、竣工财务决算）中标(成交)结果公告",
+    "annotated_at": "2026-07-29T23:52:32",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "XJDKZB-2026-007-041",
+            "acceptable_evidence_spans": [
+              {
+                "start": 393,
+                "end": 418,
+                "text": "项目编号： XJDKZB-2026-007-041"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "新疆哈密市巴里坤哈萨克自治县文化体育广播电视和旅游局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 1912,
+                "end": 1942,
+                "text": "名 称：新疆哈密市巴里坤哈萨克自治县文化体育广播电视和旅游局"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "405000（元）",
+            "amount_type": "award",
+            "acceptable_evidence_spans": [
+              {
+                "start": 664,
+                "end": 676,
+                "text": "报价：405000（元）"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年07月29日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 50,
+                "end": 61,
+                "text": "2026年07月29日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "新疆拓源工程管理咨询有限公司",
+            "partners": [
+              "新疆西部有限责任会计师事务所"
+            ],
+            "acceptable_evidence_spans": [
+              {
+                "start": 611,
+                "end": 646,
+                "text": "投标联合体：新疆拓源工程管理咨询有限公司、新疆西部有限责任会计师事务所"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "not_applicable",
+        "values": []
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "巴里坤县大河古城遗址展示利用建设项目（全过程跟踪审计、竣工财务决算）",
+            "acceptable_evidence_spans": [
+              {
+                "start": 440,
+                "end": 480,
+                "text": "项目名称： 巴里坤县大河古城遗址展示利用建设项目（全过程跟踪审计、竣工财务决算）"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed3-consortium",
+    "fix_note": "K3-W3-05 补抓真实联合体中标公告"
+  },
+  {
+    "document_id": "w3_award_consortium_002",
+    "file": "w3_award_consortium_002.txt",
+    "notice_type": "award",
+    "title": "宁夏回族自治区文化和旅游厅2026年度宁夏文旅消费券电商平台发放活动项目中标公告",
+    "annotated_at": "2026-07-29T23:52:32",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "CXZB-2026ZC075",
+            "acceptable_evidence_spans": [
+              {
+                "start": 443,
+                "end": 463,
+                "text": "项目编号： CXZB-2026ZC075"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "宁夏回族自治区文化和旅游厅",
+            "acceptable_evidence_spans": [
+              {
+                "start": 143,
+                "end": 160,
+                "text": "采购单位宁夏回族自治区文化和旅游厅"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "7997000.00",
+            "amount_type": "award",
+            "acceptable_evidence_spans": [
+              {
+                "start": 658,
+                "end": 668,
+                "text": "7997000.00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年07月24日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 46,
+                "end": 57,
+                "text": "2026年07月24日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "成都光合信号科技有限公司",
+            "partners": [
+              "宁夏文投数智文化创意有限公司"
+            ],
+            "acceptable_evidence_spans": [
+              {
+                "start": 1314,
+                "end": 1366,
+                "text": "本项目中标供应商为联合体，牵头单位为成都光合信号科技有限公司，联合体成员为：宁夏文投数智文化创意有限公司"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "not_applicable",
+        "values": []
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "宁夏回族自治区文化和旅游厅2026年度宁夏文旅消费券电商平台发放活动项目",
+            "acceptable_evidence_spans": [
+              {
+                "start": 499,
+                "end": 541,
+                "text": "项目名称： 宁夏回族自治区文化和旅游厅2026年度宁夏文旅消费券电商平台发放活动项目"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed3-consortium",
+    "fix_note": "K3-W3-05 补抓真实联合体中标公告"
   },
   {
     "document_id": "w3_tender_001",
