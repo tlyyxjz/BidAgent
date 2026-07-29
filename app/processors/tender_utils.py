@@ -174,3 +174,41 @@ def _build_tender(
         attachment_url=pick("attachment_url", "attachment", "附件链接"),
         simhash=simhash_value,
     )
+
+
+def _classify_source_role(
+    source_url: str,
+    title: str,
+    notice_type: str | None = None,
+    core_content: str | None = None,
+) -> str:
+    """计算来源角色 (v4.1 第八章 8.2 节).
+
+    接入 app.processors.source_lineage, 不修改 schema.
+    用于在入库时标记来源角色, 写入 source_platform 字段.
+
+    Args:
+        source_url: 来源 URL
+        title: 公告标题
+        notice_type: 公告类型
+        core_content: 正文内容 (可选, 用于计算 SimHash)
+
+    Returns:
+        来源角色字符串 (official_original / official_repost / commercial_repost / index_only / unknown)
+    """
+    try:
+        from app.processors.source_lineage import (
+            SOURCE_ROLE_UNKNOWN,
+            build_lineage_features,
+            classify_source_role,
+        )
+        feats = build_lineage_features(
+            url=source_url or "",
+            title=title or "",
+            notice_type=notice_type or "other",
+            content_text=core_content[:5000] if core_content else None,
+        )
+        return classify_source_role(feats)
+    except Exception:
+        # source_lineage 不可用时降级, 不阻塞入库
+        return SOURCE_ROLE_UNKNOWN

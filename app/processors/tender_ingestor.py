@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.database import AsyncSessionLocal
 from app.models.tender import Tender
 from app.processors.simhash import find_duplicate_in_iter
-from app.processors.tender_utils import _build_tender, _infer_platform
+from app.processors.tender_utils import _build_tender, _classify_source_role, _infer_platform
 from app.utils.logger import get_logger
 
 logger = get_logger("tender_ingestor")
@@ -159,6 +159,28 @@ async def _ingest_with_db(
                     continue
 
             tender = _build_tender(item, source_url, source_platform, simhash_value)
+
+            # W3 source_lineage 接入: 计算来源角色并更新 source_platform
+            try:
+                title = str(item.get("project_name") or item.get("title") or "")
+                notice_type = item.get("notice_type")
+                core_content = item.get("core_content") or item.get("content")
+                role = _classify_source_role(
+                    source_url=source_url,
+                    title=title,
+                    notice_type=notice_type,
+                    core_content=core_content,
+                )
+                # 写入 source_platform 字段 (格式: "原平台:来源角色")
+                if role and role != "unknown":
+                    tender.source_platform = f"{source_platform}:{role}"
+                    logger.info(
+                        "source_lineage role=%s url=%s",
+                        role, source_url[:80],
+                    )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("source_lineage 计算失败: %s", exc)
+
             db.add(tender)
             to_insert.append((tender, simhash_value))
         except Exception as exc:  # noqa: BLE001

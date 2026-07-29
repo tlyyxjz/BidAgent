@@ -1,0 +1,161 @@
+[
+  {
+    "file": "w3_tender_001.txt",
+    "status": "success",
+    "model": "deepseek/deepseek-v4-flash",
+    "latency_s": 7.12,
+    "total_tokens": 3171,
+    "field_count": 6,
+    "has_json_normalized": false,
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "0701-264006110085",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "purchaser_name",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "中央广播电视总台",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "winner_name",
+        "field_status": "absent",
+        "raw_value_type": "None",
+        "raw_value_preview": null,
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "amount",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "282.000000 万元（人民币）",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "publish_date",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "2026年07月29日 08:36",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "bid_deadline",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "2026年08月19日 09点30分",
+        "is_json_normalized": false
+      }
+    ]
+  },
+  {
+    "file": "w3_tender_002.txt",
+    "status": "success",
+    "model": "deepseek/deepseek-v4-flash",
+    "latency_s": 9.54,
+    "total_tokens": 3879,
+    "field_count": 6,
+    "has_json_normalized": false,
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "ZC26K290086",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "purchaser_name",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "中国工程物理研究院电子工程研究所",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "winner_name",
+        "field_status": "absent",
+        "raw_value_type": "None",
+        "raw_value_preview": null,
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "amount",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "287.240000 万元（人民币）",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "publish_date",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "2026年07月28日 21:53",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "bid_deadline",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "2026年08月19日 09点30分（北京时间）",
+        "is_json_normalized": false
+      }
+    ]
+  },
+  {
+    "file": "w3_award_016.txt",
+    "status": "success",
+    "model": "deepseek/deepseek-v4-flash",
+    "latency_s": 6.22,
+    "total_tokens": 3573,
+    "field_count": 6,
+    "has_json_normalized": false,
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "0701-264106150500",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "purchaser_name",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "铁道党校",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "winner_name",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "新开普电子股份有限公司",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "amount",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "147.2920000万元",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "publish_date",
+        "field_status": "present",
+        "raw_value_type": "str",
+        "raw_value_preview": "2026年07月29日 09:07",
+        "is_json_normalized": false
+      },
+      {
+        "field_name": "bid_deadline",
+        "field_status": "absent",
+        "raw_value_type": "None",
+        "raw_value_preview": null,
+        "is_json_normalized": false
+      }
+    ]
+  }
+]
