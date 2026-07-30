@@ -70,10 +70,14 @@ async def test_release_is_idempotent():
 
 @pytest.mark.asyncio
 async def test_acquire_times_out():
-    """池耗尽时应按配置超时。"""
+    """池耗尽时应按配置超时。
+
+    Note: Python 3.10 中 asyncio.exceptions.TimeoutError 与内置 TimeoutError
+    是不同的类(3.11+ 才统一),必须使用 asyncio.TimeoutError 匹配 wait_for 抛出的异常。
+    """
     pool, _ = make_started_pool()
     await pool.acquire()
-    with pytest.raises(TimeoutError):
+    with pytest.raises(asyncio.TimeoutError):
         await pool.acquire()
 
 

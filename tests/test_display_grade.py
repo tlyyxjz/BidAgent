@@ -240,3 +240,71 @@ def test_migration_on_empty_db():
     assert not r["errors"]
     # 列 display_grade / cross_verified 已 either migrated or skipped
     assert r["table"] is True  # Base.metadata.create_all 会创建
+
+
+# ========== 覆盖率补全：_sl_value(sl=None) + output_strategies edge cases ==========
+
+def test_display_grade__support_level_none():
+    """补 display_grade.py line 47：support_level=None -> UNSUPPORTED -> LOW"""
+    # sl is None 会走到 _sl_value 第1分支
+    grade = compute_display_grade(support_level=None, source_role="official_original")
+    assert grade == GRADE_LOW
+
+
+def test_output_strategies__plain_tuple_fallback():
+    """补 output_strategies.py 33 & 41：输入的 field 既不是对象也不是 dict（例如一个字符串/元组）
+    -> _g 走 fallback=REVIEW, _sl 走 fallback="" """
+    weird = [
+        ("just", "a", "tuple", 42),  # 非对象非dict
+    ]
+    res = filter_by_strategy(weird, "audit")
+    # audit 全留
+    assert len(res) == 1
+    # default: field.grade 默认为 REVIEW, sl="" 不是strong
+    res2 = filter_by_strategy(weird, "default")
+    assert res2 == []  # REVIEW + sl not strong -> default 不保留 (只有 strict留high, default留high+REVIEW+strong)
+    # loose：high + all review
+    res3 = filter_by_strategy(weird, "loose")
+    assert len(res3) == 1  # REVIEW 保留
+
+
+def test_output_strategies__support_level_none():
+    """补 output_strategies.py 38：hasattr 对象且 support_level=None，
+    且 strategy=default + grade=REVIEW → 真正触发 _sl 调用 str(field.support_level or "") """
+
+    class O:
+        def __init__(self, grade, sl):
+            self.display_grade = grade
+            self.support_level = sl
+
+    # grade=REVIEW + sl=None → default 不保留 (_sl 返回 "" 不在 _STRENGTH_HIGH)
+    assert len(filter_by_strategy([O(GRADE_REVIEW, None)], "default")) == 0
+    # grade=REVIEW + sl=None → loose 保留
+    assert len(filter_by_strategy([O(GRADE_REVIEW, None)], "loose")) == 1
+    # grade=REVIEW + sl="direct" → default 保留 (_sl="direct" ∈ STRONG)
+    assert len(filter_by_strategy([O(GRADE_REVIEW, "direct")], "default")) == 1
+
+
+def test_output_strategies__dict_grade_none():
+    """补 output_strategies.py 32：dict 里 display_grade=None -> or GRADE_REVIEW"""
+    weird = [{"display_grade": None, "support_level": "direct", "n": "f1"}]
+    r = filter_by_strategy(weird, "default")
+    # grade=None -> REVIEW ; sl=direct -> STRONG strong_support("direct") -> True
+    # default: high 或 (REVIEW and strong) -> 保留
+    assert len(r) == 1
+
+
+def test_output_strategies__dict_missing_support_level():
+    """补 output_strategies.py 38 右半：dict 没提供 support_level key（或为空）。
+    field.get("support_level", "") or "" → "" → str.lower() → "" """
+    d1 = {"display_grade": GRADE_HIGH}  # 无 support_level key
+    d2 = {"display_grade": GRADE_REVIEW, "support_level": None}  # 显式 None
+    # audit 保留全部
+    assert len(filter_by_strategy([d1], "audit")) == 1
+    assert len(filter_by_strategy([d2], "audit")) == 1
+    # d1 是 HIGH，default 也保留
+    assert len(filter_by_strategy([d1], "default")) == 1
+    # d2 是 REVIEW 但 sl=None → "" → not strong → default 不保留；loose 才保留
+    assert len(filter_by_strategy([d2], "default")) == 0
+    assert len(filter_by_strategy([d2], "loose")) == 1
+

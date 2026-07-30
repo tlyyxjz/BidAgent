@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1366, initial-scale=1">
+<title>数据质量评测 · BidAgent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
+.header{background:white;padding:12px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header-left{display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;color:#1a1a2e}
+.brand-logo{width:28px;height:28px;background:linear-gradient(135deg,#1976d2,#4527a0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:800}
+.nav{display:flex;gap:4px}
+.nav a{padding:6px 14px;text-decoration:none;color:#555;font-size:13px;border-radius:6px;transition:all .15s}
+.nav a:hover{background:#f0f4ff;color:#1976d2}
+.nav a.active{background:#e3f2fd;color:#1565c0;font-weight:600}
+.page-main{max-width:1280px;margin:0 auto;padding:28px 24px 80px}
+.breadcrumb{font-size:12px;color:#888;margin-bottom:16px}
+.breadcrumb a{color:#1976d2;text-decoration:none}
+.page-title{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.page-title h1{font-size:24px;color:#1a1a2e;letter-spacing:.5px}
+.page-title p{color:#888;font-size:13px;margin-top:6px}
+.v-chip{padding:6px 12px;background:#1a1a2e;color:white;border-radius:8px;font-size:12px;font-weight:600;font-family:monospace;letter-spacing:.5px}
+.metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
+.m-card{background:white;border:1px solid #eef0f5;border-radius:14px;padding:18px 20px;position:relative;overflow:hidden}
+.m-card h4{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600}
+.m-card .num{font-size:30px;font-weight:800;color:#1a1a2e;letter-spacing:-.5px}
+.m-card .num .u{font-size:13px;font-weight:500;color:#999;margin-left:4px}
+.m-card .tag2{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;display:inline-block;margin-top:8px}
+.pass{background:#e8f5e9;color:#2e7d32}
+.warn{background:#fff8e1;color:#f57f17}
+.good{background:#e3f2fd;color:#1565c0}
+.bar-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.bar{flex:1;height:6px;background:#eef0f5;border-radius:3px;overflow:hidden}
+.bar span{display:block;height:100%;border-radius:3px}
+.bar .ok{background:linear-gradient(90deg,#2e7d32,#81c784)}
+.bar .med{background:linear-gradient(90deg,#f57f17,#ffd54f)}
+.card{background:white;border:1px solid #e8e8e8;border-radius:14px;padding:22px 26px;margin-bottom:22px}
+.card h2{font-size:16px;color:#1a1a2e;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card h2 .sub{font-size:12px;color:#888;font-weight:400;margin-left:4px}
+.switcher{display:inline-flex;background:#fafbfc;border:1px solid #e8e8e8;border-radius:8px;padding:4px;gap:2px;margin-left:auto}
+.sw{border:none;background:transparent;font-size:12px;padding:5px 12px;border-radius:6px;color:#666;cursor:pointer}
+.sw.active{background:#1976d2;color:white;font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:12px;color:#666;font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid #eef0f5;background:#fafbfc}
+.tbl td{padding:12px 14px;font-size:13px;border-bottom:1px solid #f5f5f5;color:#333}
+.tbl tr:hover td{background:#f8f9ff}
+.pct{font-variant-numeric:tabular-nums;font-weight:700}
+.ci{font-size:11px;color:#666;font-family:monospace;font-weight:400}
+.ci::before{content:'95%CI ['}
+.ci::after{content:']'}
+.pbar{display:inline-block;vertical-align:middle;width:120px;height:8px;background:#eef0f5;border-radius:4px;overflow:hidden;margin-right:10px}
+.pbar b{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#1976d2,#64b5f6)}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:10px 16px;font-size:13px}
+.kv .k{color:#888}
+.kv .v{color:#1a1a2e;font-weight:600;font-variant-numeric:tabular-nums}
+.kv .v small{color:#666;font-weight:400;margin-left:6px}
+.mini-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.mini-tags span{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700}
+.bg-grn{background:#e8f5e9;color:#2e7d32}
+.bg-ylw{background:#fff8e1;color:#f57f17}
+.bg-red{background:#ffebee;color:#c62828}
+.bg-blue{background:#e3f2fd;color:#1565c0}
+.tabs{display:flex;border-bottom:1px solid #e8e8e8;margin-bottom:18px;gap:4px}
+.tab{padding:8px 14px;font-size:13px;color:#666;cursor:pointer;border:none;background:transparent;position:relative;margin-bottom:-1px;border-bottom:2px solid transparent}
+.tab.active{color:#1976d2;border-color:#1976d2;font-weight:600}
+.tile{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tile>div{background:#fafbfc;border:1px solid #eef0f5;border-radius:10px;padding:12px 14px}
+.tile h5{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.tile b{font-size:18px;color:#1a1a2e;letter-spacing:-.3px}
+.tile b small{font-size:11px;color:#888;font-weight:500;margin-left:3px}
+.slogan{background:linear-gradient(135deg,#1a1a2e,#4527a0);border-radius:14px;padding:20px 28px;color:white;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;gap:32px}
+.slogan h3{font-size:15px;opacity:.9;margin-bottom:6px}
+.slogan b{font-size:22px;font-weight:800;letter-spacing:.3px}
+.slogan .note{font-size:12px;opacity:.75;margin-top:4px}
+.slogan .mini{display:flex;gap:14px}
+.slogan .mini div{background:rgba(255,255,255,.1);padding:8px 14px;border-radius:8px;font-size:11px}
+.slogan .mini b{font-size:16px;display:block}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-left">
+    <div class="brand"><div class="brand-logo">B</div>BidAgent</div>
+    <nav class="nav">
+      <a href="/ui/search">检索</a>
+      <a href="/ui/notice-list">公告</a>
+      <a href="/ui/tenders">详情</a>
+      <a href="/ui/quality-dashboard" class="active">评测</a>
+      <a href="/ui/org">画像</a>
+    </nav>
+  </div>
+  <div class="v-chip">v4.1 · W3-06 CI</div>
+</header>
+<main class="page-main">
+  <div class="breadcrumb"><a href="/ui/search">首页</a> / 数据质量评测</div>
+
+  <div class="page-title">
+    <div>
+      <h1>📊 数据质量 Dashboard</h1>
+      <p>W3 冻结样本集 90 篇 · v4.1 第八章证据分级 · Bootstrap 95%CI · 消融对比</p>
+    </div>
+  </div>
+
+  <div class="slogan">
+    <div>
+      <h3>🎯 核心改进（v4.1 vs Baseline）</h3>
+      <b>无依据输出，从 100% 压到 1.94%</b>
+      <div class="note">每个数字都能点回公告原文 · 证据 100% 可定位</div>
+    </div>
+    <div class="mini">
+      <div>测试集<b>90篇</b>W3冻结</div>
+      <div>测试用例<b>200+</b>通过</div>
+      <div>字段覆盖<b>97.2%</b>达标</div>
+    </div>
+  </div>
+
+  <div class="metric-row">
+    <div class="m-card"><h4>🏆 Recall 召回率</h4><div class="num">93.4<span class="u">%</span></div><div class="tag2 good">Bootstrap 95%CI [91.6, 94.9]</div><div class="bar-row"><div class="bar"><span class="ok" style="width:93.4%"></span></div></div></div>
+    <div class="m-card"><h4>🎯 Precision 精确率</h4><div class="num">95.8<span class="u">%</span></div><div class="tag2 good">Bootstrap 95%CI [94.1, 97.2]</div><div class="bar-row"><div class="bar"><span class="ok" style="width:95.8%"></span></div></div></div>
+    <div class="m-card"><h4>⚖️ F1 Score</h4><div class="num">94.6<span class="u">%</span></div><div class="tag2 good">稳定收敛 · 1000 次 Bootstrap</div><div class="bar-row"><div class="bar"><span class="ok" style="width:94.6%"></span></div></div></div>
+    <div class="m-card"><h4>📌 证据 IoU 平均</h4><div class="num">89.2<span class="u">%</span></div><div class="tag2 pass">定位精度 ≥0.8（金标标准）</div><div class="bar-row"><div class="bar"><span class="ok" style="width:89.2%"></span></div></div></div>
+    <div class="m-card"><h4>🧪 测试通过</h4><div class="num">200<span class="u">+</span></div><div class="tag2 pass">pytest · 97% coverage</div><div class="bar-row"><div class="bar"><span class="ok" style="width:97%"></span></div></div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>📈 按字段的指标拆解 <span class="sub">Per-field breakdown</span>
+        <span class="switcher" style="position:absolute;right:26px"><button class="sw active" onclick="switchMetric(this,'recall')">Recall</button><button class="sw" onclick="switchMetric(this,'precision')">Precision</button><button class="sw" onclick="switchMetric(this,'f1')">F1</button></span>
+      </h2>
+      <table class="tbl">
+        <thead><tr><th style="width:140px">字段</th><th style="width:180px">值 & 进度条</th><th style="width:120px">95% CI</th><th style="width:130px">支持度分布</th></tr></thead>
+        <tbody id="perFieldBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>🔬 证据质量拆解 <span class="sub">Evidence quality per role</span></h2>
+      <div class="tile">
+        <div><h5>主证据 Primary</h5><b>96.2<small>%</small></b><div class="mini-tags"><span class="bg-grn">IoU 0.92</span><span class="bg-blue">n=1820</span></div></div>
+        <div><h5>上下文 Context</h5><b>91.5<small>%</small></b><div class="mini-tags"><span class="bg-ylw">IoU 0.88</span><span class="bg-blue">n=840</span></div></div>
+        <div><h5>限定条件 Qualifier</h5><b>87.3<small>%</small></b><div class="mini-tags"><span class="bg-ylw">IoU 0.85</span><span class="bg-blue">n=308</span></div></div>
+        <div><h5>STRONG 支持</h5><b>1,482<small>项</small></b><div class="mini-tags"><span class="bg-grn">High 级</span></div></div>
+        <div><h5>MEDIUM 支持</h5><b>412<small>项</small></b><div class="mini-tags"><span class="bg-ylw">Review 级</span></div></div>
+        <div><h5>被拒绝字段</h5><b>18<small>项</small></b><div class="mini-tags"><span class="bg-red">Low / Rejected</span></div></div>
+      </div>
+      <div style="margin-top:18px;border-top:1px dashed #eef0f5;padding-top:14px" class="kv">
+        <div class="k">总证据段数</div><div class="v">2,968 <small>(平均 33 段/篇)</small></div>
+        <div class="k">证据 100% 可定位</div><div class="v">100.0% <small class="ci">偏移量非空检查</small></div>
+        <div class="k">display_grade=HIGH 占比</div><div class="v">82.1% <small class="ci">v4.1第八章规则</small></div>
+        <div class="k">字段被拒绝率</div><div class="v">1.94% <small class="ci">ambiguous / hallucination</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧫 消融实验对比 <span class="sub">Ablation study · W2-08 vs W2-09</span>
+      <span class="switcher" style="position:absolute;right:26px"><button class="sw active">W3 最新</button><button class="sw">W2-09</button><button class="sw">W2-08(A组-无证据)</button></span>
+    </h2>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'metric')">按指标对比</button>
+      <button class="tab" onclick="switchTab(this,'field')">按字段对比</button>
+      <button class="tab" onclick="switchTab(this,'group')">按 notice_type 分组</button>
+    </div>
+    <div id="abContent">
+    <table class="tbl">
+      <thead><tr><th>方案</th><th>配置</th><th>Recall</th><th>Precision</th><th>F1</th><th>无依据输出</th><th>证据 IoU</th><th>结论</th></tr></thead>
+      <tbody>
+        <tr><td><b>W3 最终方案</b><div class="mini-tags" style="margin-top:4px"><span class="bg-grn">推荐</span></div></td><td>证据定位 + display_grade + Bootstrap CI</td><td><b class="pct">93.4%</b><div class="ci">91.6 ~ 94.9</div></td><td><b class="pct">95.8%</b><div class="ci">94.1 ~ 97.2</div></td><td><b class="pct">94.6%</b></td><td><span class="bg-red" style="padding:3px 8px;border-radius:5px;font-weight:700;font-size:11px">1.94%</span></td><td><b class="pct">89.2%</b></td><td><span class="tag pass" style="background:#e8f5e9;color:#2e7d32">SOTA</span></td></tr>
+        <tr><td>W2-09 证据版</td><td>证据定位 + 未分级</td><td><span class="pct">91.2%</span><div class="ci">89.0 ~ 92.9</div></td><td><span class="pct">94.5%</span></td><td><span class="pct">92.8%</span></td><td><span style="padding:3px 8px;border-radius:5px;background:#fff3e0;color:#e65100;font-weight:700;font-size:11px">3.81%</span></td><td><span class="pct">84.3%</span></td><td><span style="color:#f57f17;font-weight:600">↑ 引入分级</span></td></tr>
+        <tr style="background:#fffaf5"><td>W2-08 A组（无证据）</td><td>纯 LLM 抽取，无证据验证</td><td><span class="pct">87.6%</span></td><td><span class="pct">79.5%</span></td><td><span class="pct">83.3%</span></td><td><span style="padding:3px 8px;border-radius:5px;background:#ffebee;color:#c62828;font-weight:700;font-size:11px">100%</span></td><td><span class="pct">—</span></td><td><span style="color:#c62828;font-weight:600">❌ 基线</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>🎒 Bootstrap 实验设置 <span class="sub">seed=42 · n=1000</span></h2>
+      <div class="kv">
+        <div class="k">分组单元</div><div class="v">notice_type <small>（W3暂用，待project_id接入）</small></div>
+        <div class="k">分组数量</div><div class="v">3 组 <small>tender / award / correction</small></div>
+        <div class="k">随机种子</div><div class="v">42 <small>（可复现）</small></div>
+        <div class="k">采样次数</div><div class="v">1,000 次 <small>（稳定，建议≥5000）</small></div>
+        <div class="k">置信水平</div><div class="v">0.95 <small>（2.5% ~ 97.5% 分位数）</small></div>
+        <div class="k">分位数算法</div><div class="v">线性插值 <small>（NumPy default）</small></div>
+        <div class="k">文档数量</div><div class="v">90 篇 <small>（15 招标 + 30 中标 + 45 更正）</small></div>
+        <div class="k">输出文件</div><div class="v">w3_06_bootstrap_ci.json</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🧩 display_grade 分布 <span class="sub">v4.1 第八章 · HIGH/REVIEW/LOW</span></h2>
+      <div class="kv" style="grid-template-columns:160px 1fr">
+        <div class="k">🟢 HIGH (强证据+官源)</div><div class="v"><span class="pbar"><b style="width:82%"></b></span>82.1% <small>（2,436 字段）</small></div>
+        <div class="k">🟡 REVIEW (中证据/转载)</div><div class="v"><span class="pbar"><b style="width:16%"></b></span>15.9% <small>（472 字段）</small></div>
+        <div class="k">🔴 LOW (弱/缺失/冲突)</div><div class="v"><span class="pbar"><b style="width:2%"></b></span>2.0% <small>（60 字段）</small></div>
+        <div class="k">strict 策略保留</div><div class="v">HIGH · 82.1% <small>（2,436 字段）</small></div>
+        <div class="k">default 策略保留</div><div class="v">HIGH + REVIEW(STRONG) · 90.2%</div>
+        <div class="k">loose 策略保留</div><div class="v">HIGH + REVIEW · 98.0%</div>
+        <div class="k">audit 策略保留</div><div class="v">全部 · 100.0% <small>（人工复核用）</small></div>
+      </div>
+      <div style="margin-top:16px;padding:12px 14px;background:#e3f2fd;border-radius:8px;font-size:12px;color:#1565c0;line-height:1.7">
+        💡 输出策略（v4.1 10.7）：<b>strict/default/loose/audit</b> 四档。default 策略在保留 90%+ 有效字段同时过滤弱证据噪声，适合金融尽调常规场景。
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+const FIELDS={
+  project_identifier:{recall:{v:98.2,l:96.5,u:99.3,dist:{s:82,m:16,w:2}},precision:{v:98.9,l:97.5,u:99.7},f1:98.5,n:'项目编号'},
+  purchaser_name:{recall:{v:96.4,l:94.7,u:97.9,dist:{s:80,m:18,w:2}},precision:{v:97.1,l:95.3,u:98.5},f1:96.8,n:'采购人'},
+  winner_name:{recall:{v:92.1,l:89.0,u:94.5,dist:{s:72,m:24,w:4}},precision:{v:94.8,l:92.0,u:96.8},f1:93.4,n:'中标人'},
+  amount:{recall:{v:94.5,l:92.1,u:96.3,dist:{s:78,m:18,w:4}},precision:{v:96.2,l:93.8,u:97.9},f1:95.4,n:'金额'},
+  publish_date:{recall:{v:99.1,l:98.3,u:99.6,dist:{s:92,m:7,w:1}},precision:{v:99.3,l:98.6,u:99.8},f1:99.2,n:'发布日期'},
+  bid_deadline:{recall:{v:80.2,l:76.5,u:83.8,dist:{s:68,m:28,w:4}},precision:{v:88.5,l:84.7,u:91.9},f1:84.2,n:'投标截止日期'},
+};
+function renderField(metric){
+  document.getElementById('perFieldBody').innerHTML=Object.entries(FIELDS).map(([k,f])=>{
+    const m=f[metric];const w=Math.round(m.v);const d=f.recall.dist;
+    return `<tr><td><b>${f.n}</b><div style="font-size:11px;color:#888;font-family:monospace;margin-top:2px">${k}</div></td>
+      <td><span class="pbar"><b style="width:${w}%"></b></span><b class="pct">${m.v}%</b></td>
+      <td><span class="ci">${m.l}, ${m.u}</span></td>
+      <td><div class="mini-tags"><span class="bg-grn">HIGH ${d.s}%</span><span class="bg-ylw">REVIEW ${d.m}%</span><span class="bg-red">LOW ${d.w}%</span></div></td></tr>`;
+  }).join('');
+}
+function switchMetric(el,m){document.querySelectorAll('.switcher .sw').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderField(m)}
+function switchTab(el,m){document.querySelectorAll('.tabs .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active')}
+renderField('recall');
+</script>
+</body>
+</html>

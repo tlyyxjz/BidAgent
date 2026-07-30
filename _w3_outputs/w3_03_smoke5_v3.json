@@ -1,0 +1,184 @@
+{
+  "task": "W3-03",
+  "version": "v1",
+  "timestamp": "2026-07-29 15:25:22",
+  "overall": {
+    "docs_count": 5,
+    "fields_total": 30,
+    "fields_present": 25,
+    "fields_found": 19,
+    "evidences_pred": 35,
+    "evidences_located": 35,
+    "evidences_matched": 22,
+    "recall": 0.76,
+    "precision": 0.6286,
+    "iou_avg": 0.5209,
+    "iou_avg_matched": 0.8287,
+    "iou_p50": 0.8286,
+    "iou_p95": 1.0,
+    "model_id": "deepseek-v4-flash",
+    "prompt_hash": "6c10d5ccdd0287d4",
+    "total_tokens": 18925,
+    "invalid_docs": [],
+    "by_type": {
+      "tender": {
+        "docs": 5,
+        "fields_present": 25,
+        "fields_found": 19,
+        "evidences_pred": 35,
+        "evidences_matched": 22,
+        "recall": 0.76,
+        "precision": 0.6286
+      }
+    }
+  },
+  "doc_metrics": [
+    {
+      "doc_id": "w3_tender_001",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 9,
+      "evidences_located": 9,
+      "evidences_matched": 6,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.7391,
+        0.7826,
+        0.4231,
+        0.0,
+        0.8286,
+        0.1379
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.7391,
+        0.7826,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.6667,
+      "iou_avg": 0.5389,
+      "iou_avg_matched": 0.8084
+    },
+    {
+      "doc_id": "w3_tender_002",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        0.5,
+        0.0,
+        0.6471,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        0.6471,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.6667,
+      "iou_avg": 0.4959,
+      "iou_avg_matched": 0.7439
+    },
+    {
+      "doc_id": "w3_tender_003",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 9,
+      "evidences_located": 9,
+      "evidences_matched": 5,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.0,
+        0.0,
+        0.6471,
+        0.0,
+        0.8286,
+        0.2069
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.6471,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.5556,
+      "iou_avg": 0.4417,
+      "iou_avg_matched": 0.7951
+    },
+    {
+      "doc_id": "w3_tender_004",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 5,
+      "evidences_located": 5,
+      "evidences_matched": 4,
+      "iou_list": [
+        1.0,
+        1.0,
+        0.7727,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.7727,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.8,
+      "iou_avg": 0.7203,
+      "iou_avg_matched": 0.9003
+    },
+    {
+      "doc_id": "w3_tender_005",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 3,
+      "evidences_pred": 6,
+      "evidences_located": 6,
+      "evidences_matched": 3,
+      "iou_list": [
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        1.0,
+        0.8286
+      ],
+      "recall": 0.6,
+      "precision": 0.5,
+      "iou_avg": 0.4714,
+      "iou_avg_matched": 0.9429
+    }
+  ]
+}

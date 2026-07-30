@@ -1,57 +1,80 @@
-"""Bootstrap 置信区间计算。
+"""W3-06 Bootstrap 置信区间计算。
 
-对应 v4.1 第十章 10.10 节：以采购项目为最小重采样单元，报告 95% 置信区间。
+对应总规划 v4.1 第十章 10.10 节：为关键评测指标计算 95% 置信区间。
 
-W3 阶段限制：
-- W3 数据无 project_id 字段，暂用 notice_type 分组（tender/award/correction 三组）
-- 待数据库接入 project_id 后切换为按项目分组
+Bootstrap 以采购项目为最小重采样单元（不按单个字段独立采样），
+同一项目的公告、版本和字段整体参与采样。
 
-算法：
-1. 按 group_key 将 doc_metrics 分组
-2. 点估计：全量聚合计算每个指标
-3. Bootstrap 循环 n_bootstrap 次：有放回采样 n_groups 个组，重新计算指标
-4. 置信区间：采样值排序，取 2.5% 和 97.5% 分位数
+当前 W3 数据无 project_id 字段，暂用 notice_type（tender/award/correction）
+作为分组 key，待数据库接入 project_id 后修正。
+
+实现：纯 Python 无 numpy 依赖（如需 numpy 加速可在 docstring 中注明）。
 """
 from __future__ import annotations
 
+import math
 import random
 from collections import defaultdict
 from typing import Any
 
 
-def _group_docs(
-    doc_metrics: list[dict],
-    group_key: str,
-) -> dict[str, list[dict]]:
-    """按 group_key 分组。"""
-    groups: dict[str, list[dict]] = defaultdict(list)
-    for d in doc_metrics:
-        groups[str(d.get(group_key, "unknown"))].append(d)
-    return dict(groups)
+def _percentile(values: list[float], pct: float) -> float:
+    """线性插值法计算分位数（与 numpy.percentile 默认 method='linear' 一致）。
+
+    Args:
+        values: 数值列表（无需预先排序）
+        pct: 百分位，0~100
+
+    Returns:
+        分位数值
+    """
+    if not values:
+        return 0.0
+    if len(values) == 1:
+        return values[0]
+    sorted_vals = sorted(values)
+    n = len(sorted_vals)
+    rank = (pct / 100.0) * (n - 1)
+    lo = int(math.floor(rank))
+    hi = int(math.ceil(rank))
+    if lo == hi:
+        return sorted_vals[lo]
+    frac = rank - lo
+    return sorted_vals[lo] + frac * (sorted_vals[hi] - sorted_vals[lo])
 
 
-def _aggregate_metric(docs: list[dict], metric_key: str) -> float:
-    """全量聚合计算指标值（先求和再相除，与 OverallMetric 口径一致）。
+def _aggregate_metric(
+    docs: list[dict], metric_key: str
+) -> float:
+    """按「先求和再相除」口径计算指标。
 
-    recall = sum(fields_found) / sum(fields_present)
-    precision = sum(evidences_matched) / sum(evidences_pred)
-    iou_avg = sum(iou_list_matched) / sum(evidences_pred)
+    与 OverallMetric 保持一致：
+    - recall = sum(fields_found) / sum(fields_present)
+    - precision = sum(evidences_matched) / sum(evidences_pred)
+    - iou_avg = sum(iou_list_matched) / sum(evidences_pred)
+
+    Args:
+        docs: doc_metrics 子集
+        metric_key: 指标名
+
+    Returns:
+        指标值（分母为 0 时返回 0.0）
     """
     if metric_key == "recall":
-        num = sum(d.get("fields_found", 0) for d in docs)
-        den = sum(d.get("fields_present", 0) for d in docs)
-    elif metric_key == "precision":
-        num = sum(d.get("evidences_matched", 0) for d in docs)
-        den = sum(d.get("evidences_pred", 0) for d in docs)
-    elif metric_key == "iou_avg":
-        # iou_avg 的分母是 evidences_pred，分子是所有匹配IoU之和
-        num = sum(sum(d.get("iou_list_matched", [])) for d in docs)
-        den = sum(d.get("evidences_pred", 0) for d in docs)
-    else:
-        # 通用：取该字段值的均值
-        vals = [d.get(metric_key, 0) for d in docs]
-        return sum(vals) / len(vals) if vals else 0.0
-    return round(num / den, 4) if den > 0 else 0.0
+        num = sum(float(d.get("fields_found", 0)) for d in docs)
+        den = sum(float(d.get("fields_present", 0)) for d in docs)
+        return num / den if den > 0 else 0.0
+    if metric_key == "precision":
+        num = sum(float(d.get("evidences_matched", 0)) for d in docs)
+        den = sum(float(d.get("evidences_pred", 0)) for d in docs)
+        return num / den if den > 0 else 0.0
+    if metric_key == "iou_avg":
+        num = sum(float(d.get("iou_list_matched", 0)) for d in docs)
+        den = sum(float(d.get("evidences_pred", 0)) for d in docs)
+        return num / den if den > 0 else 0.0
+    # 通用 fallback：逐篇 sum / n
+    vals = [float(d.get(metric_key, 0)) for d in docs]
+    return sum(vals) / len(vals) if vals else 0.0
 
 
 def bootstrap_ci(
@@ -61,124 +84,108 @@ def bootstrap_ci(
     confidence: float = 0.95,
     random_seed: int = 42,
     group_key: str = "notice_type",
-) -> dict:
+) -> dict[str, Any]:
     """Bootstrap 置信区间计算。
 
+    算法步骤（v4.1 10.10）：
+    1. 分组：按 group_key 将 doc_metrics 分组（组是最小重采样单元）
+    2. 点估计：全量计算每个指标
+    3. Bootstrap 循环：有放回采样 n_groups 个组 → 拼接组内 doc → 重算指标
+    4. 置信区间：对每个指标采样值排序取 (1-confidence)/2 和 1-(1-confidence)/2 分位数
+
     Args:
-        doc_metrics: 逐篇指标列表（来自 W3-03 报告的 doc_metrics）
-        metric_keys: 需要计算 CI 的指标名
+        doc_metrics: 逐篇指标列表（W3-03 报告 doc_metrics 结构）
+        metric_keys: 需要计算 CI 的指标名，如 ["recall", "precision", "iou_avg"]
         n_bootstrap: 采样次数（默认 1000）
-        confidence: 置信水平（默认 0.95）
-        random_seed: 随机种子（必须记录，保证可复现）
-        group_key: 分组字段（W3 无 project_id，暂用 notice_type）
+        confidence: 置信水平（默认 0.95，即 95%）
+        random_seed: 随机种子（保证可复现，必须记录在 meta 中）
+        group_key: 分组字段（W3 无 project_id，默认 notice_type；可传入 project_id）
 
     Returns:
         {
-            metric_name: {
-                "point_estimate": float,
-                "ci_lower": float,
-                "ci_upper": float,
-                "bootstrap_samples": list[float],
+            "<metric_name>": {
+                "point_estimate": float,   # 点估计
+                "ci_lower": float,         # 置信下界
+                "ci_upper": float,         # 置信上界
+                "bootstrap_samples": [float, ...],  # 全部采样值（长度 n_bootstrap）
             },
-            "meta": {...}
+            "meta": {
+                "n_bootstrap": int,
+                "confidence": float,
+                "random_seed": int,
+                "group_key": str,
+                "n_groups": int,
+                "n_docs": int,
+            }
         }
     """
-    if not doc_metrics:
-        return {"meta": {"error": "empty doc_metrics"}, "metrics": {}}
-
     rng = random.Random(random_seed)
-    groups = _group_docs(doc_metrics, group_key)
+    n_docs = len(doc_metrics)
+
+    # Step 1: 按 group_key 分组（缺失 key 归入 "__ungrouped__"）
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for d in doc_metrics:
+        g = d.get(group_key, "__ungrouped__")
+        groups[str(g)].append(d)
     group_names = list(groups.keys())
     n_groups = len(group_names)
 
-    # 点估计
-    point_estimates: dict[str, float] = {}
+    # Step 2: 点估计（全量 docs）
+    result: dict[str, Any] = {}
     for mk in metric_keys:
-        point_estimates[mk] = _aggregate_metric(doc_metrics, mk)
+        point = _aggregate_metric(doc_metrics, mk)
+        result[mk] = {
+            "point_estimate": point,
+            "ci_lower": point,
+            "ci_upper": point,
+            "bootstrap_samples": [point] * n_bootstrap,
+        }
 
-    # Bootstrap 循环
-    bootstrap_samples: dict[str, list[float]] = {mk: [] for mk in metric_keys}
+    if n_groups <= 1 or n_docs == 0 or n_bootstrap <= 0:
+        # 边界：单组/无数据/无采样 → CI 退化为点估计
+        result["meta"] = {
+            "n_bootstrap": max(n_bootstrap, 0),
+            "confidence": confidence,
+            "random_seed": random_seed,
+            "group_key": group_key,
+            "n_groups": n_groups,
+            "n_docs": n_docs,
+        }
+        return result
+
+    # Step 3: Bootstrap 循环
+    alpha = 1.0 - confidence
+    low_pct = (alpha / 2.0) * 100.0
+    high_pct = (1.0 - alpha / 2.0) * 100.0
+
+    sample_buckets: dict[str, list[float]] = {mk: [] for mk in metric_keys}
     for _ in range(n_bootstrap):
         # 有放回采样 n_groups 个组
-        sampled_group_names = [rng.choice(group_names) for _ in range(n_groups)]
-        sampled_docs: list[dict] = []
-        for gn in sampled_group_names:
-            sampled_docs.extend(groups[gn])
+        resampled_docs: list[dict] = []
+        for _i in range(n_groups):
+            gname = group_names[rng.randrange(n_groups)]
+            resampled_docs.extend(groups[gname])
+        # 重新计算各指标
         for mk in metric_keys:
-            val = _aggregate_metric(sampled_docs, mk)
-            bootstrap_samples[mk].append(val)
+            sample_buckets[mk].append(_aggregate_metric(resampled_docs, mk))
 
-    # 置信区间
-    alpha = 1.0 - confidence
-    lower_pct = alpha / 2 * 100
-    upper_pct = (1 - alpha / 2) * 100
+    # Step 4: 置信区间
+    for mk in metric_keys:
+        samples = sample_buckets[mk]
+        point = result[mk]["point_estimate"]
+        ci_lo = _percentile(samples, low_pct)
+        ci_hi = _percentile(samples, high_pct)
+        # 合理性保证（理论下界/上界 ≤ 或 ≥ 点估计，但分位数法不保证，夹逼修正）
+        result[mk]["ci_lower"] = min(ci_lo, point)
+        result[mk]["ci_upper"] = max(ci_hi, point)
+        result[mk]["bootstrap_samples"] = samples
 
-    result: dict[str, Any] = {"meta": {
+    result["meta"] = {
         "n_bootstrap": n_bootstrap,
         "confidence": confidence,
         "random_seed": random_seed,
         "group_key": group_key,
         "n_groups": n_groups,
-        "n_docs": len(doc_metrics),
-        "groups": group_names,
-    }, "metrics": {}}
-
-    for mk in metric_keys:
-        samples = sorted(bootstrap_samples[mk])
-        ci_lower = samples[int(len(samples) * lower_pct / 100)]
-        ci_upper = samples[int(len(samples) * upper_pct / 100) - 1]
-        result["metrics"][mk] = {
-            "point_estimate": point_estimates[mk],
-            "ci_lower": round(ci_lower, 4),
-            "ci_upper": round(ci_upper, 4),
-            "bootstrap_samples": [round(x, 4) for x in bootstrap_samples[mk]],
-        }
-
-    return result
-
-
-def run_from_report(
-    report_path: str,
-    output_path: str | None = None,
-    metric_keys: list[str] | None = None,
-    n_bootstrap: int = 1000,
-    random_seed: int = 42,
-) -> dict:
-    """从 W3-03 评测报告读取数据并计算 CI。
-
-    Args:
-        report_path: W3-03 报告 JSON 路径
-        output_path: 输出 JSON 路径（None 则不写文件）
-        metric_keys: 指标列表，默认 recall/precision/iou_avg
-        n_bootstrap: 采样次数
-        random_seed: 随机种子
-
-    Returns:
-        CI 计算结果 dict
-    """
-    import json
-    from pathlib import Path
-
-    if metric_keys is None:
-        metric_keys = ["recall", "precision", "iou_avg"]
-
-    with open(report_path, encoding="utf-8") as f:
-        report = json.load(f)
-
-    doc_metrics = report.get("doc_metrics", [])
-    if not doc_metrics:
-        raise ValueError(f"report.doc_metrics 为空: {report_path}")
-
-    result = bootstrap_ci(
-        doc_metrics=doc_metrics,
-        metric_keys=metric_keys,
-        n_bootstrap=n_bootstrap,
-        random_seed=random_seed,
-    )
-
-    if output_path:
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
-
+        "n_docs": n_docs,
+    }
     return result

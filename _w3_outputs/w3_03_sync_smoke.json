@@ -1,0 +1,69 @@
+{
+  "task": "W3-03",
+  "version": "v1",
+  "timestamp": "2026-07-29 16:00:06",
+  "overall": {
+    "docs_count": 1,
+    "fields_total": 6,
+    "fields_present": 5,
+    "fields_found": 4,
+    "evidences_pred": 8,
+    "evidences_located": 8,
+    "evidences_matched": 6,
+    "recall": 0.8,
+    "precision": 0.75,
+    "iou_avg": 0.6063,
+    "iou_avg_matched": 0.8084,
+    "iou_p50": 0.8286,
+    "iou_p95": 1.0,
+    "model_id": "deepseek-v4-flash",
+    "prompt_hash": "6c10d5ccdd0287d4",
+    "total_tokens": 3043,
+    "invalid_docs": [],
+    "by_type": {
+      "tender": {
+        "docs": 1,
+        "fields_present": 5,
+        "fields_found": 4,
+        "evidences_pred": 8,
+        "evidences_matched": 6,
+        "recall": 0.8,
+        "precision": 0.75
+      }
+    }
+  },
+  "doc_metrics": [
+    {
+      "doc_id": "w3_tender_001",
+      "notice_type": "tender",
+      "fields_total": 6,
+      "fields_present": 5,
+      "fields_found": 4,
+      "evidences_pred": 8,
+      "evidences_located": 8,
+      "evidences_matched": 6,
+      "iou_list": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.7391,
+        0.4231,
+        0.0,
+        0.8286
+      ],
+      "iou_list_matched": [
+        1.0,
+        0.5,
+        1.0,
+        0.7826,
+        0.7391,
+        0.8286
+      ],
+      "recall": 0.8,
+      "precision": 0.75,
+      "iou_avg": 0.6063,
+      "iou_avg_matched": 0.8084
+    }
+  ]
+}

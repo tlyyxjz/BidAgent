@@ -1,0 +1,962 @@
+[
+  {
+    "document_id": "w3_tender_051",
+    "notice_type": "tender",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      }
+    ]
+  },
+  {
+    "document_id": "w3_tender_004",
+    "notice_type": "tender",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      }
+    ]
+  },
+  {
+    "document_id": "w3_tender_001",
+    "notice_type": "tender",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      }
+    ]
+  },
+  {
+    "document_id": "w3_tender_054",
+    "notice_type": "tender",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      }
+    ]
+  },
+  {
+    "document_id": "w3_tender_009",
+    "notice_type": "tender",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      }
+    ]
+  },
+  {
+    "document_id": "w3_tender_008",
+    "notice_type": "tender",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      }
+    ]
+  },
+  {
+    "document_id": "w3_award_028",
+    "notice_type": "award",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_award_018",
+    "notice_type": "award",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_award_067",
+    "notice_type": "award",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_award_017",
+    "notice_type": "award",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_award_065",
+    "notice_type": "award",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_award_073",
+    "notice_type": "award",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_award_consortium_001",
+    "notice_type": "award",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_award_consortium_002",
+    "notice_type": "award",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "not_applicable",
+        "verdict": "consistent",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_correction_089",
+    "notice_type": "correction",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "absent",
+        "my_status": "present",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_correction_078",
+    "notice_type": "correction",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "absent",
+        "my_status": "present",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_correction_033",
+    "notice_type": "correction",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "absent",
+        "my_status": "absent",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_correction_079",
+    "notice_type": "correction",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "absent",
+        "my_status": "present",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      }
+    ]
+  },
+  {
+    "document_id": "w3_correction_044",
+    "notice_type": "correction",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "absent",
+        "my_status": "absent",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      }
+    ]
+  },
+  {
+    "document_id": "w3_correction_032",
+    "notice_type": "correction",
+    "field_reviews": [
+      {
+        "field_name": "project_identifier",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "purchaser_name",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "amount",
+        "k3_status": "absent",
+        "my_status": "absent",
+        "verdict": "consistent",
+        "span_check": null
+      },
+      {
+        "field_name": "publish_date",
+        "k3_status": "present",
+        "my_status": "present",
+        "verdict": "consistent",
+        "span_check": "valid"
+      },
+      {
+        "field_name": "winner_name",
+        "k3_status": "not_applicable",
+        "my_status": "absent",
+        "verdict": "disputed",
+        "span_check": null
+      },
+      {
+        "field_name": "bid_deadline",
+        "k3_status": "not_applicable",
+        "my_status": "present",
+        "verdict": "disputed",
+        "span_check": null
+      }
+    ]
+  }
+]
