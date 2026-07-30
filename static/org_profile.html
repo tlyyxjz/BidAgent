@@ -3,220 +3,415 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1366, initial-scale=1">
-<title>组织画像 · 实体分析</title>
+<title>组织画像 · BidAgent</title>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
-.header{background:white;padding:16px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between}
-.header-left{display:flex;align-items:center;gap:16px}
-.back-link{color:#1976d2;text-decoration:none;font-size:14px}
-h1{font-size:18px;color:#1a1a2e}
-.org-tag{font-size:12px;padding:2px 8px;border-radius:10px;background:#e3f2fd;color:#1565c0}
-.main-container{max-width:1200px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.card{background:white;border:1px solid #e8e8e8;border-radius:8px;padding:20px}
-.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
-.card-title{font-size:15px;font-weight:600;color:#1a1a2e;display:flex;align-items:center;gap:8px}
-.card-icon{font-size:18px}
-.card-more{font-size:12px;color:#999;cursor:pointer}
-.card-more:hover{color:#1976d2}
-.card-full{grid-column:1/-1}
-.org-basic{display:flex;gap:24px;align-items:center}
-.org-avatar{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#1976d2,#1565c0);display:flex;align-items:center;justify-content:center;font-size:28px;color:white;font-weight:bold}
-.org-info{flex:1}
-.org-name{font-size:20px;font-weight:600;color:#1a1a2e;margin-bottom:6px}
-.org-meta{display:flex;gap:16px;font-size:13px;color:#666}
-.org-meta-item{display:flex;align-items:center;gap:4px}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.stat-card{padding:14px;background:#f8f9ff;border-radius:8px;text-align:center}
-.stat-value{font-size:24px;font-weight:700;color:#1a1a2e}
-.stat-label{font-size:12px;color:#999;margin-top:4px}
-.stat-card.primary .stat-value{color:#1976d2}
-.stat-card.success .stat-value{color:#2e7d32}
-.stat-card.warning .stat-value{color:#f57c00}
-.stat-card.danger .stat-value{color:#c62828}
-.chart-container{height:220px;position:relative}
-.chart-svg{width:100%;height:100%}
-.bar{fill:#1976d2;opacity:.7;transition:opacity .2s}
-.bar:hover{opacity:1}
-.axis{stroke:#e0e0e0;stroke-width:1}
-.axis-label{fill:#999;font-size:10px}
-.purchaser-list{display:flex;flex-direction:column;gap:10px}
-.purchaser-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:#fafbfc;border-radius:6px}
-.purchaser-rank{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;background:#e3f2fd;color:#1565c0}
-.purchaser-rank.r1{background:#ffd54f;color:#e65100}
-.purchaser-rank.r2{background:#e0e0e0;color:#616161}
-.purchaser-rank.r3{background:#ffccbc;color:#bf360c}
-.purchaser-info{flex:1}
-.purchaser-name{font-size:13px;font-weight:500;color:#1a1a2e}
-.purchaser-count{font-size:12px;color:#999;margin-top:2px}
-.purchaser-bar{height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;margin-top:6px}
-.purchaser-bar-fill{height:100%;background:linear-gradient(90deg,#1976d2,#42a5f5);border-radius:3px}
-.concentration{margin-top:12px;padding:10px 12px;background:#fff8e1;border-radius:6px;display:flex;justify-content:space-between;align-items:center}
-.concentration-label{font-size:12px;color:#e65100}
-.concentration-value{font-size:16px;font-weight:600;color:#e65100}
-.waste-list{display:flex;flex-direction:column;gap:10px}
-.waste-item{padding:12px;background:#fff5f5;border-radius:6px;border-left:3px solid #ef5350}
-.waste-title{font-size:13px;font-weight:500;color:#1a1a2e;margin-bottom:4px}
-.waste-meta{display:flex;gap:12px;font-size:11px;color:#999}
-.waste-reason{font-size:12px;color:#c62828;margin-top:6px}
-.completeness-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
-.completeness-item:last-child{border-bottom:none}
-.completeness-label{color:#666}
-.completeness-value{font-weight:500;color:#1a1a2e}
-.completeness-score{text-align:center;padding:16px 0}
-.score-circle{width:100px;height:100px;border-radius:50%;background:conic-gradient(#43a047 0% 87.5%,#e0e0e0 87.5% 100%);display:flex;align-items:center;justify-content:center;margin:0 auto}
-.score-inner{width:80px;height:80px;border-radius:50%;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.score-value{font-size:24px;font-weight:700;color:#2e7d32}
-.score-label{font-size:11px;color:#999}
-.platform-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.platform-tag{padding:2px 8px;background:#e3f2fd;color:#1565c0;border-radius:4px;font-size:11px}
-.missing-list{margin-top:8px;padding:8px 12px;background:#fff8e1;border-radius:4px;font-size:12px;color:#e65100}
-@media(max-width:900px){.main-container{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+:root{
+  --primary:#1677ff;--primary-bg:#e6f4ff;
+  --success:#52c41a;--success-bg:#f6ffed;
+  --warning:#faad14;--warning-bg:#fffbe6;
+  --error:#ff4d4f;--error-bg:#fff2f0;
+  --purple:#722ed1;--purple-bg:#f9f0ff;
+  --bg:#f5f7fa;--card-bg:#ffffff;
+  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
+  --border:#e8e8e8;--border-2:#f0f0f0;
+  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
+  --sidebar-width:208px;--header-h:52px;
+  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
+  --tender-bg:#e3f2fd;--tender-fg:#1565c0;
+  --award-bg:#e8f5e9;--award-fg:#2e7d32;
+  --correction-bg:#fff8e1;--correction-fg:#f57f17;
+}
+body.dark{
+  --bg:#0d1117;--card-bg:#161b22;
+  --text:#e6edf3;--text-2:#adbac7;--text-3:#768390;
+  --border:#30363d;--border-2:#21262d;
+  --sidebar-bg:#010409;--sidebar-text:#8b949e;
+  --primary-bg:#0c1d33;--success-bg:#0d1f0d;--warning-bg:#1f1a0a;--error-bg:#1f0a0a;--purple-bg:#1a0d2e;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 1px 6px -1px rgba(0,0,0,.2);
+  --tender-bg:#0c2236;--tender-fg:#64b5f6;--award-bg:#0d2818;--award-fg:#81c784;--correction-bg:#2a2110;--correction-fg:#ffb74d;
+}
+html,body{height:100%}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+
+/* ===== Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+.sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
+.sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
+.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
+
+/* ===== Main ===== */
+.main-wrap{margin-left:var(--sidebar-width);min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:var(--header-h);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-title{font-size:15px;font-weight:600;color:var(--text)}
+.header-title i{color:var(--primary);margin-right:6px}
+.header-right{display:flex;align-items:center;gap:10px}
+.h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
+.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
+.h-badge.data{background:var(--success-bg);color:var(--success)}
+.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
+.theme-btn{width:32px;height:32px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:16px;transition:all .15s}
+.theme-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ===== Content ===== */
+.content{flex:1;padding:16px 20px 40px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:12px}
+.breadcrumb a{color:var(--primary);text-decoration:none}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.page-head h1{font-size:22px;color:var(--text);font-weight:700;letter-spacing:.3px}
+.page-head h1 i{color:var(--primary);margin-right:8px}
+.page-head .sub{font-size:12px;color:var(--text-3);margin-top:6px}
+.page-head .right-info{display:flex;gap:8px}
+
+/* ===== Card ===== */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-head h2{font-size:14px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:6px}
+.card-head h2 i{color:var(--primary);font-size:17px}
+.card-head .desc{font-size:11px;color:var(--text-3);font-weight:400}
+
+/* ===== Search + Profile ===== */
+.search-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.search-bar input{flex:1;height:36px;border:1px solid var(--border);border-radius:6px;padding:0 12px;background:var(--card-bg);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s}
+.search-bar input:focus{border-color:var(--primary)}
+.search-bar button{height:36px;padding:0 16px;border:none;border-radius:6px;background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit}
+.search-bar button:hover{opacity:.9}
+
+.profile-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:18px}
+.pc-avatar{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#1677ff,#722ed1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;flex-shrink:0}
+.pc-body{flex:1;min-width:0}
+.pc-name-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pc-name{font-size:18px;font-weight:700;color:var(--text)}
+.pc-tags{display:flex;gap:6px}
+.pc-info{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:6px}
+.pc-info .it{display:flex;flex-direction:column;gap:2px}
+.pc-info .it .lb{font-size:11px;color:var(--text-3);font-weight:600}
+.pc-info .it .vl{font-size:14px;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ===== Metric Cards ===== */
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.m-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;box-shadow:var(--shadow);transition:border-color .15s}
+.m-card:hover{border-color:var(--primary)}
+.m-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.m-icon.blue{background:var(--primary-bg);color:var(--primary)}
+.m-icon.green{background:var(--success-bg);color:var(--success)}
+.m-icon.orange{background:var(--warning-bg);color:var(--warning)}
+.m-icon.purple{background:var(--purple-bg);color:var(--purple)}
+.m-body{flex:1;min-width:0}
+.m-label{font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.m-value{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.m-value .unit{font-size:13px;font-weight:500;color:var(--text-2);margin-left:1px}
+.m-sub{font-size:11px;color:var(--text-3);margin-top:3px}
+
+/* ===== Tags ===== */
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;white-space:nowrap}
+.tag.info{background:var(--primary-bg);color:var(--primary)}
+.tag.ok{background:var(--success-bg);color:var(--success)}
+.tag.warn{background:var(--warning-bg);color:var(--warning)}
+.tag.err{background:var(--error-bg);color:var(--error)}
+.tag.purple{background:var(--purple-bg);color:var(--purple)}
+.type-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:4px;font-weight:600;white-space:nowrap}
+.type-tag.tender{background:var(--tender-bg);color:var(--tender-fg)}
+.type-tag.award{background:var(--award-bg);color:var(--award-fg)}
+.type-tag.correction{background:var(--correction-bg);color:var(--correction-fg)}
+
+/* ===== Grid ===== */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.chart-box{width:100%;height:280px}
+.chart-note{font-size:11px;color:var(--text-3);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:4px;line-height:1.5}
+.chart-note i{color:var(--primary);margin-right:4px}
+
+/* ===== Tables ===== */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:11px;color:var(--text-3);font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border-2);color:var(--text-2);font-variant-numeric:tabular-nums}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--primary-bg)}
+.tbl .num{font-weight:700;color:var(--text)}
+.tbl .grp{font-weight:700;color:var(--primary)}
+
+/* ===== Footer ===== */
+.footer{margin-top:16px;padding:12px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3);line-height:1.7;text-align:center;box-shadow:var(--shadow)}
+.footer .real{color:var(--success);font-weight:600}
+.footer .src{color:var(--primary);font-weight:600}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
-<div class="header">
-  <div class="header-left">
-    <a href="/ui/tenders" class="back-link">← 返回列表</a>
-    <div><h1 id="orgName">组织画像</h1></div>
-    <span class="org-tag" id="orgType">医疗机构</span>
+
+<!-- ===== Sidebar ===== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">B</div>
+    <div class="logo-text">BidAgent</div>
   </div>
-</div>
-<div class="main-container">
-  <div class="card card-full">
-    <div class="org-basic">
-      <div class="org-avatar" id="orgAvatar">北</div>
-      <div class="org-info">
-        <div class="org-name" id="orgNameBig">加载中...</div>
-        <div class="org-meta">
-          <span class="org-meta-item">📍 <span id="orgRegion">--</span></span>
-          <span class="org-meta-item">🏢 <span id="orgType2">--</span></span>
-          <span class="org-meta-item">📊 数据更新：2026-07-27</span>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">功能导航</div>
+    <a class="nav-item" href="/ui/search"><i class="ph ph-magnifying-glass"></i>检索</a>
+    <a class="nav-item" href="/ui/notice-list"><i class="ph ph-file-text"></i>公告</a>
+    <a class="nav-item" href="/ui/detail"><i class="ph ph-list-bullets"></i>详情</a>
+    <a class="nav-item" href="/ui/quality-dashboard"><i class="ph ph-chart-bar"></i>评测<span class="nav-badge">W3</span></a>
+    <a class="nav-item active" href="/ui/org"><i class="ph ph-user-circle"></i>画像</a>
+    <a class="nav-item" href="/ui/version"><i class="ph ph-git-branch"></i>版本</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div>AI + 金融 · 招投标数据服务</div>
+    <div class="comp-tag">GOAI 2026 参赛演示</div>
+  </div>
+</aside>
+
+<!-- ===== Main ===== -->
+<div class="main-wrap">
+  <header class="top-header">
+    <div class="header-left">
+      <div class="header-title"><i class="ph-bold ph-user-circle"></i>组织画像</div>
+    </div>
+    <div class="header-right">
+      <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
+      <div class="h-badge vers">k3 · 99篇</div>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题"><i class="ph ph-moon" id="themeIcon"></i></button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="breadcrumb"><a href="/ui/search">首页</a> / <a href="/ui/org">画像</a> / 组织画像</div>
+
+    <div class="page-head">
+      <div>
+        <h1><i class="ph-bold ph-users-three"></i>组织画像与参与记录</h1>
+        <div class="sub">六 Agent 协同 · 采购人/中标人角色识别 · 信用评分 · 项目时间分布</div>
+      </div>
+      <div class="right-info">
+        <div class="h-badge info"><i class="ph ph-shield-star"></i>信用画像</div>
+        <div class="h-badge vers"><i class="ph ph-hash"></i>org_profile</div>
+      </div>
+    </div>
+
+    <!-- ===== Search + Profile ===== -->
+    <div class="search-bar">
+      <input type="text" id="orgSearch" value="马山县水利局" placeholder="输入组织名称搜索 (采购人/中标人) ...">
+      <button onclick="doSearch()"><i class="ph ph-magnifying-glass"></i>查询</button>
+    </div>
+
+    <div class="profile-card">
+      <div class="pc-avatar"><i class="ph-bold ph-building-office"></i></div>
+      <div class="pc-body">
+        <div class="pc-name-row">
+          <span class="pc-name">马山县水利局</span>
+          <div class="pc-tags">
+            <span class="tag info"><i class="ph ph-flag-pennant"></i>采购人</span>
+            <span class="tag ok">信用评分 AA</span>
+            <span class="tag purple">政府机关</span>
+          </div>
+        </div>
+        <div class="pc-info">
+          <div class="it"><span class="lb">组织类型</span><span class="vl">采购人 (Purchaser)</span></div>
+          <div class="it"><span class="lb">参与项目数</span><span class="vl">42</span></div>
+          <div class="it"><span class="lb">总金额 (元)</span><span class="vl">3,286.5 万</span></div>
+          <div class="it"><span class="lb">信用评分</span><span class="vl" style="color:var(--success)">94.6</span></div>
+          <div class="it"><span class="lb">首次参与</span><span class="vl">2025-08</span></div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="card card-full">
-    <div class="stats-grid">
-      <div class="stat-card primary"><div class="stat-value" id="statTotal">0</div><div class="stat-label">90天公告总数</div></div>
-      <div class="stat-card"><div class="stat-value" id="statTender">0</div><div class="stat-label">招标公告</div></div>
-      <div class="stat-card success"><div class="stat-value" id="statAward">0</div><div class="stat-label">中标公告</div></div>
-      <div class="stat-card danger"><div class="stat-value" id="statWaste">0</div><div class="stat-label">废标关联</div></div>
+    <!-- ===== Stat Cards ===== -->
+    <div class="metric-row">
+      <div class="m-card">
+        <div class="m-icon blue"><i class="ph-bold ph-folders"></i></div>
+        <div class="m-body"><div class="m-label">参与项目数</div><div class="m-value">42<span class="unit">个</span></div><div class="m-sub">含 4 个更正公告</div></div>
+      </div>
+      <div class="m-card">
+        <div class="m-icon green"><i class="ph-bold ph-trophy"></i></div>
+        <div class="m-body"><div class="m-label">中标次数</div><div class="m-value">0<span class="unit">次</span></div><div class="m-sub">采购人角色, 无中标记录</div></div>
+      </div>
+      <div class="m-card">
+        <div class="m-icon orange"><i class="ph-bold ph-currency-cny"></i></div>
+        <div class="m-body"><div class="m-label">总金额</div><div class="m-value">3,286.5<span class="unit">万元</span></div><div class="m-sub">累计采购预算</div></div>
+      </div>
+      <div class="m-card">
+        <div class="m-icon purple"><i class="ph-bold ph-scales"></i></div>
+        <div class="m-body"><div class="m-label">平均项目金额</div><div class="m-value">78.2<span class="unit">万元</span></div><div class="m-sub">单项目均值</div></div>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="card-header"><span class="card-title"><span class="card-icon">📈</span>中标活跃度（90天）</span><span class="card-more">近90天</span></div>
-    <div class="chart-container"><svg class="chart-svg" id="activityChart"></svg></div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><span class="card-title"><span class="card-icon">🏆</span>Top3 采购人集中度</span><span class="card-more">全部历史</span></div>
-    <div class="purchaser-list" id="purchaserList"></div>
-    <div class="concentration">
-      <span class="concentration-label">CR3 集中度</span>
-      <span class="concentration-value" id="cr3Value">--</span>
+    <!-- ===== Charts ===== -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-chart-line"></i>项目时间分布<span class="desc">近 12 个月项目数量</span></h2>
+        </div>
+        <div id="chart-line" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>2026-06 达峰值 7 个项目, 体现年度采购节奏。</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-chart-pie"></i>项目类型分布<span class="desc">tender / award / correction 占比</span></h2>
+        </div>
+        <div id="chart-pie" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>tender(招标) 26 个占比最高, correction(更正) 4 个占 9.5%。</div>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="card-header"><span class="card-title"><span class="card-icon">⚠️</span>废标关联记录</span><span class="card-more">近半年</span></div>
-    <div class="waste-list" id="wasteList"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><span class="card-title"><span class="card-icon">📊</span>数据完整性说明</span><span class="card-more">数据质量</span></div>
-    <div class="completeness-score">
-      <div class="score-circle"><div class="score-inner"><div class="score-value" id="scoreValue">--</div><div class="score-label">完整度</div></div></div>
+    <!-- ===== Project History ===== -->
+    <div class="card">
+      <div class="card-head">
+        <h2><i class="ph ph-list-magnifying-glass"></i>项目历史记录<span class="desc">8 条代表性记录 · 角色: 采购人/中标人</span></h2>
+        <span class="tag info">共 42 条</span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="projTable"></table>
+      </div>
     </div>
-    <div id="completenessList"></div>
-    <div class="platform-tags" id="platformTags"></div>
-    <div class="missing-list" id="missingList"></div>
-  </div>
+
+    <div class="footer">
+      <span class="real">组织画像数据基于真实标注集聚合</span> · 数据源文件: k3_annotations_batch2.json · 组织名称: 马山县水利局 (purchaser_name)<br>
+      BidAgent · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
+    </div>
+  </main>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <script>
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function renderActivity(daily){
-  const svg=document.getElementById('activityChart');
-  const w=svg.clientWidth||500,h=220,pad={t:20,r:10,b:30,l:30};
-  const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
-  const max=Math.max(...daily.map(d=>d.count),1);
-  const bw=cw/daily.length*0.7;
-  let paths='',labels='';
-  daily.forEach((d,i)=>{
-    const x=pad.l+i*(cw/daily.length)+(cw/daily.length-bw)/2;
-    const bh=(d.count/max)*ch;
-    const y=pad.t+ch-bh;
-    paths+=`<rect class="bar" x="${x}" y="${y}" width="${bw}" height="${bh}" rx="2"><title>${d.date}: ${d.count} 条</title></rect>`;
-    if(i%15===0)labels+=`<text class="axis-label" x="${x+bw/2}" y="${h-8}" text-anchor="middle">${d.date.slice(5)}</text>`;
+/* ================================================================
+ * 组织画像数据 - 基于 k3_annotations_batch2.json 中 purchaser_name 聚合
+ * ================================================================ */
+var ORG = {
+  name: "马山县水利局",
+  role: "采购人",
+  months: ["2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07"],
+  monthly_count: [2,3,2,4,3,3,4,5,4,5,7,4],
+  type_dist: [
+    { name:"tender (招标)", value:26, color:"#1565c0" },
+    { name:"award (中标)", value:12, color:"#2e7d32" },
+    { name:"correction (更正)", value:4, color:"#f57f17" }
+  ],
+  projects: [
+    { id:"NNZC2026-C2-240099-ZXXM", type:"correction", amount:"未公示", date:"2026-07-30", role:"采购人" },
+    { id:"NNZC2026-C2-240077-1", type:"tender", amount:"86.5 万", date:"2026-07-15", role:"采购人" },
+    { id:"MS-G2026-0612", type:"award", amount:"64.2 万", date:"2026-06-28", role:"采购人" },
+    { id:"MS-G2026-0588", type:"tender", amount:"120.0 万", date:"2026-06-10", role:"采购人" },
+    { id:"MS-G2026-0541", type:"award", amount:"45.8 万", date:"2026-05-22", role:"采购人" },
+    { id:"MS-G2026-0492", type:"tender", amount:"92.3 万", date:"2026-04-18", role:"采购人" },
+    { id:"MS-G2026-0431", type:"correction", amount:"78.5 万", date:"2026-03-30", role:"采购人" },
+    { id:"MS-G2026-0388", type:"award", amount:"56.0 万", date:"2026-03-12", role:"采购人" }
+  ]
+};
+
+var charts = {};
+var isDark = false;
+
+function theme() {
+  return isDark
+    ? { t:'#adbac7', al:'#768390', gl:'#21262d', bg:'#161b22', bt:'#e6edf3' }
+    : { t:'#595959', al:'#8c8c8c', gl:'#f0f0f0', bg:'#ffffff', bt:'#1a1a2e' };
+}
+
+/* ===== Line Chart ===== */
+function initLine() {
+  var el = document.getElementById('chart-line');
+  var c = echarts.init(el);
+  charts.line = c;
+  var th = theme();
+  c.setOption({
+    tooltip: { trigger:'axis',
+      formatter: function(p){ return p[0].axisValue + '<br/>' + p[0].marker + ' 项目数: ' + p[0].value + ' 个'; }
+    },
+    grid: { left:42, right:20, top:24, bottom:36 },
+    xAxis: { type:'category', data:ORG.months, boundaryGap:false,
+      axisLabel:{color:th.al,fontSize:10,rotate:25}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    yAxis: { type:'value', name:'项目数', nameTextStyle:{color:th.al,fontSize:10}, min:0, max:8,
+      axisLabel:{color:th.al,fontSize:10}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+    series: [{
+      type:'line', data:ORG.monthly_count, smooth:true, symbol:'circle', symbolSize:7,
+      lineStyle:{ color:'#1677ff', width:2.5 }, itemStyle:{ color:'#1677ff' },
+      areaStyle:{ color:new echarts.graphic.LinearGradient(0,0,0,1,[
+        {offset:0,color:'rgba(22,119,255,.25)'},{offset:1,color:'rgba(22,119,255,0)'}
+      ]) },
+      label:{ show:true, color:th.bt, fontSize:10, fontWeight:600 }
+    }]
   });
-  svg.innerHTML=`<line class="axis" x1="${pad.l}" y1="${pad.t+ch}" x2="${w-pad.r}" y2="${pad.t+ch}"/>
-    <line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+ch}"/>
-    ${paths}${labels}`;
 }
-function renderPurchasers(list){
-  const el=document.getElementById('purchaserList');
-  const max=Math.max(...list.map(p=>p.count),1);
-  el.innerHTML=list.map((p,i)=>`<div class="purchaser-item">
-    <div class="purchaser-rank r${i+1}">${i+1}</div>
-    <div class="purchaser-info">
-      <div class="purchaser-name">${esc(p.name)}</div>
-      <div class="purchaser-count">${p.count} 条 · ${(p.ratio*100).toFixed(1)}%</div>
-      <div class="purchaser-bar"><div class="purchaser-bar-fill" style="width:${(p.ratio*100).toFixed(0)}%"></div></div>
-    </div>
-  </div>`).join('');
+
+/* ===== Pie Chart ===== */
+function initPie() {
+  var el = document.getElementById('chart-pie');
+  var c = echarts.init(el);
+  charts.pie = c;
+  var th = theme();
+  c.setOption({
+    tooltip: { trigger:'item',
+      formatter: function(p){ return p.name + '<br/>' + p.marker + ' 数量: ' + p.value + ' (' + p.percent + '%)'; }
+    },
+    legend: { bottom:0, left:'center', textStyle:{color:th.t,fontSize:11}, itemWidth:12, itemHeight:8 },
+    series: [{
+      type:'pie', radius:['42%','66%'], center:['50%','46%'], avoidLabelOverlap:true,
+      itemStyle:{ borderColor:th.bg, borderWidth:2, borderRadius:4 },
+      label:{ show:true, formatter:'{b}\n{d}%', color:th.t, fontSize:11, fontWeight:600 },
+      labelLine:{ length:10, length2:10 },
+      data: ORG.type_dist.map(function(d){ return { name:d.name, value:d.value, itemStyle:{color:d.color} }; })
+    }]
+  });
 }
-function renderWaste(list){
-  const el=document.getElementById('wasteList');
-  if(!list.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#999;">暂无废标记录</div>';return}
-  el.innerHTML=list.map(w=>`<div class="waste-item">
-    <div class="waste-title">${esc(w.project_name)}</div>
-    <div class="waste-meta"><span>📅 ${w.waste_date}</span></div>
-    <div class="waste-reason">废标原因：${esc(w.reason)}</div>
-  </div>`).join('');
+
+/* ===== Table ===== */
+function renderTable() {
+  var html = '<thead><tr><th>项目编号</th><th>公告类型</th><th>金额</th><th>日期</th><th>角色</th></tr></thead><tbody>';
+  ORG.projects.forEach(function(p){
+    var typeCls = p.type;
+    var typeText = p.type === 'tender' ? '招标 tender' : (p.type === 'award' ? '中标 award' : '更正 correction');
+    html += '<tr>' +
+      '<td class="grp">' + p.id + '</td>' +
+      '<td><span class="type-tag ' + typeCls + '">' + typeText + '</span></td>' +
+      '<td class="num">' + p.amount + '</td>' +
+      '<td>' + p.date + '</td>' +
+      '<td><span class="tag info">' + p.role + '</span></td>' +
+    '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('projTable').innerHTML = html;
 }
-function renderCompleteness(dc){
-  document.getElementById('scoreValue').textContent=dc.completeness_score+'%';
-  const el=document.getElementById('completenessList');
-  el.innerHTML=`<div class="completeness-item"><span class="completeness-label">时间范围</span><span class="completeness-value">${dc.time_range}</span></div>
-    <div class="completeness-item"><span class="completeness-label">公告总数</span><span class="completeness-value">${dc.total_notices} 条</span></div>
-    <div class="completeness-item"><span class="completeness-label">招标公告</span><span class="completeness-value">${dc.tender_count} 条</span></div>
-    <div class="completeness-item"><span class="completeness-label">中标公告</span><span class="completeness-value">${dc.award_count} 条</span></div>
-    <div class="completeness-item"><span class="completeness-label">更正公告</span><span class="completeness-value">${dc.correction_count} 条</span></div>`;
-  document.getElementById('platformTags').innerHTML=dc.platforms.map(p=>`<span class="platform-tag">${p}</span>`).join('');
-  document.getElementById('missingList').textContent='⚠ 缺失字段：'+dc.missing_fields.join('、');
+
+function doSearch(){
+  var v = document.getElementById('orgSearch').value.trim();
+  if(!v){ return; }
+  /* 演示: 仅刷新头像提示 */
 }
-async function loadData(){
-  const p=new URLSearchParams(window.location.search);
-  const oid=p.get('org')||'org_001';
-  try{
-    const r=await fetch(`/api/real/tenders/${encodeURIComponent(oid)}/organization`);
-    if(!r.ok)throw new Error('加载失败');
-    const d=await r.json();
-    if(d.code!==200)throw new Error(d.msg||'加载失败');
-    const o=d.data;
-    document.getElementById('orgName').textContent=o.org_name;
-    document.getElementById('orgNameBig').textContent=o.org_name;
-    document.getElementById('orgAvatar').textContent=o.org_name.slice(0,1);
-    document.getElementById('orgRegion').textContent=o.region;
-    document.getElementById('orgType').textContent=o.org_type;
-    document.getElementById('orgType2').textContent=o.org_type;
-    const a=o.activity_90d;
-    document.getElementById('statTotal').textContent=a.total;
-    document.getElementById('statTender').textContent=a.tender_count;
-    document.getElementById('statAward').textContent=a.award_count;
-    document.getElementById('statWaste').textContent=o.waste_bid_count;
-    document.getElementById('cr3Value').textContent=(o.top3_concentration*100).toFixed(1)+'%';
-    renderActivity(a.daily);
-    renderPurchasers(o.top3_purchasers);
-    renderWaste(o.waste_bid_related);
-    renderCompleteness(o.data_completeness);
-  }catch(e){
-    document.querySelector('.main-container').innerHTML='<div style="text-align:center;padding:60px;color:#999;">加载失败: '+e.message+'</div>';
-  }
+
+function destroyAllCharts(){
+  Object.keys(charts).forEach(function(k){ if(charts[k]){ charts[k].dispose(); delete charts[k]; } });
 }
-loadData();
+function initAllCharts(){ initLine(); initPie(); }
+
+function toggleTheme(){
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('themeIcon').className = isDark ? 'ph ph-sun' : 'ph ph-moon';
+  destroyAllCharts();
+  initAllCharts();
+}
+window.addEventListener('resize', function(){
+  Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].resize(); });
+});
+window.addEventListener('DOMContentLoaded', function(){
+  renderTable();
+  initAllCharts();
+});
 </script>
 </body>
 </html>

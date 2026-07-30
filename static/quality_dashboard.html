@@ -4,317 +4,632 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1366, initial-scale=1">
 <title>数据质量评测 · BidAgent</title>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
-.header{background:white;padding:12px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.header-left{display:flex;align-items:center;gap:16px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;color:#1a1a2e}
-.brand-logo{width:28px;height:28px;background:linear-gradient(135deg,#1976d2,#4527a0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:800}
-.nav{display:flex;gap:4px}
-.nav a{padding:6px 14px;text-decoration:none;color:#555;font-size:13px;border-radius:6px;transition:all .15s}
-.nav a:hover{background:#f0f4ff;color:#1976d2}
-.nav a.active{background:#e3f2fd;color:#1565c0;font-weight:600}
-.page-main{max-width:1280px;margin:0 auto;padding:28px 24px 80px}
-.breadcrumb{font-size:12px;color:#888;margin-bottom:16px}
-.breadcrumb a{color:#1976d2;text-decoration:none}
-.page-title{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
-.page-title h1{font-size:24px;color:#1a1a2e;letter-spacing:.5px}
-.page-title p{color:#888;font-size:13px;margin-top:6px}
-.v-chip{padding:6px 12px;background:#1a1a2e;color:white;border-radius:8px;font-size:12px;font-weight:600;font-family:monospace;letter-spacing:.5px}
-.metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
-.m-card{background:white;border:1px solid #eef0f5;border-radius:14px;padding:18px 20px;position:relative;overflow:hidden}
-.m-card h4{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600}
-.m-card .num{font-size:30px;font-weight:800;color:#1a1a2e;letter-spacing:-.5px}
-.m-card .num .u{font-size:13px;font-weight:500;color:#999;margin-left:4px}
-.m-card .tag2{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;display:inline-block;margin-top:8px}
-.pass{background:#e8f5e9;color:#2e7d32}
-.warn{background:#fff8e1;color:#f57f17}
-.good{background:#e3f2fd;color:#1565c0}
-.bar-row{display:flex;align-items:center;gap:10px;margin-top:10px}
-.bar{flex:1;height:6px;background:#eef0f5;border-radius:3px;overflow:hidden}
-.bar span{display:block;height:100%;border-radius:3px}
-.bar .ok{background:linear-gradient(90deg,#2e7d32,#81c784)}
-.bar .med{background:linear-gradient(90deg,#f57f17,#ffd54f)}
-.card{background:white;border:1px solid #e8e8e8;border-radius:14px;padding:22px 26px;margin-bottom:22px}
-.card h2{font-size:16px;color:#1a1a2e;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.card h2 .sub{font-size:12px;color:#888;font-weight:400;margin-left:4px}
-.switcher{display:inline-flex;background:#fafbfc;border:1px solid #e8e8e8;border-radius:8px;padding:4px;gap:2px;margin-left:auto}
-.sw{border:none;background:transparent;font-size:12px;padding:5px 12px;border-radius:6px;color:#666;cursor:pointer}
-.sw.active{background:#1976d2;color:white;font-weight:600}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-.tbl{width:100%;border-collapse:collapse}
-.tbl th{font-size:12px;color:#666;font-weight:600;text-align:left;padding:10px 14px;border-bottom:2px solid #eef0f5;background:#fafbfc}
-.tbl td{padding:12px 14px;font-size:13px;border-bottom:1px solid #f5f5f5;color:#333}
-.tbl tr:hover td{background:#f8f9ff}
-.pct{font-variant-numeric:tabular-nums;font-weight:700}
-.ci{font-size:11px;color:#666;font-family:monospace;font-weight:400}
-.ci::before{content:'95%CI ['}
-.ci::after{content:']'}
-.pbar{display:inline-block;vertical-align:middle;width:120px;height:8px;background:#eef0f5;border-radius:4px;overflow:hidden;margin-right:10px}
-.pbar b{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#1976d2,#64b5f6)}
-.kv{display:grid;grid-template-columns:140px 1fr;gap:10px 16px;font-size:13px}
-.kv .k{color:#888}
-.kv .v{color:#1a1a2e;font-weight:600;font-variant-numeric:tabular-nums}
-.kv .v small{color:#666;font-weight:400;margin-left:6px}
-.mini-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
-.mini-tags span{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700}
-.bg-grn{background:#e8f5e9;color:#2e7d32}
-.bg-ylw{background:#fff8e1;color:#f57f17}
-.bg-red{background:#ffebee;color:#c62828}
-.bg-blue{background:#e3f2fd;color:#1565c0}
-.tabs{display:flex;border-bottom:1px solid #e8e8e8;margin-bottom:18px;gap:4px}
-.tab{padding:8px 14px;font-size:13px;color:#666;cursor:pointer;border:none;background:transparent;position:relative;margin-bottom:-1px;border-bottom:2px solid transparent}
-.tab.active{color:#1976d2;border-color:#1976d2;font-weight:600}
-.tile{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.tile>div{background:#fafbfc;border:1px solid #eef0f5;border-radius:10px;padding:12px 14px}
-.tile h5{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.tile b{font-size:18px;color:#1a1a2e;letter-spacing:-.3px}
-.tile b small{font-size:11px;color:#888;font-weight:500;margin-left:3px}
-.slogan{background:linear-gradient(135deg,#1a1a2e,#4527a0);border-radius:14px;padding:20px 28px;color:white;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;gap:32px}
-.slogan h3{font-size:15px;opacity:.9;margin-bottom:6px}
-.slogan b{font-size:22px;font-weight:800;letter-spacing:.3px}
-.slogan .note{font-size:12px;opacity:.75;margin-top:4px}
-.slogan .mini{display:flex;gap:14px}
-.slogan .mini div{background:rgba(255,255,255,.1);padding:8px 14px;border-radius:8px;font-size:11px}
-.slogan .mini b{font-size:16px;display:block}
-.footer-note{margin-top:8px;padding:14px 20px;background:#fafbfc;border:1px dashed #e8e8e8;border-radius:10px;font-size:12px;color:#666;line-height:1.7;text-align:center}
-.footer-note .real{color:#16a34a;font-weight:600}
-.footer-note .mock{color:#888;font-weight:600}
+:root{
+  --primary:#1677ff;--primary-bg:#e6f4ff;
+  --success:#52c41a;--success-bg:#f6ffed;
+  --warning:#faad14;--warning-bg:#fffbe6;
+  --error:#ff4d4f;--error-bg:#fff2f0;
+  --purple:#722ed1;--purple-bg:#f9f0ff;
+  --bg:#f5f7fa;--card-bg:#ffffff;
+  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
+  --border:#e8e8e8;--border-2:#f0f0f0;
+  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
+  --sidebar-width:208px;--header-h:52px;
+  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
+}
+body.dark{
+  --bg:#0d1117;--card-bg:#161b22;
+  --text:#e6edf3;--text-2:#adbac7;--text-3:#768390;
+  --border:#30363d;--border-2:#21262d;
+  --sidebar-bg:#010409;--sidebar-text:#8b949e;
+  --primary-bg:#0c1d33;--success-bg:#0d1f0d;--warning-bg:#1f1a0a;--error-bg:#1f0a0a;--purple-bg:#1a0d2e;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 1px 6px -1px rgba(0,0,0,.2);
+}
+html,body{height:100%}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+
+/* ===== Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+.sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
+.sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
+.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
+
+/* ===== Main ===== */
+.main-wrap{margin-left:var(--sidebar-width);min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:var(--header-h);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-title{font-size:15px;font-weight:600;color:var(--text)}
+.header-title i{color:var(--primary);margin-right:6px}
+.header-right{display:flex;align-items:center;gap:10px}
+.h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
+.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
+.h-badge.data{background:var(--success-bg);color:var(--success)}
+.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
+.theme-btn{width:32px;height:32px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:16px;transition:all .15s}
+.theme-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ===== Content ===== */
+.content{flex:1;padding:16px 20px 40px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:12px}
+.breadcrumb a{color:var(--primary);text-decoration:none}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.page-head h1{font-size:22px;color:var(--text);font-weight:700;letter-spacing:.3px}
+.page-head h1 i{color:var(--primary);margin-right:8px}
+.page-head .sub{font-size:12px;color:var(--text-3);margin-top:6px}
+.page-head .right-info{display:flex;gap:8px}
+
+/* ===== Metric Cards ===== */
+.metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.m-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;position:relative;box-shadow:var(--shadow);transition:border-color .15s}
+.m-card:hover{border-color:var(--primary)}
+.m-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.m-icon.blue{background:var(--primary-bg);color:var(--primary)}
+.m-icon.green{background:var(--success-bg);color:var(--success)}
+.m-icon.orange{background:var(--warning-bg);color:var(--warning)}
+.m-icon.purple{background:var(--purple-bg);color:var(--purple)}
+.m-icon.red{background:var(--error-bg);color:var(--error)}
+.m-body{flex:1;min-width:0}
+.m-label{font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.m-value{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.m-value .unit{font-size:13px;font-weight:500;color:var(--text-2);margin-left:1px}
+.m-sub{font-size:11px;color:var(--text-3);margin-top:3px}
+.m-trend{position:absolute;top:12px;right:12px;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+.m-trend.info{background:var(--primary-bg);color:var(--primary)}
+.m-trend.ok{background:var(--success-bg);color:var(--success)}
+.m-trend.warn{background:var(--warning-bg);color:var(--warning)}
+
+/* ===== Cards & Grid ===== */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-head h2{font-size:14px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:6px}
+.card-head h2 i{color:var(--primary);font-size:17px}
+.card-head .desc{font-size:11px;color:var(--text-3);font-weight:400}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.chart-box{width:100%;height:260px}
+.chart-box.sm{height:220px}
+.chart-box.lg{height:240px}
+.chart-note{font-size:11px;color:var(--text-3);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:4px;line-height:1.5}
+.chart-note i{color:var(--primary);margin-right:4px}
+
+/* ===== Tables ===== */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:11px;color:var(--text-3);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--border-2);color:var(--text-2);font-variant-numeric:tabular-nums}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--primary-bg)}
+.tbl .num{font-weight:700;color:var(--text)}
+.tbl .grp{font-weight:700;color:var(--primary)}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600}
+.tag.ok{background:var(--success-bg);color:var(--success)}
+.tag.warn{background:var(--warning-bg);color:var(--warning)}
+.tag.err{background:var(--error-bg);color:var(--error)}
+.tag.info{background:var(--primary-bg);color:var(--primary)}
+.tag.purple{background:var(--purple-bg);color:var(--purple)}
+.ci-text{font-size:10px;color:var(--text-3);font-family:Consolas,monospace;margin-top:2px}
+
+/* ===== Cost Table Layout ===== */
+.cost-row{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+
+/* ===== Footer ===== */
+.footer{margin-top:16px;padding:12px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3);line-height:1.7;text-align:center;box-shadow:var(--shadow)}
+.footer .real{color:var(--success);font-weight:600}
+.footer .src{color:var(--primary);font-weight:600}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
-<header class="header">
-  <div class="header-left">
-    <div class="brand"><div class="brand-logo">B</div>BidAgent</div>
-    <nav class="nav">
-      <a href="/ui/search">检索</a>
-      <a href="/ui/notice-list">公告</a>
-      <a href="/ui/tenders">详情</a>
-      <a href="/ui/quality-dashboard" class="active">评测</a>
-      <a href="/ui/org">画像</a>
-    </nav>
-  </div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <span id="dataSourceBadge" style="padding:4px 10px;border-radius:4px;background:#f3f4f6;color:#888;font-size:12px;font-weight:600;">⏳ 加载中...</span>
-    <div class="v-chip">v4.1 · W3-06 CI</div>
-  </div>
-</header>
-<main class="page-main">
-  <div class="breadcrumb"><a href="/ui/search">首页</a> / 数据质量评测</div>
 
-  <div class="page-title">
-    <div>
-      <h1>📊 数据质量 Dashboard</h1>
-      <p>W3 冻结样本集 90 篇 · v4.1 第八章证据分级 · Bootstrap 95%CI · 消融对比</p>
+<!-- ===== Sidebar ===== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">B</div>
+    <div class="logo-text">BidAgent</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">功能导航</div>
+    <a class="nav-item" href="/ui/search"><i class="ph ph-magnifying-glass"></i>检索</a>
+    <a class="nav-item" href="/ui/notice-list"><i class="ph ph-file-text"></i>公告</a>
+    <a class="nav-item" href="/ui/detail"><i class="ph ph-list-bullets"></i>详情</a>
+    <a class="nav-item active" href="/ui/quality-dashboard"><i class="ph ph-chart-bar"></i>评测<span class="nav-badge">W3</span></a>
+    <a class="nav-item" href="/ui/org"><i class="ph ph-user-circle"></i>画像</a>
+    <a class="nav-item" href="/ui/versions"><i class="ph ph-git-branch"></i>版本</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div>AI + 金融 · 招投标数据服务</div>
+    <div class="comp-tag">GOAI 2026 参赛演示</div>
+  </div>
+</aside>
+
+<!-- ===== Main ===== -->
+<div class="main-wrap">
+  <header class="top-header">
+    <div class="header-left">
+      <div class="header-title"><i class="ph-bold ph-chart-bar-up"></i>数据质量评测 Dashboard</div>
     </div>
-  </div>
-
-  <div class="slogan">
-    <div>
-      <h3>🎯 核心改进（v4.1 vs Baseline）</h3>
-      <b>无依据输出，从 100% 压到 1.94%</b>
-      <div class="note">每个数字都能点回公告原文 · 证据 100% 可定位</div>
+    <div class="header-right">
+      <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
+      <div class="h-badge vers">v4.1 · 99篇</div>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题"><i class="ph ph-moon" id="themeIcon"></i></button>
     </div>
-    <div class="mini">
-      <div>测试集<b id="testSetCount">90篇</b>W3冻结</div>
-      <div>测试用例<b>200+</b>通过</div>
-      <div>字段覆盖<b>97.2%</b>达标</div>
+  </header>
+
+  <main class="content">
+    <div class="breadcrumb"><a href="/ui/search">首页</a> / <a href="/ui/quality-dashboard">评测</a> / 数据质量 Dashboard</div>
+
+    <div class="page-head">
+      <div>
+        <h1><i class="ph-bold ph-chart-line-up"></i>W3 数据质量评测结果</h1>
+        <div class="sub">冻结样本集 99 篇 · 594 字段 · deepseek-v4-flash · 证据验证 + 来源谱系 + 展示等级</div>
+      </div>
+      <div class="right-info">
+        <div class="h-badge info"><i class="ph ph-floppy-disk"></i>W3 冻结集</div>
+        <div class="h-badge vers"><i class="ph ph-hash"></i>full_99</div>
+      </div>
     </div>
-  </div>
 
-  <div class="metric-row">
-    <div class="m-card"><h4>🏆 Recall 召回率</h4><div class="num">93.4<span class="u">%</span></div><div class="tag2 good">Bootstrap 95%CI [91.6, 94.9]</div><div class="bar-row"><div class="bar"><span class="ok" style="width:93.4%"></span></div></div></div>
-    <div class="m-card"><h4>🎯 Precision 精确率</h4><div class="num">95.8<span class="u">%</span></div><div class="tag2 good">Bootstrap 95%CI [94.1, 97.2]</div><div class="bar-row"><div class="bar"><span class="ok" style="width:95.8%"></span></div></div></div>
-    <div class="m-card"><h4>⚖️ F1 Score</h4><div class="num">94.6<span class="u">%</span></div><div class="tag2 good">稳定收敛 · 1000 次 Bootstrap</div><div class="bar-row"><div class="bar"><span class="ok" style="width:94.6%"></span></div></div></div>
-    <div class="m-card"><h4>📌 证据 IoU 平均</h4><div class="num">89.2<span class="u">%</span></div><div class="tag2 pass">定位精度 ≥0.8（金标标准）</div><div class="bar-row"><div class="bar"><span class="ok" style="width:89.2%"></span></div></div></div>
-    <div class="m-card"><h4>🧪 测试通过</h4><div class="num">200<span class="u">+</span></div><div class="tag2 pass">pytest · 97% coverage</div><div class="bar-row"><div class="bar"><span class="ok" style="width:97%"></span></div></div></div>
-  </div>
+    <!-- ===== 1. Metric Cards ===== -->
+    <div class="metric-row" id="metricRow"></div>
 
-  <div class="grid2">
+    <!-- ===== 2. Ablation + Strategy ===== -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-chart-bar"></i>四组消融实验对比<span class="desc">field_precision vs unjustified_rate · 双 Y 轴</span></h2>
+        </div>
+        <div id="chart-ablation" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>A(无证据) -> B(+证据定位) -> C(+证据验证) -> D(+分级过滤). D 组无依据率降至 0%.</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-chart-scatter"></i>输出策略工作点<span class="desc">field_precision vs gold_recall · 点大小 = 保留字段数</span></h2>
+        </div>
+        <div id="chart-strategy" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>strict 与 default 在本批数据结果一致, 图中以不同符号叠加显示.</div>
+      </div>
+    </div>
+
+    <!-- ===== 3. IoU + Error ===== -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-chart-histogram"></i>真实 IoU 分布<span class="desc">321 个匹配证据 (IoU >= 0.5)</span></h2>
+        </div>
+        <div id="chart-iou" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>完美(>=0.99): 163 个 (50.8%) | 良好(0.7-0.99): 59 个 (18.4%) | 一般(0.5-0.7): 99 个 (30.8%)</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-warning"></i>错误案例归因<span class="desc">D 组 35 个 incorrect 按字段分布</span></h2>
+        </div>
+        <div id="chart-error" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>错误集中在 amount(金额) 与 bid_deadline(投标截止日期), 各 16 例, 合计占 91.4%.</div>
+      </div>
+    </div>
+
+    <!-- ===== 4. Cost Performance ===== -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head">
+        <h2><i class="ph ph-currency-cny"></i>成本性能对比<span class="desc">A/B/C/D 四组 · tokens / 延迟 / 成本 / 无依据率</span></h2>
+      </div>
+      <div class="cost-row">
+        <table class="tbl" id="costTable"></table>
+        <div>
+          <div id="chart-cost" class="chart-box sm"></div>
+          <div class="chart-note" style="margin-top:8px"><i class="ph ph-info"></i>柱: Total Tokens (左轴) | 线: 延迟 ms (右轴)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5. Bootstrap CI ===== -->
     <div class="card">
-      <h2>📈 按字段的指标拆解 <span class="sub">Per-field breakdown</span>
-        <span class="switcher" style="position:absolute;right:26px"><button class="sw active" onclick="switchMetric(this,'recall')">Recall</button><button class="sw" onclick="switchMetric(this,'precision')">Precision</button><button class="sw" onclick="switchMetric(this,'f1')">F1</button></span>
-      </h2>
-      <table class="tbl">
-        <thead><tr><th style="width:140px">字段</th><th style="width:180px">值 & 进度条</th><th style="width:120px">95% CI</th><th style="width:130px">支持度分布</th></tr></thead>
-        <tbody id="perFieldBody"></tbody>
-      </table>
+      <div class="card-head">
+        <h2><i class="ph ph-seal-check"></i>Bootstrap 95% 置信区间<span class="desc">recall / precision / iou_avg · 1000 次重采样</span></h2>
+      </div>
+      <div class="cost-row">
+        <table class="tbl" id="bootstrapTable"></table>
+        <div>
+          <div id="chart-bootstrap" class="chart-box sm"></div>
+          <div class="chart-note" style="margin-top:8px"><i class="ph ph-info"></i>指标为聚合比率 (sum/sum), CI 界等于点估计. A/B 无验证证据 -> precision=0; C/D 验证通过 -> precision=1.</div>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>🔬 证据质量拆解 <span class="sub">Evidence quality per role</span></h2>
-      <div class="tile">
-        <div><h5>主证据 Primary</h5><b>96.2<small>%</small></b><div class="mini-tags"><span class="bg-grn">IoU 0.92</span><span class="bg-blue">n=1820</span></div></div>
-        <div><h5>上下文 Context</h5><b>91.5<small>%</small></b><div class="mini-tags"><span class="bg-ylw">IoU 0.88</span><span class="bg-blue">n=840</span></div></div>
-        <div><h5>限定条件 Qualifier</h5><b>87.3<small>%</small></b><div class="mini-tags"><span class="bg-ylw">IoU 0.85</span><span class="bg-blue">n=308</span></div></div>
-        <div><h5>STRONG 支持</h5><b>1,482<small>项</small></b><div class="mini-tags"><span class="bg-grn">High 级</span></div></div>
-        <div><h5>MEDIUM 支持</h5><b>412<small>项</small></b><div class="mini-tags"><span class="bg-ylw">Review 级</span></div></div>
-        <div><h5>被拒绝字段</h5><b>18<small>项</small></b><div class="mini-tags"><span class="bg-red">Low / Rejected</span></div></div>
-      </div>
-      <div style="margin-top:18px;border-top:1px dashed #eef0f5;padding-top:14px" class="kv">
-        <div class="k">总证据段数</div><div class="v">2,968 <small>(平均 33 段/篇)</small></div>
-        <div class="k">证据 100% 可定位</div><div class="v">100.0% <small class="ci">偏移量非空检查</small></div>
-        <div class="k">display_grade=HIGH 占比</div><div class="v">82.1% <small class="ci">v4.1第八章规则</small></div>
-        <div class="k">字段被拒绝率</div><div class="v">1.94% <small class="ci">ambiguous / hallucination</small></div>
-      </div>
+    <!-- ===== Footer ===== -->
+    <div class="footer">
+      <span class="real">全部数据来自真实评测</span> · 数据源文件: w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json / w3_03_evidence_full_99.json / w3_error_analysis.json / w3_bootstrap_ci_full_99.json<br>
+      BidAgent · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
     </div>
-  </div>
+  </main>
+</div>
 
-  <div class="card">
-    <h2>🧫 消融实验对比 <span class="sub">Ablation study · W2-08 vs W2-09</span>
-      <span class="switcher" style="position:absolute;right:26px"><button class="sw active">W3 最新</button><button class="sw">W2-09</button><button class="sw">W2-08(A组-无证据)</button></span>
-    </h2>
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab(this,'metric')">按指标对比</button>
-      <button class="tab" onclick="switchTab(this,'field')">按字段对比</button>
-      <button class="tab" onclick="switchTab(this,'group')">按 notice_type 分组</button>
-    </div>
-    <div id="abContent">
-    <table class="tbl">
-      <thead><tr><th>方案</th><th>配置</th><th>Recall</th><th>Precision</th><th>F1</th><th>无依据输出</th><th>证据 IoU</th><th>结论</th></tr></thead>
-      <tbody>
-        <tr><td><b>W3 最终方案</b><div class="mini-tags" style="margin-top:4px"><span class="bg-grn">推荐</span></div></td><td>证据定位 + display_grade + Bootstrap CI</td><td><b class="pct">93.4%</b><div class="ci">91.6 ~ 94.9</div></td><td><b class="pct">95.8%</b><div class="ci">94.1 ~ 97.2</div></td><td><b class="pct">94.6%</b></td><td><span class="bg-red" style="padding:3px 8px;border-radius:5px;font-weight:700;font-size:11px">1.94%</span></td><td><b class="pct">89.2%</b></td><td><span class="tag pass" style="background:#e8f5e9;color:#2e7d32">SOTA</span></td></tr>
-        <tr><td>W2-09 证据版</td><td>证据定位 + 未分级</td><td><span class="pct">91.2%</span><div class="ci">89.0 ~ 92.9</div></td><td><span class="pct">94.5%</span></td><td><span class="pct">92.8%</span></td><td><span style="padding:3px 8px;border-radius:5px;background:#fff3e0;color:#e65100;font-weight:700;font-size:11px">3.81%</span></td><td><span class="pct">84.3%</span></td><td><span style="color:#f57f17;font-weight:600">↑ 引入分级</span></td></tr>
-        <tr style="background:#fffaf5"><td>W2-08 A组（无证据）</td><td>纯 LLM 抽取，无证据验证</td><td><span class="pct">87.6%</span></td><td><span class="pct">79.5%</span></td><td><span class="pct">83.3%</span></td><td><span style="padding:3px 8px;border-radius:5px;background:#ffebee;color:#c62828;font-weight:700;font-size:11px">100%</span></td><td><span class="pct">—</span></td><td><span style="color:#c62828;font-weight:600">❌ 基线</span></td></tr>
-      </tbody>
-    </table>
-    </div>
-  </div>
-
-  <div class="grid2">
-    <div class="card">
-      <h2>🎒 Bootstrap 实验设置 <span class="sub">seed=42 · n=1000</span></h2>
-      <div class="kv">
-        <div class="k">分组单元</div><div class="v">notice_type <small>（W3暂用，待project_id接入）</small></div>
-        <div class="k">分组数量</div><div class="v">3 组 <small>tender / award / correction</small></div>
-        <div class="k">随机种子</div><div class="v">42 <small>（可复现）</small></div>
-        <div class="k">采样次数</div><div class="v">1,000 次 <small>（稳定，建议≥5000）</small></div>
-        <div class="k">置信水平</div><div class="v">0.95 <small>（2.5% ~ 97.5% 分位数）</small></div>
-        <div class="k">分位数算法</div><div class="v">线性插值 <small>（NumPy default）</small></div>
-        <div class="k">文档数量</div><div class="v" id="docCount">90 篇 <small>（15 招标 + 30 中标 + 45 更正）</small></div>
-        <div class="k">输出文件</div><div class="v">w3_06_bootstrap_ci.json</div>
-      </div>
-    </div>
-    <div class="card">
-      <h2>🧩 display_grade 分布 <span class="sub">v4.1 第八章 · HIGH/REVIEW/LOW</span></h2>
-      <div class="kv" style="grid-template-columns:160px 1fr">
-        <div class="k">🟢 HIGH (强证据+官源)</div><div class="v"><span class="pbar"><b style="width:82%"></b></span>82.1% <small>（2,436 字段）</small></div>
-        <div class="k">🟡 REVIEW (中证据/转载)</div><div class="v"><span class="pbar"><b style="width:16%"></b></span>15.9% <small>（472 字段）</small></div>
-        <div class="k">🔴 LOW (弱/缺失/冲突)</div><div class="v"><span class="pbar"><b style="width:2%"></b></span>2.0% <small>（60 字段）</small></div>
-        <div class="k">strict 策略保留</div><div class="v">HIGH · 82.1% <small>（2,436 字段）</small></div>
-        <div class="k">default 策略保留</div><div class="v">HIGH + REVIEW(STRONG) · 90.2%</div>
-        <div class="k">loose 策略保留</div><div class="v">HIGH + REVIEW · 98.0%</div>
-        <div class="k">audit 策略保留</div><div class="v">全部 · 100.0% <small>（人工复核用）</small></div>
-      </div>
-      <div style="margin-top:16px;padding:12px 14px;background:#e3f2fd;border-radius:8px;font-size:12px;color:#1565c0;line-height:1.7">
-        💡 输出策略（v4.1 10.7）：<b>strict/default/loose/audit</b> 四档。default 策略在保留 90%+ 有效字段同时过滤弱证据噪声，适合金融尽调常规场景。
-      </div>
-    </div>
-  </div>
-
-  <div class="footer-note" id="footerNote">
-    <span class="mock">⏳ 数据源加载中...</span>
-  </div>
-</main>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <script>
-const FIELDS={
-  project_identifier:{recall:{v:98.2,l:96.5,u:99.3,dist:{s:82,m:16,w:2}},precision:{v:98.9,l:97.5,u:99.7},f1:98.5,n:'项目编号'},
-  purchaser_name:{recall:{v:96.4,l:94.7,u:97.9,dist:{s:80,m:18,w:2}},precision:{v:97.1,l:95.3,u:98.5},f1:96.8,n:'采购人'},
-  winner_name:{recall:{v:92.1,l:89.0,u:94.5,dist:{s:72,m:24,w:4}},precision:{v:94.8,l:92.0,u:96.8},f1:93.4,n:'中标人'},
-  amount:{recall:{v:94.5,l:92.1,u:96.3,dist:{s:78,m:18,w:4}},precision:{v:96.2,l:93.8,u:97.9},f1:95.4,n:'金额'},
-  publish_date:{recall:{v:99.1,l:98.3,u:99.6,dist:{s:92,m:7,w:1}},precision:{v:99.3,l:98.6,u:99.8},f1:99.2,n:'发布日期'},
-  bid_deadline:{recall:{v:80.2,l:76.5,u:83.8,dist:{s:68,m:28,w:4}},precision:{v:88.5,l:84.7,u:91.9},f1:84.2,n:'投标截止日期'},
+/* ================================================================
+ * 真实数据 - 从 _w3_outputs/ JSON 文件提取
+ * ================================================================ */
+var DATA = {
+  meta: { docs: 99, fields_total: 594, model: "deepseek-v4-flash", price_per_m: 1.5 },
+  evidence: {
+    docs_count: 99, fields_present: 437, fields_found: 297,
+    evidences_pred: 590, evidences_matched: 321,
+    recall: 0.6796, precision: 0.5441,
+    iou_avg: 0.5339, iou_avg_matched: 0.7126,
+    iou_p50: 0.7097, iou_p95: 1.0
+  },
+  ablation: {
+    A: { fields_total:594, fields_with_value:447, fields_unjustified:447, unjustified_rate:1.0, field_precision:0.9197, total_tokens:278882, latency_ms_avg:5658.2, cost_cny:0.4183,
+         desc:"纯LLM抽取, 无证据验证" },
+    B: { fields_total:594, fields_with_value:446, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9258, total_tokens:353503, latency_ms_avg:8140.2, cost_cny:0.5303,
+         desc:"+证据定位, 未验证" },
+    C: { fields_total:594, fields_with_value:447, fields_unjustified:27, unjustified_rate:0.0604, field_precision:0.9258, total_tokens:348657, latency_ms_avg:7705.3, cost_cny:0.523,
+         desc:"+证据验证" },
+    D: { fields_total:594, fields_with_value:447, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9217, total_tokens:348657, latency_ms_avg:7705.3, cost_cny:0.523,
+         desc:"+分级过滤 (完整流水线)" }
+  },
+  strategies: {
+    strict:  { kept_fields:420, field_precision:0.9376, gold_recall:0.8947, desc:"仅 HIGH 级" },
+    default: { kept_fields:420, field_precision:0.9376, gold_recall:0.8947, desc:"HIGH + REVIEW(STRONG)" },
+    loose:   { kept_fields:447, field_precision:0.9321, gold_recall:0.9428, desc:"HIGH + REVIEW" },
+    audit:   { kept_fields:594, field_precision:0.8822, gold_recall:0.9428, desc:"全部保留 (人工复核)" }
+  },
+  iou_dist: {
+    matched: 321,
+    buckets: [
+      { range:"0.50-0.60", count:56, grade:"normal" },
+      { range:"0.60-0.70", count:43, grade:"normal" },
+      { range:"0.70-0.80", count:23, grade:"good" },
+      { range:"0.80-0.90", count:18, grade:"good" },
+      { range:"0.90-0.99", count:18, grade:"good" },
+      { range:"0.99-1.00", count:163, grade:"perfect" }
+    ],
+    summary: { perfect:163, good:59, normal:99 }
+  },
+  error_analysis: {
+    total: 35,
+    by_field: [
+      { key:"amount", name:"金额", count:16 },
+      { key:"bid_deadline", name:"投标截止日期", count:16 },
+      { key:"publish_date", name:"发布日期", count:2 },
+      { key:"project_identifier", name:"项目编号", count:1 }
+    ]
+  },
+  bootstrap: {
+    A: { recall:{p:1.0,l:1.0,u:1.0}, precision:{p:0.0,l:0.0,u:0.0}, iou_avg:{p:0.0,l:0.0,u:0.0} },
+    B: { recall:{p:1.0,l:1.0,u:1.0}, precision:{p:0.0,l:0.0,u:0.0}, iou_avg:{p:0.0,l:0.0,u:0.0} },
+    C: { recall:{p:1.0,l:1.0,u:1.0}, precision:{p:1.0,l:1.0,u:1.0}, iou_avg:{p:1.0,l:1.0,u:1.0} },
+    D: { recall:{p:1.0,l:1.0,u:1.0}, precision:{p:1.0,l:1.0,u:1.0}, iou_avg:{p:1.0,l:1.0,u:1.0} }
+  }
 };
-function renderField(metric){
-  document.getElementById('perFieldBody').innerHTML=Object.entries(FIELDS).map(([k,f])=>{
-    const m=f[metric];const w=Math.round(m.v);const d=f.recall.dist;
-    return `<tr><td><b>${f.n}</b><div style="font-size:11px;color:#888;font-family:monospace;margin-top:2px">${k}</div></td>
-      <td><span class="pbar"><b style="width:${w}%"></b></span><b class="pct">${m.v}%</b></td>
-      <td><span class="ci">${m.l}, ${m.u}</span></td>
-      <td><div class="mini-tags"><span class="bg-grn">HIGH ${d.s}%</span><span class="bg-ylw">REVIEW ${d.m}%</span><span class="bg-red">LOW ${d.w}%</span></div></td></tr>`;
+
+var charts = {};
+var isDark = false;
+
+function theme() {
+  return isDark
+    ? { t:'#adbac7', al:'#768390', gl:'#21262d', bg:'#161b22', bt:'#e6edf3' }
+    : { t:'#595959', al:'#8c8c8c', gl:'#f0f0f0', bg:'#ffffff', bt:'#1a1a2e' };
+}
+function pct(v, d) { d = (d==null)?2:d; return (v*100).toFixed(d); }
+
+/* ===== Metric Cards ===== */
+function renderMetrics() {
+  var e = DATA.evidence, d = DATA.ablation.D;
+  var cards = [
+    { icon:'ph-target', cls:'blue', label:'证据召回率', val:pct(e.recall), unit:'%',
+      sub:e.fields_found + '/' + e.fields_present + ' 字段命中', trend:'IoU Recall', tc:'info' },
+    { icon:'ph-crosshair', cls:'orange', label:'证据精确率', val:pct(e.precision), unit:'%',
+      sub:e.evidences_matched + '/' + e.evidences_pred + ' 证据匹配', trend:'IoU Precision', tc:'warn' },
+    { icon:'ph-ruler', cls:'green', label:'边界 IoU', val:pct(e.iou_avg_matched), unit:'%',
+      sub:'P50=' + e.iou_p50 + ' | P95=' + e.iou_p95, trend:'matched avg', tc:'ok' },
+    { icon:'ph-check-square', cls:'blue', label:'字段精确率', val:pct(d.field_precision), unit:'%',
+      sub:'D 组 (完整流水线)', trend:'field_precision', tc:'ok' },
+    { icon:'ph-shield-check', cls:'green', label:'无依据率', val:pct(d.unjustified_rate,0), unit:'%',
+      sub:'D 组 | A 组为 ' + pct(DATA.ablation.A.unjustified_rate,0) + '%', trend:'A->D: 100%->0%', tc:'ok' }
+  ];
+  document.getElementById('metricRow').innerHTML = cards.map(function(c) {
+    return '<div class="m-card">' +
+      '<div class="m-icon ' + c.cls + '"><i class="ph-bold ' + c.icon + '"></i></div>' +
+      '<div class="m-body"><div class="m-label">' + c.label + '</div>' +
+      '<div class="m-value">' + c.val + '<span class="unit">' + c.unit + '</span></div>' +
+      '<div class="m-sub">' + c.sub + '</div></div>' +
+      '<div class="m-trend ' + c.tc + '">' + c.trend + '</div></div>';
   }).join('');
 }
-function switchMetric(el,m){document.querySelectorAll('.switcher .sw').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderField(m)}
-function switchTab(el,m){document.querySelectorAll('.tabs .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active')}
-renderField('recall');
 
-// ===== 数据源状态：'loading' | 'real' | 'mock' =====
-let dashboardDataSource='loading';
-
-function updateDataSourceBadge(){
-  const badge=document.getElementById('dataSourceBadge');
-  const note=document.getElementById('footerNote');
-  if(badge){
-    if(dashboardDataSource==='loading'){
-      badge.textContent='⏳ 加载中...';
-      badge.style.color='#888';
-      badge.style.background='#f3f4f6';
-    }else if(dashboardDataSource==='real'){
-      badge.textContent='📊 真实数据';
-      badge.style.color='#16a34a';
-      badge.style.background='#dcfce7';
-    }else{
-      badge.textContent='⚠️ 模拟数据(API未连接)';
-      badge.style.color='#dc2626';
-      badge.style.background='#fee2e2';
-    }
-  }
-  if(note){
-    if(dashboardDataSource==='real'){
-      note.innerHTML='<span class="real">📊 评测篇数来自真实数据库，其余指标为历史评测结果</span>';
-    }else if(dashboardDataSource==='mock'){
-      note.innerHTML='<span class="mock">⚠️ 真实数据 API 未连接，全部指标为历史评测结果（模拟数据）</span>';
-    }
-  }
+/* ===== Chart 1: Ablation Bar ===== */
+function initAblation() {
+  var el = document.getElementById('chart-ablation');
+  var c = echarts.init(el);
+  charts.ablation = c;
+  var th = theme();
+  var groups = ['A','B','C','D'];
+  var fp = groups.map(function(g){ return +(DATA.ablation[g].field_precision*100).toFixed(2); });
+  var ur = groups.map(function(g){ return +(DATA.ablation[g].unjustified_rate*100).toFixed(2); });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var g = p[0].axisValue;
+        var ab = DATA.ablation[g];
+        return '<b>组 ' + g + '</b> (' + ab.desc + ')<br/>' +
+          p.map(function(x){ return x.marker + ' ' + x.seriesName + ': ' + x.value + '%'; }).join('<br/>');
+      }
+    },
+    legend: { data:['字段精确率','无依据率'], top:0, right:0, textStyle:{color:th.t,fontSize:11}, itemWidth:12, itemHeight:8 },
+    grid: { left:50, right:50, top:30, bottom:30 },
+    xAxis: { type:'category', data:groups, axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    yAxis: [
+      { type:'value', name:'精确率 %', nameTextStyle:{color:th.al,fontSize:10}, min:80, max:100, axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+      { type:'value', name:'无依据率 %', nameTextStyle:{color:th.al,fontSize:10}, min:0, max:100, axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{show:false}, axisLine:{show:false}, axisTick:{show:false} }
+    ],
+    series: [
+      { name:'字段精确率', type:'bar', barWidth:28, data:fp, itemStyle:{color:'#1677ff',borderRadius:[3,3,0,0]},
+        label:{show:true,position:'top',color:th.t,fontSize:10,formatter:'{c}%'} },
+      { name:'无依据率', type:'bar', barWidth:28, yAxisIndex:1, data:ur, itemStyle:{color:'#ff4d4f',borderRadius:[3,3,0,0]},
+        label:{show:true,position:'top',color:th.t,fontSize:10,formatter:'{c}%'} }
+    ]
+  });
 }
 
-// ===== 尝试加载真实公告总数，更新"评测篇数"指标 =====
-async function loadRealCount(){
-  try{
-    const resp=await fetch('/api/real/tenders');
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    const data=await resp.json();
-    if(data.code && data.code!==200) throw new Error(data.msg||'API错误');
-    const tenders=(data.data && data.data.tenders)||data.tenders||[];
-    if(!tenders.length) throw new Error('无数据');
-    dashboardDataSource='real';
-    const count=tenders.length;
-    // 更新"测试集"篇数
-    const tsEl=document.getElementById('testSetCount');
-    if(tsEl) tsEl.textContent=count+'篇';
-    // 更新 Bootstrap 设置中的"文档数量"
-    const dcEl=document.getElementById('docCount');
-    if(dcEl){
-      // 按 notice_type 分组统计
-      const groups={};
-      tenders.forEach(t=>{
-        const ty=mapType(t.type||t.notice_type);
-        groups[ty]=(groups[ty]||0)+1;
-      });
-      const parts=Object.entries(groups).map(([k,v])=>`${v} ${k.replace('公告','')}`).join(' + ');
-      dcEl.innerHTML=count+' 篇 <small>（'+(parts||'真实数据')+'）</small>';
+/* ===== Chart 2: Strategy Scatter ===== */
+function initStrategy() {
+  var el = document.getElementById('chart-strategy');
+  var c = echarts.init(el);
+  charts.strategy = c;
+  var th = theme();
+  var colors = { strict:'#1677ff', default:'#13c2c2', loose:'#52c41a', audit:'#faad14' };
+  var symbols = { strict:'circle', default:'diamond', loose:'triangle', audit:'roundRect' };
+  var series = Object.keys(DATA.strategies).map(function(name) {
+    var s = DATA.strategies[name];
+    return {
+      name: name, type:'scatter',
+      data: [[+(s.field_precision*100).toFixed(2), +(s.gold_recall*100).toFixed(2), s.kept_fields]],
+      symbol: symbols[name], symbolSize: 15 + (s.kept_fields - 400) / 10,
+      itemStyle: { color: colors[name], opacity:0.85, borderColor:colors[name], borderWidth:2 },
+      label: { show:true, position:'top', formatter:name, color:th.t, fontSize:11, fontWeight:600, distance:8 }
+    };
+  });
+  c.setOption({
+    tooltip: { trigger:'item',
+      formatter: function(p) {
+        var s = DATA.strategies[p.seriesName];
+        return '<b>' + p.seriesName + '</b> (' + s.desc + ')<br/>' +
+          '字段精确率: ' + (s.field_precision*100).toFixed(2) + '%<br/>' +
+          '金标召回率: ' + (s.gold_recall*100).toFixed(2) + '%<br/>' +
+          '保留字段数: ' + s.kept_fields + ' / ' + DATA.meta.fields_total;
+      }
+    },
+    legend: { show:false },
+    grid: { left:55, right:30, top:25, bottom:40 },
+    xAxis: { type:'value', name:'字段精确率 %', nameTextStyle:{color:th.al,fontSize:10}, min:86, max:95,
+      axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{lineStyle:{color:th.gl}} },
+    yAxis: { type:'value', name:'金标召回率 %', nameTextStyle:{color:th.al,fontSize:10}, min:86, max:96,
+      axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{lineStyle:{color:th.gl}} },
+    series: series
+  });
+}
+
+/* ===== Chart 3: IoU Histogram ===== */
+function initIoU() {
+  var el = document.getElementById('chart-iou');
+  var c = echarts.init(el);
+  charts.iou = c;
+  var th = theme();
+  var bk = DATA.iou_dist.buckets;
+  var ranges = bk.map(function(b){ return b.range; });
+  var counts = bk.map(function(b){ return b.count; });
+  var colors = bk.map(function(b){
+    if (b.grade==='perfect') return '#52c41a';
+    if (b.grade==='good') return '#1677ff';
+    return '#faad14';
+  });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var b = bk[p[0].dataIndex];
+        var pctv = (b.count / DATA.iou_dist.matched * 100).toFixed(1);
+        var gradeName = b.grade==='perfect'?'完美':(b.grade==='good'?'良好':'一般');
+        return 'IoU ' + b.range + '<br/>' + p[0].marker + ' 数量: ' + b.count + ' (' + pctv + '%)<br/>等级: ' + gradeName;
+      }
+    },
+    grid: { left:45, right:20, top:20, bottom:35 },
+    xAxis: { type:'category', data:ranges, name:'IoU 区间', nameTextStyle:{color:th.al,fontSize:10},
+      axisLabel:{color:th.al,fontSize:10,rotate:20}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    yAxis: { type:'value', name:'证据数', nameTextStyle:{color:th.al,fontSize:10},
+      axisLabel:{color:th.al,fontSize:10}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+    series: [{
+      type:'bar', barWidth:'70%', data: counts.map(function(v,i){ return { value:v, itemStyle:{ color:colors[i], borderRadius:[3,3,0,0] } }; }),
+      label: { show:true, position:'top', color:th.t, fontSize:10 }
+    }]
+  });
+}
+
+/* ===== Chart 4: Error Analysis ===== */
+function initError() {
+  var el = document.getElementById('chart-error');
+  var c = echarts.init(el);
+  charts.error = c;
+  var th = theme();
+  var errs = DATA.error_analysis.by_field.slice().sort(function(a,b){ return a.count - b.count; });
+  var names = errs.map(function(e){ return e.name + ' (' + e.key + ')'; });
+  var counts = errs.map(function(e){ return e.count; });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var e = errs[p[0].dataIndex];
+        var pctv = (e.count / DATA.error_analysis.total * 100).toFixed(1);
+        return e.name + ' (' + e.key + ')<br/>' + p[0].marker + ' 错误数: ' + e.count + ' (' + pctv + '%)';
+      }
+    },
+    grid: { left:120, right:40, top:15, bottom:25 },
+    xAxis: { type:'value', name:'错误数', nameTextStyle:{color:th.al,fontSize:10},
+      axisLabel:{color:th.al,fontSize:10}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+    yAxis: { type:'category', data:names,
+      axisLabel:{color:th.t,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    series: [{
+      type:'bar', barWidth:18, data: counts.map(function(v){ return { value:v, itemStyle:{ color: v>=16?'#ff4d4f':(v>=2?'#faad14':'#1677ff'), borderRadius:[0,3,3,0] } }; }),
+      label: { show:true, position:'right', color:th.t, fontSize:11, formatter:'{c}' }
+    }]
+  });
+}
+
+/* ===== Chart 5: Cost Performance ===== */
+function initCost() {
+  var el = document.getElementById('chart-cost');
+  var c = echarts.init(el);
+  charts.cost = c;
+  var th = theme();
+  var groups = ['A','B','C','D'];
+  var tokens = groups.map(function(g){ return DATA.ablation[g].total_tokens; });
+  var latency = groups.map(function(g){ return DATA.ablation[g].latency_ms_avg; });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var g = p[0].axisValue;
+        var ab = DATA.ablation[g];
+        return '<b>组 ' + g + '</b><br/>' +
+          p[0].marker + ' Tokens: ' + ab.total_tokens.toLocaleString() + '<br/>' +
+          p[1].marker + ' 延迟: ' + ab.latency_ms_avg + ' ms<br/>' +
+          '成本: ' + ab.cost_cny + ' CNY | 无依据率: ' + pct(ab.unjustified_rate) + '%';
+      }
+    },
+    legend: { data:['Tokens','延迟(ms)'], top:0, right:0, textStyle:{color:th.t,fontSize:10}, itemWidth:10, itemHeight:8 },
+    grid: { left:55, right:50, top:28, bottom:25 },
+    xAxis: { type:'category', data:groups, axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    yAxis: [
+      { type:'value', name:'Tokens', nameTextStyle:{color:th.al,fontSize:9}, axisLabel:{color:th.al,fontSize:9,formatter:function(v){return v/1000+'k';}}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+      { type:'value', name:'ms', nameTextStyle:{color:th.al,fontSize:9}, axisLabel:{color:th.al,fontSize:9}, splitLine:{show:false}, axisLine:{show:false}, axisTick:{show:false} }
+    ],
+    series: [
+      { name:'Tokens', type:'bar', barWidth:22, data:tokens, itemStyle:{color:'#1677ff',borderRadius:[3,3,0,0]} },
+      { name:'延迟(ms)', type:'line', yAxisIndex:1, data:latency, itemStyle:{color:'#722ed1'}, lineStyle:{color:'#722ed1',width:2}, symbol:'circle', symbolSize:7, label:{show:true,color:th.t,fontSize:9,formatter:function(p){return p.value;}} }
+    ]
+  });
+}
+
+/* ===== Chart 6: Bootstrap CI ===== */
+function initBootstrap() {
+  var el = document.getElementById('chart-bootstrap');
+  var c = echarts.init(el);
+  charts.bootstrap = c;
+  var th = theme();
+  var groups = ['A','B','C','D'];
+  var metrics = ['recall','precision','iou_avg'];
+  var mNames = { recall:'Recall', precision:'Precision', iou_avg:'IoU Avg' };
+  var colors = { recall:'#52c41a', precision:'#1677ff', iou_avg:'#722ed1' };
+  var series = metrics.map(function(m) {
+    return {
+      name: mNames[m], type:'bar', barWidth:14,
+      data: groups.map(function(g){ return +(DATA.bootstrap[g][m].p * 100).toFixed(0); }),
+      itemStyle: { color: colors[m], borderRadius:[3,3,0,0] },
+      label: { show:true, position:'top', color:th.t, fontSize:9, formatter:function(p){ return p.value + '%'; } }
+    };
+  });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var g = p[0].axisValue;
+        var bs = DATA.bootstrap[g];
+        var s = '<b>组 ' + g + '</b><br/>';
+        metrics.forEach(function(m,i) {
+          s += p[i].marker + ' ' + mNames[m] + ': ' + (bs[m].p*100).toFixed(0) + '% [CI ' + (bs[m].l*100).toFixed(0) + ', ' + (bs[m].u*100).toFixed(0) + ']<br/>';
+        });
+        return s;
+      }
+    },
+    legend: { top:0, right:0, textStyle:{color:th.t,fontSize:10}, itemWidth:10, itemHeight:8 },
+    grid: { left:40, right:20, top:28, bottom:25 },
+    xAxis: { type:'category', data:groups, axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    yAxis: { type:'value', min:0, max:110, axisLabel:{color:th.al,fontSize:9,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+    series: series
+  });
+}
+
+/* ===== Tables ===== */
+function renderCostTable() {
+  var groups = ['A','B','C','D'];
+  var html = '<thead><tr><th>组</th><th>配置</th><th>Tokens</th><th>延迟(ms)</th><th>成本(CNY)</th><th>无依据率</th></tr></thead><tbody>';
+  groups.forEach(function(g) {
+    var ab = DATA.ablation[g];
+    var urTag = ab.unjustified_rate >= 1 ? 'err' : (ab.unjustified_rate > 0.05 ? 'warn' : 'ok');
+    html += '<tr><td class="grp">' + g + '</td><td>' + ab.desc + '</td>' +
+      '<td class="num">' + ab.total_tokens.toLocaleString() + '</td>' +
+      '<td>' + ab.latency_ms_avg + '</td>' +
+      '<td class="num">' + ab.cost_cny + '</td>' +
+      '<td><span class="tag ' + urTag + '">' + pct(ab.unjustified_rate) + '%</span></td></tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('costTable').innerHTML = html;
+}
+
+function renderBootstrapTable() {
+  var groups = ['A','B','C','D'];
+  var html = '<thead><tr><th>组</th><th>Recall</th><th>Precision</th><th>IoU Avg</th></tr></thead><tbody>';
+  groups.forEach(function(g) {
+    var bs = DATA.bootstrap[g];
+    function fmt(m) {
+      var v = bs[m];
+      return '<td><span class="num">' + pct(v.p,0) + '%</span><div class="ci-text">CI [' + pct(v.l,0) + ', ' + pct(v.u,0) + ']</div></td>';
     }
-  }catch(e){
-    console.warn('真实数据加载失败,使用Mock篇数:',e.message);
-    dashboardDataSource='mock';
-    // 保持原 Mock 值 90 篇不动
-  }
-  updateDataSourceBadge();
+    html += '<tr><td class="grp">' + g + '</td>' + fmt('recall') + fmt('precision') + fmt('iou_avg') + '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('bootstrapTable').innerHTML = html;
 }
 
-// notice_type 原始值 → 中文标签映射
-function mapType(t){
-  if(!t) return '未知';
-  const s=String(t).toLowerCase();
-  if(s.includes('tender')||s==='招标') return '招标公告';
-  if(s.includes('award')||s==='中标') return '中标公告';
-  if(s.includes('correction')||s.includes('correct')||s==='更正') return '更正公告';
-  return '其他';
+/* ===== Init All ===== */
+function initAllCharts() {
+  initAblation();
+  initStrategy();
+  initIoU();
+  initError();
+  initCost();
+  initBootstrap();
 }
 
-updateDataSourceBadge();
-loadRealCount();
+function destroyAllCharts() {
+  Object.keys(charts).forEach(function(k) {
+    if (charts[k]) { charts[k].dispose(); delete charts[k]; }
+  });
+}
+
+/* ===== Theme Toggle ===== */
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('themeIcon').className = isDark ? 'ph ph-sun' : 'ph ph-moon';
+  destroyAllCharts();
+  initAllCharts();
+}
+
+/* ===== Resize ===== */
+window.addEventListener('resize', function() {
+  Object.keys(charts).forEach(function(k) { if (charts[k]) charts[k].resize(); });
+});
+
+/* ===== Load ===== */
+window.addEventListener('DOMContentLoaded', function() {
+  renderMetrics();
+  renderCostTable();
+  renderBootstrapTable();
+  initAllCharts();
+});
 </script>
 </body>
 </html>
