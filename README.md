@@ -13,22 +13,41 @@
   - 废标风险预警（18 条规则，含否定语境检测）
   - 供应商信用评分（已实现）
 - **质量保障**：SimHash 64 位去重 + 反幻觉校验（金额/日期归一化 + 事实比对）
+- **证据验证与来源谱系**(W3):
+  - 证据定位器(EvidenceLocator):为每个字段在原文中定位证据 span,支持精确匹配 + 规范化匹配 + IoU 边界评估
+  - 事实断言键(fact_assertion_key):为跨公告的同一事实生成唯一键,支持多源合并
+  - 来源谱系(source_lineage):识别公告来源角色(official_original/official_repost/commercial_repost/unknown),基于 SimHash 跨平台去重
+  - 字段等价性校验(FieldValidator):验证 LLM 抽取值与原文证据一致性
+- **展示等级与选择性输出**(W3):
+  - display_grade 三级分类(high/review/low):基于支持度(support_level)+来源角色+交叉验证状态
+  - 四种输出策略:strict(仅 high)/default(high + STRONG review)/loose(high + 全部 review)/audit(全部含 low)
+- **数据质量评测**(W3/W4):
+  - 证据检出率(recall)/证据精确率(precision)/边界 IoU 三大指标
+  - Bootstrap 95% 置信区间(按 project_id 分组,1000 次重采样)
+  - 四组消融实验(A: Direct LLM / B: +候选证据 / C: +程序验证 / D: 完整 BidAgent + 选择性输出)
+- **Web Demo**(W3):
+  - 6 个 UI 页面:查询 / 公告列表 / 质量评测 Dashboard / 来源版本链 / 组织画像 / 公告详情
+  - 三分钟 Demo 流程承载(查询→去重→证据验证→拒绝冲突→组织画像→评测结果)
 - **推送**：SMTP 邮件 + Webhook HMAC 签名，at-least-once 语义 + content_hash 幂等去重
 - **安全**：SSRF 三层防护 / LIKE 注入防护 / 邮件头注入防护 / 路径穿越防护
 
 ## MVP 边界
 
-**已实现**：
-- 六 Agent 骨架 + 编排器（21 测试）
-- BOQ 异常检测引擎（25 测试）
-- 废标风险预警引擎（41 测试，含否定语境检测）
-- 千里马登录态采集（实测通过）
-- SMTP 邮件实发（163 邮箱联调通过）
-- 221 → 571 测试全过，0 回归
+**已实现**:
+- 六 Agent 骨架 + 编排器
+- BOQ 异常检测引擎(25 测试)
+- 废标风险预警引擎(41 测试,含否定语境检测)
+- 千里马登录态采集(实测通过)
+- SMTP 邮件实发(163 邮箱联调通过)
+- W3 证据验证与来源谱系(EvidenceLocator + FieldValidator + source_lineage)
+- W3 展示等级与选择性输出(display_grade + 4 种输出策略)
+- W3/W4 数据质量评测(召回/精确/IoU + Bootstrap CI + 四组消融)
+- W3 Web Demo(6 个 UI 页面)
+- 824 测试全过,3 模块覆盖率 100%(bootstrap_ci/display_grade/output_strategies)
 
-**规划中**：
-- 30+ 数据源注册（S-4）
-- 简易聊天 UI + 进度轮询（S-5）
+**规划中**:
+- 30+ 数据源注册(S-4)
+- 全量 90 篇评测(等测试集冻结后运行)
 - Demo 视频录制
 
 ## 安装与启动
@@ -96,6 +115,10 @@ pytest -v
 - 废标风险预警引擎（41 测试，含否定语境反面用例）
 - 核心模块（SimHash / 反幻觉 / 邮件推送 / 订阅 / 采集器 / 登录态）
 - 企业级特征（SSRF / 路径穿越 / LIKE 注入 / 幂等去重）
+- W3 证据验证(EvidenceLocator / FieldValidator / source_lineage / fact_assertion_key)
+- W3 展示等级(display_grade + output_strategies 四策略)
+- W3 数据质量评测(bootstrap_ci 置信区间 / 消融实验 A/B/C/D 四组)
+- W3 覆盖率补强(3 模块 100%:bootstrap_ci / display_grade / output_strategies)
 
 ## 文档目录索引
 
@@ -106,6 +129,9 @@ pytest -v
 | 合规文档 | `docs/compliance.md` | 数据来源 / 隐私保护 / 风险提示 / 行业边界 |
 | 部署文档 | `DEPLOY.md` | Docker 部署说明 |
 | 完整版对比报告 | `docs/完整版对比报告.md` | 完整版资产吸收清单 |
+| W3 评测报告 | `_w3_outputs/w3_03_evidence_report.json` | 90 篇证据评测结果(召回/精确/IoU) |
+| W3 display_grade 规则 | `_w3_outputs/display_grade_rule_frozen.md` | 展示等级规则冻结文档 |
+| 金标冻结 | `tests/fixtures/gold/gold_frozen_v1.json` | 90 篇金标标注冻结 |
 
 ## 数据与合规边界
 
@@ -135,9 +161,11 @@ pytest -v
 ## 当前已知限制
 
 1. **数据源覆盖有限**：当前 4 平台，S-4 后扩展至 30+
-2. **聊天 UI 尚未实现**：S-5 任务，Demo 视频录制依赖此
-3. **risk_engine 基于关键词匹配**：存在一定误报率，已加否定语境检测，但仍需人工复核
-4. **法条引用准确性未核实**：risk_engine 中部分 `law_ref` 字段为空或未核实，答辩前需补充
+2. **测试集 93 篇**：K3 正在补抓至 100 篇(tender 30 + award 32 + correction 30 → 100)
+3. **cross_verified 默认 False**：交叉验证赋值需等 W4 多源合并阶段接入
+4. **Web Demo 为前端 Mock 数据**：后端 demo_api.py 已预留接入点,后续改为真实 API
+5. **risk_engine 基于关键词匹配**：存在一定误报率,已加否定语境检测,但仍需人工复核
+6. **法条引用准确性未核实**：risk_engine 中部分 law_ref 字段为空或未核实,答辩前需补充
 
 ## 技术栈
 
