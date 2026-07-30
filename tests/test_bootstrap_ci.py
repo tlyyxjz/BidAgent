@@ -56,6 +56,7 @@ def test_output_structure():
         metric_keys=["recall", "precision"],
         n_bootstrap=100,
         random_seed=42,
+        group_key="notice_type",
     )
     # 顶层 key
     assert "recall" in result
@@ -114,8 +115,8 @@ def test_single_group():
 # ==== 4. 可复现性：相同 seed 结果相同 ====
 def test_reproducibility():
     docs = _build_doc_metrics(10)
-    r1 = bootstrap_ci(docs, metric_keys=["recall", "precision"], n_bootstrap=200, random_seed=123)
-    r2 = bootstrap_ci(docs, metric_keys=["recall", "precision"], n_bootstrap=200, random_seed=123)
+    r1 = bootstrap_ci(docs, metric_keys=["recall", "precision"], n_bootstrap=200, random_seed=123, group_key="notice_type")
+    r2 = bootstrap_ci(docs, metric_keys=["recall", "precision"], n_bootstrap=200, random_seed=123, group_key="notice_type")
     for mk in ("recall", "precision"):
         assert r1[mk]["point_estimate"] == pytest.approx(r2[mk]["point_estimate"])
         assert r1[mk]["ci_lower"] == pytest.approx(r2[mk]["ci_lower"])
@@ -131,6 +132,7 @@ def test_ci_monotonicity():
         metric_keys=["recall", "precision", "iou_avg"],
         n_bootstrap=500,
         random_seed=7,
+        group_key="notice_type",
     )
     for mk in ("recall", "precision", "iou_avg"):
         r = result[mk]
@@ -230,3 +232,32 @@ def test_custom_metric_fallback():
     # 空 docs 时 fallback=0.0
     r2 = bootstrap_ci([], metric_keys=["custom_score"], n_bootstrap=0)
     assert r2["custom_score"]["point_estimate"] == 0.0
+
+
+# ==== 10. project_id 分组（v4.1 10.10 默认 group_key）====
+def test_bootstrap_ci_with_project_id():
+    """project_id 分组:同一项目的多篇公告整体采样。"""
+    docs = [
+        {"project_id": "P001", "fields_found": 4, "fields_present": 5, "evidences_matched": 3, "evidences_pred": 4, "iou_list_matched": 2},
+        {"project_id": "P001", "fields_found": 5, "fields_present": 5, "evidences_matched": 4, "evidences_pred": 4, "iou_list_matched": 3},
+        {"project_id": "P002", "fields_found": 3, "fields_present": 4, "evidences_matched": 2, "evidences_pred": 3, "iou_list_matched": 2},
+        {"project_id": "P003", "fields_found": 4, "fields_present": 4, "evidences_matched": 3, "evidences_pred": 3, "iou_list_matched": 3},
+    ]
+    result = bootstrap_ci(docs, ["recall"], n_bootstrap=100, group_key="project_id")
+    assert result["meta"]["n_groups"] == 3  # P001/P002/P003
+    assert result["meta"]["group_key"] == "project_id"
+    # 同一项目 P001 的两篇公告应一起采样
+    assert result["meta"]["n_docs"] == 4
+
+
+# ==== 11. 默认 group_key 为 project_id（v4.1 10.10）====
+def test_default_group_key_is_project_id():
+    """不传 group_key 时默认按 project_id 分组。"""
+    docs = [
+        {"project_id": "P001", "fields_found": 4, "fields_present": 5, "evidences_matched": 3, "evidences_pred": 4, "iou_list_matched": 2},
+        {"project_id": "P002", "fields_found": 3, "fields_present": 4, "evidences_matched": 2, "evidences_pred": 3, "iou_list_matched": 2},
+    ]
+    result = bootstrap_ci(docs, ["recall"], n_bootstrap=0)
+    assert result["meta"]["group_key"] == "project_id"
+    assert result["meta"]["n_groups"] == 2
+

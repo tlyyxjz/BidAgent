@@ -5,8 +5,8 @@
 Bootstrap 以采购项目为最小重采样单元（不按单个字段独立采样），
 同一项目的公告、版本和字段整体参与采样。
 
-当前 W3 数据无 project_id 字段，暂用 notice_type（tender/award/correction）
-作为分组 key，待数据库接入 project_id 后修正。
+按 project_id 分组（v4.1 10.10：同一项目的公告、版本和字段整体参与采样）。
+若 doc_metrics 中无 project_id 字段或值为空，归入 "__ungrouped__" 组。
 
 实现：纯 Python 无 numpy 依赖（如需 numpy 加速可在 docstring 中注明）。
 """
@@ -83,7 +83,7 @@ def bootstrap_ci(
     n_bootstrap: int = 1000,
     confidence: float = 0.95,
     random_seed: int = 42,
-    group_key: str = "notice_type",
+    group_key: str = "project_id",
 ) -> dict[str, Any]:
     """Bootstrap 置信区间计算。
 
@@ -99,7 +99,7 @@ def bootstrap_ci(
         n_bootstrap: 采样次数（默认 1000）
         confidence: 置信水平（默认 0.95，即 95%）
         random_seed: 随机种子（保证可复现，必须记录在 meta 中）
-        group_key: 分组字段（W3 无 project_id，默认 notice_type；可传入 project_id）
+        group_key: 分组字段（默认 project_id，符合 v4.1 10.10 以采购项目为最小重采样单元）
 
     Returns:
         {

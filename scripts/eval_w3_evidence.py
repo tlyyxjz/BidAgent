@@ -87,6 +87,7 @@ class FieldMetric:
 class DocMetric:
     doc_id: str
     notice_type: str
+    project_id: str  # 从 LLM 抽取的 project_identifier 作为 Bootstrap CI 分组 key (v4.1 10.10)
     fields_total: int
     fields_present: int
     fields_found: int
@@ -223,6 +224,12 @@ async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[Optional[DocMetric],
     locator = EvidenceLocator(raw_text)
     pred_by_name = {f.field_name: f for f in result.fields}
 
+    # 提取 project_id 用于 Bootstrap CI 分组 (v4.1 10.10)
+    pred_pid = pred_by_name.get("project_identifier")
+    project_id = pred_pid.raw_value if pred_pid and pred_pid.raw_value else "__no_project_id__"
+    # 归一化:去除空格和常见前缀符号
+    project_id = project_id.strip() if project_id else "__no_project_id__"
+
     field_metrics: list[FieldMetric] = []
     evidences_pred = 0
     evidences_located = 0
@@ -289,6 +296,7 @@ async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[Optional[DocMetric],
     return DocMetric(
         doc_id=gd.document_id,
         notice_type=gd.notice_type,
+        project_id=project_id,
         fields_total=len(field_metrics),
         fields_present=fields_present,
         fields_found=fields_found,
@@ -464,6 +472,15 @@ async def main():
     for t, b in sorted(overall.by_type.items()):
         print(f"  {t}: docs={b['docs']} recall={b['recall']} precision={b['precision']}", flush=True)
 
+    # Bootstrap CI (v4.1 10.10) - 按 project_id 分组
+    from app.eval.bootstrap_ci import bootstrap_ci
+    doc_metrics_dicts = [asdict(d) for d in doc_metrics]
+    ci_result = bootstrap_ci(
+        doc_metrics_dicts,
+        metric_keys=["recall", "precision", "iou_avg"],
+        group_key="project_id",
+    )
+
     # 写报告
     report = {
         "task": "W3-03",
@@ -471,6 +488,7 @@ async def main():
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "overall": asdict(overall),
         "doc_metrics": [asdict(d) for d in doc_metrics],
+        "bootstrap_ci": ci_result,
     }
     Path(args.output).parent.mkdir(exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:
