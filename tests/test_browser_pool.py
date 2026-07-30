@@ -86,6 +86,10 @@ async def test_context_closes_and_releases():
     """Context 管理器退出时自动关闭并归还。"""
     pool, slot = make_started_pool()
     context = AsyncMock()
+    # set_default_timeout / set_default_navigation_timeout 在 Playwright 中是同步方法
+    # AsyncMock 会让它们变成 coroutine,导致 "coroutine never awaited" warning
+    context.set_default_timeout = MagicMock()
+    context.set_default_navigation_timeout = MagicMock()
     slot.browser.new_context.return_value = context
 
     async with pool.context() as returned:
