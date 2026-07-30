@@ -43,7 +43,7 @@
 - W3 展示等级与选择性输出(display_grade + 4 种输出策略)
 - W3/W4 数据质量评测(召回/精确/IoU + Bootstrap CI + 四组消融)
 - W3 Web Demo(6 个 UI 页面)
-- 824 测试全过,3 模块覆盖率 100%(bootstrap_ci/display_grade/output_strategies)
+- 826 测试全过,3 模块覆盖率 100%(bootstrap_ci/display_grade/output_strategies)
 
 **规划中**:
 - 30+ 数据源注册(S-4)
@@ -125,8 +125,7 @@ pytest -v
 | 文档 | 位置 | 说明 |
 |---|---|---|
 | 设计文档 | `docs/superpowers/specs/2026-07-20-bidagent-goai-design.md` | 六 Agent 架构 + 金融方向定位 + 合规边界 |
-| 作品简介 | `docs/introduction_500.md` | GOAI 初赛作品简介 500 字 |
-| 合规文档 | `docs/compliance.md` | 数据来源 / 隐私保护 / 风险提示 / 行业边界 |
+| 合规文档 | `_w2_report/compliance.md` | 数据来源 / 隐私保护 / 风险提示 / 行业边界 |
 | 部署文档 | `DEPLOY.md` | Docker 部署说明 |
 | 完整版对比报告 | `docs/完整版对比报告.md` | 完整版资产吸收清单 |
 | W3 评测报告 | `_w3_outputs/w3_03_evidence_report.json` | 90 篇证据评测结果(召回/精确/IoU) |
@@ -161,7 +160,7 @@ pytest -v
 ## 当前已知限制
 
 1. **数据源覆盖有限**：当前 4 平台，S-4 后扩展至 30+
-2. **测试集 93 篇**：K3 正在补抓至 100 篇(tender 30 + award 32 + correction 30 → 100)
+2. **测试集 99 篇**：K3 已补抓至 99 篇(tender 33 + award 34 + correction 32), 目标 100 篇
 3. **cross_verified 默认 False**：交叉验证赋值需等 W4 多源合并阶段接入
 4. **Web Demo 为前端 Mock 数据**：后端 demo_api.py 已预留接入点,后续改为真实 API
 5. **risk_engine 基于关键词匹配**：存在一定误报率,已加否定语境检测,但仍需人工复核

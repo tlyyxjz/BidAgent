@@ -79,6 +79,11 @@ def _aggregate_metric(
                 num += float(v)
         den = sum(float(d.get("evidences_pred", 0)) for d in docs)
         return num / den if den > 0 else 0.0
+    if metric_key == "field_precision":
+        # field_precision: sum(correct)/sum(evaluable) [先求和再相除, 与消融汇总口径一致]
+        num = sum(float(d.get("fields_correct", 0)) for d in docs)
+        den = sum(float(d.get("fields_evaluable", 0)) for d in docs)
+        return num / den if den > 0 else 0.0
     # 通用 fallback：逐篇 sum / n
     vals = [float(d.get(metric_key, 0)) for d in docs]
     return sum(vals) / len(vals) if vals else 0.0

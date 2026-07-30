@@ -1,6 +1,6 @@
-# ScrapeFlow 部署指南
+# BidAgent 部署指南
 
-本文介绍如何用 Docker 部署 ScrapeFlow API，以及如何部署到 Fly.io / Railway。
+本文介绍如何用 Docker 部署 BidAgent API，以及如何部署到 Fly.io / Railway。
 
 ## 1. Docker 部署（推荐）
 
@@ -63,7 +63,7 @@ curl http://localhost:8000/health
 # {"status":"ok"}
 
 curl http://localhost:8000/
-# {"name":"ScrapeFlow API","version":"0.1.0","docs":"/docs","health":"/health"}
+# {"name":"BidAgent API","version":"0.1.0","docs":"/docs","health":"/health"}
 ```
 
 ### 1.4 创建用户并开始使用
@@ -213,7 +213,7 @@ name = "scrapeflow-worker"
 
 1. 登录 https://railway.app
 2. New Project → Deploy from GitHub repo
-3. 选择 ScrapeFlow 仓库
+3. 选择 BidAgent 仓库
 
 ### 3.2 添加服务
 
@@ -290,7 +290,7 @@ fly logs
 日志格式（带 request_id）：
 
 ```
-2026-07-18 10:00:00.123 [INFO] [a1b2c3d4e5f6] app.main: starting ScrapeFlow API
+2026-07-18 10:00:00.123 [INFO] [a1b2c3d4e5f6] app.main: starting BidAgent API
 2026-07-18 10:00:01.456 [INFO] [a1b2c3d4e5f6] app.core.queue: job completed job_id=xxx
 ```
 
