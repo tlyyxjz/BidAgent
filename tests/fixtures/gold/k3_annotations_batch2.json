@@ -1,7 +1,7 @@
 [
   {
     "annotation_version": "k3-w3-01-v1-fixed4-batch7",
-    "doc_count": 99,
+    "doc_count": 100,
     "_is_meta": true,
     "fix_note": "补bid_deadline, project_name降为extra_fields",
     "fix_count": 90,
@@ -11,6 +11,87 @@
     "fix_count_v3": 2,
     "fix_note_v4": "K3补抓7篇(tender_091-093/award_091-092/correction_091-092)，插于consortium后",
     "fix_count_v4": 7
+  },
+  {
+    "document_id": "w3_correction_093",
+    "file": "w3_correction_093.txt",
+    "notice_type": "correction",
+    "title": "广西众鑫工程项目管理有限公司关于马山县金钗镇大凌水厂管网改造工程的更正公告",
+    "annotated_at": "2026-07-30 16:56:00",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "raw_value": "",
+        "values": [
+          {
+            "value": "",
+            "acceptable_evidence_spans": [
+              {
+                "start": 153,
+                "end": 188,
+                "text": "原公告的采购项目编号：\nNNZC2026-C2-240099-ZXXM"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "raw_value": "",
+        "values": [
+          {
+            "value": "",
+            "acceptable_evidence_spans": [
+              {
+                "start": 583,
+                "end": 597,
+                "text": "名    称：\n马山县水利局"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "absent",
+        "raw_value": "",
+        "values": []
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "raw_value": "",
+        "values": [
+          {
+            "value": "",
+            "acceptable_evidence_spans": [
+              {
+                "start": 389,
+                "end": 406,
+                "text": "更正日期：\n2026年07月30日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "not_applicable",
+        "raw_value": "",
+        "values": []
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "not_applicable",
+        "raw_value": "",
+        "values": []
+      }
+    ],
+    "extra_fields": {},
+    "annotation_version": "v1-batch8-glm",
+    "fix_note": "第100篇补抓, GLM自动标注, 已修正purchaser_name/publish_date, 待K3复核"
   },
   {
     "document_id": "w3_award_consortium_001",
