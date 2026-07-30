@@ -78,6 +78,9 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
 .slogan .mini{display:flex;gap:14px}
 .slogan .mini div{background:rgba(255,255,255,.1);padding:8px 14px;border-radius:8px;font-size:11px}
 .slogan .mini b{font-size:16px;display:block}
+.footer-note{margin-top:8px;padding:14px 20px;background:#fafbfc;border:1px dashed #e8e8e8;border-radius:10px;font-size:12px;color:#666;line-height:1.7;text-align:center}
+.footer-note .real{color:#16a34a;font-weight:600}
+.footer-note .mock{color:#888;font-weight:600}
 </style>
 </head>
 <body>
@@ -92,7 +95,10 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
       <a href="/ui/org">画像</a>
     </nav>
   </div>
-  <div class="v-chip">v4.1 · W3-06 CI</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="dataSourceBadge" style="padding:4px 10px;border-radius:4px;background:#f3f4f6;color:#888;font-size:12px;font-weight:600;">⏳ 加载中...</span>
+    <div class="v-chip">v4.1 · W3-06 CI</div>
+  </div>
 </header>
 <main class="page-main">
   <div class="breadcrumb"><a href="/ui/search">首页</a> / 数据质量评测</div>
@@ -111,7 +117,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
       <div class="note">每个数字都能点回公告原文 · 证据 100% 可定位</div>
     </div>
     <div class="mini">
-      <div>测试集<b>90篇</b>W3冻结</div>
+      <div>测试集<b id="testSetCount">90篇</b>W3冻结</div>
       <div>测试用例<b>200+</b>通过</div>
       <div>字段覆盖<b>97.2%</b>达标</div>
     </div>
@@ -186,7 +192,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
         <div class="k">采样次数</div><div class="v">1,000 次 <small>（稳定，建议≥5000）</small></div>
         <div class="k">置信水平</div><div class="v">0.95 <small>（2.5% ~ 97.5% 分位数）</small></div>
         <div class="k">分位数算法</div><div class="v">线性插值 <small>（NumPy default）</small></div>
-        <div class="k">文档数量</div><div class="v">90 篇 <small>（15 招标 + 30 中标 + 45 更正）</small></div>
+        <div class="k">文档数量</div><div class="v" id="docCount">90 篇 <small>（15 招标 + 30 中标 + 45 更正）</small></div>
         <div class="k">输出文件</div><div class="v">w3_06_bootstrap_ci.json</div>
       </div>
     </div>
@@ -205,6 +211,10 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
         💡 输出策略（v4.1 10.7）：<b>strict/default/loose/audit</b> 四档。default 策略在保留 90%+ 有效字段同时过滤弱证据噪声，适合金融尽调常规场景。
       </div>
     </div>
+  </div>
+
+  <div class="footer-note" id="footerNote">
+    <span class="mock">⏳ 数据源加载中...</span>
   </div>
 </main>
 <script>
@@ -228,6 +238,83 @@ function renderField(metric){
 function switchMetric(el,m){document.querySelectorAll('.switcher .sw').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderField(m)}
 function switchTab(el,m){document.querySelectorAll('.tabs .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active')}
 renderField('recall');
+
+// ===== 数据源状态：'loading' | 'real' | 'mock' =====
+let dashboardDataSource='loading';
+
+function updateDataSourceBadge(){
+  const badge=document.getElementById('dataSourceBadge');
+  const note=document.getElementById('footerNote');
+  if(badge){
+    if(dashboardDataSource==='loading'){
+      badge.textContent='⏳ 加载中...';
+      badge.style.color='#888';
+      badge.style.background='#f3f4f6';
+    }else if(dashboardDataSource==='real'){
+      badge.textContent='📊 真实数据';
+      badge.style.color='#16a34a';
+      badge.style.background='#dcfce7';
+    }else{
+      badge.textContent='⚠️ 模拟数据(API未连接)';
+      badge.style.color='#dc2626';
+      badge.style.background='#fee2e2';
+    }
+  }
+  if(note){
+    if(dashboardDataSource==='real'){
+      note.innerHTML='<span class="real">📊 评测篇数来自真实数据库，其余指标为历史评测结果</span>';
+    }else if(dashboardDataSource==='mock'){
+      note.innerHTML='<span class="mock">⚠️ 真实数据 API 未连接，全部指标为历史评测结果（模拟数据）</span>';
+    }
+  }
+}
+
+// ===== 尝试加载真实公告总数，更新"评测篇数"指标 =====
+async function loadRealCount(){
+  try{
+    const resp=await fetch('/api/real/tenders');
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    if(data.code && data.code!==200) throw new Error(data.msg||'API错误');
+    const tenders=(data.data && data.data.tenders)||data.tenders||[];
+    if(!tenders.length) throw new Error('无数据');
+    dashboardDataSource='real';
+    const count=tenders.length;
+    // 更新"测试集"篇数
+    const tsEl=document.getElementById('testSetCount');
+    if(tsEl) tsEl.textContent=count+'篇';
+    // 更新 Bootstrap 设置中的"文档数量"
+    const dcEl=document.getElementById('docCount');
+    if(dcEl){
+      // 按 notice_type 分组统计
+      const groups={};
+      tenders.forEach(t=>{
+        const ty=mapType(t.type||t.notice_type);
+        groups[ty]=(groups[ty]||0)+1;
+      });
+      const parts=Object.entries(groups).map(([k,v])=>`${v} ${k.replace('公告','')}`).join(' + ');
+      dcEl.innerHTML=count+' 篇 <small>（'+(parts||'真实数据')+'）</small>';
+    }
+  }catch(e){
+    console.warn('真实数据加载失败,使用Mock篇数:',e.message);
+    dashboardDataSource='mock';
+    // 保持原 Mock 值 90 篇不动
+  }
+  updateDataSourceBadge();
+}
+
+// notice_type 原始值 → 中文标签映射
+function mapType(t){
+  if(!t) return '未知';
+  const s=String(t).toLowerCase();
+  if(s.includes('tender')||s==='招标') return '招标公告';
+  if(s.includes('award')||s==='中标') return '中标公告';
+  if(s.includes('correction')||s.includes('correct')||s==='更正') return '更正公告';
+  return '其他';
+}
+
+updateDataSourceBadge();
+loadRealCount();
 </script>
 </body>
 </html>

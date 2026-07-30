@@ -76,7 +76,10 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
       <a href="/ui/org">画像</a>
     </nav>
   </div>
-  <div style="font-size:12px;color:#888">用户模式 · Demo</div>
+  <div style="font-size:12px;color:#888;display:flex;align-items:center;gap:8px">
+    <span id="dataSourceBadge" style="padding:2px 10px;border-radius:4px;background:#f3f4f6;color:#888;font-weight:600;">⏳ 加载中...</span>
+    <span>用户模式 · Demo</span>
+  </div>
 </header>
 <main class="page-main">
   <section class="hero">
@@ -144,7 +147,9 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
 </main>
 <script>
 const FL={招标公告:'tag-tender',中标公告:'tag-award',更正公告:'tag-correction'};
-const SAMPLE=[
+
+// ===== Mock 数据（作为 fallback 保留） =====
+const MOCK_RESULTS=[
   {title:'北京大学第三医院信息化系统建设及医疗设备采购项目',purchaser:'北京大学第三医院',plat:'中国政府采购网',type:'招标公告',amount:12000000,date:'2026-07-20',grade:'high'},
   {title:'上海市教育委员会智慧校园设备集中采购',purchaser:'上海市教育委员会',plat:'全国公共资源交易平台',type:'招标公告',amount:5680000,date:'2026-07-19',grade:'high'},
   {title:'北京协和医院手术机器人采购中标结果公告',purchaser:'北京协和医院',plat:'中国政府采购网',type:'中标公告',amount:32800000,date:'2026-07-18',grade:'high'},
@@ -154,16 +159,32 @@ const SAMPLE=[
   {title:'成都市政府云计算服务采购项目',purchaser:'成都市大数据中心',plat:'中国政府采购网',type:'招标公告',amount:24000000,date:'2026-07-14',grade:'high'},
   {title:'杭州未来科技城办公楼装修项目',purchaser:'杭州未来科技城管委会',plat:'千里马招标网',type:'招标公告',amount:7800000,date:'2026-07-13',grade:'review'},
 ];
+
+// ===== 数据源状态：'loading' | 'real' | 'mock' =====
+let dataSource='loading';
+// 当前展示的数据（真实或 Mock）
+let currentData=MOCK_RESULTS;
+
+// notice_type 原始值 → 中文标签映射
+function mapType(t){
+  if(!t) return '未知';
+  const s=String(t).toLowerCase();
+  if(s.includes('tender')||s==='招标') return '招标公告';
+  if(s.includes('award')||s==='中标') return '中标公告';
+  if(s.includes('correction')||s.includes('correct')||s==='更正') return '更正公告';
+  return '其他';
+}
+
 function fmt(n){if(n>=1e8)return (n/1e8).toFixed(2)+' 亿';if(n>=1e4)return (n/1e4).toFixed(0)+' 万';return n.toLocaleString()}
 function renderStats(list){
   const total=list.length;
-  const amt=list.reduce((s,x)=>s+x.amount,0);
+  const amt=list.reduce((s,x)=>s+(x.amount||0),0);
   const high=list.filter(x=>x.grade==='high').length;
   const plats=new Set(list.map(x=>x.plat)).size;
   const cards=[
     {h:'命中项目',n:total,u:'个',t:'',d:false},
     {h:'累计金额',n:fmt(amt),u:'',t:'',d:false},
-    {h:'高质量字段',n:high+'/'+total,u:'',t:Math.round(high/total*100)+'% HIGH',d:false},
+    {h:'高质量字段',n:high+'/'+total,u:'',t:total?Math.round(high/total*100)+'% HIGH':'',d:false},
     {h:'来源平台',n:plats,u:'个',t:'跨平台去重合并',d:false},
   ];
   document.getElementById('statsGrid').innerHTML=cards.map(c=>`
@@ -178,16 +199,68 @@ function renderList(list){
       <div class="seq">${String(i+1).padStart(2,'0')}</div>
       <div><div class="res-title">${x.title}</div><div class="res-meta"><span>🏢 ${x.purchaser}</span><span>🌐 ${x.plat}</span></div></div>
       <div><span class="tag ${FL[x.type]||'tag-tender'}">${x.type}</span></div>
-      <div class="amount">${fmt(x.amount)}</div>
+      <div class="amount">${x.amount?fmt(x.amount):'—'}</div>
       <div class="date">${x.date}</div>
     </div>`).join('');
 }
-function goDetail(i){location.href='/ui/tenders/'+(i+1)+'?doc=tender_00'+(i+1)}
+function goDetail(i){
+  // 真实数据走真实 id，Mock 走原 Demo 路径
+  const item=currentData[i];
+  if(item&&item.id){location.href='/ui/tenders/'+item.id}
+  else{location.href='/ui/tenders/'+(i+1)+'?doc=tender_00'+(i+1)}
+}
+
+// ===== 数据源标识 =====
+function updateDataSourceBadge(){
+  const badge=document.getElementById('dataSourceBadge');
+  if(!badge) return;
+  if(dataSource==='loading'){
+    badge.textContent='⏳ 加载中...';
+    badge.style.color='#888';
+    badge.style.background='#f3f4f6';
+  }else if(dataSource==='real'){
+    badge.textContent='📊 真实数据';
+    badge.style.color='#16a34a';
+    badge.style.background='#dcfce7';
+  }else{
+    badge.textContent='⚠️ 模拟数据(API未连接)';
+    badge.style.color='#dc2626';
+    badge.style.background='#fee2e2';
+  }
+}
+
+// ===== 加载真实数据，失败回退 Mock =====
+async function loadRealData(){
+  try{
+    const resp=await fetch('/api/real/tenders');
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    if(data.code && data.code!==200) throw new Error(data.msg||'API错误');
+    const tenders=(data.data && data.data.tenders)||data.tenders||[];
+    if(!tenders.length) throw new Error('无数据');
+    dataSource='real';
+    return tenders.map(t=>({
+      id:t.id,
+      title:t.name||t.project_name||'未命名公告',
+      purchaser:'—',
+      plat:'真实数据库',
+      type:mapType(t.type||t.notice_type),
+      amount:0,
+      date:'—',
+      grade:'review'
+    }));
+  }catch(e){
+    console.warn('真实数据加载失败,使用Mock:',e.message);
+    dataSource='mock';
+    return MOCK_RESULTS;
+  }
+}
+
 function runSearch(){
   const k=(document.getElementById('searchInput').value||'').trim();
   const t=document.getElementById('fType').value;
   const g=document.getElementById('fGrade').value;
-  let list=SAMPLE.slice();
+  let list=currentData.slice();
   if(k)list=list.filter(x=>(x.title+x.purchaser).toLowerCase().includes(k.toLowerCase()));
   if(t)list=list.filter(x=>x.type===t);
   if(g)list=list.filter(x=>x.grade===g);
@@ -195,7 +268,15 @@ function runSearch(){
 }
 document.getElementById('fType').onchange=runSearch;
 document.getElementById('fGrade').onchange=runSearch;
+
+// 初始用 Mock 渲染（避免页面空白），随后尝试加载真实数据
 runSearch();
+updateDataSourceBadge();
+loadRealData().then(data=>{
+  currentData=data;
+  updateDataSourceBadge();
+  runSearch();
+});
 </script>
 </body>
 </html>

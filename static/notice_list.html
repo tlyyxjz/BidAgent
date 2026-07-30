@@ -82,7 +82,10 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
       <a href="/ui/org">画像</a>
     </nav>
   </div>
-  <div style="font-size:12px;color:#888">共 <span id="headCount" style="color:#1976d2;font-weight:700">0</span> 条公告</div>
+  <div style="font-size:12px;color:#888;display:flex;align-items:center;gap:10px">
+    <span id="dataSourceBadge" style="padding:2px 10px;border-radius:4px;background:#f3f4f6;color:#888;font-weight:600;">⏳ 加载中...</span>
+    <span>共 <span id="headCount" style="color:#1976d2;font-weight:700">0</span> 条公告</span>
+  </div>
 </header>
 <main class="page-main">
   <div class="breadcrumb"><a href="/ui/search">首页</a> / 公告列表</div>
@@ -111,7 +114,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
   </div>
 
   <div class="summary-row">
-    <div class="sum-card"><div class="lbl">公告总量</div><div class="val" id="sTotal">0<span class="sub">条</span></div><div class="mini">W3 冻结样本集</div></div>
+    <div class="sum-card"><div class="lbl">公告总量</div><div class="val" id="sTotal">0<span class="sub">条</span></div><div class="mini" id="sTotalNote">W3 冻结样本集</div></div>
     <div class="sum-card"><div class="lbl">字段完整度</div><div class="val" id="sField">97<span class="sub">%</span></div><div class="mini">920/948 字段提取</div></div>
     <div class="sum-card"><div class="lbl">证据覆盖率</div><div class="val" id="sEv">96<span class="sub">%</span></div><div class="mini">无依据输出 1.94%</div></div>
     <div class="sum-card"><div class="lbl">跨平台去重</div><div class="val" id="sDe">14<span class="sub">组</span></div><div class="mini">4 平台 SimHash 去重</div></div>
@@ -139,7 +142,27 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
 </main>
 <script>
 const TT={招标公告:'tag-tender',中标公告:'tag-award',更正公告:'tag-correction'};
-const DATA=[
+
+// ===== Mock 数据（作为 fallback 保留） =====
+function makeGroup(prefix, n, type, titles){
+  const plats=['中国政府采购网','全国公共资源交易平台','千里马招标网','北京市政府采购网','上海政府采购网'];
+  return Array.from({length:n}).map((_,i)=>{
+    const ti=i%titles.length;
+    const grade=i%5===0?'review':i%23===0?'low':'high';
+    return{
+      id:`${prefix}_${String(i+1).padStart(3,'0')}`,
+      title:titles[ti]+(i>=titles.length?'（包'+(i-titles.length+1)+'）':''),
+      plat:plats[i%plats.length],
+      type,grade,
+      date:`2026-07-${String(30-(i%28)).padStart(2,'0')}`,
+      fields:[
+        {n:'项目编号',v:'high'},{n:'采购人',v:'high'},{n:'中标人',v:type==='招标公告'?'low':'high'},
+        {n:'金额',v:grade==='low'?'review':'high'},{n:'发布日期',v:'high'},{n:'投标截止',v:type==='更正公告'?'review':'high'},
+      ]
+    };
+  });
+}
+const MOCK_DATA=[
   ...(makeGroup('w3_tender', 15, '招标公告', [
     '北京大学第三医院医疗设备采购项目招标公告',
     '中国科学院计算所信息化系统建设招标公告',
@@ -192,28 +215,26 @@ const DATA=[
     '杭州市卫健委电子病历系统延期',
   ])).map(r=>{r.amount=(100+Math.random()*200)*10000;return r}),
 ];
-function makeGroup(prefix, n, type, titles){
-  const plats=['中国政府采购网','全国公共资源交易平台','千里马招标网','北京市政府采购网','上海政府采购网'];
-  return Array.from({length:n}).map((_,i)=>{
-    const ti=i%titles.length;
-    const grade=i%5===0?'review':i%23===0?'low':'high';
-    return{
-      id:`${prefix}_${String(i+1).padStart(3,'0')}`,
-      title:titles[ti]+(i>=titles.length?'（包'+(i-titles.length+1)+'）':''),
-      plat:plats[i%plats.length],
-      type,grade,
-      date:`2026-07-${String(30-(i%28)).padStart(2,'0')}`,
-      fields:[
-        {n:'项目编号',v:'high'},{n:'采购人',v:'high'},{n:'中标人',v:type==='招标公告'?'low':'high'},
-        {n:'金额',v:grade==='low'?'review':'high'},{n:'发布日期',v:'high'},{n:'投标截止',v:type==='更正公告'?'review':'high'},
-      ]
-    };
-  });
+
+// ===== 数据源状态：'loading' | 'real' | 'mock' =====
+let dataSource='loading';
+// 当前展示的数据（真实或 Mock）
+let currentData=MOCK_DATA;
+
+// notice_type 原始值 → 中文标签映射
+function mapType(t){
+  if(!t) return '未知';
+  const s=String(t).toLowerCase();
+  if(s.includes('tender')||s==='招标') return '招标公告';
+  if(s.includes('award')||s==='中标') return '中标公告';
+  if(s.includes('correction')||s.includes('correct')||s==='更正') return '更正公告';
+  return '其他';
 }
+
 let state={type:'all',grade:'all',q:'',page:1,ps:10};
 function fmt(n){return n>=1e8?(n/1e8).toFixed(2)+'亿':(n/1e4).toFixed(0)+'万'}
 function apply(){
-  let d=DATA.slice();
+  let d=currentData.slice();
   if(state.type!=='all')d=d.filter(x=>x.type===state.type);
   if(state.grade==='high')d=d.filter(x=>x.grade==='high');
   if(state.grade==='review')d=d.filter(x=>x.grade!=='low');
@@ -228,11 +249,11 @@ function apply(){
       <td><input class="chk" type="checkbox"></td>
       <td><span class="doc-id">${x.id}</span></td>
       <td><div class="title" title="${x.title}">${x.title}</div><div class="plat"><span>🌐 ${x.plat}</span><span>📅 ${x.date}</span></div></td>
-      <td><span class="tag ${TT[x.type]}">${x.type}</span></td>
-      <td><span class="amount">${fmt(x.amount)}元</span></td>
+      <td><span class="tag ${TT[x.type]||'tag-tender'}">${x.type}</span></td>
+      <td><span class="amount">${x.amount?fmt(x.amount)+'元':'—'}</span></td>
       <td><div class="field-grid">${x.fields.map(f=>`<span class="fd fd-${f.v}">${f.n}</span>`).join('')}</div></td>
       <td><span class="badge badge-${x.grade==='low'?'warn':'ok'}">${x.grade.toUpperCase()}</span></td>
-      <td class="act"><a class="link" href="/ui/tenders/1?doc=${x.id}">详情</a><a class="link" href="/ui/version?src=${x.id}">版本</a><a class="link" onclick="viewEv('${x.id}')">证据</a></td>
+      <td class="act"><a class="link" href="/ui/tenders/${x.realId||1}?doc=${x.id}">详情</a><a class="link" href="/ui/version?src=${x.id}">版本</a><a class="link" onclick="viewEv('${x.id}')">证据</a></td>
     </tr>`).join('') || '<tr><td colspan="8" style="padding:40px;text-align:center;color:#999">无符合条件的公告</td></tr>';
   const end=Math.min(state.page*state.ps,d.length);
   document.getElementById('pInfo').textContent=`第 ${state.page===1?1:(state.page-1)*state.ps+1}-${end} 条 / 共 ${d.length} 条`;
@@ -249,7 +270,71 @@ function filterType(b){document.querySelectorAll('[data-type]').forEach(x=>x.cla
 function filterGrade(b){document.querySelectorAll('[data-grade]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.grade=b.dataset.grade;state.page=1;apply()}
 function toggleAll(c){document.querySelectorAll('.tbl input.chk').forEach(x=>x.checked=c.checked)}
 document.getElementById('miniQ').oninput=e=>{state.q=e.target.value.trim();state.page=1;apply()};
+
+// ===== 数据源标识 =====
+function updateDataSourceBadge(){
+  const badge=document.getElementById('dataSourceBadge');
+  if(!badge) return;
+  if(dataSource==='loading'){
+    badge.textContent='⏳ 加载中...';
+    badge.style.color='#888';
+    badge.style.background='#f3f4f6';
+  }else if(dataSource==='real'){
+    badge.textContent='📊 真实数据';
+    badge.style.color='#16a34a';
+    badge.style.background='#dcfce7';
+  }else{
+    badge.textContent='⚠️ 模拟数据(API未连接)';
+    badge.style.color='#dc2626';
+    badge.style.background='#fee2e2';
+  }
+}
+
+// ===== 加载真实数据，失败回退 Mock =====
+async function loadRealData(){
+  try{
+    const resp=await fetch('/api/real/tenders');
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    if(data.code && data.code!==200) throw new Error(data.msg||'API错误');
+    const tenders=(data.data && data.data.tenders)||data.tenders||[];
+    if(!tenders.length) throw new Error('无数据');
+    dataSource='real';
+    // 默认字段质量（API 不提供字段级证据，用默认 Mock 值填充以保持 UI 结构）
+    const defaultFields=[
+      {n:'项目编号',v:'high'},{n:'采购人',v:'high'},{n:'中标人',v:'review'},
+      {n:'金额',v:'high'},{n:'发布日期',v:'high'},{n:'投标截止',v:'review'},
+    ];
+    return tenders.map(t=>({
+      id:String(t.id),
+      realId:t.id,
+      title:t.name||t.project_name||'未命名公告',
+      plat:'真实数据库',
+      type:mapType(t.type||t.notice_type),
+      grade:'review',
+      date:'—',
+      amount:0,
+      fields:defaultFields
+    }));
+  }catch(e){
+    console.warn('真实数据加载失败,使用Mock:',e.message);
+    dataSource='mock';
+    return MOCK_DATA;
+  }
+}
+
+// 初始用 Mock 渲染（避免页面空白），随后尝试加载真实数据
 apply();
+updateDataSourceBadge();
+loadRealData().then(data=>{
+  currentData=data;
+  state.page=1;
+  updateDataSourceBadge();
+  // 更新"公告总量"卡注脚
+  const note=document.getElementById('sTotalNote');
+  if(note) note.textContent=dataSource==='real'?'来自真实数据库':'W3 冻结样本集';
+  apply();
+});
 </script>
 </body>
 </html>
