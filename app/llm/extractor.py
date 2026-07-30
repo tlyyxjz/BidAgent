@@ -429,23 +429,37 @@ def parse_extraction_response(
 
     fields = []
     for field_data in data["fields"]:
-        evidences = [
-            CandidateEvidence(
-                evidence_text=ev["evidence_text"],
-                role=ev.get("role", "primary"),
+        # W2-10 修复：per-field try/except 容错，单字段失败不影响其他字段
+        try:
+            evidences = [
+                CandidateEvidence(
+                    evidence_text=ev["evidence_text"],
+                    role=ev.get("role", "primary"),
+                )
+                for ev in field_data.get("candidate_evidences", [])
+            ]
+            # W2-10 修复：raw_value 归一化，dict/list 转 JSON 字符串，其他非 str 转 str
+            raw_value = field_data.get("raw_value")
+            if isinstance(raw_value, (dict, list)):
+                raw_value = json.dumps(raw_value, ensure_ascii=False)
+            elif raw_value is not None and not isinstance(raw_value, str):
+                raw_value = str(raw_value)
+            field_ext = FieldExtraction(
+                field_name=field_data["field_name"],
+                field_status=field_data.get("field_status", "present"),
+                raw_value=raw_value,
+                amount_type=field_data.get("amount_type"),
+                currency=field_data.get("currency"),
+                lot_id=field_data.get("lot_id"),
+                candidate_evidences=evidences,
             )
-            for ev in field_data.get("candidate_evidences", [])
-        ]
-        field_ext = FieldExtraction(
-            field_name=field_data["field_name"],
-            field_status=field_data.get("field_status", "present"),
-            raw_value=field_data.get("raw_value"),
-            amount_type=field_data.get("amount_type"),
-            currency=field_data.get("currency"),
-            lot_id=field_data.get("lot_id"),
-            candidate_evidences=evidences,
-        )
-        fields.append(field_ext)
+            fields.append(field_ext)
+        except Exception as exc:
+            logger.warning(
+                "parse field failed name={} error={}",
+                field_data.get("field_name", "<unknown>"),
+                exc,
+            )
 
     return ExtractionResult(
         fields=fields,

@@ -146,6 +146,13 @@ class ExtractedField(Base):
         Boolean, nullable=False, default=False
     )
 
+    # ==== W3-05 新增：展示等级规则版本 ====
+    # 规则版本号（如 v0.1-calib / v1.0-frozen），用于追溯字段展示等级是基于哪版规则计算的
+    # W3 周验收要求："展示等级包含规则版本"
+    display_rule_version: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="v0.1-calib"
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
     )

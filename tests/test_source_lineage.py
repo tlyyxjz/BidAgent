@@ -1,323 +1,361 @@
-"""来源谱系判定单元测试 (v4.1 第八章).
+"""W3-01 来源谱系判定引擎测试。
 
-覆盖:
-- 来源角色判定 (classify_source_role)
-- 同源检测 (detect_same_origin)
-- 独立性分类 (classify_independence)
-- 便捷构造函数 (build_lineage_features)
+覆盖 W3 周验收要求：
+- 同一项目不同公告不会被误判为冲突
+- 同一公告转载不会被误判为独立验证
+- SimHash 同源转载候选识别
+- 来源角色判定（official_original/official_repost/commercial_repost/unknown）
 """
 from __future__ import annotations
 
 import pytest
 
 from app.processors.source_lineage import (
-    LINEAGE_CONSISTENT_UNKNOWN,
-    LINEAGE_INDEPENDENT,
-    LINEAGE_SAME_ORIGIN,
-    LINEAGE_SINGLE_SOURCE,
-    LINEAGE_VERSION_DIFFERENCE,
-    RULE_VERSION,
     SOURCE_ROLE_COMMERCIAL_REPOST,
-    SOURCE_ROLE_INDEX_ONLY,
     SOURCE_ROLE_OFFICIAL_ORIGINAL,
     SOURCE_ROLE_OFFICIAL_REPOST,
     SOURCE_ROLE_UNKNOWN,
-    SourceLineageFeatures,
-    build_lineage_features,
-    classify_independence,
-    classify_source_role,
-    detect_same_origin,
+    ConflictJudgment,
+    SourceLineageResult,
+    compute_fact_assertion_key,
+    compute_source_group,
+    find_repost_candidates,
+    judge_field_conflict,
+    judge_source_lineage,
+    judge_source_role,
 )
 
 
-# ========== 规则版本 ==========
+# ========== 来源角色判定测试 ==========
 
+class TestJudgeSourceRole:
+    """来源角色判定。"""
 
-class TestRuleVersion:
-    def test_rule_version(self):
-        assert RULE_VERSION == "source_lineage_v1.0"
-
-
-# ========== 来源角色判定 ==========
-
-
-class TestClassifySourceRole:
-    def test_official_original_ccgp(self):
-        """ccgp.gov.cn 无上游来源标注 → 原始页面."""
-        f = SourceLineageFeatures(
-            url="http://www.ccgp.gov.cn/cggg/zygg/gkzb/202607/t123.htm",
-            title="某项目招标公告",
-            project_identifier="GC-2026-001",
+    def test_official_original_by_flag(self):
+        """调用方标记为首发 → official_original。"""
+        role, reason = judge_source_role(
+            "http://example.com/notice/1",
+            is_original_publication=True,
         )
-        assert classify_source_role(f) == SOURCE_ROLE_OFFICIAL_ORIGINAL
+        assert role == SOURCE_ROLE_OFFICIAL_ORIGINAL
+        assert "首发" in reason
 
-    def test_official_original_ggzy(self):
-        """ggzy.gov.cn → 原始页面."""
-        f = SourceLineageFeatures(
-            url="https://www.ggzy.gov.cn/info/123",
-            title="某项目公告",
+    def test_official_original_ccgp_domain(self):
+        """ccgp 域名无转载标记 → official_original。"""
+        role, reason = judge_source_role(
+            "http://www.ccgp.gov.cn/notice/123",
+            content_text="项目编号：ZFCG-2026-001",
         )
-        assert classify_source_role(f) == SOURCE_ROLE_OFFICIAL_ORIGINAL
+        assert role == SOURCE_ROLE_OFFICIAL_ORIGINAL
+        assert "ccgp" in reason
 
-    def test_official_repost_with_upstream(self):
-        """官方域名 + 上游来源标注 → 官方转载."""
-        f = SourceLineageFeatures(
-            url="http://www.ccgp.gov.cn/cggg/zygg/gkzb/202607/t123.htm",
-            title="某项目招标公告",
-            upstream_source_mention="转载自财政部",
+    def test_official_repost_with_marker(self):
+        """官方域名 + 含转载标记 → official_repost。"""
+        role, reason = judge_source_role(
+            "http://www.ccgp.gov.cn/repost/456",
+            content_text="转载自某省政府采购网\n项目编号：ZFCG-2026-001",
         )
-        assert classify_source_role(f) == SOURCE_ROLE_OFFICIAL_REPOST
+        assert role == SOURCE_ROLE_OFFICIAL_REPOST
+        assert "转载标记" in reason
 
-    def test_commercial_repost_qianlima(self):
-        """千里马域名 → 商业转载."""
-        f = SourceLineageFeatures(
-            url="https://www.qianlima.com/zb/kw-abc/",
-            title="某项目招标公告",
+    def test_commercial_repost_bidcenter(self):
+        """bidcenter 域名 → commercial_repost。"""
+        role, reason = judge_source_role(
+            "http://www.bidcenter.com.cn/news/789",
+            content_text="项目编号：ZFCG-2026-001",
         )
-        assert classify_source_role(f) == SOURCE_ROLE_COMMERCIAL_REPOST
+        assert role == SOURCE_ROLE_COMMERCIAL_REPOST
+        assert "商业域名" in reason
 
-    def test_commercial_repost_with_upstream(self):
-        """非官方域名 + 上游来源标注 → 商业转载."""
-        f = SourceLineageFeatures(
-            url="https://example.com/news/123",
-            title="某项目公告",
-            upstream_source_mention="来源: 中国政府采购网",
+    def test_commercial_repost_unknown_domain_with_marker(self):
+        """非官方域名 + 含转载标记 → commercial_repost。"""
+        role, _ = judge_source_role(
+            "http://www.somethingsite.com/news/1",
+            content_text="文章来源：某网\n项目编号：ZFCG-2026-001",
         )
-        assert classify_source_role(f) == SOURCE_ROLE_COMMERCIAL_REPOST
+        assert role == SOURCE_ROLE_COMMERCIAL_REPOST
 
-    def test_index_only_no_attachment_no_project(self):
-        """无附件 + 无项目编号 → 索引页面."""
-        f = SourceLineageFeatures(
-            url="https://example.com/list/page1",
-            title="招标信息列表",
+    def test_unknown_role_no_domain_feature(self):
+        """无域名特征 + 无转载标记 → unknown。"""
+        role, reason = judge_source_role(
+            "http://www.somethingsite.com/news/1",
+            content_text="项目编号：ZFCG-2026-001",
         )
-        assert classify_source_role(f) == SOURCE_ROLE_INDEX_ONLY
+        assert role == SOURCE_ROLE_UNKNOWN
+        assert "未知" in reason
 
-    def test_unknown_domain_with_project(self):
-        """未知域名 + 有项目编号 → unknown (非索引)."""
-        f = SourceLineageFeatures(
-            url="https://unknown-site.com/detail/123",
-            title="某项目公告",
-            project_identifier="GC-2026-001",
+    def test_empty_url(self):
+        """空 URL → unknown。"""
+        role, _ = judge_source_role("")
+        assert role == SOURCE_ROLE_UNKNOWN
+
+    def test_gov_domain(self):
+        """gov 域名 → official_original。"""
+        role, _ = judge_source_role(
+            "http://www.shanghai.gov.cn/notice/1",
+            content_text="项目编号",
         )
-        assert classify_source_role(f) == SOURCE_ROLE_UNKNOWN
+        assert role == SOURCE_ROLE_OFFICIAL_ORIGINAL
 
-
-# ========== 同源检测 ==========
-
-
-class TestDetectSameOrigin:
-    def test_same_url_same_origin(self):
-        """URL 完全相同 → same_origin (1.0)."""
-        fa = SourceLineageFeatures(url="http://example.com/a", title="A")
-        fb = SourceLineageFeatures(url="http://example.com/a", title="B")
-        status, conf = detect_same_origin(fa, fb)
-        assert status == LINEAGE_SAME_ORIGIN
-        assert conf == 1.0
-
-    def test_same_project_same_type_simhash_close(self):
-        """项目编号相同 + 公告类型相同 + SimHash近 → same_origin (0.9)."""
-        fa = SourceLineageFeatures(
-            url="http://ccgp.gov.cn/a",
-            title="某项目招标公告",
-            notice_type="tender",
-            project_identifier="GC-2026-001",
-            content_simhash=0x1234567890ABCDEF,
+    def test_ggzy_domain(self):
+        """ggzy 域名 → official_original。"""
+        role, _ = judge_source_role(
+            "http://www.ggzy.gov.cn/notice/1",
+            content_text="项目编号",
         )
-        fb = SourceLineageFeatures(
-            url="http://ccgp.gov.cn/b",
-            title="某项目招标公告",
-            notice_type="tender",
-            project_identifier="GC-2026-001",
-            content_simhash=0x1234567890ABCDEF,  # 完全相同
+        assert role == SOURCE_ROLE_OFFICIAL_ORIGINAL
+
+
+# ========== 来源谱系组生成测试 ==========
+
+class TestComputeSourceGroup:
+    """来源谱系组 ID 生成。"""
+
+    def test_same_input_same_group(self):
+        """相同输入 → 相同 source_group。"""
+        g1 = compute_source_group("http://a.com/1", 12345)
+        g2 = compute_source_group("http://a.com/1", 12345)
+        assert g1 == g2
+        assert len(g1) == 16
+
+    def test_different_url_different_group(self):
+        """不同 URL → 不同 source_group。"""
+        g1 = compute_source_group("http://a.com/1", 12345)
+        g2 = compute_source_group("http://b.com/2", 12345)
+        assert g1 != g2
+
+    def test_different_simhash_different_group(self):
+        """不同 SimHash → 不同 source_group。"""
+        g1 = compute_source_group("http://a.com/1", 12345)
+        g2 = compute_source_group("http://a.com/1", 67890)
+        assert g1 != g2
+
+    def test_group_is_hex(self):
+        """source_group 是 16 位十六进制。"""
+        g = compute_source_group("http://a.com/1", 0)
+        assert len(g) == 16
+        int(g, 16)  # 能解析为十六进制
+
+
+# ========== 事实断言键生成测试 ==========
+
+class TestComputeFactAssertionKey:
+    """事实断言键生成。"""
+
+    def test_same_input_same_key(self):
+        """相同输入 → 相同 key。"""
+        k1 = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        k2 = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        assert k1 == k2
+        assert len(k1) == 16
+
+    def test_different_project_different_key(self):
+        """不同项目同字段同值 → 不同 key（项目隔离）。"""
+        k1 = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        k2 = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-002")
+        assert k1 != k2
+
+    def test_different_field_different_key(self):
+        """同项目不同字段 → 不同 key。"""
+        k1 = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        k2 = compute_fact_assertion_key("winner_name", "某公司", "ZFCG-2026-001")
+        assert k1 != k2
+
+    def test_different_value_different_key(self):
+        """同项目同字段不同值 → 不同 key（版本差异检测基础）。"""
+        k1 = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        k2 = compute_fact_assertion_key("amount", "120万", "ZFCG-2026-001")
+        assert k1 != k2
+
+    def test_no_project_identifier(self):
+        """无项目编号也能生成 key（但不同项目可能碰撞）。"""
+        k = compute_fact_assertion_key("amount", "100万")
+        assert len(k) == 16
+
+
+# ========== 同源转载候选识别测试 ==========
+
+class TestFindRepostCandidates:
+    """同源转载候选识别。"""
+
+    def test_no_match(self):
+        """无匹配（汉明距离 > 3）。"""
+        candidates = [("src1", 0xFFFFFFFFFFFFFFFF, "url1")]
+        result = find_repost_candidates(0x0000000000000000, candidates)
+        assert result == []
+
+    def test_exact_match(self):
+        """完全匹配（汉明距离 0）。"""
+        target = 0x123456789ABCDEF0
+        candidates = [("src1", target, "url1"), ("src2", 0xFFFFFFFFFFFFFFFF, "url2")]
+        result = find_repost_candidates(target, candidates)
+        assert len(result) == 1
+        assert result[0][0] == "src1"
+
+    def test_near_match_within_threshold(self):
+        """汉明距离 ≤ 3 视为匹配。"""
+        # 用非零 target 避免触发 target==0 保护
+        target = 0x1000000000000000
+        # 汉明距离 1
+        cand1 = ("src1", 0x1000000000000001, "url1")
+        # 汉明距离 3
+        cand2 = ("src2", 0x1000000000000007, "url2")
+        # 汉明距离 4（不匹配）
+        cand3 = ("src3", 0x100000000000000F, "url3")
+        result = find_repost_candidates(target, [cand1, cand2, cand3])
+        assert len(result) == 2
+        assert result[0][0] == "src1"  # 距离最近
+        assert result[1][0] == "src2"
+
+    def test_empty_target(self):
+        """target_simhash=0 → 返回空。"""
+        result = find_repost_candidates(0, [("src1", 12345, "url1")])
+        assert result == []
+
+    def test_sorted_by_distance(self):
+        """结果按汉明距离升序。"""
+        # 用非零 target 避免触发 target==0 保护
+        target = 0x1000000000000000
+        candidates = [
+            ("far", 0x1000000000000007, "url_far"),    # 距离 3
+            ("near", 0x1000000000000001, "url_near"),  # 距离 1
+        ]
+        result = find_repost_candidates(target, candidates)
+        assert result[0][0] == "near"
+        assert result[1][0] == "far"
+
+
+# ========== 主判定函数测试 ==========
+
+class TestJudgeSourceLineage:
+    """来源谱系判定主函数。"""
+
+    def test_full_pipeline_official(self):
+        """完整流程：官方域名 + 字段信息。"""
+        result = judge_source_lineage(
+            source_url="http://www.ccgp.gov.cn/notice/1",
+            content_text="项目编号：ZFCG-2026-001\n预算金额：100万",
+            field_name="amount",
+            normalized_value="1000000",
+            project_identifier="ZFCG-2026-001",
         )
-        status, conf = detect_same_origin(fa, fb)
-        assert status == LINEAGE_SAME_ORIGIN
-        assert conf == 0.9
+        assert isinstance(result, SourceLineageResult)
+        assert result.source_role == SOURCE_ROLE_OFFICIAL_ORIGINAL
+        assert result.simhash != 0
+        assert len(result.source_group) == 16
+        assert result.fact_assertion_key is not None
+        assert len(result.fact_assertion_key) == 16
 
-    def test_same_project_different_type_version_difference(self):
-        """项目编号相同 + 公告类型不同 → version_difference (0.7)."""
-        fa = SourceLineageFeatures(
-            url="http://ccgp.gov.cn/a",
-            title="某项目招标公告",
-            notice_type="tender",
-            project_identifier="GC-2026-001",
+    def test_pipeline_without_field_info(self):
+        """无字段信息 → fact_assertion_key 为 None。"""
+        result = judge_source_lineage(
+            source_url="http://www.ccgp.gov.cn/notice/1",
+            content_text="项目编号",
         )
-        fb = SourceLineageFeatures(
-            url="http://ccgp.gov.cn/b",
-            title="某项目中标公告",
-            notice_type="award",
-            project_identifier="GC-2026-001",
+        assert result.fact_assertion_key is None
+        assert result.simhash != 0
+
+    def test_pipeline_with_repost_candidates(self):
+        """含转载候选 → 填充 repost_candidates。"""
+        text = "项目编号：ZFCG-2026-001\n预算金额：100万"
+        result = judge_source_lineage(
+            source_url="http://www.ccgp.gov.cn/notice/1",
+            content_text=text,
+            repost_candidates=[("src1", compute_simhash_dup(text), "url1")],
         )
-        status, conf = detect_same_origin(fa, fb)
-        assert status == LINEAGE_VERSION_DIFFERENCE
-        assert conf == 0.7
+        # 同文本 SimHash 相同，汉明距离 0
+        assert len(result.repost_candidates) == 1
 
-    def test_simhash_close_no_evidence_consistent_unknown(self):
-        """SimHash近但无其他佐证 → consistent_unknown (0.5)."""
-        fa = SourceLineageFeatures(
-            url="http://site-a.com/a",
-            title="完全不同的标题甲",
-            content_simhash=0x1234567890ABCDEF,
+    def test_idempotent(self):
+        """幂等：相同输入相同输出。"""
+        r1 = judge_source_lineage("http://a.com/1", "测试文本", field_name="amount", normalized_value="100")
+        r2 = judge_source_lineage("http://a.com/1", "测试文本", field_name="amount", normalized_value="100")
+        assert r1.source_role == r2.source_role
+        assert r1.simhash == r2.simhash
+        assert r1.source_group == r2.source_group
+        assert r1.fact_assertion_key == r2.fact_assertion_key
+
+
+def compute_simhash_dup(text: str) -> int:
+    """辅助函数：计算 SimHash（避免循环导入）。"""
+    from app.processors.simhash import compute_simhash
+    return compute_simhash(text)
+
+
+# ========== 冲突判定测试（W3 周验收核心）==========
+
+class TestJudgeFieldConflict:
+    """版本差异 vs 事实冲突判定（W3 周验收核心）。"""
+
+    def test_same_fact_key_no_conflict(self):
+        """相同 fact_key → 非冲突（同值）。"""
+        key = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        j = judge_field_conflict(
+            key, key, "amount", "100万", "100万",
+            "ZFCG-2026-001", "tender", "tender"
         )
-        fb = SourceLineageFeatures(
-            url="http://site-b.com/b",
-            title="完全不同的标题乙",
-            content_simhash=0x1234567890ABCDEF,  # 完全相同但标题不同
+        assert not j.is_conflict
+        assert not j.is_version_diff
+
+    def test_version_diff_different_notice_type(self):
+        """同项目不同公告类型同字段不同值 → 版本差异（非冲突）。
+
+        W3 周验收要求：同一项目不同公告不会被误判为冲突。
+        """
+        k1 = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        k2 = compute_fact_assertion_key("amount", "120万", "ZFCG-2026-001")
+        j = judge_field_conflict(
+            k1, k2, "amount", "100万", "120万",
+            "ZFCG-2026-001", "tender", "award"
         )
-        status, conf = detect_same_origin(fa, fb)
-        assert status == LINEAGE_CONSISTENT_UNKNOWN
-        assert conf == 0.5
+        assert not j.is_conflict
+        assert j.is_version_diff
+        assert "版本" in j.reason or "不同公告类型" in j.reason
 
-    def test_no_match_independent(self):
-        """无任何匹配特征 → independent (0.0)."""
-        fa = SourceLineageFeatures(
-            url="http://site-a.com/a",
-            title="项目A招标公告",
-            project_identifier="GC-2026-001",
+    def test_conflict_same_notice_type_different_value(self):
+        """同项目同公告类型同字段不同值 → 事实冲突。"""
+        k1 = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        k2 = compute_fact_assertion_key("amount", "120万", "ZFCG-2026-001")
+        j = judge_field_conflict(
+            k1, k2, "amount", "100万", "120万",
+            "ZFCG-2026-001", "tender", "tender"
         )
-        fb = SourceLineageFeatures(
-            url="http://site-b.com/b",
-            title="项目B中标公告",
-            project_identifier="GC-2026-002",
+        assert j.is_conflict
+        assert not j.is_version_diff
+
+    def test_no_project_identifier_no_judgment(self):
+        """无项目编号 → 无法判断。"""
+        k1 = compute_fact_assertion_key("amount", "100万")
+        k2 = compute_fact_assertion_key("amount", "120万")
+        j = judge_field_conflict(
+            k1, k2, "amount", "100万", "120万",
+            "", "tender", "tender"
         )
-        status, conf = detect_same_origin(fa, fb)
-        assert status == LINEAGE_INDEPENDENT
-        assert conf == 0.0
+        assert not j.is_conflict
+        assert not j.is_version_diff
 
-    def test_simhash_close_title_similar_same_origin(self):
-        """SimHash近 + 标题高度相似 → same_origin (0.8)."""
-        # 构造标题几乎相同的两个来源
-        fa = SourceLineageFeatures(
-            url="http://site-a.com/a",
-            title="某机关单位办公设备采购招标公告",
-            content_simhash=0x1234567890ABCDEF,
+    def test_correction_notice_is_version_diff(self):
+        """更正公告 vs 招标公告 → 版本差异（更正是合法变更）。"""
+        k1 = compute_fact_assertion_key("bid_deadline", "2026-08-01", "ZFCG-2026-001")
+        k2 = compute_fact_assertion_key("bid_deadline", "2026-08-15", "ZFCG-2026-001")
+        j = judge_field_conflict(
+            k1, k2, "bid_deadline", "2026-08-01", "2026-08-15",
+            "ZFCG-2026-001", "tender", "correction"
         )
-        fb = SourceLineageFeatures(
-            url="http://site-b.com/b",
-            title="某机关单位办公设备采购招标公告",  # 完全相同
-            content_simhash=0x1234567890ABCDEF,
+        assert not j.is_conflict
+        assert j.is_version_diff
+
+    def test_repost_not_independent_validation(self):
+        """同一公告转载 → fact_key 相同 → 非冲突（不视为独立验证）。
+
+        W3 周验收要求：同一公告转载不会被误判为独立验证。
+        """
+        # 转载内容相同，fact_key 相同
+        k = compute_fact_assertion_key("amount", "100万", "ZFCG-2026-001")
+        j = judge_field_conflict(
+            k, k, "amount", "100万", "100万",
+            "ZFCG-2026-001", "tender", "tender"
         )
-        status, conf = detect_same_origin(fa, fb)
-        assert status == LINEAGE_SAME_ORIGIN
-        assert conf == 0.8
-
-
-# ========== 独立性分类 ==========
-
-
-class TestClassifyIndependence:
-    def test_single_source(self):
-        """只有一个来源 → single_source."""
-        f = SourceLineageFeatures(url="http://a.com", title="A")
-        assert classify_independence([f]) == LINEAGE_SINGLE_SOURCE
-
-    def test_empty_list_single_source(self):
-        """空列表 → single_source."""
-        assert classify_independence([]) == LINEAGE_SINGLE_SOURCE
-
-    def test_all_independent(self):
-        """所有来源两两独立 → independent."""
-        fa = SourceLineageFeatures(
-            url="http://a.com",
-            title="项目A",
-            project_identifier="GC-001",
-        )
-        fb = SourceLineageFeatures(
-            url="http://b.com",
-            title="项目B",
-            project_identifier="GC-002",
-        )
-        assert classify_independence([fa, fb]) == LINEAGE_INDEPENDENT
-
-    def test_has_same_origin(self):
-        """存在同源来源 → same_origin."""
-        fa = SourceLineageFeatures(url="http://a.com", title="A")
-        fb = SourceLineageFeatures(url="http://a.com", title="B")  # 同URL
-        fc = SourceLineageFeatures(
-            url="http://c.com",
-            title="C",
-            project_identifier="GC-003",
-        )
-        assert classify_independence([fa, fb, fc]) == LINEAGE_SAME_ORIGIN
-
-    def test_has_consistent_unknown(self):
-        """存在独立性未知 → consistent_unknown."""
-        fa = SourceLineageFeatures(
-            url="http://a.com",
-            title="标题甲",
-            content_simhash=0x1234567890ABCDEF,
-        )
-        fb = SourceLineageFeatures(
-            url="http://b.com",
-            title="标题乙",
-            content_simhash=0x1234567890ABCDEF,
-        )
-        assert classify_independence([fa, fb]) == LINEAGE_CONSISTENT_UNKNOWN
-
-
-# ========== 便捷构造函数 ==========
-
-
-class TestBuildLineageFeatures:
-    def test_build_with_content_text(self):
-        """有正文 → 自动计算 SimHash."""
-        f = build_lineage_features(
-            url="http://ccgp.gov.cn/test",
-            title="测试公告",
-            content_text="这是一段测试正文内容用于计算SimHash指纹",
-            project_identifier="GC-2026-001",
-        )
-        assert f.url == "http://ccgp.gov.cn/test"
-        assert f.title == "测试公告"
-        assert f.project_identifier == "GC-2026-001"
-        assert f.content_simhash is not None
-        assert isinstance(f.content_simhash, int)
-
-    def test_build_without_content_text(self):
-        """无正文 → SimHash 为 None."""
-        f = build_lineage_features(
-            url="http://ccgp.gov.cn/test",
-            title="测试公告",
-        )
-        assert f.content_simhash is None
-
-    def test_build_with_attachment_urls(self):
-        """附件链接列表."""
-        f = build_lineage_features(
-            url="http://ccgp.gov.cn/test",
-            title="测试",
-            attachment_urls=["http://a.com/1.pdf", "http://b.com/2.docx"],
-        )
-        assert len(f.attachment_urls) == 2
-
-    def test_build_default_attachment_urls(self):
-        """附件链接默认空列表."""
-        f = build_lineage_features(url="http://a.com", title="T")
-        assert f.attachment_urls == []
-
-
-# ========== SimHash 不单独决定 ==========
-
-
-class TestSimHashNotSole:
-    """v4.1 8.1 约束: SimHash 只能提供候选, 不能单独决定来源谱系."""
-
-    def test_simhash_close_but_different_project_still_checked(self):
-        """SimHash近但项目编号不同 → 不直接判同源, 需标题佐证."""
-        fa = SourceLineageFeatures(
-            url="http://a.com",
-            title="完全不同的标题甲乙丙丁",
-            project_identifier="GC-001",
-            content_simhash=0x1234567890ABCDEF,
-        )
-        fb = SourceLineageFeatures(
-            url="http://b.com",
-            title="完全不同的标题戊己庚辛壬",
-            project_identifier="GC-002",
-            content_simhash=0x1234567890ABCDEF,  # SimHash相同
-        )
-        status, _ = detect_same_origin(fa, fb)
-        # SimHash近但标题不相似且项目不同 → consistent_unknown (不是 same_origin)
-        assert status == LINEAGE_CONSISTENT_UNKNOWN
-        assert status != LINEAGE_SAME_ORIGIN
+        assert not j.is_conflict
+        assert not j.is_version_diff
+        assert "同值" in j.reason

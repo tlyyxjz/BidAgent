@@ -173,6 +173,44 @@ async def _run_risk_analysis(state: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _run_supplier_analysis(state: dict[str, Any]) -> dict[str, Any]:
-    """供应商信用评分（等 Sol S-3 交付后实现）。"""
-    # TODO: Sol S-3 交付后接入 supplier_risk.analyze_supplier
-    return {"scores": []}
+    """供应商风险分析（W3-03 已接入 supplier_risk.analyze_supplier）。"""
+    from app.processors.supplier_risk import analyze_supplier
+
+    # 从 state 中提取供应商中标记录
+    org_id = state.get("organization_id", "")
+    org_name = state.get("normalized_name", "") or state.get("raw_name", "")
+    win_records = state.get("win_records", [])
+
+    if not win_records:
+        return {"scores": [], "summary": "无中标记录，跳过风险分析"}
+
+    result = analyze_supplier(org_id, org_name, win_records)
+    return {
+        "scores": [
+            {
+                "organization_id": result.organization_id,
+                "normalized_name": result.normalized_name,
+                "total_score": round(result.total_score, 2),
+                "risk_level": result.risk_level,
+                "summary": result.summary,
+                "dimensions": [
+                    {
+                        "name": d.name,
+                        "score": round(d.score, 2),
+                        "level": d.level,
+                        "reason": d.reason,
+                    }
+                    for d in result.dimensions
+                ],
+            }
+        ],
+        "profile": {
+            "win_count": result.profile.win_count,
+            "total_win_amount": result.profile.total_win_amount,
+            "main_purchasers": result.profile.main_purchasers,
+            "main_agencies": result.profile.main_agencies,
+            "active_regions": result.profile.active_regions,
+            "first_win_date": result.profile.first_win_date,
+            "last_win_date": result.profile.last_win_date,
+        } if result.profile else None,
+    }
