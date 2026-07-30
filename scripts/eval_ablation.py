@@ -355,12 +355,16 @@ async def run_group_c(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
 
 # ========== D 组：完整 BidAgent（C 组验证 + display_grade 选择性输出）==========
 
-async def run_group_d(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], dict]:
+async def run_group_d(rows_c: list[GroupResult], meta_c: dict) -> tuple[list[GroupResult], dict]:
     """D 组：完整 BidAgent = C 组验证 + display_grade 选择性输出。
 
-    复用 C 组的 LLM 调用与证据验证逻辑 (call_extraction_llm + EvidenceLocator +
-    FieldValidator)，在 C 组验证结果基础上计算 display_grade (v4.1 第八章)，
+    直接复用 C 组的 LLM 调用与证据验证结果 (不重新调用 LLM)，
+    在 C 组结果基础上计算 display_grade (v4.1 第八章)，
     并按选择性输出策略 (v4.1 第十章 10.7) 拒绝 grade="low" 的字段。
+
+    Baseline 公平性 (v4.1 10.11): D 组与 C 组使用相同 LLM 调用结果，
+    仅在 C 组验证后增加 display_grade 计算和选择性输出，
+    确保 "相同重试次数" 和 "相同 LLM 调用" 的公平性约束。
 
     与 C 组的差异:
     - 计算 display_grade: support_level 基于 evidence_verified + field_validated
@@ -371,13 +375,11 @@ async def run_group_d(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
 
     单源评测默认 source_role="official_original"，cross_verified=False (W3 无多源)。
 
-    独立 LLM 调用 (调用 run_group_c 自身的 call_extraction_llm)，独立记录 meta，
     meta 中额外记录 display_grade 分布 (high/review/low 计数)。
+    D 组 tokens/latency 复用 C 组 (不重新调用 LLM)。
     """
-    # 复用 C 组验证逻辑 (独立 LLM 调用，独立 meta)
-    rows_c, meta = await run_group_c(doc, raw_text)
-    if meta.get("invalid"):
-        return [], meta
+    if meta_c.get("invalid"):
+        return [], meta_c
 
     rows_d: list[GroupResult] = []
     grade_dist = {"high": 0, "review": 0, "low": 0}
@@ -412,7 +414,7 @@ async def run_group_d(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
         ))
 
     # 独立记录 meta (添加 display_grade 分布)
-    meta_d = dict(meta)
+    meta_d = dict(meta_c)
     meta_d["display_grade_dist"] = grade_dist
     return rows_d, meta_d
 
@@ -522,15 +524,17 @@ async def main():
         else:
             print(f"  C: {len(rows_c)} 字段, tokens={meta_c['total_tokens']}, latency={meta_c['latency_ms']}ms")
             all_rows_c.extend(rows_c); metas_c.append(meta_c)
-        # D 组 (独立 LLM 调用，复用 C 组验证逻辑 + display_grade 选择性输出)
-        rows_d, meta_d = await run_group_d(gd, rt)
-        if meta_d.get("invalid"):
-            print(f"  D: [INVALID] tokens={meta_d['total_tokens']}, error={meta_d['error']} - 跳过评测")
+        # D 组 (复用 C 组 LLM 调用结果 + display_grade 选择性输出)
+        # Baseline 公平性: D 组不重新调用 LLM，与 C 组共享同一次 LLM 调用
+        if meta_c.get("invalid"):
+            rows_d, meta_d = [], meta_c
+            print(f"  D: [INVALID] 复用 C 组 invalid 状态 - 跳过评测")
             invalid_d.append(gd.document_id)
             metas_d.append(meta_d)
         else:
+            rows_d, meta_d = await run_group_d(rows_c, meta_c)
             gd_dist = meta_d.get("display_grade_dist", {})
-            print(f"  D: {len(rows_d)} 字段, tokens={meta_d['total_tokens']}, latency={meta_d['latency_ms']}ms, "
+            print(f"  D: {len(rows_d)} 字段, tokens={meta_d['total_tokens']} (复用C组), latency={meta_d['latency_ms']}ms (复用C组), "
                   f"grade={gd_dist}")
             all_rows_d.extend(rows_d); metas_d.append(meta_d)
 
