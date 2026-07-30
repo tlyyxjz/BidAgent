@@ -1,13 +1,17 @@
-"""W2-08 消融实验 A/B/C 三组。
+"""W2-08/W4 消融实验 A/B/C/D 四组。
 
 对应总规划 v4.1 第十章 10.8 消融实验设计 + 第二周任务清单 W2-08。
 
-三组对比:
+四组对比:
 - A 组 (Direct LLM): 直接输出字段，无证据要求
 - B 组 (LLM + 候选证据): LLM 输出字段 + 候选证据文本，但不做程序验证
 - C 组 (LLM + 程序证据验证): 验证证据存在性 + 字段等价性 + 确定性字段校验
+- D 组 (完整 BidAgent): C 组验证 + display_grade 选择性输出 (grade="low" 拒绝)
+  D 组在 C 组验证结果基础上计算 display_grade (v4.1 第八章)，
+  按选择性输出策略 (v4.1 第十章 10.7) 拒绝 grade="low" 的字段，
+  模拟完整 BidAgent 的来源处理 + 版本/冲突处理 + 选择性输出能力。
 
-三组使用相同底层模型、相同公告文本、相同字段定义、相同提示词主体。
+四组使用相同底层模型、相同公告文本、相同字段定义、相同提示词主体。
 
 输出对比报告:
 - 无依据输出率 (lower is better)
@@ -54,6 +58,7 @@ from app.processors.field_validator import (
     validate_amount, validate_date, validate_project_identifier,
     ValidationResult,
 )
+from app.processors.display_grade import compute_display_grade
 
 
 # 7 篇金标 (W1 已有 + W2 D2 验证过的)
@@ -348,6 +353,69 @@ async def run_group_c(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
     return rows, meta
 
 
+# ========== D 组：完整 BidAgent（C 组验证 + display_grade 选择性输出）==========
+
+async def run_group_d(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], dict]:
+    """D 组：完整 BidAgent = C 组验证 + display_grade 选择性输出。
+
+    复用 C 组的 LLM 调用与证据验证逻辑 (call_extraction_llm + EvidenceLocator +
+    FieldValidator)，在 C 组验证结果基础上计算 display_grade (v4.1 第八章)，
+    并按选择性输出策略 (v4.1 第十章 10.7) 拒绝 grade="low" 的字段。
+
+    与 C 组的差异:
+    - 计算 display_grade: support_level 基于 evidence_verified + field_validated
+      (direct=STRONG / inferred=MEDIUM / unsupported=WEAK)
+    - 选择性输出: grade="low" 的字段被拒绝 (不输出)
+    - unjustified = 有值但被拒绝 (has_value and grade=="low")
+    - correct 只统计输出字段 (grade != "low")，被拒绝字段 correct=None
+
+    单源评测默认 source_role="official_original"，cross_verified=False (W3 无多源)。
+
+    独立 LLM 调用 (调用 run_group_c 自身的 call_extraction_llm)，独立记录 meta，
+    meta 中额外记录 display_grade 分布 (high/review/low 计数)。
+    """
+    # 复用 C 组验证逻辑 (独立 LLM 调用，独立 meta)
+    rows_c, meta = await run_group_c(doc, raw_text)
+    if meta.get("invalid"):
+        return [], meta
+
+    rows_d: list[GroupResult] = []
+    grade_dist = {"high": 0, "review": 0, "low": 0}
+    for r in rows_c:
+        # 基于 C 组结果计算 display_grade
+        if r.evidence_verified and r.field_validated:
+            support_level = "direct"  # STRONG
+        elif r.has_value:
+            support_level = "inferred"  # MEDIUM
+        else:
+            support_level = "unsupported"  # WEAK
+        source_role = "official_original"  # 单源评测默认
+        cross_verified = False  # W3 无多源交叉验证
+        field_status = r.pred_status  # 已是 pred_status if pred else "missing"
+        grade = compute_display_grade(support_level, source_role, cross_verified, field_status)
+        grade_dist[grade] += 1
+
+        # D 组选择性输出: grade="low" 被拒绝 (不输出)
+        output = grade != "low"
+        # unjustified: 有值但被拒绝
+        unjustified = r.has_value and not output
+        # correct: 只统计输出字段 (被拒绝字段不计入 evaluable)
+        correct = r.correct if output else None
+
+        rows_d.append(GroupResult(
+            group="D", doc_id=r.doc_id, field_name=r.field_name,
+            gold_status=r.gold_status, pred_status=r.pred_status,
+            has_value=r.has_value, has_evidence=r.has_evidence,
+            evidence_verified=r.evidence_verified, field_validated=r.field_validated,
+            unjustified=unjustified,
+            correct=correct,
+        ))
+
+    # 独立记录 meta (添加 display_grade 分布)
+    meta_d = dict(meta)
+    meta_d["display_grade_dist"] = grade_dist
+    return rows_d, meta_d
+
 # ========== 汇总 ==========
 
 def summarize(
@@ -381,7 +449,7 @@ def summarize(
         field_precision=round(correct / max(evaluable, 1), 4),
         # C 组字段级证据验证率 (已验证证据字段 / 有证据字段)
         # 命名澄清 (P3): 此处是字段级，非证据级，与 W2-09 证据级精确率口径不同
-        evidence_precision=round(ev_verified / max(with_evidence, 1), 4) if group == "C" else 0.0,
+        evidence_precision=round(ev_verified / max(with_evidence, 1), 4) if group in ("C", "D") else 0.0,
         model_id=metas[0].get("model_id", "unknown") if metas else "unknown",
         prompt_hash=metas[0].get("prompt_hash", "") if metas else "",
         total_tokens=sum(m.get("total_tokens", 0) for m in metas),
@@ -399,7 +467,7 @@ async def main():
     args = parser.parse_args()
 
     print("=" * 70)
-    print("W2-08 消融实验 A/B/C 三组")
+    print("W2-08/W4 消融实验 A/B/C/D 四组")
     print("=" * 70)
     print(f"公告数: {len(args.docs)}")
     print(f"模型: deepseek-v4-flash")
@@ -421,9 +489,9 @@ async def main():
         print("[SKIP-LLM] 跳过 LLM 调用，仅输出空结果")
         return
 
-    all_rows_a, all_rows_b, all_rows_c = [], [], []
-    metas_a, metas_b, metas_c = [], [], []
-    invalid_a, invalid_b, invalid_c = [], [], []
+    all_rows_a, all_rows_b, all_rows_c, all_rows_d = [], [], [], []
+    metas_a, metas_b, metas_c, metas_d = [], [], [], []
+    invalid_a, invalid_b, invalid_c, invalid_d = [], [], [], []
 
     for gd, rt in docs:
         print(f"\n--- {gd.document_id} ({len(rt)} 字符) ---")
@@ -454,46 +522,60 @@ async def main():
         else:
             print(f"  C: {len(rows_c)} 字段, tokens={meta_c['total_tokens']}, latency={meta_c['latency_ms']}ms")
             all_rows_c.extend(rows_c); metas_c.append(meta_c)
+        # D 组 (独立 LLM 调用，复用 C 组验证逻辑 + display_grade 选择性输出)
+        rows_d, meta_d = await run_group_d(gd, rt)
+        if meta_d.get("invalid"):
+            print(f"  D: [INVALID] tokens={meta_d['total_tokens']}, error={meta_d['error']} - 跳过评测")
+            invalid_d.append(gd.document_id)
+            metas_d.append(meta_d)
+        else:
+            gd_dist = meta_d.get("display_grade_dist", {})
+            print(f"  D: {len(rows_d)} 字段, tokens={meta_d['total_tokens']}, latency={meta_d['latency_ms']}ms, "
+                  f"grade={gd_dist}")
+            all_rows_d.extend(rows_d); metas_d.append(meta_d)
 
     # 汇总 (传入 invalid_docs 用于报告)
     sum_a = summarize("A", all_rows_a, metas_a, invalid_a)
     sum_b = summarize("B", all_rows_b, metas_b, invalid_b)
     sum_c = summarize("C", all_rows_c, metas_c, invalid_c)
+    sum_d = summarize("D", all_rows_d, metas_d, invalid_d)
 
     # 打印 invalid docs 警告
-    if invalid_a or invalid_b or invalid_c:
+    if invalid_a or invalid_b or invalid_c or invalid_d:
         print("\n" + "!" * 70)
         print("警告: 检测到 LLM 调用失败的 invalid docs (已排除出评测)")
         print(f"  A 组 invalid: {invalid_a}")
         print(f"  B 组 invalid: {invalid_b}")
         print(f"  C 组 invalid: {invalid_c}")
+        print(f"  D 组 invalid: {invalid_d}")
         print("!" * 70)
 
     print("\n" + "=" * 70)
     print("汇总对比")
     print("=" * 70)
-    print(f"{'指标':<24} {'A组':>12} {'B组':>12} {'C组':>12}")
-    print("-" * 70)
-    print(f"{'字段总数':<24} {sum_a.fields_total:>12} {sum_b.fields_total:>12} {sum_c.fields_total:>12}")
-    print(f"{'有值字段':<24} {sum_a.fields_with_value:>12} {sum_b.fields_with_value:>12} {sum_c.fields_with_value:>12}")
-    print(f"{'有证据字段':<24} {sum_a.fields_with_evidence:>12} {sum_b.fields_with_evidence:>12} {sum_c.fields_with_evidence:>12}")
-    print(f"{'证据已验证':<24} {sum_a.fields_evidence_verified:>12} {sum_b.fields_evidence_verified:>12} {sum_c.fields_evidence_verified:>12}")
-    print(f"{'字段已校验':<24} {sum_a.fields_field_validated:>12} {sum_b.fields_field_validated:>12} {sum_c.fields_field_validated:>12}")
-    print(f"{'无依据字段':<24} {sum_a.fields_unjustified:>12} {sum_b.fields_unjustified:>12} {sum_c.fields_unjustified:>12}")
-    print(f"{'无依据率':<24} {sum_a.unjustified_rate:>12.2%} {sum_b.unjustified_rate:>12.2%} {sum_c.unjustified_rate:>12.2%}")
-    print(f"{'字段正确数':<24} {sum_a.fields_correct:>12} {sum_b.fields_correct:>12} {sum_c.fields_correct:>12}")
-    print(f"{'字段精确率':<24} {sum_a.field_precision:>12.2%} {sum_b.field_precision:>12.2%} {sum_c.field_precision:>12.2%}")
-    print(f"{'证据精确率':<24} {'N/A':>12} {'N/A':>12} {sum_c.evidence_precision:>12.2%}")
-    print(f"{'总 tokens':<24} {sum_a.total_tokens:>12} {sum_b.total_tokens:>12} {sum_c.total_tokens:>12}")
-    print(f"{'平均延迟 ms':<24} {sum_a.latency_ms_avg:>12.0f} {sum_b.latency_ms_avg:>12.0f} {sum_c.latency_ms_avg:>12.0f}")
+    print(f"{'指标':<24} {'A组':>12} {'B组':>12} {'C组':>12} {'D组':>12}")
+    print("-" * 80)
+    print(f"{'字段总数':<24} {sum_a.fields_total:>12} {sum_b.fields_total:>12} {sum_c.fields_total:>12} {sum_d.fields_total:>12}")
+    print(f"{'有值字段':<24} {sum_a.fields_with_value:>12} {sum_b.fields_with_value:>12} {sum_c.fields_with_value:>12} {sum_d.fields_with_value:>12}")
+    print(f"{'有证据字段':<24} {sum_a.fields_with_evidence:>12} {sum_b.fields_with_evidence:>12} {sum_c.fields_with_evidence:>12} {sum_d.fields_with_evidence:>12}")
+    print(f"{'证据已验证':<24} {sum_a.fields_evidence_verified:>12} {sum_b.fields_evidence_verified:>12} {sum_c.fields_evidence_verified:>12} {sum_d.fields_evidence_verified:>12}")
+    print(f"{'字段已校验':<24} {sum_a.fields_field_validated:>12} {sum_b.fields_field_validated:>12} {sum_c.fields_field_validated:>12} {sum_d.fields_field_validated:>12}")
+    print(f"{'无依据字段':<24} {sum_a.fields_unjustified:>12} {sum_b.fields_unjustified:>12} {sum_c.fields_unjustified:>12} {sum_d.fields_unjustified:>12}")
+    print(f"{'无依据率':<24} {sum_a.unjustified_rate:>12.2%} {sum_b.unjustified_rate:>12.2%} {sum_c.unjustified_rate:>12.2%} {sum_d.unjustified_rate:>12.2%}")
+    print(f"{'字段正确数':<24} {sum_a.fields_correct:>12} {sum_b.fields_correct:>12} {sum_c.fields_correct:>12} {sum_d.fields_correct:>12}")
+    print(f"{'字段精确率':<24} {sum_a.field_precision:>12.2%} {sum_b.field_precision:>12.2%} {sum_c.field_precision:>12.2%} {sum_d.field_precision:>12.2%}")
+    print(f"{'证据精确率':<24} {'N/A':>12} {'N/A':>12} {sum_c.evidence_precision:>12.2%} {sum_d.evidence_precision:>12.2%}")
+    print(f"{'总 tokens':<24} {sum_a.total_tokens:>12} {sum_b.total_tokens:>12} {sum_c.total_tokens:>12} {sum_d.total_tokens:>12}")
+    print(f"{'平均延迟 ms':<24} {sum_a.latency_ms_avg:>12.0f} {sum_b.latency_ms_avg:>12.0f} {sum_c.latency_ms_avg:>12.0f} {sum_d.latency_ms_avg:>12.0f}")
 
     # 保存
     out = {
-        "summaries": {s.group: asdict(s) for s in [sum_a, sum_b, sum_c]},
+        "summaries": {s.group: asdict(s) for s in [sum_a, sum_b, sum_c, sum_d]},
         "rows": {
             "A": [asdict(r) for r in all_rows_a],
             "B": [asdict(r) for r in all_rows_b],
             "C": [asdict(r) for r in all_rows_c],
+            "D": [asdict(r) for r in all_rows_d],
         },
         "docs": [gd.document_id for gd, _ in docs],
     }
