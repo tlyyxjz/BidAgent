@@ -45,6 +45,12 @@ WORK_DIR = Path(r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-ag
 RAW_DIR = WORK_DIR / "_w2_raw"
 ANNOT_DIR = WORK_DIR / "_w2_annotations"
 
+# W3 数据源路径
+BIDAGENT_ROOT = Path(r"C:\Users\Lenovo\Desktop\BidAgent")
+W3_RAW_DIR = BIDAGENT_ROOT / "_w3_raw"
+W3_GOLD_PATH = BIDAGENT_ROOT / "tests" / "fixtures" / "gold" / "k3_annotations_batch2.json"
+W3_OUTPUT_DIR = BIDAGENT_ROOT / "_w3_outputs"
+
 from app.llm.extractor import (
     call_extraction_llm,
     call_extraction_llm_no_evidence,
@@ -125,8 +131,54 @@ class ExpSummary:
     invalid_docs: list = field(default_factory=list)  # P2: 失败文档 ID 列表
 
 
-def load_gold_doc(doc_prefix: str) -> Optional[GoldDoc]:
-    """加载金标 (从 _w2_annotations 找对应文件)。"""
+def load_gold_all_w3() -> list[GoldDoc]:
+    """从 W3 gold JSON (k3_annotations_batch2.json) 加载全部金标。
+
+    JSON 结构: 顶部一个 _is_meta 头, 其余 99 项为公告金标。
+    """
+    with open(W3_GOLD_PATH, encoding="utf-8") as f:
+        data = json.load(f)
+    docs = []
+    for item in data:
+        if not isinstance(item, dict) or item.get("_is_meta"):
+            continue
+        fields = [
+            GoldField(
+                field_name=f["field_name"],
+                gold_status=f["gold_status"],
+                values=f.get("values", []),
+            )
+            for f in item.get("fields", [])
+        ]
+        docs.append(GoldDoc(
+            document_id=item["document_id"],
+            file=item.get("file", ""),
+            fields=fields,
+        ))
+    return docs
+
+
+_GOLD_CACHE_W3: dict[str, GoldDoc] = {}
+
+
+def _load_w3_gold_cache() -> dict[str, GoldDoc]:
+    """惰性加载 W3 gold 到缓存 (按 document_id 索引)。"""
+    if not _GOLD_CACHE_W3:
+        for gd in load_gold_all_w3():
+            _GOLD_CACHE_W3[gd.document_id] = gd
+    return _GOLD_CACHE_W3
+
+
+def load_gold_doc(doc_prefix: str, source: str = "w2") -> Optional[GoldDoc]:
+    """加载金标。
+
+    source="w2" 从 _w2_annotations 目录按 prefix glob 查找单独 JSON 文件;
+    source="w3" 从 k3_annotations_batch2.json 按 document_id 直接匹配
+    (W3 的 doc_prefix 就是 document_id, 如 w3_tender_001)。
+    """
+    if source == "w3":
+        cache = _load_w3_gold_cache()
+        return cache.get(doc_prefix)
     matches = list(ANNOT_DIR.glob(f"annotation_{doc_prefix}*.json"))
     if not matches:
         return None
@@ -146,8 +198,12 @@ def load_gold_doc(doc_prefix: str) -> Optional[GoldDoc]:
     )
 
 
-def load_raw_text(doc_prefix: str) -> Optional[str]:
-    p = RAW_DIR / f"{doc_prefix}.txt"
+def load_raw_text(doc_prefix: str, source: str = "w2") -> Optional[str]:
+    """加载原文。source="w3" 从 _w3_raw, 否则从 _w2_raw。"""
+    if source == "w3":
+        p = W3_RAW_DIR / f"{doc_prefix}.txt"
+    else:
+        p = RAW_DIR / f"{doc_prefix}.txt"
     if not p.exists():
         return None
     return p.read_text(encoding="utf-8")
@@ -463,24 +519,42 @@ def summarize(
 
 async def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--docs", nargs="*", default=DEFAULT_DOCS, help="要跑的公告前缀列表")
+    parser.add_argument("--docs", nargs="*", default=None, help="要跑的公告前缀列表 (w2) 或 document_id 子集 (w3)")
+    parser.add_argument("--source", choices=["w2", "w3"], default="w2", help="数据源: w2=21篇W2标注, w3=99篇W3金标")
     parser.add_argument("--skip-llm", action="store_true", help="跳过 LLM 调用 (用空结果)")
-    parser.add_argument("--out", default=str(WORK_DIR / "_w2_d4_ablation_result.json"))
+    parser.add_argument("--out", default=None, help="输出路径 (默认自动: w2->WORK_DIR/_w2_d4_ablation_result.json, w3->W3_OUTPUT_DIR/w3_ablation_full.json)")
     args = parser.parse_args()
+
+    source = args.source
+
+    # w3 模式: 从 gold JSON 动态读取全量 document_id; w2 模式: 用 DEFAULT_DOCS
+    if source == "w3":
+        all_gold = load_gold_all_w3()
+        docs_to_run = [gd.document_id for gd in all_gold]
+        if args.docs:
+            wanted = set(args.docs)
+            docs_to_run = [d for d in docs_to_run if d in wanted]
+        out_path = args.out or str(W3_OUTPUT_DIR / "w3_ablation_full.json")
+        W3_OUTPUT_DIR.mkdir(exist_ok=True)
+    else:
+        docs_to_run = args.docs if args.docs is not None else DEFAULT_DOCS
+        out_path = args.out or str(WORK_DIR / "_w2_d4_ablation_result.json")
 
     print("=" * 70)
     print("W2-08/W4 消融实验 A/B/C/D 四组")
     print("=" * 70)
-    print(f"公告数: {len(args.docs)}")
+    print(f"数据源: {source}")
+    print(f"公告数: {len(docs_to_run)}")
     print(f"模型: deepseek-v4-flash")
     print(f"prompt_hash: {compute_prompt_hash()}")
+    print(f"输出: {out_path}")
     print()
 
-    # 加载金标
+    # 加载金标和原文
     docs: list[tuple[GoldDoc, str]] = []
-    for prefix in args.docs:
-        gd = load_gold_doc(prefix)
-        rt = load_raw_text(prefix)
+    for prefix in docs_to_run:
+        gd = load_gold_doc(prefix, source=source)
+        rt = load_raw_text(prefix, source=source)
         if gd is None or rt is None:
             print(f"[WARN] 跳过 {prefix} (金标或原文缺失)")
             continue
@@ -583,9 +657,9 @@ async def main():
         },
         "docs": [gd.document_id for gd, _ in docs],
     }
-    out_path = Path(args.out)
-    out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"\n结果已保存: {out_path}")
+    final_out_path = Path(out_path)
+    final_out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\n结果已保存: {final_out_path}")
 
 
 if __name__ == "__main__":
