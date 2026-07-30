@@ -69,7 +69,14 @@ def _aggregate_metric(
         den = sum(float(d.get("evidences_pred", 0)) for d in docs)
         return num / den if den > 0 else 0.0
     if metric_key == "iou_avg":
-        num = sum(float(d.get("iou_list_matched", 0)) for d in docs)
+        # iou_list_matched 可能是 list(逐条 IoU)或标量,需兼容
+        num = 0.0
+        for d in docs:
+            v = d.get("iou_list_matched", 0)
+            if isinstance(v, list):
+                num += sum(float(x) for x in v)
+            else:
+                num += float(v)
         den = sum(float(d.get("evidences_pred", 0)) for d in docs)
         return num / den if den > 0 else 0.0
     # 通用 fallback：逐篇 sum / n
