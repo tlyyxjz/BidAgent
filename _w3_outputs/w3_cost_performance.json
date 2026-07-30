@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "model": "deepseek-v4-flash",
+    "docs": 99,
+    "fields": 594,
+    "price_per_m_tokens_cny": 1.5
+  },
+  "groups": [
+    {
+      "group": "A",
+      "fields_total": 594,
+      "fields_with_value": 447,
+      "fields_with_evidence": 0,
+      "fields_evidence_verified": 0,
+      "fields_unjustified": 447,
+      "unjustified_rate": 1.0,
+      "field_precision": 0.9197,
+      "total_tokens": 278882,
+      "latency_ms_avg": 5658.2,
+      "cost_cny": 0.4183
+    },
+    {
+      "group": "B",
+      "fields_total": 594,
+      "fields_with_value": 446,
+      "fields_with_evidence": 448,
+      "fields_evidence_verified": 0,
+      "fields_unjustified": 0,
+      "unjustified_rate": 0.0,
+      "field_precision": 0.9258,
+      "total_tokens": 353503,
+      "latency_ms_avg": 8140.2,
+      "cost_cny": 0.5303
+    },
+    {
+      "group": "C",
+      "fields_total": 594,
+      "fields_with_value": 447,
+      "fields_with_evidence": 447,
+      "fields_evidence_verified": 447,
+      "fields_unjustified": 27,
+      "unjustified_rate": 0.0604,
+      "field_precision": 0.9258,
+      "total_tokens": 348657,
+      "latency_ms_avg": 7705.3,
+      "cost_cny": 0.523
+    },
+    {
+      "group": "D",
+      "fields_total": 594,
+      "fields_with_value": 447,
+      "fields_with_evidence": 447,
+      "fields_evidence_verified": 447,
+      "fields_unjustified": 0,
+      "unjustified_rate": 0.0,
+      "field_precision": 0.9217,
+      "total_tokens": 348657,
+      "latency_ms_avg": 7705.3,
+      "cost_cny": 0.523
+    }
+  ]
+}

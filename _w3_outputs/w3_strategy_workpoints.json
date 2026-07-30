@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "group": "D",
+    "docs": 99,
+    "fields_total": 594,
+    "grade_distribution": {
+      "high": 420,
+      "low": 147,
+      "review": 27
+    }
+  },
+  "strategies": {
+    "strict": {
+      "kept_fields": 420,
+      "kept_pct": 70.70707070707071,
+      "correct": 391,
+      "incorrect": 29,
+      "none_correct (NA/absent)": 0,
+      "evaluable": 417,
+      "field_precision": 0.9376498800959233,
+      "gold_present_total": 437,
+      "gold_present_kept_correct": 391,
+      "gold_recall": 0.8947368421052632
+    },
+    "default": {
+      "kept_fields": 420,
+      "kept_pct": 70.70707070707071,
+      "correct": 391,
+      "incorrect": 29,
+      "none_correct (NA/absent)": 0,
+      "evaluable": 417,
+      "field_precision": 0.9376498800959233,
+      "gold_present_total": 437,
+      "gold_present_kept_correct": 391,
+      "gold_recall": 0.8947368421052632
+    },
+    "loose": {
+      "kept_fields": 447,
+      "kept_pct": 75.25252525252525,
+      "correct": 412,
+      "incorrect": 35,
+      "none_correct (NA/absent)": 0,
+      "evaluable": 442,
+      "field_precision": 0.9321266968325792,
+      "gold_present_total": 437,
+      "gold_present_kept_correct": 412,
+      "gold_recall": 0.9427917620137299
+    },
+    "audit": {
+      "kept_fields": 594,
+      "kept_pct": 100.0,
+      "correct": 412,
+      "incorrect": 35,
+      "none_correct (NA/absent)": 147,
+      "evaluable": 467,
+      "field_precision": 0.8822269807280514,
+      "gold_present_total": 437,
+      "gold_present_kept_correct": 412,
+      "gold_recall": 0.9427917620137299
+    }
+  }
+}

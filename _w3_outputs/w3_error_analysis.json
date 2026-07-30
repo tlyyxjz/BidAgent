@@ -1,0 +1,160 @@
+{
+  "d_group_incorrect": {
+    "total": 35,
+    "by_field": {
+      "amount": 16,
+      "bid_deadline": 16,
+      "project_identifier": 1,
+      "publish_date": 2
+    },
+    "by_type": {
+      "award": 6,
+      "tender": 15,
+      "correction": 14
+    },
+    "by_status_pair": {
+      "present_x_present": 23,
+      "present_x_multi_value": 2,
+      "not_applicable_x_present": 5,
+      "absent_x_present": 5
+    },
+    "samples": [
+      {
+        "group": "D",
+        "doc_id": "w3_award_091",
+        "field_name": "amount",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": true,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_005",
+        "field_name": "amount",
+        "gold_status": "present",
+        "pred_status": "multi_value",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": true,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_009",
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": true,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_046",
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": true,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_047",
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": false,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_048",
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": true,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_049",
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": false,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_051",
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": true,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_052",
+        "field_name": "amount",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": true,
+        "unjustified": false,
+        "correct": false
+      },
+      {
+        "group": "D",
+        "doc_id": "w3_tender_052",
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "pred_status": "present",
+        "has_value": true,
+        "has_evidence": true,
+        "evidence_verified": true,
+        "field_validated": true,
+        "unjustified": false,
+        "correct": false
+      }
+    ]
+  },
+  "iou_not_detected": {
+    "total": 0,
+    "by_field": {},
+    "by_type": {},
+    "samples": []
+  }
+}
