@@ -1,14 +1,16 @@
 [
   {
-    "annotation_version": "k3-w3-01-v1-fixed3-consortium",
-    "doc_count": 92,
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "doc_count": 99,
     "_is_meta": true,
     "fix_note": "补bid_deadline, project_name降为extra_fields",
     "fix_count": 90,
     "fix_note_v2": "修复w3_award_066 bid_deadline误判(发布时间误标为投标截止时间)",
     "fix_count_v2": 1,
     "fix_note_v3": "K3-W3-05 补抓2篇真实联合体中标公告(w3_award_consortium_001/002)，插于元数据后",
-    "fix_count_v3": 2
+    "fix_count_v3": 2,
+    "fix_note_v4": "K3补抓7篇(tender_091-093/award_091-092/correction_091-092)，插于consortium后",
+    "fix_count_v4": 7
   },
   {
     "document_id": "w3_award_consortium_001",
@@ -245,6 +247,897 @@
     ],
     "annotation_version": "k3-w3-01-v1-fixed3-consortium",
     "fix_note": "K3-W3-05 补抓真实联合体中标公告"
+  },
+  {
+    "document_id": "w3_tender_091",
+    "file": "w3_tender_091.txt",
+    "notice_type": "tender",
+    "title": "华南理工大学五山校区2026年度小型维修工程公开招标公告",
+    "annotated_at": "2026-07-30T14:13:12",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "SCUT-GC-20260002",
+            "acceptable_evidence_spans": [
+              {
+                "start": 759,
+                "end": 780,
+                "text": "项目编号：SCUT-GC-20260002"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "华南理工大学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 122,
+                "end": 132,
+                "text": "采购单位华南理工大学"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "1300.000000 万元（人民币）",
+            "amount_type": "budget",
+            "acceptable_evidence_spans": [
+              {
+                "start": 813,
+                "end": 837,
+                "text": "预算金额：1300.000000 万元（人民币）"
+              }
+            ]
+          },
+          {
+            "raw_value": "450万元",
+            "amount_type": "budget",
+            "lot_id": "标段一",
+            "acceptable_evidence_spans": [
+              {
+                "start": 1546,
+                "end": 1551,
+                "text": "450万元"
+              }
+            ]
+          },
+          {
+            "raw_value": "425万元",
+            "amount_type": "budget",
+            "lot_id": "标段二",
+            "acceptable_evidence_spans": [
+              {
+                "start": 2219,
+                "end": 2224,
+                "text": "425万元"
+              }
+            ]
+          },
+          {
+            "raw_value": "425万元",
+            "amount_type": "budget",
+            "lot_id": "标段三",
+            "acceptable_evidence_spans": [
+              {
+                "start": 2858,
+                "end": 2863,
+                "text": "425万元"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年02月12日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 34,
+                "end": 45,
+                "text": "2026年02月12日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "not_applicable",
+        "values": []
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年03月05日 09点30分",
+            "acceptable_evidence_spans": [
+              {
+                "start": 710,
+                "end": 743,
+                "text": "并于2026年03月05日 09点30分（北京时间）前递交投标文件"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "华南理工大学五山校区2026年度小型维修工程",
+            "acceptable_evidence_spans": [
+              {
+                "start": 783,
+                "end": 810,
+                "text": "项目名称：华南理工大学五山校区2026年度小型维修工程"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
+  },
+  {
+    "document_id": "w3_tender_092",
+    "file": "w3_tender_092.txt",
+    "notice_type": "tender",
+    "title": "城管执法服装第一包、第二包、第三包公开招标公告",
+    "annotated_at": "2026-07-30T14:13:12",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "11000025210200159264-XM001",
+            "acceptable_evidence_spans": [
+              {
+                "start": 596,
+                "end": 627,
+                "text": "项目编号：11000025210200159264-XM001"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "北京市城市管理综合行政执法局（本级）",
+            "acceptable_evidence_spans": [
+              {
+                "start": 87,
+                "end": 109,
+                "text": "采购单位北京市城市管理综合行政执法局（本级）"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "1659.960032 万元（人民币）",
+            "amount_type": "budget",
+            "acceptable_evidence_spans": [
+              {
+                "start": 644,
+                "end": 668,
+                "text": "预算金额：1659.960032 万元（人民币）"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年01月16日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 29,
+                "end": 40,
+                "text": "2026年01月16日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "not_applicable",
+        "values": []
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026-02-27 09:30",
+            "acceptable_evidence_spans": [
+              {
+                "start": 548,
+                "end": 579,
+                "text": "并于2026-02-27 09:30（北京时间）前递交投标文件"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "城管执法服装",
+            "acceptable_evidence_spans": [
+              {
+                "start": 630,
+                "end": 641,
+                "text": "项目名称：城管执法服装"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
+  },
+  {
+    "document_id": "w3_tender_093",
+    "file": "w3_tender_093.txt",
+    "notice_type": "tender",
+    "title": "2025-2026年度长春北湖科技开发区出让宗地规划条件设计单位定点采购项目公开招标公告",
+    "annotated_at": "2026-07-30T14:13:12",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "BQZCWT2025-003",
+            "acceptable_evidence_spans": [
+              {
+                "start": 901,
+                "end": 920,
+                "text": "项目编号：BQZCWT2025-003"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "长春北湖科技开发区管理委员会",
+            "acceptable_evidence_spans": [
+              {
+                "start": 161,
+                "end": 179,
+                "text": "采购单位长春北湖科技开发区管理委员会"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "350.000000 万元（人民币）",
+            "amount_type": "budget",
+            "acceptable_evidence_spans": [
+              {
+                "start": 969,
+                "end": 992,
+                "text": "预算金额：350.000000 万元（人民币）"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2025年02月21日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 50,
+                "end": 61,
+                "text": "2025年02月21日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "not_applicable",
+        "values": []
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2025年03月18日 09点30分",
+            "acceptable_evidence_spans": [
+              {
+                "start": 2020,
+                "end": 2055,
+                "text": "提交投标文件截止时间：2025年03月18日 09点30分（北京时间）"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2025-2026年度长春北湖科技开发区出让宗地规划条件设计单位定点采购项目",
+            "acceptable_evidence_spans": [
+              {
+                "start": 923,
+                "end": 966,
+                "text": "项目名称：2025-2026年度长春北湖科技开发区出让宗地规划条件设计单位定点采购项目"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
+  },
+  {
+    "document_id": "w3_award_091",
+    "file": "w3_award_091.txt",
+    "notice_type": "award",
+    "title": "国家税务总局北京市房山区税务局2026-2027年食堂食材采购项目中标公告",
+    "annotated_at": "2026-07-30T14:13:12",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "BJJQ-2026-670-01、02、03",
+            "acceptable_evidence_spans": [
+              {
+                "start": 600,
+                "end": 629,
+                "text": "一、项目编号：BJJQ-2026-670-01、02、03"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "国家税务总局北京市房山区税务局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 1974,
+                "end": 1993,
+                "text": "名 称：国家税务总局北京市房山区税务局"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "97.0000000",
+            "amount_type": "award",
+            "lot_id": "第一包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 790,
+                "end": 806,
+                "text": "费率(%)：97.0000000"
+              }
+            ]
+          },
+          {
+            "raw_value": "97.0000000",
+            "amount_type": "award",
+            "lot_id": "第二包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 888,
+                "end": 904,
+                "text": "费率(%)：97.0000000"
+              }
+            ]
+          },
+          {
+            "raw_value": "97.0000000",
+            "amount_type": "award",
+            "lot_id": "第三包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 986,
+                "end": 1002,
+                "text": "费率(%)：97.0000000"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年07月30日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 43,
+                "end": 54,
+                "text": "2026年07月30日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "京之源（北京）农业有限公司",
+            "lot_id": "第一包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 719,
+                "end": 738,
+                "text": "供应商名称：京之源（北京）农业有限公司"
+              }
+            ]
+          },
+          {
+            "raw_value": "京之源（北京）农业有限公司",
+            "lot_id": "第二包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 811,
+                "end": 830,
+                "text": "供应商名称：京之源（北京）农业有限公司"
+              }
+            ]
+          },
+          {
+            "raw_value": "北京怡众和商贸有限公司",
+            "lot_id": "第三包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 909,
+                "end": 926,
+                "text": "供应商名称：北京怡众和商贸有限公司"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "not_applicable",
+        "values": []
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "国家税务总局北京市房山区税务局2026-2027年食堂食材采购项目",
+            "acceptable_evidence_spans": [
+              {
+                "start": 663,
+                "end": 703,
+                "text": "二、项目名称：国家税务总局北京市房山区税务局2026-2027年食堂食材采购项目"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
+  },
+  {
+    "document_id": "w3_award_092",
+    "file": "w3_award_092.txt",
+    "notice_type": "award",
+    "title": "中国医学科学院北京协和医院检验科设备购置项目（2）第1包第2包中标公告",
+    "annotated_at": "2026-07-30T14:13:12",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "0701-264106070107",
+            "acceptable_evidence_spans": [
+              {
+                "start": 445,
+                "end": 469,
+                "text": "一、项目编号：0701-264106070107"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中国医学科学院北京协和医院",
+            "acceptable_evidence_spans": [
+              {
+                "start": 1436,
+                "end": 1453,
+                "text": "名 称：中国医学科学院北京协和医院"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "76.5600000（万元）",
+            "amount_type": "award",
+            "lot_id": "第1包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 603,
+                "end": 626,
+                "text": "中标（成交）金额：76.5600000（万元）"
+              }
+            ]
+          },
+          {
+            "raw_value": "80.0000000（万元）",
+            "amount_type": "award",
+            "lot_id": "第2包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 689,
+                "end": 712,
+                "text": "中标（成交）金额：80.0000000（万元）"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年07月24日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 41,
+                "end": 52,
+                "text": "2026年07月24日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "北京小蝇科技有限责任公司",
+            "lot_id": "第1包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 546,
+                "end": 564,
+                "text": "供应商名称：北京小蝇科技有限责任公司"
+              }
+            ]
+          },
+          {
+            "raw_value": "唯彼康（北京）医学科技有限公司",
+            "lot_id": "第2包",
+            "acceptable_evidence_spans": [
+              {
+                "start": 631,
+                "end": 652,
+                "text": "供应商名称：唯彼康（北京）医学科技有限公司"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "not_applicable",
+        "values": []
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中国医学科学院北京协和医院检验科设备购置项目（2）",
+            "acceptable_evidence_spans": [
+              {
+                "start": 498,
+                "end": 530,
+                "text": "二、项目名称：中国医学科学院北京协和医院检验科设备购置项目（2）"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
+  },
+  {
+    "document_id": "w3_correction_091",
+    "file": "w3_correction_091.txt",
+    "notice_type": "correction",
+    "title": "四川省骨科医院医疗大数据指标智能融合平台采购更正公告（第二次）",
+    "annotated_at": "2026-07-30T14:13:12",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "N5100012026001272",
+            "acceptable_evidence_spans": [
+              {
+                "start": 409,
+                "end": 437,
+                "text": "原公告的采购项目编号：N5100012026001272"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "四川省骨科医院",
+            "acceptable_evidence_spans": [
+              {
+                "start": 102,
+                "end": 113,
+                "text": "采购单位四川省骨科医院"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "920,000.00",
+            "amount_type": "budget",
+            "acceptable_evidence_spans": [
+              {
+                "start": 835,
+                "end": 857,
+                "text": "采购包预算金额（元）: 920,000.00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年07月29日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 37,
+                "end": 48,
+                "text": "2026年07月29日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "not_applicable",
+        "values": []
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026-08-14 09:30:00",
+            "acceptable_evidence_spans": [
+              {
+                "start": 554,
+                "end": 617,
+                "text": "原公告的投标(响应)文件提交截止时间：2026-08-13 09:30:00，更正为：2026-08-14 09:30:00。"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "医疗大数据指标智能融合平台",
+            "acceptable_evidence_spans": [
+              {
+                "start": 440,
+                "end": 464,
+                "text": "原公告的采购项目名称：医疗大数据指标智能融合平台"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
+  },
+  {
+    "document_id": "w3_correction_092",
+    "file": "w3_correction_092.txt",
+    "notice_type": "correction",
+    "title": "2026年平陆县公安局人卡车卡建设项目的更正公告",
+    "annotated_at": "2026-07-30T14:13:12",
+    "fields": [
+      {
+        "field_name": "project_identifier",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "1408292026AGK00118",
+            "acceptable_evidence_spans": [
+              {
+                "start": 335,
+                "end": 364,
+                "text": "原公告的采购项目编号：1408292026AGK00118"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "purchaser_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "平陆县公安局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 101,
+                "end": 111,
+                "text": "采购单位平陆县公安局"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "amount",
+        "gold_status": "absent",
+        "values": []
+      },
+      {
+        "field_name": "publish_date",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年07月29日",
+            "acceptable_evidence_spans": [
+              {
+                "start": 30,
+                "end": 41,
+                "text": "2026年07月29日"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "field_name": "winner_name",
+        "gold_status": "not_applicable",
+        "values": []
+      },
+      {
+        "field_name": "bid_deadline",
+        "gold_status": "not_applicable",
+        "values": []
+      }
+    ],
+    "extra_fields": [
+      {
+        "field_name": "project_name",
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026年平陆县公安局人卡车卡建设项目",
+            "acceptable_evidence_spans": [
+              {
+                "start": 366,
+                "end": 396,
+                "text": "原公告的采购项目名称：2026年平陆县公安局人卡车卡建设项目"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
   },
   {
     "document_id": "w3_tender_001",
