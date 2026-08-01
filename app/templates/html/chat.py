@@ -1,4 +1,4 @@
-"""聊天 Demo 页 HTML（W2-06 6 Agent 协作 Demo）。
+"""聊天 Demo 页 HTML（W2-06 智能问答 · 6 Agent 协作）。
 
 用于 Demo 视频展示：用户输入查询 → 展示 6 Agent 协作进度 → 输出 Word 报告下载链接。
 约束：单文件 ≤ 300 行
@@ -9,7 +9,7 @@ CHAT_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1366, initial-scale=1">
-<title>智能招标助手 · 6 Agent 协作 Demo</title>
+<title>标小智 · 智能问答 · 6 Agent 协作</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;
@@ -72,7 +72,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;
 .agent-card.active{border-color:#1976d2;box-shadow:0 2px 8px rgba(25,118,210,.15)}
 .agent-card.done{border-color:#a5d6a7;background:#f1f8e9}
 .agent-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.agent-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.agent-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#1976d2;background:#e3f2fd}
 .agent-name{font-size:13px;font-weight:600;color:#1a1a2e;flex:1}
 .agent-status{font-size:11px;padding:2px 8px;border-radius:10px}
 .status-pending{background:#f5f5f5;color:#999}
@@ -88,26 +88,85 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;
 .typing-dots span:nth-child(3){animation-delay:.4s}
 @keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}
 @media(max-width:1024px){.agents-panel{width:280px;min-width:280px}}
+
+/* ===== Unified Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:208px;height:100vh;background:#001529;display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:52px;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:#1677ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+.sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:#1677ff}
+.nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:#1677ff;color:#fff;font-weight:600}
+.sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
+.sidebar-footer .comp-tag{color:#1677ff;font-weight:600}
+/* ===== Unified Main Wrap ===== */
+.main-wrap{margin-left:208px;min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:52px;background:#fff;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02)}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-title{font-size:15px;font-weight:600;color:#1a1a2e}
+.header-title i{color:#1677ff;margin-right:6px}
+.header-right{display:flex;align-items:center;gap:10px}
+.h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
+.h-badge.comp{background:#e6f4ff;color:#1677ff}
+.h-badge.data{background:#f6ffed;color:#52c41a}
+.h-badge.vers{background:#f5f7fa;color:#595959;border:1px solid #e8e8e8}
+body{background:#f5f7fa}
+
 </style>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
 </head>
 <body>
-<div class="header">
-  <div class="header-left">
-    <div class="logo">B</div>
-    <div><h1>BidAgent 智能招标助手</h1><div class="subtitle">6 Agent 协作 · 一键生成招标分析报告</div></div>
+<!-- ===== Sidebar ===== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">标</div>
+    <div class="logo-text">标小智</div>
   </div>
-  <a href="/ui" class="back-link">← 返回首页</a>
-</div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">主导航</div>
+<a href="/ui" class="nav-item"><i class="ph-bold ph-house"></i><span>工作台</span></a>
+<a href="/ui/search" class="nav-item"><i class="ph-bold ph-magnifying-glass"></i><span>招标检索</span></a>
+<a href="/ui/notice-list" class="nav-item"><i class="ph-bold ph-list-magnifying-glass"></i><span>跨平台去重</span></a>
+<a href="/ui/detail" class="nav-item"><i class="ph-bold ph-line-segment"></i><span>证据验证</span></a>
+<a href="/ui/org" class="nav-item"><i class="ph-bold ph-users-three"></i><span>组织画像</span></a>
+<a href="/ui/quality-dashboard" class="nav-item"><i class="ph-bold ph-chart-bar"></i><span>质量评测</span></a>
+<a href="/ui/versions" class="nav-item"><i class="ph-bold ph-git-branch"></i><span>版本历史</span></a>
+<a href="/ui/chat" class="nav-item active"><i class="ph-bold ph-chats-circle"></i><span>智能问答</span><span class="nav-badge">AI</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div><span class="comp-tag">标小智</span> v4.1</div>
+    <div>GOAI 2026 初赛 · W3</div>
+  </div>
+</aside>
+
+<!-- ===== Main ===== -->
+<div class="main-wrap">
+  <header class="top-header">
+    <div class="header-left">
+      <div class="header-title"><i class="ph-bold ph-chats-circle"></i>智能问答</div>
+    </div>
+    <div class="header-right">
+      <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
+      <div class="h-badge vers">v4.1 · 99篇</div>
+    </div>
+  </header>
+  <div class="content-area" style="flex:1;padding:0;overflow:hidden">
+
 <div class="main-container">
   <section class="chat-panel">
     <div class="chat-messages" id="chatMessages">
       <div class="message bot">
         <div class="avatar">AI</div>
         <div class="bubble">
-          👋 你好！我是 BidAgent 智能招标助手。<br><br>
+          你好！我是标小智。<br><br>
           告诉我你想找什么样的招标项目，我会通过 6 个 Agent 协作帮你：<br>
-          1️⃣ 理解意图 → 2️⃣ 搜集数据 → 3️⃣ 清洗处理 →<br>
-          4️⃣ 质量校验 → 5️⃣ 报告生成 → 6️⃣ 推送交付<br><br>
+          1. 理解意图 → 2. 搜集数据 → 3. 清洗处理 →<br>
+          4. 质量校验 → 5. 报告生成 → 6. 推送交付<br><br>
           试试输入：<b>"找上海最近7天的IT采购项目"</b>
         </div>
       </div>
@@ -127,18 +186,19 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;
     </div>
   </section>
   <aside class="agents-panel">
-    <div class="panel-header"><h2>Agent 协作进度</h2><div class="desc">6 个专业 Agent 流水线协作</div></div>
+    <div class="panel-header"><h2><i class="ph-bold ph-robot" style="color:#1976d2;margin-right:6px"></i>Agent 协作流水线</h2><div class="desc">6 个专业 Agent 实时运行状态（功能面板）</div></div>
     <div class="agents-list" id="agentsList"></div>
   </aside>
 </div>
 <script>
+
 const AGENTS=[
-  {id:'intent',name:'意图理解 Agent',icon:'🎯',desc:'解析用户意图，抽取5槽位参数',status:'pending',progress:0},
-  {id:'collector',name:'数据采集 Agent',icon:'🕷️',desc:'多平台爬取招标公告数据',status:'pending',progress:0},
-  {id:'processor',name:'清洗抽取 Agent',icon:'⚙️',desc:'LLM 抽取6类核心字段',status:'pending',progress:0},
-  {id:'quality',name:'质量校验 Agent',icon:'✅',desc:'证据定位 + 反幻觉校验',status:'pending',progress:0},
-  {id:'report',name:'报告生成 Agent',icon:'📄',desc:'生成 Word 分析报告',status:'pending',progress:0},
-  {id:'delivery',name:'交付推送 Agent',icon:'📧',desc:'邮件/订阅推送交付',status:'pending',progress:0},
+  {id:'intent',name:'意图理解 Agent',icon:'<i class="ph-bold ph-brain"></i>',desc:'解析用户意图，抽取5槽位参数',status:'pending',progress:0},
+  {id:'collector',name:'数据采集 Agent',icon:'<i class="ph-bold ph-globe"></i>',desc:'多平台爬取招标公告数据',status:'pending',progress:0},
+  {id:'processor',name:'清洗抽取 Agent',icon:'<i class="ph-bold ph-gear-six"></i>',desc:'LLM 抽取6类核心字段',status:'pending',progress:0},
+  {id:'quality',name:'质量校验 Agent',icon:'<i class="ph-bold ph-shield-check"></i>',desc:'证据定位 + 反幻觉校验',status:'pending',progress:0},
+  {id:'report',name:'报告生成 Agent',icon:'<i class="ph-bold ph-file-text"></i>',desc:'生成 Word 分析报告',status:'pending',progress:0},
+  {id:'delivery',name:'交付推送 Agent',icon:'<i class="ph-bold ph-paper-plane-tilt"></i>',desc:'邮件/订阅推送交付',status:'pending',progress:0},
 ];
 let running=false;
 function renderAgents(){
@@ -164,17 +224,46 @@ function addMsg(role,content){
   c.appendChild(m);c.scrollTop=c.scrollHeight;return m;
 }
 function setInput(t){document.getElementById('msgInput').value=t}
-async function runSim(slots){
+// A1 修复：真实轮询 pipeline 进度（替代 setTimeout 模拟）
+const STAGE_AGENT_MAP={'intent':0,'collecting':1,'processing':2,'quality':3,'finance':4,'done':5};
+let _pipelineSid=null;
+async function runReal(){
   AGENTS.forEach(a=>{a.status='pending';a.progress=0});renderAgents();
-  for(let i=0;i<AGENTS.length;i++){
-    AGENTS[i].status='running';renderAgents();
-    for(let p=0;p<=100;p+=20){
-      await new Promise(r=>setTimeout(r,150+Math.random()*150));
-      AGENTS[i].progress=p;renderAgents();
-    }
-    AGENTS[i].progress=100;AGENTS[i].status='done';renderAgents();
-    await new Promise(r=>setTimeout(r,300));
+  // 轮询真实 pipeline 状态
+  for(let iter=0;iter<300;iter++){  // 最多轮询 300 次（~5分钟）
+    await new Promise(r=>setTimeout(r,1000));
+    if(!_pipelineSid)break;
+    try{
+      const r=await fetch(`/api/demo/pipeline/status?sid=${encodeURIComponent(_pipelineSid)}`);
+      if(!r.ok)continue;
+      const d=await r.json();
+      if(d.code!==200)continue;
+      const s=d.data;
+      // 根据 stages 更新 6 Agent 进度
+      const stages=s.stages||{};
+      let agentIdx=0;
+      for(const [stageName,stageInfo] of Object.entries(stages)){
+        const idx=STAGE_AGENT_MAP[stageName];
+        if(idx===undefined)continue;
+        if(stageInfo.status==='done'){AGENTS[idx].status='done';AGENTS[idx].progress=100}
+        else if(stageInfo.status==='running'){AGENTS[idx].status='running';AGENTS[idx].progress=Math.max(AGENTS[idx].progress,50)}
+        else if(stageInfo.status==='pending' && AGENTS[idx].status==='done'){/* skip */}
+      }
+      // 当前运行中的 Agent 进度递增
+      const curIdx=STAGE_AGENT_MAP[s.stage];
+      if(curIdx!==undefined && AGENTS[curIdx].status==='running'){
+        AGENTS[curIdx].progress=Math.min(95,AGENTS[curIdx].progress+5);
+      }
+      renderAgents();
+      // pipeline 完成
+      if(s.stage==='done' && s.finished_at){
+        AGENTS.forEach(a=>{a.status='done';a.progress=100});renderAgents();
+        return s;
+      }
+      if(s.error){return s}
+    }catch(e){/* 轮询失败继续 */}
   }
+  return null;
 }
 async function sendMsg(){
   if(running)return;
@@ -187,20 +276,34 @@ async function sendMsg(){
   await new Promise(r=>setTimeout(r,600));
   const slots=parseSlots(text);
   botMsg.querySelector('.bubble').innerHTML=
-    `✅ 已解析你的需求，5 槽位参数如下：${renderSlots(slots)}<br>`+
+    `已解析你的需求，5 槽位参数如下：${renderSlots(slots)}<br>`+
     `正在启动 6 个 Agent 协作处理，请稍候...`;
-  await runSim(slots);
-  const rn=`招标分析报告_${slots.keyword||'自定义'}_${new Date().toISOString().slice(0,10)}.docx`;
-  botMsg.querySelector('.bubble').innerHTML=
-    `🎉 处理完成！共找到 <b>${Math.floor(Math.random()*30)+10}</b> 条相关招标公告。`+
-    `<div class="report-card">
-      <div class="report-icon">📄</div>
-      <div class="report-info">
-        <div class="report-name">${rn}</div>
-        <div class="report-size">Word 文档 · ${(Math.random()*2+.5).toFixed(1)} MB · 包含项目列表+趋势分析+风险提示</div>
-      </div>
-      <a href="#" class="report-btn" onclick="alert('Demo 模式，下载链接待接入真实后端');return false;">下载报告</a>
-    </div>`;
+  // A1 修复：启动真实 pipeline 并轮询
+  try{
+    const sr=await fetch(`/api/demo/pipeline/start?query=${encodeURIComponent(text)}`);
+    const sd=await sr.json();
+    if(sd.code===200 && sd.data.session_id){
+      _pipelineSid=sd.data.session_id;
+      const result=await runReal();
+      _pipelineSid=null;
+      const foundCount=result&&result.result&&result.result.items?result.result.items.length:0;
+      const rn=`招标分析报告_${slots.keyword||'自定义'}_${new Date().toISOString().slice(0,10)}.docx`;
+      botMsg.querySelector('.bubble').innerHTML=
+        `处理完成！共找到 <b>${foundCount}</b> 条相关招标公告。`+
+        `<div class="report-card">
+          <div class="report-icon"><i class="ph-bold ph-file-text" style="font-size:28px;color:#2e7d32"></i></div>
+          <div class="report-info">
+            <div class="report-name">${rn}</div>
+            <div class="report-size">Word 文档 · 真实 pipeline 生成 · 包含项目列表+趋势分析+风险提示</div>
+          </div>
+          <a href="#" class="report-btn" onclick="downloadReport();return false;">下载报告</a>
+        </div>`;
+    }else{
+      botMsg.querySelector('.bubble').innerHTML=`Pipeline 启动失败: ${sd.msg||'未知错误'}`;
+    }
+  }catch(e){
+    botMsg.querySelector('.bubble').innerHTML=`Pipeline 执行异常: ${e.message}`;
+  }
   running=false;btn.disabled=false;input.focus();
 }
 function parseSlots(text){
@@ -225,7 +328,7 @@ function parseSlots(text){
   return s;
 }
 function renderSlots(s){
-  return `<div class="slots-card"><div class="slots-title">📋 5 槽位解析结果</div>
+  return `<div class="slots-card"><div class="slots-title">5 槽位解析结果</div>
     <div class="slots-grid">
       <div class="slot-item"><span class="slot-label">关键词</span><span class="slot-value">${s.keyword||'<span class="slot-empty">未指定</span>'}</span></div>
       <div class="slot-item"><span class="slot-label">地区</span><span class="slot-value">${s.region||'<span class="slot-empty">未指定</span>'}</span></div>
@@ -235,6 +338,17 @@ function renderSlots(s){
     </div></div>`;
 }
 renderAgents();document.getElementById('msgInput').focus();
+
+function downloadReport(){
+  const q=document.getElementById('chatInput')?document.getElementById('chatInput').value.trim():'';
+  const query=q||'医疗设备采购';
+  // 调真实后端 /api/demo/report 生成 Word 报告
+  window.location.href='/api/demo/report?query='+encodeURIComponent(query);
+}
+
 </script>
+</div>
+</div>
+
 </body>
 </html>"""

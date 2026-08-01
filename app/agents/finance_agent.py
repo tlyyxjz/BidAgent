@@ -4,7 +4,7 @@
 
 核心能力（三子模块）：
 1. BOQ 报价异常检测（吸收完整版 boq_engine.py 并修复 bug）
-   - 20 类常见采购品类基准价格库
+   - 32 类常见采购品类基准价格库（覆盖工程/服务/货物三大类）
    - 正则提取"数量+单位+品名"和"品名+数量+单位"两种模式
    - 按市场均价 ±std 判定 underpriced/overpriced/normal
 
@@ -13,8 +13,8 @@
    - 输出 RiskReport 含 score + risk_items + qualification_gaps
 
 3. 供应商信用评分（重构 supplier_risk.py，去掉伪造联邦学习）
-   - 三维度：投标活跃度 + 中标率 + 平均报价偏离度
-   - 加权 30/40/30
+   - 五维度：集中度 + 金额异常 + 频率异常 + 地域集中 + 采购人集中
+   - 加权 25/20/20/15/20（对齐 supplier_risk.py 口径）
 
 复用：app/processors/boq_engine.py + risk_engine.py + supplier_risk.py
       （由 Sol S-1/S-2/S-3 交付后接入）
@@ -162,7 +162,7 @@ async def _run_risk_analysis(state: dict[str, Any]) -> dict[str, Any]:
             tender_id=tender.get("id"),
         )
         if report.get("risk_score", 0) > 0:
-            total_risks += len(report.get("risk_items", []))
+            total_risks += report.get("total_risk_items", len(report.get("risk_items", [])))
         reports.append(report)
 
     return {

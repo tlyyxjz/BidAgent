@@ -43,6 +43,71 @@ FIELD_ORDER = [
 ]
 
 
+
+# 组织元数据推断规则（基于组织名称关键字）
+_ORG_TYPE_RULES = [
+    ("医院", "医疗机构"), ("临床", "医疗机构"), ("卫生院", "医疗机构"),
+    ("大学", "教育机构"), ("学校", "教育机构"), ("学院", "教育机构"),
+    ("教育委员会", "政府机构"), ("教育局", "政府机构"),
+    ("人民政府", "政府机构"), ("财政局", "政府机构"),
+    ("厅", "政府机构"), ("局", "政府机构"), ("委员会", "政府机构"),
+    ("中心", "事业单位"), ("院所", "事业单位"),
+    ("研究院", "事业单位"), ("研究所", "事业单位"),
+    ("公司", "企业"), ("集团", "企业"), ("厂", "企业"),
+]
+_REGION_RULES = [
+    ("北京", "北京"), ("上海", "上海"),
+    ("广东", "广东"), ("深圳", "广东"), ("广州", "广东"),
+    ("浙江", "浙江"), ("杭州", "浙江"),
+    ("江苏", "江苏"), ("南京", "江苏"),
+    ("四川", "四川"), ("成都", "四川"),
+    ("湖北", "湖北"), ("武汉", "湖北"),
+    ("山东", "山东"), ("济南", "山东"),
+    ("陕西", "陕西"), ("西安", "陕西"),
+    ("福建", "福建"), ("福州", "福建"), ("厦门", "福建"),
+    ("天津", "天津"), ("重庆", "重庆"),
+    ("辽宁", "辽宁"), ("沈阳", "辽宁"), ("大连", "辽宁"),
+    ("河南", "河南"), ("郑州", "河南"),
+    ("湖南", "湖南"), ("长沙", "湖南"),
+    ("安徽", "安徽"), ("合肥", "安徽"),
+    ("河北", "河北"), ("石家庄", "河北"),
+    ("江西", "江西"), ("南昌", "江西"),
+    ("山西", "山西"), ("太原", "山西"),
+    ("云南", "云南"), ("昆明", "云南"),
+    ("广西", "广西"), ("南宁", "广西"),
+    ("甘肃", "甘肃"), ("兰州", "甘肃"),
+    ("贵州", "贵州"), ("贵阳", "贵州"),
+    ("海南", "海南"), ("海口", "海南"),
+    ("吉林", "吉林"), ("长春", "吉林"),
+    ("黑龙江", "黑龙江"), ("哈尔滨", "黑龙江"),
+    ("内蒙古", "内蒙古"), ("呼和浩特", "内蒙古"),
+    ("宁夏", "宁夏"), ("银川", "宁夏"),
+    ("新疆", "新疆"), ("乌鲁木齐", "新疆"),
+    ("西藏", "西藏"), ("拉萨", "西藏"),
+    ("青海", "青海"), ("西宁", "青海"),
+]
+
+
+def _infer_org_meta(org_name: str, org_role: str) -> tuple[str, str]:
+    """基于组织名称推断类型和地区，返回 (org_type, region)."""
+    if not org_name:
+        return ("未知", "未知")
+    org_type = "其他"
+    for keyword, t in _ORG_TYPE_RULES:
+        if keyword in org_name:
+            org_type = t
+            break
+    if org_type == "其他" and org_role == "winner":
+        org_type = "企业"
+    elif org_type == "其他" and org_role == "purchaser":
+        org_type = "政府机构"
+    region = "未知"
+    for keyword, r in _REGION_RULES:
+        if keyword in org_name:
+            region = r
+            break
+    return (org_type, region)
+
 def _ok(data: dict) -> JSONResponse:
     """统一 {code:200, data, msg} 响应格式（Turbo HTML 期望）."""
     return JSONResponse({"code": 200, "data": data, "msg": "ok"})
@@ -260,14 +325,24 @@ async def get_tender_organization(tender_id: int, db: AsyncSession = Depends(get
     tender_count = sum(1 for f, t in all_occurrences if t.notice_type and "tender" in t.notice_type)
     award_count = sum(1 for f, t in all_occurrences if t.notice_type and "award" in t.notice_type)
 
-    # 构造 90 天 daily 数据（基于真实公告时间分布）
+    # 构造 90 天 daily 数据（基于真实 publish_time 聚合，非取模伪造）
+    from collections import Counter
+    from datetime import datetime as _dt, timedelta as _td
+    today = _dt.now().date()
+    start = today - _td(days=89)
+    date_counts: Counter = Counter()
+    for _f, _t in all_occurrences:
+        # 优先 publish_time；为空时回退 created_at（真实入库时间，非伪造）
+        pt = getattr(_t, "publish_time", None) or getattr(_t, "created_at", None)
+        if pt is None:
+            continue
+        d = pt.date() if hasattr(pt, "date") else _dt.fromisoformat(str(pt)).date()
+        if start <= d <= today:
+            date_counts[d] += 1
     daily = []
-    base_date = datetime(2026, 5, 1)
     for i in range(90):
-        d = base_date + timedelta(days=i)
-        # 模拟基于真实数据量的分布
-        cnt = (i % 7 < 5 and (i * 7 + total) % 3 == 0) and 2 + (i % 4) or (i % 3 == 0 and 1 or 0)
-        daily.append({"date": d.strftime("%Y-%m-%d"), "count": cnt})
+        d = start + _td(days=i)
+        daily.append({"date": d.strftime("%Y-%m-%d"), "count": date_counts.get(d, 0)})
 
     # top3 采购人（基于所有公告）
     purchasers_result = await db.execute(
@@ -292,11 +367,12 @@ async def get_tender_organization(tender_id: int, db: AsyncSession = Depends(get
         t.source_platform for f, t in all_occurrences if t.source_platform
     )) or ["ccgp"]
 
+    _org_type, _region = _infer_org_meta(org_name, org_role)
     data = {
         "org_id": f"real_org_{tender_id}",
         "org_name": org_name,
-        "org_type": "企业" if org_role == "winner" else "政府机构",
-        "region": "上海",
+        "org_type": _org_type,
+        "region": _region,
         "activity_90d": {
             "total": total,
             "tender_count": tender_count,
@@ -320,10 +396,43 @@ async def get_tender_organization(tender_id: int, db: AsyncSession = Depends(get
 
 @router.get("/tenders")
 async def list_tenders(db: AsyncSession = Depends(get_db)):
-    """列出所有公告（供页面选择）."""
+    """列出所有公告（含 amount/purchaser/publish_date/platform 供检索页展示）.
+
+    批量查询字段避免 N+1，供 search.html 真实数据源使用.
+    """
     result = await db.execute(
-        select(Tender.id, Tender.project_name, Tender.notice_type)
+        select(Tender.id, Tender.project_name, Tender.notice_type,
+               Tender.created_at, Tender.source_platform)
         .order_by(Tender.id)
     )
-    tenders = [{"id": r.id, "name": r.project_name, "type": r.notice_type} for r in result]
+    rows = result.all()
+    tender_ids = [r.id for r in rows]
+
+    # 批量查 amount/purchaser_name/publish_date（避免 N+1）
+    field_map: dict[int, dict] = {}
+    if tender_ids:
+        flds = await db.execute(
+            select(ExtractedField)
+            .where(ExtractedField.tender_id.in_(tender_ids))
+            .where(ExtractedField.field_name.in_(["amount", "purchaser_name", "publish_date"]))
+            .order_by(ExtractedField.id)
+        )
+        for f in flds.scalars().all():
+            d = field_map.setdefault(f.tender_id, {})
+            if f.field_name not in d and f.raw_value:
+                d[f.field_name] = f.raw_value
+
+    tenders = []
+    for r in rows:
+        fm = field_map.get(r.id, {})
+        tenders.append({
+            "id": r.id,
+            "name": r.project_name,
+            "type": r.notice_type,
+            "amount": fm.get("amount", ""),
+            "purchaser": fm.get("purchaser_name", ""),
+            "publish_date": fm.get("publish_date", "")
+            or (r.created_at.strftime("%Y-%m-%d") if r.created_at else ""),
+            "platform": r.source_platform or "",
+        })
     return _ok({"tenders": tenders})

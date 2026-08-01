@@ -48,8 +48,8 @@ h1 { color: #1a1a2e; font-size: 32px; margin-bottom: 8px; }
     <p class="subtitle">自然语言驱动 · 多源聚合 · 增量推送 · Word 报告</p>
 
     <div style="margin: 24px 0;">
-      <a href="/ui/subscriptions" class="btn">订阅管理</a>
-      <a href="/ui/tenders" class="btn btn-secondary">招标信息查询</a>
+      <a href="/ui/chat" class="btn">进入 Demo</a>
+      <a href="/ui/search" class="btn btn-secondary">需求检索</a>
       <a href="/docs" class="btn btn-secondary">API 文档</a>
     </div>
   </div>

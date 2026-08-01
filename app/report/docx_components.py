@@ -175,7 +175,7 @@ def add_anti_hallucination_section(
     C-2 修复：原实现不传 source_texts，内部 source_texts={} 永远跳过校验。
              现接收 source_texts 并传入 check_items，让反幻觉真正生效。
     """
-    h = doc.add_heading("四、反幻觉校验报告", level=1)
+    h = doc.add_heading("五、反幻觉校验报告", level=1)
     for run in h.runs:
         _set_run_font(run, "黑体")
 

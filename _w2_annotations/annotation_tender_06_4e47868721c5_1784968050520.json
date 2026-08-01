@@ -82,7 +82,7 @@
         {
           "raw_value": "￥331.300000万元（人民币）",
           "normalized_value": "￥331.300000万元（人民币）",
-          "amount_type": null,
+          "amount_type": "budget",
           "currency": "人民币",
           "original_unit": "元",
           "tax_status": null,
@@ -95,9 +95,26 @@
               "text": "预算金额：￥331.300000万元（人民币）"
             }
           ]
+        },
+        {
+          "raw_value": "331.300000万元",
+          "normalized_value": "3313000.00",
+          "amount_type": "ceiling",
+          "currency": "人民币",
+          "original_unit": "元",
+          "tax_status": null,
+          "lot_id": null,
+          "acceptable_evidence_spans": [
+            {
+              "role": "primary",
+              "start": 680,
+              "end": 699,
+              "text": "4．最高限价：331.300000万元"
+            }
+          ]
         }
       ],
-      "note": "预算金额也是最高限价"
+      "note": "预算金额=最高限价=331.300000万元"
     },
     {
       "field_name": "publish_date",

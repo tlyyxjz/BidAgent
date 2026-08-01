@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1366, initial-scale=1">
+<title>数据质量评测 · 标小智</title>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1677ff;--primary-bg:#e6f4ff;
+  --success:#52c41a;--success-bg:#f6ffed;
+  --warning:#faad14;--warning-bg:#fffbe6;
+  --error:#ff4d4f;--error-bg:#fff2f0;
+  --purple:#722ed1;--purple-bg:#f9f0ff;
+  --bg:#f5f7fa;--card-bg:#ffffff;
+  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
+  --border:#e8e8e8;--border-2:#f0f0f0;
+  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
+  --sidebar-width:208px;--header-h:52px;
+  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
+}
+body.dark{
+  --bg:#0d1117;--card-bg:#161b22;
+  --text:#e6edf3;--text-2:#adbac7;--text-3:#768390;
+  --border:#30363d;--border-2:#21262d;
+  --sidebar-bg:#010409;--sidebar-text:#8b949e;
+  --primary-bg:#0c1d33;--success-bg:#0d1f0d;--warning-bg:#1f1a0a;--error-bg:#1f0a0a;--purple-bg:#1a0d2e;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 1px 6px -1px rgba(0,0,0,.2);
+}
+html,body{height:100%}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+
+/* ===== Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+.sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
+.sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
+.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
+
+/* ===== Main ===== */
+.main-wrap{margin-left:0;min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:var(--header-h);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-title{font-size:15px;font-weight:600;color:var(--text)}
+.header-title i{color:var(--primary);margin-right:6px}
+.header-right{display:flex;align-items:center;gap:10px}
+.h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
+.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
+.h-badge.data{background:var(--success-bg);color:var(--success)}
+.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
+.theme-btn{width:32px;height:32px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:16px;transition:all .15s}
+.theme-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ===== Content ===== */
+.content{flex:1;padding:16px 20px 40px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:12px}
+.breadcrumb a{color:var(--primary);text-decoration:none}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.page-head h1{font-size:22px;color:var(--text);font-weight:700;letter-spacing:.3px}
+.page-head h1 i{color:var(--primary);margin-right:8px}
+.page-head .sub{font-size:12px;color:var(--text-3);margin-top:6px}
+.page-head .right-info{display:flex;gap:8px}
+
+/* ===== Metric Cards ===== */
+.metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.m-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;position:relative;box-shadow:var(--shadow);transition:border-color .15s}
+.m-card:hover{border-color:var(--primary)}
+.m-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.m-icon.blue{background:var(--primary-bg);color:var(--primary)}
+.m-icon.green{background:var(--success-bg);color:var(--success)}
+.m-icon.orange{background:var(--warning-bg);color:var(--warning)}
+.m-icon.purple{background:var(--purple-bg);color:var(--purple)}
+.m-icon.red{background:var(--error-bg);color:var(--error)}
+.m-body{flex:1;min-width:0}
+.m-label{font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.m-value{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.m-value .unit{font-size:13px;font-weight:500;color:var(--text-2);margin-left:1px}
+.m-sub{font-size:11px;color:var(--text-3);margin-top:3px}
+.m-trend{position:absolute;top:12px;right:12px;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+.m-trend.info{background:var(--primary-bg);color:var(--primary)}
+.m-trend.ok{background:var(--success-bg);color:var(--success)}
+.m-trend.warn{background:var(--warning-bg);color:var(--warning)}
+
+/* ===== Cards & Grid ===== */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-head h2{font-size:14px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:6px}
+.card-head h2 i{color:var(--primary);font-size:17px}
+.card-head .desc{font-size:11px;color:var(--text-3);font-weight:400}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.chart-box{width:100%;height:260px}
+.chart-box.sm{height:220px}
+.chart-box.lg{height:240px}
+.chart-note{font-size:11px;color:var(--text-3);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:4px;line-height:1.5}
+.chart-note i{color:var(--primary);margin-right:4px}
+
+/* ===== Tables ===== */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:11px;color:var(--text-3);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--border-2);color:var(--text-2);font-variant-numeric:tabular-nums}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--primary-bg)}
+.tbl .num{font-weight:700;color:var(--text)}
+.tbl .grp{font-weight:700;color:var(--primary)}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600}
+.tag.ok{background:var(--success-bg);color:var(--success)}
+.tag.warn{background:var(--warning-bg);color:var(--warning)}
+.tag.err{background:var(--error-bg);color:var(--error)}
+.tag.info{background:var(--primary-bg);color:var(--primary)}
+.tag.purple{background:var(--purple-bg);color:var(--purple)}
+.ci-text{font-size:10px;color:var(--text-3);font-family:Consolas,monospace;margin-top:2px}
+
+/* ===== Cost Table Layout ===== */
+.cost-row{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+
+/* ===== Footer ===== */
+.footer{margin-top:16px;padding:12px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3);line-height:1.7;text-align:center;box-shadow:var(--shadow)}
+.footer .real{color:var(--success);font-weight:600}
+.footer .src{color:var(--primary);font-weight:600}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== Stepper 主链路步骤条 ===== */
+.stepper{background:white;border-bottom:1px solid #e8e8e8;padding:18px 40px 14px;display:flex;align-items:flex-start;justify-content:center;gap:0;position:sticky;top:0;z-index:9}
+.stepper-track{position:absolute;top:34px;left:calc(50% - 480px);width:960px;height:2px;background:#e0e0e0;z-index:0}
+.stepper-steps{display:flex;gap:0;width:100%;max-width:960px;position:relative;z-index:1;justify-content:space-between}
+.stepper-step{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;text-decoration:none;flex:1;position:relative}
+.stepper-circle{width:36px;height:36px;border-radius:50%;background:#e8eaf6;color:#999;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s ease;border:2px solid transparent;z-index:2}
+.stepper-step.active .stepper-circle{background:#1976d2;color:white;border-color:#1565c0;box-shadow:0 0 0 4px rgba(25,118,210,.12)}
+.stepper-step.done .stepper-circle{background:#1976d2;color:white}
+.stepper-label{font-size:12px;color:#999;font-weight:500;text-align:center;white-space:nowrap;transition:color .2s ease;line-height:1.4}
+.stepper-step.active .stepper-label{color:#1565c0;font-weight:700}
+.stepper-step.done .stepper-label{color:#555}
+.stepper-step:hover .stepper-circle:not(.active){background:#c5cae9;color:#1a1a2e}
+.stepper-step:hover .stepper-label{color:#1976d2}
+@media(max-width:960px){.stepper{padding:14px 16px 10px}.stepper-label{font-size:10px}.stepper-circle{width:30px;height:30px;font-size:14px}.stepper-track{top:28px}}
+
+/* ===== 标小智品牌头（统一） ===== */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
+.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- 主链路 Stepper（6 步全流程打通） -->
+<nav class="stepper" id="mainStepper" aria-label="主链路 6 步流程"></nav>
+
+
+
+<!-- ===== Main ===== -->
+<div class="main-wrap">
+  <header class="top-header">
+    <div class="header-left">
+      <div class="brand"><div class="brand-logo">标</div><span>标小智</span></div>
+      <div class="header-title"><i class="ph-bold ph-chart-bar-up"></i>数据质量评测 Dashboard</div>
+    </div>
+    <div class="header-right">
+      <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
+      <div class="h-badge vers">v4.1 · 99篇</div>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题"><i class="ph ph-moon" id="themeIcon"></i></button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="breadcrumb"><a href="/ui/search">首页</a> / <a href="/ui/quality-dashboard">评测</a> / 数据质量 Dashboard</div>
+
+    <div class="page-head">
+      <div>
+        <h1><i class="ph-bold ph-chart-line-up"></i>W3 数据质量评测结果</h1>
+        <div class="sub">冻结样本集 99 篇 · 594 字段 · deepseek-v4-flash · 证据验证 + 来源谱系 + 展示等级</div>
+      </div>
+      <div class="right-info">
+        <div class="h-badge info"><i class="ph ph-floppy-disk"></i>W3 冻结集</div>
+        <div class="h-badge vers"><i class="ph ph-hash"></i>full_99</div>
+      </div>
+    </div>
+
+    <!-- ===== 1. Metric Cards ===== -->
+    <div class="metric-row" id="metricRow"></div>
+
+    <!-- ===== 2. Ablation + Strategy ===== -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-chart-bar"></i>四组消融实验对比<span class="desc">field_precision vs unjustified_rate · 双 Y 轴</span></h2>
+        </div>
+        <div id="chart-ablation" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>A(无证据) -> B(+证据定位) -> C(+证据验证) -> D(+分级过滤). D 组无依据率降至 0%.</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-chart-scatter"></i>输出策略工作点<span class="desc">field_precision vs gold_recall · 点大小 = 保留字段数</span></h2>
+        </div>
+        <div id="chart-strategy" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>strict 与 default 在本批数据结果一致, 图中以不同符号叠加显示.</div>
+      </div>
+    </div>
+
+    <!-- ===== 3. IoU + Error ===== -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head">
+          <h2><i class="ph ph-chart-histogram"></i>真实 IoU 分布<span class="desc">321 个匹配证据 (IoU >= 0.5)</span></h2>
+        </div>
+        <div id="chart-iou" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>完美(>=0.99): 163 个 (50.8%) | 良好(0.7-0.99): 59 个 (18.4%) | 一般(0.5-0.7): 99 个 (30.8%)</div>
+      </div>
+      <div class="card" id="rejects">
+        <div class="card-head">
+          <h2><i class="ph ph-warning"></i>错误案例归因<span class="desc">D 组 35 个 incorrect 按字段分布</span></h2>
+        </div>
+        <div id="chart-error" class="chart-box"></div>
+        <div class="chart-note"><i class="ph ph-info"></i>错误集中在 amount(金额) 与 bid_deadline(投标截止日期), 各 16 例, 合计占 91.4%.</div>
+      </div>
+    </div>
+
+    <!-- ===== 4. Cost Performance ===== -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head">
+        <h2><i class="ph ph-currency-cny"></i>成本性能对比<span class="desc">A/B/C/D 四组 · tokens / 延迟 / 成本 / 无依据率</span></h2>
+      </div>
+      <div class="cost-row">
+        <table class="tbl" id="costTable"></table>
+        <div>
+          <div id="chart-cost" class="chart-box sm"></div>
+          <div class="chart-note" style="margin-top:8px"><i class="ph ph-info"></i>柱: Total Tokens (左轴) | 线: 延迟 ms (右轴)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 5. Bootstrap CI ===== -->
+    <div class="card">
+      <div class="card-head">
+        <h2><i class="ph ph-seal-check"></i>Bootstrap 95% 置信区间<span class="desc">recall / precision / iou_avg · 1000 次重采样</span></h2>
+      </div>
+      <div class="cost-row">
+        <table class="tbl" id="bootstrapTable"></table>
+        <div>
+          <div id="chart-bootstrap" class="chart-box sm"></div>
+          <div class="chart-note" style="margin-top:8px"><i class="ph ph-info"></i>真实 IoU 评测 Bootstrap 95% CI (1000 次重采样). 柱高=点估计, 误差线范围=[CI 下界, CI 上界], 三指标有明显区分度.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <div class="footer">
+      <span class="real">全部数据来自真实评测</span> · 数据源文件: w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json / w3_03_evidence_full_99.json / w3_error_analysis.json / w3_bootstrap_ci_full_99.json<br>
+      标小智 · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
+    </div>
+  </main>
+</div>
+
+<script src="/static/vendor/echarts/echarts.min.js"></script>
+<script>
+/* ================================================================
+ * 真实数据 - 从 _w3_outputs/ JSON 文件提取
+ * ================================================================ */
+var DATA = {
+  meta: { docs: 99, fields_total: 594, model: "deepseek-v4-flash", price_per_m: 1.5 },
+  evidence: {
+    docs_count: 99, fields_present: 437, fields_found: 297,
+    evidences_pred: 590, evidences_matched: 321,
+    recall: 0.6796, precision: 0.5441,
+    iou_avg: 0.5339, iou_avg_matched: 0.7126,
+    iou_p50: 0.7097, iou_p95: 1.0
+  },
+  ablation: {
+    A: { fields_total:594, fields_with_value:447, fields_unjustified:447, unjustified_rate:1.0, field_precision:0.9197, total_tokens:278882, latency_ms_avg:5658.2, cost_cny:0.4183,
+         desc:"纯LLM抽取, 无证据验证" },
+    B: { fields_total:594, fields_with_value:446, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9258, total_tokens:353503, latency_ms_avg:8140.2, cost_cny:0.5303,
+         desc:"+证据定位, 未验证" },
+    C: { fields_total:594, fields_with_value:447, fields_unjustified:27, unjustified_rate:0.0604, field_precision:0.9258, total_tokens:348657, latency_ms_avg:7705.3, cost_cny:0.523,
+         desc:"+证据验证" },
+    D: { fields_total:594, fields_with_value:447, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9217, total_tokens:348657, latency_ms_avg:7705.3, cost_cny:0.523,
+         desc:"+分级过滤 (完整流水线)" }
+  },
+  strategies: {
+    strict:  { kept_fields:420, field_precision:0.9376, gold_recall:0.8947, desc:"仅 HIGH 级" },
+    default: { kept_fields:420, field_precision:0.9376, gold_recall:0.8947, desc:"HIGH + REVIEW(STRONG)" },
+    loose:   { kept_fields:447, field_precision:0.9321, gold_recall:0.9428, desc:"HIGH + REVIEW" },
+    audit:   { kept_fields:594, field_precision:0.8822, gold_recall:0.9428, desc:"全部保留 (人工复核)" }
+  },
+  iou_dist: {
+    matched: 321,
+    buckets: [
+      { range:"0.50-0.60", count:56, grade:"normal" },
+      { range:"0.60-0.70", count:43, grade:"normal" },
+      { range:"0.70-0.80", count:23, grade:"good" },
+      { range:"0.80-0.90", count:18, grade:"good" },
+      { range:"0.90-0.99", count:18, grade:"good" },
+      { range:"0.99-1.00", count:163, grade:"perfect" }
+    ],
+    summary: { perfect:163, good:59, normal:99 }
+  },
+  error_analysis: {
+    total: 35,
+    by_field: [
+      { key:"amount", name:"金额", count:16 },
+      { key:"bid_deadline", name:"投标截止日期", count:16 },
+      { key:"publish_date", name:"发布日期", count:2 },
+      { key:"project_identifier", name:"项目编号", count:1 }
+    ]
+  },
+  bootstrap_ci: {
+    recall:    { p:0.6796, l:0.6366, u:0.7195 },
+    precision: { p:0.5441, l:0.5098, u:0.5772 },
+    iou_avg:   { p:0.4541, l:0.4277, u:0.4795 }
+  }
+};
+
+var charts = {};
+var isDark = false;
+
+function theme() {
+  return isDark
+    ? { t:'#adbac7', al:'#768390', gl:'#21262d', bg:'#161b22', bt:'#e6edf3' }
+    : { t:'#595959', al:'#8c8c8c', gl:'#f0f0f0', bg:'#ffffff', bt:'#1a1a2e' };
+}
+function pct(v, d) { d = (d==null)?2:d; return (v*100).toFixed(d); }
+
+/* ===== Metric Cards ===== */
+function renderMetrics() {
+  var e = DATA.evidence, d = DATA.ablation.D;
+  var cards = [
+    { icon:'ph-target', cls:'blue', label:'证据召回率', val:pct(e.recall), unit:'%',
+      sub:e.fields_found + '/' + e.fields_present + ' 字段命中', trend:'IoU Recall', tc:'info' },
+    { icon:'ph-crosshair', cls:'orange', label:'证据精确率', val:pct(e.precision), unit:'%',
+      sub:e.evidences_matched + '/' + e.evidences_pred + ' 证据匹配', trend:'IoU Precision', tc:'warn' },
+    { icon:'ph-ruler', cls:'green', label:'边界 IoU', val:pct(e.iou_avg_matched), unit:'%',
+      sub:'P50=' + e.iou_p50 + ' | P95=' + e.iou_p95, trend:'matched avg', tc:'ok' },
+    { icon:'ph-check-square', cls:'blue', label:'字段精确率', val:pct(d.field_precision), unit:'%',
+      sub:'D 组 (完整流水线)', trend:'field_precision', tc:'ok' },
+    { icon:'ph-shield-check', cls:'green', label:'无依据率', val:pct(d.unjustified_rate,0), unit:'%',
+      sub:'D 组 | A 组为 ' + pct(DATA.ablation.A.unjustified_rate,0) + '%', trend:'A->D: 100%->0%', tc:'ok' }
+  ];
+  document.getElementById('metricRow').innerHTML = cards.map(function(c) {
+    return '<div class="m-card">' +
+      '<div class="m-icon ' + c.cls + '"><i class="ph-bold ' + c.icon + '"></i></div>' +
+      '<div class="m-body"><div class="m-label">' + c.label + '</div>' +
+      '<div class="m-value">' + c.val + '<span class="unit">' + c.unit + '</span></div>' +
+      '<div class="m-sub">' + c.sub + '</div></div>' +
+      '<div class="m-trend ' + c.tc + '">' + c.trend + '</div></div>';
+  }).join('');
+}
+
+/* ===== Chart 1: Ablation Bar ===== */
+function initAblation() {
+  var el = document.getElementById('chart-ablation');
+  var c = echarts.init(el);
+  charts.ablation = c;
+  var th = theme();
+  var groups = ['A','B','C','D'];
+  var fp = groups.map(function(g){ return +(DATA.ablation[g].field_precision*100).toFixed(2); });
+  var ur = groups.map(function(g){ return +(DATA.ablation[g].unjustified_rate*100).toFixed(2); });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var g = p[0].axisValue;
+        var ab = DATA.ablation[g];
+        return '<b>组 ' + g + '</b> (' + ab.desc + ')<br/>' +
+          p.map(function(x){ return x.marker + ' ' + x.seriesName + ': ' + x.value + '%'; }).join('<br/>');
+      }
+    },
+    legend: { data:['字段精确率','无依据率'], top:5, left:'center', itemGap:24, textStyle:{color:th.t,fontSize:11}, itemWidth:12, itemHeight:8 },
+    grid: { left:55, right:55, top:50, bottom:35 },
+    xAxis: { type:'category', data:groups, axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    yAxis: [
+      { type:'value', name:'比率 %', nameTextStyle:{color:th.al,fontSize:10}, min:80, max:100, axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+      { type:'value', name:'无依据率 %', nameTextStyle:{color:th.al,fontSize:10}, min:0, max:100, axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{show:false}, axisLine:{show:false}, axisTick:{show:false} }
+    ],
+    series: [
+      { name:'字段精确率', type:'bar', barWidth:28, data:fp, itemStyle:{color:'#1677ff',borderRadius:[3,3,0,0]},
+        label:{show:true,position:'top',color:th.t,fontSize:10,formatter:'{c}%'} },
+      { name:'无依据率', type:'bar', barWidth:28, yAxisIndex:1, data:ur, itemStyle:{color:'#ff4d4f',borderRadius:[3,3,0,0]},
+        label:{show:true,position:'top',color:th.t,fontSize:10,formatter:'{c}%'} }
+    ]
+  });
+}
+
+/* ===== Chart 2: Strategy Scatter ===== */
+function initStrategy() {
+  var el = document.getElementById('chart-strategy');
+  var c = echarts.init(el);
+  charts.strategy = c;
+  var th = theme();
+  var colors = { strict:'#1677ff', default:'#13c2c2', loose:'#52c41a', audit:'#faad14' };
+  var symbols = { strict:'circle', default:'diamond', loose:'triangle', audit:'roundRect' };
+  var series = Object.keys(DATA.strategies).map(function(name) {
+    var s = DATA.strategies[name];
+    return {
+      name: name, type:'scatter',
+      data: [[+(s.field_precision*100).toFixed(2), +(s.gold_recall*100).toFixed(2), s.kept_fields]],
+      symbol: symbols[name], symbolSize: 15 + (s.kept_fields - 400) / 10,
+      itemStyle: { color: colors[name], opacity:0.85, borderColor:colors[name], borderWidth:2 },
+      label: { show:true, position:'top', formatter:name, color:th.t, fontSize:11, fontWeight:600, distance:8 }
+    };
+  });
+  c.setOption({
+    tooltip: { trigger:'item',
+      formatter: function(p) {
+        var s = DATA.strategies[p.seriesName];
+        return '<b>' + p.seriesName + '</b> (' + s.desc + ')<br/>' +
+          '字段精确率: ' + (s.field_precision*100).toFixed(2) + '%<br/>' +
+          '金标召回率: ' + (s.gold_recall*100).toFixed(2) + '%<br/>' +
+          '保留字段数: ' + s.kept_fields + ' / ' + DATA.meta.fields_total;
+      }
+    },
+    legend: { show:false },
+    grid: { left:55, right:30, top:25, bottom:40 },
+    xAxis: { type:'value', name:'字段精确率 %', nameTextStyle:{color:th.al,fontSize:10}, min:86, max:95,
+      axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{lineStyle:{color:th.gl}} },
+    yAxis: { type:'value', name:'金标召回率 %', nameTextStyle:{color:th.al,fontSize:10}, min:86, max:96,
+      axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{lineStyle:{color:th.gl}} },
+    series: series
+  });
+}
+
+/* ===== Chart 3: IoU Histogram ===== */
+function initIoU() {
+  var el = document.getElementById('chart-iou');
+  var c = echarts.init(el);
+  charts.iou = c;
+  var th = theme();
+  var bk = DATA.iou_dist.buckets;
+  var ranges = bk.map(function(b){ return b.range; });
+  var counts = bk.map(function(b){ return b.count; });
+  var colors = bk.map(function(b){
+    if (b.grade==='perfect') return '#52c41a';
+    if (b.grade==='good') return '#1677ff';
+    return '#faad14';
+  });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var b = bk[p[0].dataIndex];
+        var pctv = (b.count / DATA.iou_dist.matched * 100).toFixed(1);
+        var gradeName = b.grade==='perfect'?'完美':(b.grade==='good'?'良好':'一般');
+        return 'IoU ' + b.range + '<br/>' + p[0].marker + ' 数量: ' + b.count + ' (' + pctv + '%)<br/>等级: ' + gradeName;
+      }
+    },
+    grid: { left:45, right:20, top:20, bottom:35 },
+    xAxis: { type:'category', data:ranges, name:'IoU 区间', nameTextStyle:{color:th.al,fontSize:10},
+      axisLabel:{color:th.al,fontSize:10,rotate:20}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    yAxis: { type:'value', name:'证据数', nameTextStyle:{color:th.al,fontSize:10},
+      axisLabel:{color:th.al,fontSize:10}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+    series: [{
+      type:'bar', barWidth:'70%', data: counts.map(function(v,i){ return { value:v, itemStyle:{ color:colors[i], borderRadius:[3,3,0,0] } }; }),
+      label: { show:true, position:'top', color:th.t, fontSize:10 }
+    }]
+  });
+}
+
+/* ===== Chart 4: Error Analysis ===== */
+function initError() {
+  var el = document.getElementById('chart-error');
+  var c = echarts.init(el);
+  charts.error = c;
+  var th = theme();
+  var errs = DATA.error_analysis.by_field.slice().sort(function(a,b){ return a.count - b.count; });
+  var names = errs.map(function(e){ return e.name + ' (' + e.key + ')'; });
+  var counts = errs.map(function(e){ return e.count; });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var e = errs[p[0].dataIndex];
+        var pctv = (e.count / DATA.error_analysis.total * 100).toFixed(1);
+        return e.name + ' (' + e.key + ')<br/>' + p[0].marker + ' 错误数: ' + e.count + ' (' + pctv + '%)';
+      }
+    },
+    grid: { left:165, right:40, top:15, bottom:25 },
+    xAxis: { type:'value', name:'错误数', nameTextStyle:{color:th.al,fontSize:10},
+      axisLabel:{color:th.al,fontSize:10}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+    yAxis: { type:'category', data:names,
+      axisLabel:{color:th.t,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    series: [{
+      type:'bar', barWidth:18, data: counts.map(function(v){ return { value:v, itemStyle:{ color: v>=16?'#ff4d4f':(v>=2?'#faad14':'#1677ff'), borderRadius:[0,3,3,0] } }; }),
+      label: { show:true, position:'right', color:th.t, fontSize:11, formatter:'{c}' }
+    }]
+  });
+}
+
+/* ===== Chart 5: Cost Performance ===== */
+function initCost() {
+  var el = document.getElementById('chart-cost');
+  var c = echarts.init(el);
+  charts.cost = c;
+  var th = theme();
+  var groups = ['A','B','C','D'];
+  var tokens = groups.map(function(g){ return DATA.ablation[g].total_tokens; });
+  var latency = groups.map(function(g){ return DATA.ablation[g].latency_ms_avg; });
+  c.setOption({
+    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var g = p[0].axisValue;
+        var ab = DATA.ablation[g];
+        return '<b>组 ' + g + '</b><br/>' +
+          p[0].marker + ' Tokens: ' + ab.total_tokens.toLocaleString() + '<br/>' +
+          p[1].marker + ' 延迟: ' + ab.latency_ms_avg + ' ms<br/>' +
+          '成本: ' + ab.cost_cny + ' CNY | 无依据率: ' + pct(ab.unjustified_rate) + '%';
+      }
+    },
+    legend: { data:['Tokens','延迟(ms)'], top:5, left:'center', itemGap:24, textStyle:{color:th.t,fontSize:10}, itemWidth:10, itemHeight:8 },
+    grid: { left:55, right:55, top:50, bottom:30 },
+    xAxis: { type:'category', data:groups, axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
+    yAxis: [
+      { type:'value', name:'Tokens', nameTextStyle:{color:th.al,fontSize:9}, axisLabel:{color:th.al,fontSize:9,formatter:function(v){return v/1000+'k';}}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+      { type:'value', name:'ms', nameTextStyle:{color:th.al,fontSize:9}, axisLabel:{color:th.al,fontSize:9}, splitLine:{show:false}, axisLine:{show:false}, axisTick:{show:false} }
+    ],
+    series: [
+      { name:'Tokens', type:'bar', barWidth:22, data:tokens, itemStyle:{color:'#1677ff',borderRadius:[3,3,0,0]} },
+      { name:'延迟(ms)', type:'line', yAxisIndex:1, data:latency, itemStyle:{color:'#722ed1'}, lineStyle:{color:'#722ed1',width:2}, symbol:'circle', symbolSize:7, label:{show:true,color:th.t,fontSize:9,formatter:function(p){return p.value;}} }
+    ]
+  });
+}
+
+/* ===== Chart 6: Bootstrap CI ===== */
+function initBootstrap() {
+  var el = document.getElementById('chart-bootstrap');
+  var c = echarts.init(el);
+  charts.bootstrap = c;
+  var th = theme();
+  var bs = DATA.bootstrap_ci;
+  var metrics = ['recall','precision','iou_avg'];
+  var mNames = { recall:'Recall', precision:'Precision', iou_avg:'IoU Avg' };
+  var colors = { recall:'#52c41a', precision:'#1677ff', iou_avg:'#722ed1' };
+  var pointData = metrics.map(function(m, i){
+    return {
+      value: +(bs[m].p*100).toFixed(2),
+      itemStyle: { color: colors[metrics[i]], borderRadius:[3,3,0,0] }
+    };
+  });
+  var errorBarData = metrics.map(function(m, i){
+    return [i, +(bs[m].l*100).toFixed(2), +(bs[m].u*100).toFixed(2)];
+  });
+  c.setOption({
+    tooltip: {
+      trigger:'axis', axisPointer:{type:'shadow'},
+      formatter: function(p) {
+        var idx = p[0].dataIndex;
+        var m = metrics[idx];
+        var v = bs[m];
+        return '<b>' + mNames[m] + '</b><br/>' +
+          '点估计 ' + (v.p*100).toFixed(2) + '%<br/>' +
+          '95% CI: [' + (v.l*100).toFixed(2) + '%, ' + (v.u*100).toFixed(2) + '%]';
+      }
+    },
+    grid: { left:45, right:25, top:30, bottom:30 },
+    xAxis: {
+      type:'category',
+      data:metrics.map(function(m){return mNames[m];}),
+      axisLabel:{color:th.al,fontSize:11},
+      axisLine:{lineStyle:{color:th.gl}},
+      axisTick:{show:false}
+    },
+    yAxis: {
+      type:'value', min:0, max:80, name:'比率 %', nameTextStyle:{color:th.al,fontSize:10},
+      axisLabel:{color:th.al,fontSize:9,formatter:'{value}%'},
+      splitLine:{lineStyle:{color:th.gl}},
+      axisLine:{show:false}, axisTick:{show:false}
+    },
+    series: [
+      {
+        name:'点估计', type:'bar', barWidth:36,
+        data: pointData,
+        label: {
+          show:true, position:'top', color:th.t, fontSize:11, fontWeight:600,
+          formatter:function(p){ return p.value + '%'; }
+        },
+        z: 2
+      },
+      {
+        name:'CI 误差线', type:'custom',
+        renderItem: function(params, api) {
+          var idx = api.value(0);
+          var low = api.value(1);
+          var high = api.value(2);
+          var highPt = api.coord([idx, high]);
+          var lowPt = api.coord([idx, low]);
+          if (!highPt || !lowPt) return;
+          var xCenter = highPt[0];
+          var halfW = 10;
+          var strokeColor = th.bt;
+          return {
+            type:'group',
+            children: [
+              { type:'line', shape:{ x1:xCenter, y1:highPt[1], x2:xCenter, y2:lowPt[1] }, style:{ stroke:strokeColor, lineWidth:1.5 } },
+              { type:'line', shape:{ x1:xCenter-halfW, y1:highPt[1], x2:xCenter+halfW, y2:highPt[1] }, style:{ stroke:strokeColor, lineWidth:1.5 } },
+              { type:'line', shape:{ x1:xCenter-halfW, y1:lowPt[1], x2:xCenter+halfW, y2:lowPt[1] }, style:{ stroke:strokeColor, lineWidth:1.5 } }
+            ]
+          };
+        },
+        encode: { x:0, y:[1,2] },
+        data: errorBarData,
+        z: 10
+      }
+    ]
+  });
+}
+
+/* ===== Tables ===== */
+function renderCostTable() {
+  var groups = ['A','B','C','D'];
+  var html = '<thead><tr><th>组</th><th>配置</th><th>Tokens</th><th>延迟(ms)</th><th>成本(CNY)</th><th>无依据率</th></tr></thead><tbody>';
+  groups.forEach(function(g) {
+    var ab = DATA.ablation[g];
+    var urTag = ab.unjustified_rate >= 1 ? 'err' : (ab.unjustified_rate > 0.05 ? 'warn' : 'ok');
+    html += '<tr><td class="grp">' + g + '</td><td>' + ab.desc + '</td>' +
+      '<td class="num">' + ab.total_tokens.toLocaleString() + '</td>' +
+      '<td>' + ab.latency_ms_avg + '</td>' +
+      '<td class="num">' + ab.cost_cny + '</td>' +
+      '<td><span class="tag ' + urTag + '">' + pct(ab.unjustified_rate) + '%</span></td></tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('costTable').innerHTML = html;
+}
+
+function renderBootstrapTable() {
+  var bs = DATA.bootstrap_ci;
+  var metrics = ['recall','precision','iou_avg'];
+  var mNames = { recall:'Recall', precision:'Precision', iou_avg:'IoU Avg' };
+  var html = '<thead><tr><th>指标</th><th>点估计</th><th>95% CI 下界</th><th>95% CI 上界</th></tr></thead><tbody>';
+  metrics.forEach(function(m) {
+    var v = bs[m];
+    html += '<tr><td class="grp">' + mNames[m] + '</td>' +
+      '<td class="num">' + pct(v.p,2) + '%</td>' +
+      '<td>' + pct(v.l,2) + '%</td>' +
+      '<td>' + pct(v.u,2) + '%</td></tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('bootstrapTable').innerHTML = html;
+}
+
+/* ===== Init All ===== */
+function initAllCharts() {
+  initAblation();
+  initStrategy();
+  initIoU();
+  initError();
+  initCost();
+  initBootstrap();
+}
+
+function destroyAllCharts() {
+  Object.keys(charts).forEach(function(k) {
+    if (charts[k]) { charts[k].dispose(); delete charts[k]; }
+  });
+}
+
+/* ===== Theme Toggle ===== */
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('themeIcon').className = isDark ? 'ph ph-sun' : 'ph ph-moon';
+  destroyAllCharts();
+  initAllCharts();
+}
+
+/* ===== Resize ===== */
+window.addEventListener('resize', function() {
+  Object.keys(charts).forEach(function(k) { if (charts[k]) charts[k].resize(); });
+});
+
+/* ===== Load ===== */
+window.addEventListener('DOMContentLoaded', function() {
+  renderMetrics();
+  renderCostTable();
+  renderBootstrapTable();
+  initAllCharts();
+});
+
+/* ===== Stepper 渲染 ===== */
+function renderMainStepper(){
+  const steps=[
+    {path:'/ui/search',icon:'ph-magnifying-glass',label:'① 需求检索'},
+    {path:'/ui/notice-list',icon:'ph-arrows-split',label:'② 跨平台去重'},
+    {path:'/ui/detail',icon:'ph-line-segment',label:'③ 证据验证'},
+    {path:'/ui/quality-dashboard#rejects',icon:'ph-x-circle',label:'④ 拒绝与冲突'},
+    {path:'/ui/org',icon:'ph-users-three',label:'⑤ 组织画像'},
+    {path:'/ui/quality-dashboard',icon:'ph-chart-bar-horizontal',label:'⑥ 评测结果'},
+  ];
+  const pn=location.pathname;
+  const hash=location.hash;
+  let activeIdx=5;
+  for(let i=0;i<steps.length;i++){
+    const s=steps[i];
+    const sp=s.path.split('#')[0];
+    if(pn===sp||pn.startsWith(sp)){
+      if(s.path.includes('#')){
+        if(hash===s.path.split('#')[1]){activeIdx=i;break}
+      }else{activeIdx=i}
+    }
+  }
+  const el=document.getElementById('mainStepper');
+  if(!el)return;
+  el.innerHTML='<div class="stepper-track"></div><div class="stepper-steps">'+steps.map((s,i)=>{
+    const cls=(i===activeIdx)?' active':(i<activeIdx)?' done':'';
+    const href=s.path;
+    return `<a class="stepper-step${cls}" href="${href}">
+      <div class="stepper-circle"><i class="ph ${s.icon}"></i></div>
+      <div class="stepper-label">${s.label}</div>
+    </a>`;
+  }).join('')+'</div>';
+}
+renderMainStepper();
+</script>
+</body>
+</html>

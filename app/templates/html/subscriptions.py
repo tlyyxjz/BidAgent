@@ -4,7 +4,7 @@ SUBSCRIPTIONS_HTML = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>订阅管理 · ScrapeFlow</title>
+<title>订阅管理 · 标小智</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "Segoe UI", "PingFang SC", sans-serif;
@@ -31,12 +31,18 @@ textarea { min-height: 80px; }
 .status-active { color: #2e7d32; }
 .status-inactive { color: #c62828; }
 #result { margin-top: 16px; padding: 12px; border-radius: 6px; display: none; }
+
+/* ===== 标小智品牌头 ===== */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
+.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800}
 </style>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
 </head>
 <body>
 <div class="container">
   <div class="header">
     <a href="/ui" class="back-link">← 返回首页</a>
+    <div class="brand"><div class="brand-logo">标</div><span>标小智</span></div>
     <h1>订阅管理</h1>
     <p style="color:#666; font-size:14px;">创建订阅 · 触发推送 · 查看增量推送结果</p>
   </div>
@@ -203,6 +209,8 @@ async function viewTenders(subId) {
     resultDiv.innerHTML = '<span style="color:#c62828;">请求失败：' + e.message + '</span>';
   }
 }
+</script>
+<script>
 </script>
 </body>
 </html>"""

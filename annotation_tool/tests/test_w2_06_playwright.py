@@ -20,7 +20,7 @@ import pytest
 from playwright.async_api import async_playwright
 
 BASE_URL = "http://localhost:8000"
-DETAIL_URL = f"{BASE_URL}/ui/tenders/1?doc=tender_06_4e47868721c5"
+DETAIL_URL = f"{BASE_URL}/ui/detail?doc=tender_06_4e47868721c5"
 CHAT_URL = f"{BASE_URL}/ui/chat"
 
 

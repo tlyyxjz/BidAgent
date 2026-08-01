@@ -85,13 +85,15 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
         logger.info("delivery_agent skipped (no new tenders)")
         return state
 
-    # 生成 Word 报告
+    # 生成 Word 报告（传入 finance_summary，生成金融分析章节）
     source_texts = _build_source_texts(unpushed)
+    finance_summary = state.get("finance_summary")
     report_path = await generate_report(
         parsed,
         items,
         job_id=f"agent_{sub_id}",
         source_texts=source_texts or None,
+        finance_summary=finance_summary,
     )
     state["report_path"] = report_path
 

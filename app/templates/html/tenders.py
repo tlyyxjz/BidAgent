@@ -4,7 +4,7 @@ TENDERS_HTML = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>招标信息查询 · ScrapeFlow</title>
+<title>招标信息查询 · 标小智</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "Segoe UI", "PingFang SC", sans-serif;
@@ -31,12 +31,18 @@ th { background: #f8f9ff; color: #1a1a2e; font-weight: 600; }
 .stat { background: #f8f9ff; padding: 16px; border-radius: 8px; text-align: center; }
 .stat-num { font-size: 24px; font-weight: bold; color: #1976d2; }
 .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+
+/* ===== 标小智品牌头 ===== */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
+.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800}
 </style>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
 </head>
 <body>
 <div class="container">
   <div class="header">
     <a href="/ui" class="back-link">← 返回首页</a>
+    <div class="brand"><div class="brand-logo">标</div><span>标小智</span></div>
     <h1>招标信息查询</h1>
     <p style="color:#666; font-size:14px;">多维度过滤查询招标信息</p>
   </div>
@@ -168,6 +174,8 @@ async function searchTenders() {
     document.getElementById('tendersTable').innerHTML = '<span style="color:#c62828;">请求失败：' + e.message + '</span>';
   }
 }
+</script>
+<script>
 </script>
 </body>
 </html>"""

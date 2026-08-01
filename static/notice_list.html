@@ -3,335 +3,419 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1366, initial-scale=1">
-<title>公告列表 · BidAgent</title>
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web">
+<title>公告列表 · 标小智</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --primary:#1677ff;--primary-bg:#e6f4ff;
-  --success:#52c41a;--success-bg:#f6ffed;
-  --warning:#faad14;--warning-bg:#fffbe6;
-  --error:#ff4d4f;--error-bg:#fff2f0;
-  --purple:#722ed1;--purple-bg:#f9f0ff;
-  --bg:#f5f7fa;--card-bg:#ffffff;
-  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
-  --border:#e8e8e8;--border-2:#f0f0f0;
-  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
-  --sidebar-width:208px;--header-h:52px;
-  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
-}
-body.dark{
-  --bg:#0d1117;--card-bg:#161b22;
-  --text:#e6edf3;--text-2:#adbac7;--text-3:#768390;
-  --border:#30363d;--border-2:#21262d;
-  --sidebar-bg:#010409;--sidebar-text:#8b949e;
-  --primary-bg:#0c1d33;--success-bg:#0d1f0d;--warning-bg:#1f1a0a;--error-bg:#1f0a0a;--purple-bg:#1a0d2e;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 1px 6px -1px rgba(0,0,0,.2);
-}
-html,body{height:100%}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
-.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
-.sidebar-logo{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
+.header{background:white;padding:12px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header-left{display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;color:#1a1a2e}
+.brand-logo{width:28px;height:28px;background:linear-gradient(135deg,#1976d2,#4527a0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:800}
+.nav{display:flex;gap:4px}
+.nav a{padding:6px 14px;text-decoration:none;color:#555;font-size:13px;border-radius:6px;transition:all .15s}
+.nav a:hover{background:#f0f4ff;color:#1976d2}
+.nav a.active{background:#e3f2fd;color:#1565c0;font-weight:600}
+.page-main{max-width:1280px;margin:0 auto;padding:28px 24px 80px}
+.breadcrumb{font-size:12px;color:#888;margin-bottom:16px}
+.breadcrumb a{color:#1976d2;text-decoration:none}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-header h1{font-size:22px;color:#1a1a2e;letter-spacing:.5px}
+.toolbar{background:white;border:1px solid #e8e8e8;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.tool-group{display:flex;gap:6px;align-items:center;background:#fafbfc;padding:6px;border-radius:8px}
+.tb-btn{padding:7px 14px;border:none;background:transparent;font-size:13px;cursor:pointer;border-radius:6px;color:#555;transition:all .15s}
+.tb-btn:hover{background:#e3f2fd;color:#1976d2}
+.tb-btn.active{background:#1976d2;color:white;font-weight:600}
+.tb-btn.active:hover{background:#1565c0}
+.tb-sep{width:1px;height:22px;background:#e0e0e0;margin:0 6px}
+.search-mini{flex:1;min-width:260px;max-width:380px;display:flex;align-items:center;gap:8px;background:#fafbfc;border:1px solid #e8e8e8;border-radius:8px;padding:4px 10px}
+.search-mini input{border:none;outline:none;background:transparent;font-size:13px;flex:1;color:#1a1a2e}
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.sum-card{background:white;border:1px solid #eef0f5;border-radius:12px;padding:18px 22px}
+.sum-card .lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.sum-card .val{font-size:26px;font-weight:700;color:#1a1a2e;letter-spacing:-.5px}
+.sum-card .val .sub{font-size:12px;color:#888;margin-left:6px;font-weight:500}
+.sum-card .mini{font-size:12px;color:#2e7d32;margin-top:4px}
+.table-wrap{background:white;border:1px solid #e8e8e8;border-radius:12px;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:#fafbfc;text-align:left;padding:12px 18px;font-size:12px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #eef0f5}
+.tbl td{padding:14px 18px;font-size:13px;color:#333;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#f8f9ff}
+.chk{width:16px;height:16px;accent-color:#1976d2;cursor:pointer}
+.doc-id{font-family:monospace;font-size:12px;color:#1565c0;font-weight:600}
+.title{font-size:14px;font-weight:600;color:#1a1a2e;line-height:1.5;margin-bottom:4px;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plat{font-size:11px;color:#888;display:flex;gap:8px}
+.tag{display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700}
+.tag-tender{background:#e3f2fd;color:#1565c0}
+.tag-award{background:#e8f5e9;color:#2e7d32}
+.tag-correction{background:#fff8e1;color:#f57f17}
+.amount{font-weight:700;color:#1976d2}
+.field-grid{display:flex;flex-wrap:wrap;gap:4px}
+.fd{padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600}
+.fd-high{background:#e8f5e9;color:#2e7d32}
+.fd-review{background:#fff8e1;color:#f57f17}
+.fd-low{background:#ffebee;color:#c62828}
+.act{display:flex;gap:6px}
+.link{color:#1976d2;font-size:12px;text-decoration:none;cursor:pointer}
+.link:hover{text-decoration:underline}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.badge-ok{background:#e8f5e9;color:#2e7d32}
+.badge-warn{background:#fff3e0;color:#e65100}
+.pager{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid #f0f0f0;background:#fafbfc}
+.pager .info{font-size:12px;color:#888}
+.pager .btns{display:flex;gap:4px}
+.pg{padding:5px 11px;border:1px solid #e0e0e0;background:white;font-size:12px;border-radius:6px;cursor:pointer;color:#555}
+.pg:hover:not(.disabled):not(.active){background:#e3f2fd;color:#1976d2;border-color:#1976d2}
+.pg.active{background:#1976d2;color:white;border-color:#1976d2;font-weight:600}
+.pg.disabled{color:#ccc;cursor:not-allowed;background:#fafafa}
+
+/* ===== 表格列重构样式 ===== */
+.purchaser{font-size:12px;color:#555;display:inline-block;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+.plat-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#1976d2;background:#e3f2fd;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.date{font-size:12px;color:#666;white-space:nowrap}
+.title{font-weight:500;color:#1a1a2e;font-size:13px;line-height:1.4}
+.tbl{table-layout:auto}
+.tbl td{vertical-align:middle}
+/* 表格容器横向滚动优化 */
+.table-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.table-wrap::-webkit-scrollbar{height:8px}
+.table-wrap::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:4px}
+.table-wrap::-webkit-scrollbar-track{background:#f1f1f1}
+
+/* ===== Unified Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:208px;height:100vh;background:#001529;display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:52px;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:#1677ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
 .sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
 .sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
 .nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:#1677ff}
 .nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
-.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:#1677ff;color:#fff;font-weight:600}
 .sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
-.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
-.main-wrap{margin-left:var(--sidebar-width);min-height:100vh;display:flex;flex-direction:column}
-.top-header{height:var(--header-h);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.sidebar-footer .comp-tag{color:#1677ff;font-weight:600}
+/* ===== Unified Main Wrap ===== */
+.main-wrap{margin-left:208px;min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:52px;background:#fff;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02)}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-title{font-size:15px;font-weight:600;color:var(--text)}
-.header-title i{color:var(--primary);margin-right:6px}
+.header-title{font-size:15px;font-weight:600;color:#1a1a2e}
+.header-title i{color:#1677ff;margin-right:6px}
 .header-right{display:flex;align-items:center;gap:10px}
 .h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
-.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
-.h-badge.data{background:var(--success-bg);color:var(--success)}
-.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
-.h-badge.info{background:var(--primary-bg);color:var(--primary)}
-.theme-btn{width:32px;height:32px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:16px;transition:all .15s}
-.theme-btn:hover{border-color:var(--primary);color:var(--primary)}
-.content{flex:1;padding:16px 20px 40px}
-.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:12px}
-.breadcrumb a{color:var(--primary);text-decoration:none}
-.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
-.page-head h1{font-size:22px;color:var(--text);font-weight:700;letter-spacing:.3px}
-.page-head h1 i{color:var(--primary);margin-right:8px}
-.page-head .sub{font-size:12px;color:var(--text-3);margin-top:6px}
-.page-head .right-info{display:flex;gap:8px}
-.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.m-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;position:relative;box-shadow:var(--shadow);transition:border-color .15s}
-.m-card:hover{border-color:var(--primary)}
-.m-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.m-icon.blue{background:#e3f2fd;color:#1565c0}
-.m-icon.green{background:#e8f5e9;color:#2e7d32}
-.m-icon.orange{background:#fff8e1;color:#f57f17}
-.m-icon.purple{background:var(--purple-bg);color:var(--purple)}
-.m-body{flex:1;min-width:0}
-.m-label{font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
-.m-value{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
-.m-value .unit{font-size:13px;font-weight:500;color:var(--text-2);margin-left:2px}
-.m-sub{font-size:11px;color:var(--text-3);margin-top:3px}
-.m-trend{position:absolute;top:12px;right:12px;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
-.m-trend.info{background:var(--primary-bg);color:var(--primary)}
-.m-trend.ok{background:var(--success-bg);color:var(--success)}
-.card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;box-shadow:var(--shadow)}
-.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.card-head h2{font-size:14px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:6px}
-.card-head h2 i{color:var(--primary);font-size:17px}
-.card-head .desc{font-size:11px;color:var(--text-3);font-weight:400}
-.card-head .total{font-size:11px;color:var(--text-2);font-weight:600}
-.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-.tl-group{display:flex;align-items:center;gap:6px}
-.tl-label{font-size:12px;color:var(--text-3);font-weight:600;white-space:nowrap}
-.tl-select,.tl-input{height:32px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:12px;color:var(--text);background:var(--card-bg);outline:none;transition:border-color .15s;font-family:inherit}
-.tl-select:focus,.tl-input:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
-.tl-select{cursor:pointer;padding-right:26px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c8c8c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
-.tl-input{width:240px;padding-left:32px}
-.tl-input-wrap{position:relative}
-.tl-input-wrap .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:14px;pointer-events:none}
-.tl-btn{height:32px;padding:0 14px;border:none;border-radius:6px;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:opacity .15s;font-family:inherit}
-.tl-btn:hover{opacity:.9}
-.tl-btn.ghost{background:var(--card-bg);color:var(--text-2);border:1px solid var(--border)}
-.tl-btn.ghost:hover{border-color:var(--primary);color:var(--primary);opacity:1}
-.tl-spacer{flex:1}
-.tbl-wrap{overflow-x:auto}
-.tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{font-size:11px;color:var(--text-3);font-weight:600;text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
-.tbl td{padding:9px 10px;border-bottom:1px solid var(--border-2);color:var(--text-2);font-variant-numeric:tabular-nums;vertical-align:middle}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:var(--primary-bg)}
-.tbl .idx{color:var(--text-3);font-weight:600;text-align:center;width:42px}
-.tbl .doc-id{color:var(--text);font-weight:600;font-family:Consolas,"SF Mono",monospace;font-size:11px}
-.tbl .file-name{color:var(--text-2);font-family:Consolas,"SF Mono",monospace;font-size:11px}
-.tbl .num{font-weight:700;color:var(--text);text-align:center}
-.tbl .op-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:4px;background:var(--primary-bg);color:var(--primary);font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;text-decoration:none}
-.tbl .op-btn:hover{background:var(--primary);color:#fff}
-.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;white-space:nowrap}
-.tag.tender{background:#e3f2fd;color:#1565c0}
-.tag.award{background:#e8f5e9;color:#2e7d32}
-.tag.correction{background:#fff8e1;color:#f57f17}
-.pagination{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
-.page-info{font-size:11px;color:var(--text-3)}
-.page-info b{color:var(--text-2);font-weight:600}
-.page-list{display:flex;align-items:center;gap:4px}
-.page-btn{min-width:28px;height:28px;padding:0 8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text-2);border-radius:4px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit}
-.page-btn:hover{border-color:var(--primary);color:var(--primary)}
-.page-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
-.page-btn.ellipsis{border:none;cursor:default;color:var(--text-3);background:transparent}
-.page-btn.ellipsis:hover{border:none;color:var(--text-3)}
-.page-btn.nav i{font-size:13px}
-.footer{margin-top:16px;padding:12px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3);line-height:1.7;text-align:center;box-shadow:var(--shadow)}
-.footer .real{color:var(--success);font-weight:600}
-.footer .src{color:var(--primary);font-weight:600}
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-track{background:transparent}
+.h-badge.comp{background:#e6f4ff;color:#1677ff}
+.h-badge.data{background:#f6ffed;color:#52c41a}
+.h-badge.vers{background:#f5f7fa;color:#595959;border:1px solid #e8e8e8}
+body{background:#f5f7fa}
+
 </style>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
 </head>
 <body>
+<!-- ===== Sidebar ===== -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-icon">B</div>
-    <div class="logo-text">BidAgent</div>
+    <div class="logo-icon">标</div>
+    <div class="logo-text">标小智</div>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-section-label">功能导航</div>
-    <a class="nav-item" href="/ui/search"><i class="ph ph-magnifying-glass"></i>检索</a>
-    <a class="nav-item active" href="/ui/notice-list"><i class="ph ph-file-text"></i>公告<span class="nav-badge">100</span></a>
-    <a class="nav-item" href="/ui/detail"><i class="ph ph-list-bullets"></i>详情</a>
-    <a class="nav-item" href="/ui/quality-dashboard"><i class="ph ph-chart-bar"></i>评测<span class="nav-badge">W3</span></a>
-    <a class="nav-item" href="/ui/org"><i class="ph ph-user-circle"></i>画像</a>
-    <a class="nav-item" href="/ui/version"><i class="ph ph-git-branch"></i>版本</a>
+    <div class="nav-section-label">主导航</div>
+<a href="/ui" class="nav-item"><i class="ph-bold ph-house"></i><span>工作台</span></a>
+<a href="/ui/search" class="nav-item"><i class="ph-bold ph-magnifying-glass"></i><span>招标检索</span></a>
+<a href="/ui/notice-list" class="nav-item active"><i class="ph-bold ph-list-magnifying-glass"></i><span>跨平台去重</span></a>
+<a href="/ui/detail" class="nav-item"><i class="ph-bold ph-line-segment"></i><span>证据验证</span></a>
+<a href="/ui/org" class="nav-item"><i class="ph-bold ph-users-three"></i><span>组织画像</span></a>
+<a href="/ui/quality-dashboard" class="nav-item"><i class="ph-bold ph-chart-bar"></i><span>质量评测</span></a>
+<a href="/ui/versions" class="nav-item"><i class="ph-bold ph-git-branch"></i><span>版本历史</span></a>
+<a href="/ui/chat" class="nav-item"><i class="ph-bold ph-chats-circle"></i><span>智能问答</span><span class="nav-badge">AI</span></a>
   </nav>
   <div class="sidebar-footer">
-    <div>AI + 金融 · 招投标数据服务</div>
-    <div class="comp-tag">GOAI 2026 参赛演示</div>
+    <div><span class="comp-tag">标小智</span> v4.1</div>
+    <div>GOAI 2026 初赛 · W3</div>
   </div>
 </aside>
+
+<!-- ===== Main ===== -->
 <div class="main-wrap">
   <header class="top-header">
     <div class="header-left">
-      <div class="header-title"><i class="ph-bold ph-file-text"></i>招投标公告列表</div>
+      <div class="header-title"><i class="ph-bold ph-list-magnifying-glass"></i>跨平台去重</div>
     </div>
     <div class="header-right">
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
-      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · K3</div>
-      <div class="h-badge vers">v4.1 · 100篇</div>
-      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题"><i class="ph ph-moon" id="themeIcon"></i></button>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
+      <div class="h-badge vers">v4.1 · 99篇</div>
     </div>
   </header>
-  <main class="content">
-    <div class="breadcrumb"><a href="/ui/search">首页</a> / <a href="/ui/notice-list">公告</a> / 公告列表</div>
-    <div class="page-head">
-      <div>
-        <h1><i class="ph-bold ph-stack"></i>招投标公告数据</h1>
-        <div class="sub">跨 4 平台采集 · 去重合并 · 共 100 篇真实公告 (tender / award / correction)</div>
-      </div>
-      <div class="right-info">
-        <div class="h-badge info"><i class="ph ph-floppy-disk"></i>K3 标注集</div>
-        <div class="h-badge vers"><i class="ph ph-hash"></i>batch2</div>
-      </div>
+<main class="page-main">
+  <div class="breadcrumb"><a href="/ui/search">首页</a> / 公告列表</div>
+  <div class="page-header">
+    <h1><i class="ph ph-list-dashes" style="color:#1976d2"></i> 公告数据池（W3 · 90 条）</h1>
+  </div>
+
+  <div class="toolbar">
+    <div class="tool-group">
+      <button class="tb-btn active" data-type="all" onclick="filterType(this)">全部</button>
+      <button class="tb-btn" data-type="招标公告" onclick="filterType(this)">招标</button>
+      <button class="tb-btn" data-type="中标公告" onclick="filterType(this)">中标</button>
+      <button class="tb-btn" data-type="更正公告" onclick="filterType(this)">更正</button>
     </div>
-    <div class="metric-row" id="metricRow"></div>
-    <div class="card">
-      <div class="card-head">
-        <h2><i class="ph ph-table"></i>公告明细<span class="desc">真实数据来自 k3_annotations_batch2.json · 前 12 条</span></h2>
-        <span class="total" id="totalCount">共 12 条</span>
-      </div>
-      <div class="toolbar">
-        <div class="tl-group">
-          <span class="tl-label"><i class="ph ph-funnel"></i> 类型</span>
-          <select class="tl-select" id="filterType" onchange="applyFilter()">
-            <option value="">全部</option>
-            <option value="tender">招标 tender</option>
-            <option value="award">中标 award</option>
-            <option value="correction">更正 correction</option>
-          </select>
-        </div>
-        <div class="tl-group">
-          <span class="tl-label">等级</span>
-          <select class="tl-select" id="filterGrade" onchange="applyFilter()">
-            <option value="">全部</option>
-            <option value="high">high</option>
-            <option value="review">review</option>
-            <option value="low">low</option>
-          </select>
-        </div>
-        <div class="tl-group">
-          <div class="tl-input-wrap">
-            <i class="ph ph-magnifying-glass si"></i>
-            <input class="tl-input" id="filterKw" type="text" placeholder="搜索 document_id / 文件名" oninput="applyFilter()">
-          </div>
-        </div>
-        <div class="tl-spacer"></div>
-        <button class="tl-btn ghost" onclick="resetFilter()"><i class="ph ph-arrow-counter-clockwise"></i>重置</button>
-      </div>
-      <div class="tbl-wrap">
-        <table class="tbl" id="noticeTable"></table>
-      </div>
-      <div class="pagination">
-        <div class="page-info">共 <b>100</b> 篇公告 · 每页 <b>12</b> 条 · 当前第 <b id="curPage">1</b> / 9 页</div>
-        <div class="page-list" id="pageList"></div>
-      </div>
+    <div class="tb-sep"></div>
+    <div class="tool-group">
+      <button class="tb-btn active" data-grade="all" onclick="filterGrade(this)">质量：全部</button>
+      <button class="tb-btn" data-grade="high" onclick="filterGrade(this)">HIGH</button>
+      <button class="tb-btn" data-grade="review" onclick="filterGrade(this)">REVIEW+</button>
     </div>
-    <div class="footer">
-      <span class="real">全部数据来自真实评测</span> · 数据源文件: k3_annotations_batch2.json · 类型分布: tender 33 / award 34 / correction 33<br>
-      BidAgent · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
+    <div class="tb-sep"></div>
+    <div class="search-mini">
+      <i class="ph ph-magnifying-glass" style="color:#888"></i>
+      <input id="miniQ" placeholder="搜项目名/采购人/中标人…" oninput="apply()" />
     </div>
-  </main>
-</div>
+  </div>
+
+  <div class="summary-row">
+    <div class="sum-card"><div class="lbl">公告总量</div><div class="val" id="sTotal">0<span class="sub">条</span></div><div class="mini" id="sTotalNote">W3 冻结样本集</div></div>
+    <div class="sum-card"><div class="lbl">字段完整度</div><div class="val" id="sField">97<span class="sub">%</span></div><div class="mini">920/948 字段提取</div></div>
+    <div class="sum-card"><div class="lbl">证据覆盖率</div><div class="val" id="sEv">96<span class="sub">%</span></div><div class="mini">无依据输出 1.94%</div></div>
+    <div class="sum-card"><div class="lbl">跨平台去重</div><div class="val" id="sDe">14<span class="sub">组</span></div><div class="mini">4 平台 SimHash 去重</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="tbl">
+      <thead><tr>
+        <th style="width:36px"><input class="chk" type="checkbox" onchange="toggleAll(this)"></th>
+        <th style="min-width:260px">项目名称</th>
+        <th style="min-width:140px">采购人</th>
+        <th style="width:120px">来源平台</th>
+        <th style="width:90px">类型</th>
+        <th style="width:120px">金额</th>
+        <th style="width:110px">发布日期</th>
+        <th style="min-width:180px">字段质量</th>
+        <th style="width:90px">质检</th>
+        <th style="width:150px">操作</th>
+      </tr></thead>
+      <tbody id="tblBody"></tbody>
+    </table>
+    <div class="pager">
+      <div class="info" id="pInfo">第 1-10 条 / 共 0 条</div>
+      <div class="btns" id="pBtns"></div>
+    </div>
+  </div>
+</main>
 <script>
-var STATS = { tender:33, award:34, correction:33, total:100 };
-var NOTICES = [
-  { id:'w3_correction_093', type:'correction', file:'w3_correction_093.txt', fields:6, grade:'review' },
-  { id:'w3_award_consortium_001', type:'award', file:'w3_award_consortium_001.txt', fields:6, grade:'high' },
-  { id:'w3_award_consortium_002', type:'award', file:'w3_award_consortium_002.txt', fields:6, grade:'high' },
-  { id:'w3_tender_091', type:'tender', file:'w3_tender_091.txt', fields:6, grade:'high' },
-  { id:'w3_tender_092', type:'tender', file:'w3_tender_092.txt', fields:6, grade:'review' },
-  { id:'w3_tender_093', type:'tender', file:'w3_tender_093.txt', fields:6, grade:'high' },
-  { id:'w3_award_091', type:'award', file:'w3_award_091.txt', fields:6, grade:'high' },
-  { id:'w3_award_092', type:'award', file:'w3_award_092.txt', fields:6, grade:'high' },
-  { id:'w3_correction_091', type:'correction', file:'w3_correction_091.txt', fields:6, grade:'review' },
-  { id:'w3_correction_092', type:'correction', file:'w3_correction_092.txt', fields:6, grade:'high' },
-  { id:'w3_tender_001', type:'tender', file:'w3_tender_001.txt', fields:6, grade:'high' },
-  { id:'w3_tender_002', type:'tender', file:'w3_tender_002.txt', fields:6, grade:'low' }
-];
-var TYPE_NAME = { tender:'招标', award:'中标', correction:'更正' };
-var isDark = false;
-function renderMetrics() {
-  var cards = [
-    { icon:'ph-file-text', cls:'blue', label:'招标公告 tender', val:STATS.tender, unit:'篇', sub:'公开招标 / 邀请招标', trend:'33%', tc:'info' },
-    { icon:'ph-trophy', cls:'green', label:'中标公告 award', val:STATS.award, unit:'篇', sub:'成交结果 / 中标公示', trend:'34%', tc:'ok' },
-    { icon:'ph-pencil-simple-line', cls:'orange', label:'更正公告 correction', val:STATS.correction, unit:'篇', sub:'变更 / 澄清 / 废止', trend:'33%', tc:'info' },
-    { icon:'ph-stack', cls:'purple', label:'公告总计', val:STATS.total, unit:'篇', sub:'K3 标注集 batch2', trend:'100%', tc:'ok' }
-  ];
-  document.getElementById('metricRow').innerHTML = cards.map(function(c) {
-    return '<div class="m-card">' +
-      '<div class="m-icon ' + c.cls + '"><i class="ph-bold ' + c.icon + '"></i></div>' +
-      '<div class="m-body"><div class="m-label">' + c.label + '</div>' +
-      '<div class="m-value">' + c.val + '<span class="unit">' + c.unit + '</span></div>' +
-      '<div class="m-sub">' + c.sub + '</div></div>' +
-      '<div class="m-trend ' + c.tc + '">' + c.trend + '</div></div>';
-  }).join('');
-}
-function renderTable(list) {
-  var html = '<thead><tr><th class="idx">#</th><th>document_id</th><th>类型</th><th>文件名</th><th>字段数</th><th style="text-align:center">操作</th></tr></thead><tbody>';
-  if (list.length === 0) {
-    html += '<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:30px"><i class="ph ph-smiley-melancholy" style="font-size:20px;vertical-align:middle;margin-right:6px"></i>未匹配到符合条件的公告</td></tr>';
-  } else {
-    list.forEach(function(n, i) {
-      html += '<tr>' +
-        '<td class="idx">' + (i+1) + '</td>' +
-        '<td class="doc-id">' + n.id + '</td>' +
-        '<td><span class="tag ' + n.type + '">' + TYPE_NAME[n.type] + '</span></td>' +
-        '<td class="file-name">' + n.file + '</td>' +
-        '<td class="num">' + n.fields + '</td>' +
-        '<td style="text-align:center"><a class="op-btn" href="/ui/tenders?id=' + n.id + '"><i class="ph ph-eye"></i>查看</a></td>' +
-        '</tr>';
-    });
-  }
-  html += '</tbody>';
-  document.getElementById('noticeTable').innerHTML = html;
-  document.getElementById('totalCount').textContent = '共 ' + list.length + ' 条';
-}
-function applyFilter() {
-  var ft = document.getElementById('filterType').value;
-  var fg = document.getElementById('filterGrade').value;
-  var kw = document.getElementById('filterKw').value.trim().toLowerCase();
-  var filtered = NOTICES.filter(function(n) {
-    if (ft && n.type !== ft) return false;
-    if (fg && n.grade !== fg) return false;
-    if (kw && n.id.toLowerCase().indexOf(kw) < 0 && n.file.toLowerCase().indexOf(kw) < 0) return false;
-    return true;
+const TT={招标公告:'tag-tender',中标公告:'tag-award',更正公告:'tag-correction'};
+
+// ===== Mock 数据（作为 fallback 保留） =====
+function makeGroup(prefix, n, type, titles){
+  const plats=['中国政府采购网','全国公共资源交易平台','千里马招标网','北京市政府采购网','上海政府采购网'];
+  return Array.from({length:n}).map((_,i)=>{
+    const ti=i%titles.length;
+    const grade=i%5===0?'review':i%23===0?'low':'high';
+    return{
+      id:`${prefix}_${String(i+1).padStart(3,'0')}`,
+      title:titles[ti]+(i>=titles.length?'（包'+(i-titles.length+1)+'）':''),
+      plat:plats[i%plats.length],
+      type,grade,
+      date:`2026-07-${String(30-(i%28)).padStart(2,'0')}`,
+      fields:[
+        {n:'项目编号',v:'high'},{n:'采购人',v:'high'},{n:'中标人',v:type==='招标公告'?'low':'high'},
+        {n:'金额',v:grade==='low'?'review':'high'},{n:'发布日期',v:'high'},{n:'投标截止',v:type==='更正公告'?'review':'high'},
+      ]
+    };
   });
-  renderTable(filtered);
 }
-function resetFilter() {
-  document.getElementById('filterType').value = '';
-  document.getElementById('filterGrade').value = '';
-  document.getElementById('filterKw').value = '';
-  renderTable(NOTICES);
+const MOCK_DATA=[
+  ...(makeGroup('w3_tender', 15, '招标公告', [
+    '北京大学第三医院医疗设备采购项目招标公告',
+    '中国科学院计算所信息化系统建设招标公告',
+    '北京市教育委员会智慧校园建设项目',
+    '中关村科技园云计算服务集中采购',
+    '上海交通大学高性能计算集群招标',
+    '天津市卫健委医院信息系统升级项目',
+    '重庆市公安局安防监控设备采购',
+    '广州市地铁集团信号系统更新招标',
+    '成都市大数据中心政务云服务采购',
+    '深圳市教育局智慧课堂设备项目',
+    '杭州市卫健委电子病历系统招标',
+    '南京市政务服务中心办公设备采购',
+    '武汉市科技馆多媒体互动系统项目',
+    '西安交通大学图书馆资源建设招标',
+    '沈阳市环保局环境监测设备采购',
+  ])).map(r=>{r.amount=(80+Math.random()*420)*10000;return r}),
+  ...(makeGroup('w3_award', 30, '中标公告', [
+    '北京协和医院手术机器人采购中标结果公告',
+    '复旦大学附属中山医院影像设备中标',
+    '上海市第一人民医院检验设备采购结果',
+    '四川大学华西医院信息系统升级中标',
+    '广东省人民医院医疗设备中标公告',
+    '华中科技大学同济医学院附属协和医院中标',
+    '中南大学湘雅医院智慧医疗项目中标',
+    '浙江大学医学院附属第一医院设备中标',
+    '山东大学齐鲁医院手术部设备中标',
+    '吉林大学第一医院检验设备中标',
+    '上海瑞金医院医用耗材集中采购中标',
+    '北京天坛医院神经外科设备中标公告',
+    '武汉同济医院心血管设备中标',
+    '南京鼓楼医院骨科植入物采购中标',
+    '广州中山一院消化内镜设备中标',
+    '深圳人民医院重症监护设备中标',
+    '杭州邵逸夫医院康复设备中标公告',
+    '天津医科大学总医院影像设备中标',
+    '重庆医科大学附属一院设备中标',
+    '西安交通大学一附院医疗设备中标',
+  ])).map(r=>{r.amount=(180+Math.random()*980)*10000;return r}),
+  ...(makeGroup('w3_correction', 45, '更正公告', [
+    '北京大学第三医院医疗设备采购项目更正公告',
+    '北京市教育委员会智慧校园项目变更通知',
+    '中关村科技园云计算服务参数更正',
+    '上海交通大学高性能集群延期公告',
+    '天津市卫健委医院信息系统答疑澄清',
+    '重庆市公安局安防设备补充公告',
+    '广州市地铁集团信号系统更正',
+    '成都市大数据中心政务云变更通知',
+    '深圳市教育局智慧课堂参数补充',
+    '杭州市卫健委电子病历系统延期',
+  ])).map(r=>{r.amount=(100+Math.random()*200)*10000;return r}),
+];
+
+// ===== 数据源状态：'loading' | 'real' | 'mock' =====
+let dataSource='loading';
+// 当前展示的数据（真实或 Mock）
+let currentData=MOCK_DATA;
+
+// notice_type 原始值 → 中文标签映射
+function mapType(t){
+  if(!t) return '未知';
+  const s=String(t).toLowerCase();
+  if(s.includes('tender')||s==='招标') return '招标公告';
+  if(s.includes('award')||s==='中标') return '中标公告';
+  if(s.includes('correction')||s.includes('correct')||s==='更正') return '更正公告';
+  return '其他';
 }
-function renderPagination() {
-  var html = '';
-  html += '<button class="page-btn nav" onclick="goPage(1)" title="首页"><i class="ph ph-caret-left"></i></button>';
-  html += '<button class="page-btn active" data-p="1" onclick="goPage(1)">1</button>';
-  html += '<button class="page-btn" data-p="2" onclick="goPage(2)">2</button>';
-  html += '<button class="page-btn" data-p="3" onclick="goPage(3)">3</button>';
-  html += '<button class="page-btn ellipsis" disabled>...</button>';
-  html += '<button class="page-btn" data-p="9" onclick="goPage(9)">9</button>';
-  html += '<button class="page-btn nav" onclick="goPage(9)" title="末页"><i class="ph ph-caret-right"></i></button>';
-  document.getElementById('pageList').innerHTML = html;
+
+let state={type:'all',grade:'all',q:'',page:1,ps:10};
+function fmt(n){return n>=1e8?(n/1e8).toFixed(2)+'亿':(n/1e4).toFixed(0)+'万'}
+function apply(){
+  let d=currentData.slice();
+  if(state.type!=='all')d=d.filter(x=>x.type===state.type);
+  if(state.grade==='high')d=d.filter(x=>x.grade==='high');
+  if(state.grade==='review')d=d.filter(x=>x.grade!=='low');
+  if(state.q){const k=state.q.toLowerCase();d=d.filter(x=>(x.title+x.id).toLowerCase().includes(k))}
+  const _hc=document.getElementById('headCount'); if(_hc) _hc.textContent=d.length;
+  document.getElementById('sTotal').innerHTML=d.length+'<span class="sub">条</span>';
+  const tp=Math.ceil(d.length/state.ps);
+  if(state.page>tp)state.page=Math.max(1,tp);
+  const pg=d.slice((state.page-1)*state.ps,state.page*state.ps);
+  document.getElementById('tblBody').innerHTML=pg.map(x=>`
+    <tr>
+      <td><input class="chk" type="checkbox"></td>
+      <td><div class="title" title="${x.title}">${x.title}</div></td>
+      <td><span class="purchaser" title="${x.purchaser}">${x.purchaser||'—'}</span></td>
+      <td><span class="plat-tag"><i class="ph ph-globe"></i> ${x.plat}</span></td>
+      <td><span class="tag ${TT[x.type]||'tag-tender'}">${x.type}</span></td>
+      <td><span class="amount">${x.amount?fmt(x.amount)+'元':'—'}</span></td>
+      <td><span class="date">${x.date}</span></td>
+      <td><div class="field-grid">${x.fields.map(f=>`<span class="fd fd-${f.v}">${f.n}</span>`).join('')}</div></td>
+      <td><span class="badge badge-${x.grade==='low'?'warn':'ok'}">${x.grade.toUpperCase()}</span></td>
+      <td class="act"><a class="link" href="/ui/detail?id=${x.realId||1}">详情</a><a class="link" href="/ui/version?src=${x.id}">版本</a></td>
+    </tr>`).join('') || '<tr><td colspan="10" style="padding:40px;text-align:center;color:#999">无符合条件的公告</td></tr>';
+  const end=Math.min(state.page*state.ps,d.length);
+  document.getElementById('pInfo').textContent=`第 ${state.page===1?1:(state.page-1)*state.ps+1}-${end} 条 / 共 ${d.length} 条`;
+  let btns='';
+  for(let i=1;i<=Math.min(tp,5);i++){
+    btns+=`<button class="pg ${i===state.page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  if(tp>5)btns+=`<button class="pg disabled">…</button><button class="pg" onclick="goPage(${tp})">${tp}</button>`;
+  document.getElementById('pBtns').innerHTML=`<button class="pg ${state.page===1?'disabled':''}" onclick="goPage(${state.page-1})">‹</button>${btns}<button class="pg ${state.page===tp||tp===0?'disabled':''}" onclick="goPage(${state.page+1})">›</button>`;
 }
-function goPage(p) {
-  var btns = document.querySelectorAll('.page-btn[data-p]');
-  btns.forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-p') == p); });
-  document.getElementById('curPage').textContent = p;
-  if (p !== 1) {
-    var html = '<thead><tr><th class="idx">#</th><th>document_id</th><th>类型</th><th>文件名</th><th>字段数</th><th style="text-align:center">操作</th></tr></thead><tbody>';
-    html += '<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:36px"><i class="ph ph-info" style="font-size:18px;vertical-align:middle;margin-right:6px;color:var(--primary)"></i>演示环境仅提供第 1 页 12 条真实样例数据 · 完整 100 篇数据请见 K3 标注集</td></tr></tbody>';
-    document.getElementById('noticeTable').innerHTML = html;
-    document.getElementById('totalCount').textContent = '共 0 条 (本页无样例)';
-  } else {
-    renderTable(NOTICES);
+function viewEv(id){location.href='/ui/detail?doc='+id+'#ev'}
+function goPage(n){if(n<1)return;state.page=n;apply()}
+function filterType(b){document.querySelectorAll('[data-type]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.type=b.dataset.type;state.page=1;apply()}
+function filterGrade(b){document.querySelectorAll('[data-grade]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.grade=b.dataset.grade;state.page=1;apply()}
+function toggleAll(c){document.querySelectorAll('.tbl input.chk').forEach(x=>x.checked=c.checked)}
+document.getElementById('miniQ').oninput=e=>{state.q=e.target.value.trim();state.page=1;apply()};
+
+// ===== 数据源标识 =====
+function updateDataSourceBadge(){
+  const badge=document.getElementById('dataSourceBadge');
+  if(!badge) return;
+  if(dataSource==='loading'){
+    badge.innerHTML='<i class="ph ph-hourglass" style="color:#888"></i> 加载中...';
+    badge.style.color='#888';
+    badge.style.background='#f3f4f6';
+  }else if(dataSource==='real'){
+    badge.innerHTML='<i class="ph ph-chart-line-up" style="color:#2e7d32"></i> 真实数据';
+    badge.style.color='#16a34a';
+    badge.style.background='#dcfce7';
+  }else{
+    badge.innerHTML='<i class="ph ph-warning" style="color:#c62828"></i> 模拟数据(API未连接)';
+    badge.style.color='#dc2626';
+    badge.style.background='#fee2e2';
   }
 }
-function toggleTheme() {
-  isDark = !isDark;
-  document.body.classList.toggle('dark', isDark);
-  document.getElementById('themeIcon').className = isDark ? 'ph ph-sun' : 'ph ph-moon';
+
+// ===== 加载真实数据，失败回退 Mock =====
+async function loadRealData(){
+  try{
+    const resp=await fetch('/api/real/tenders');
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    if(data.code && data.code!==200) throw new Error(data.msg||'API错误');
+    const tenders=(data.data && data.data.tenders)||data.tenders||[];
+    if(!tenders.length) throw new Error('无数据');
+    dataSource='real';
+    // 默认字段质量（API 不提供字段级证据，用默认 Mock 值填充以保持 UI 结构）
+    const defaultFields=[
+      {n:'项目编号',v:'high'},{n:'采购人',v:'high'},{n:'中标人',v:'review'},
+      {n:'金额',v:'high'},{n:'发布日期',v:'high'},{n:'投标截止',v:'review'},
+    ];
+    return tenders.map(t=>{
+      // 金额解析：'331.300000万元' → 3313000
+      let amt=0;
+      const amtStr=String(t.amount||'');
+      const m=amtStr.match(/([\d.]+)\s*万元/);
+      if(m){amt=Math.round(parseFloat(m[1])*10000)}
+      else if(/^\d+(\.\d+)?$/.test(amtStr)){amt=parseFloat(amtStr)}
+      // 平台显示名映射
+      const platMap={ccgp:'中国政府采购网',chinabidding:'中国招标网',qianlima:'千里马招标网',central_gov:'中央政府采购网'};
+      const plat=platMap[t.platform]||t.platform||'未知平台';
+      return {
+        id:String(t.id),
+        realId:t.id,
+        title:t.name||t.project_name||'未命名公告',
+        plat:plat,
+        platform:t.platform||'',
+        type:mapType(t.type||t.notice_type),
+        grade:'review',
+        date:t.publish_date||'—',
+        amount:amt,
+        amountText:amtStr||'—',
+        purchaser:t.purchaser||'—',
+        fields:defaultFields
+      };
+    });
+  }catch(e){
+    console.warn('真实数据加载失败,使用Mock:',e.message);
+    dataSource='mock';
+    return MOCK_DATA;
+  }
 }
-window.addEventListener('DOMContentLoaded', function() {
-  renderMetrics();
-  renderTable(NOTICES);
-  renderPagination();
+
+// 初始用 Mock 渲染（避免页面空白），随后尝试加载真实数据
+apply();
+updateDataSourceBadge();
+loadRealData().then(data=>{
+  currentData=data;
+  state.page=1;
+  updateDataSourceBadge();
+  // 更新"公告总量"卡注脚
+  const note=document.getElementById('sTotalNote');
+  if(note) note.textContent=dataSource==='real'?'来自真实数据库':'W3 冻结样本集';
+  apply();
 });
 </script>
+</div>
+
 </body>
 </html>

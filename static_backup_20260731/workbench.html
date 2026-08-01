@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1366, initial-scale=1">
+<title>工作台 · 标小智</title>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1677ff;--primary-bg:#e6f4ff;--primary-hover:#4096ff;
+  --success:#52c41a;--success-bg:#f6ffed;
+  --warning:#faad14;--warning-bg:#fffbe6;
+  --error:#ff4d4f;--error-bg:#fff2f0;
+  --purple:#722ed1;--purple-bg:#f9f0ff;
+  --bg:#f5f7fa;--card-bg:#ffffff;
+  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
+  --border:#e8e8e8;--border-2:#f0f0f0;
+  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
+  --sidebar-width:208px;--header-h:52px;
+  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
+}
+html,body{height:100%}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+
+/* ===== Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+.sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
+.sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
+.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
+
+/* ===== Main ===== */
+.main-wrap{margin-left:var(--sidebar-width);min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:var(--header-h);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-title{font-size:15px;font-weight:600;color:var(--text)}
+.header-title i{color:var(--primary);margin-right:6px}
+.header-right{display:flex;align-items:center;gap:10px}
+.global-search{width:320px;padding:6px 12px 6px 32px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238c8c8c' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;color:var(--text-2);outline:none;transition:all .15s}
+.global-search:focus{border-color:var(--primary);background-color:#fff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
+.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
+.h-badge.data{background:var(--success-bg);color:var(--success)}
+.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
+
+/* ===== Content ===== */
+.content{flex:1;padding:16px 20px 40px}
+.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:12px}
+.breadcrumb a{color:var(--primary);text-decoration:none}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.page-head h1{font-size:22px;color:var(--text);font-weight:700;letter-spacing:.3px}
+.page-head h1 i{color:var(--primary);margin-right:8px}
+.page-head .sub{font-size:12px;color:var(--text-3);margin-top:6px}
+.page-head .right-info{display:flex;gap:8px}
+
+/* ===== KPI Cards ===== */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;align-items:flex-start;gap:12px;position:relative;box-shadow:var(--shadow);transition:border-color .15s}
+.kpi-card:hover{border-color:var(--primary)}
+.kpi-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.kpi-icon.blue{background:var(--primary-bg);color:var(--primary)}
+.kpi-icon.green{background:var(--success-bg);color:var(--success)}
+.kpi-icon.orange{background:var(--warning-bg);color:var(--warning)}
+.kpi-icon.purple{background:var(--purple-bg);color:var(--purple)}
+.kpi-body{flex:1;min-width:0}
+.kpi-label{font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.kpi-value{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.kpi-value .unit{font-size:13px;font-weight:500;color:var(--text-2);margin-left:2px}
+.kpi-sub{font-size:11px;color:var(--text-3);margin-top:3px}
+.kpi-trend{position:absolute;top:14px;right:14px;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+.kpi-trend.up{background:var(--success-bg);color:var(--success)}
+.kpi-trend.info{background:var(--primary-bg);color:var(--primary)}
+
+/* ===== Capability Cards (4 大能力入口) ===== */
+.section-title{font-size:14px;font-weight:600;color:var(--text);margin:20px 0 12px;display:flex;align-items:center;gap:6px}
+.section-title i{color:var(--primary);font-size:17px}
+.section-title .desc{font-size:11px;color:var(--text-3);font-weight:400;margin-left:8px}
+.cap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.cap-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:18px;text-decoration:none;color:inherit;transition:all .2s;position:relative;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.cap-card::before{content:"";position:absolute;left:0;top:0;width:3px;height:100%;background:var(--primary);opacity:0;transition:opacity .2s}
+.cap-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 4px 12px rgba(22,119,255,.12)}
+.cap-card:hover::before{opacity:1}
+.cap-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.cap-icon.blue{background:var(--primary-bg);color:var(--primary)}
+.cap-icon.green{background:var(--success-bg);color:var(--success)}
+.cap-icon.orange{background:var(--warning-bg);color:var(--warning)}
+.cap-icon.purple{background:var(--purple-bg);color:var(--purple)}
+.cap-title{font-size:15px;font-weight:600;color:var(--text)}
+.cap-desc{font-size:12px;color:var(--text-3);line-height:1.6}
+.cap-arrow{position:absolute;top:18px;right:18px;color:var(--text-3);font-size:14px;transition:all .2s}
+.cap-card:hover .cap-arrow{color:var(--primary);transform:translate(2px,-2px)}
+
+/* ===== Pipeline (主链路 6 步) ===== */
+.pipeline-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.pipeline-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.pipeline-head h2{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.pipeline-head h2 i{color:var(--primary);font-size:17px}
+.pipeline-head .desc{font-size:11px;color:var(--text-3);font-weight:400}
+.pipeline-flow{display:flex;align-items:center;justify-content:space-between;gap:0;position:relative}
+.pipeline-flow::before{content:"";position:absolute;top:24px;left:60px;right:60px;height:2px;background:linear-gradient(to right,#e0e0e0 0%,#1677ff 50%,#e0e0e0 100%);z-index:0}
+.pipe-step{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;text-decoration:none;color:var(--text-2);flex:1;position:relative;z-index:1;transition:all .2s}
+.pipe-circle{width:48px;height:48px;border-radius:50%;background:#fff;border:2px solid #e0e0e0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#999;transition:all .2s}
+.pipe-step:hover .pipe-circle{border-color:var(--primary);color:var(--primary);box-shadow:0 0 0 4px rgba(22,119,255,.1)}
+.pipe-step:hover .pipe-label{color:var(--primary)}
+.pipe-label{font-size:12px;font-weight:500;text-align:center;white-space:nowrap;transition:color .2s}
+.pipe-step:hover .pipe-label{font-weight:600}
+.pipe-sub{font-size:10px;color:var(--text-3);text-align:center}
+
+/* ===== Two Column (Recent + Quick) ===== */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.col-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;box-shadow:var(--shadow)}
+.col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.col-head h2{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.col-head h2 i{color:var(--primary);font-size:17px}
+.col-head .more{font-size:11px;color:var(--primary);text-decoration:none}
+.col-head .more:hover{text-decoration:underline}
+
+/* ===== Recent List ===== */
+.recent-list{display:flex;flex-direction:column;gap:8px}
+.recent-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:6px;border:1px solid var(--border-2);transition:all .15s;text-decoration:none;color:inherit}
+.recent-item:hover{border-color:var(--primary);background:var(--primary-bg)}
+.recent-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.recent-icon.blue{background:var(--primary-bg);color:var(--primary)}
+.recent-icon.green{background:var(--success-bg);color:var(--success)}
+.recent-icon.orange{background:var(--warning-bg);color:var(--warning)}
+.recent-icon.purple{background:var(--purple-bg);color:var(--purple)}
+.recent-body{flex:1;min-width:0}
+.recent-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-meta{font-size:11px;color:var(--text-3);margin-top:2px}
+.recent-status{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;flex-shrink:0}
+.recent-status.ok{background:var(--success-bg);color:var(--success)}
+.recent-status.warn{background:var(--warning-bg);color:var(--warning)}
+.recent-status.info{background:var(--primary-bg);color:var(--primary)}
+
+/* ===== Quick Actions ===== */
+.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.quick-btn{display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--border);border-radius:6px;text-decoration:none;color:var(--text);background:var(--bg);transition:all .15s}
+.quick-btn:hover{border-color:var(--primary);background:var(--primary-bg);color:var(--primary)}
+.quick-btn i{font-size:18px;color:var(--primary)}
+.quick-btn span{font-size:13px;font-weight:500}
+
+/* ===== Footer ===== */
+.footer{margin-top:8px;padding:12px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3);line-height:1.7;text-align:center;box-shadow:var(--shadow)}
+.footer .real{color:var(--success);font-weight:600}
+.footer .src{color:var(--primary);font-weight:600}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== 标小智品牌头（统一） ===== */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
+.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- ===== Sidebar ===== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">标</div>
+    <div class="logo-text">标小智</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">主导航</div>
+    <a href="/ui" class="nav-item active">
+      <i class="ph-bold ph-house"></i><span>工作台</span>
+    </a>
+    <a href="/ui/search" class="nav-item">
+      <i class="ph-bold ph-magnifying-glass"></i><span>招标检索</span>
+    </a>
+    <a href="/ui/notice-list" class="nav-item">
+      <i class="ph-bold ph-list-magnifying-glass"></i><span>跨平台去重</span>
+    </a>
+    <a href="/ui/detail" class="nav-item">
+      <i class="ph-bold ph-line-segment"></i><span>证据验证</span>
+    </a>
+    <a href="/ui/org" class="nav-item">
+      <i class="ph-bold ph-users-three"></i><span>组织画像</span>
+    </a>
+    <a href="/ui/quality-dashboard" class="nav-item">
+      <i class="ph-bold ph-chart-bar"></i><span>质量评测</span>
+    </a>
+    <a href="/ui/versions" class="nav-item">
+      <i class="ph-bold ph-git-branch"></i><span>版本历史</span>
+    </a>
+    <div class="nav-section-label">辅助</div>
+    <a href="/ui/chat" class="nav-item">
+      <i class="ph-bold ph-chats-circle"></i><span>智能问答</span>
+      <span class="nav-badge">AI</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div><span class="comp-tag">标小智</span> v4.1</div>
+    <div>GOAI 2026 初赛</div>
+    <div>W3 · 99 篇冻结集</div>
+  </div>
+</aside>
+
+<!-- ===== Main ===== -->
+<div class="main-wrap">
+  <header class="top-header">
+    <div class="header-left">
+      <div class="header-title"><i class="ph-bold ph-house"></i>工作台</div>
+    </div>
+    <div class="header-right">
+      <input class="global-search" type="text" placeholder="搜索项目/组织/公告..." />
+      <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
+      <div class="h-badge vers">v4.1 · 99篇</div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="breadcrumb"><a href="/ui">首页</a> / 工作台</div>
+
+    <div class="page-head">
+      <div>
+        <h1><i class="ph-bold ph-rocket-launch"></i>欢迎使用标小智</h1>
+        <div class="sub">招投标数据抽取 + 证据验证 + 组织画像 + 质量评测 · 一站式数据可信分析平台</div>
+      </div>
+      <div class="right-info">
+        <div class="h-badge data"><i class="ph ph-clock"></i>2026-07-31</div>
+      </div>
+    </div>
+
+    <!-- ===== 1. KPI Cards ===== -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-icon blue"><i class="ph-bold ph-file-text"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">公告总数</div>
+          <div class="kpi-value">99<span class="unit">篇</span></div>
+          <div class="kpi-sub">W3 冻结样本集</div>
+        </div>
+        <div class="kpi-trend info">W3</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon green"><i class="ph-bold ph-check-circle"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">字段精确率</div>
+          <div class="kpi-value">97.3<span class="unit">%</span></div>
+          <div class="kpi-sub">D 组（完整流程）</div>
+        </div>
+        <div class="kpi-trend up"><i class="ph ph-trend-up"></i>+2.1%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon orange"><i class="ph-bold ph-shield-check"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">证据验证通过</div>
+          <div class="kpi-value">321<span class="unit">条</span></div>
+          <div class="kpi-sub">IoU ≥ 0.5 · 占 92.6%</div>
+        </div>
+        <div class="kpi-trend info">真实</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon purple"><i class="ph-bold ph-users-three"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-label">组织画像</div>
+          <div class="kpi-value">331<span class="unit">条</span></div>
+          <div class="kpi-sub">已建立实体档案</div>
+        </div>
+        <div class="kpi-trend info">活跃</div>
+      </div>
+    </div>
+
+    <!-- ===== 2. 主链路 6 步 Pipeline ===== -->
+    <div class="pipeline-card">
+      <div class="pipeline-head">
+        <h2><i class="ph-bold ph-flow-arrow"></i>主链路 6 步流程</h2>
+        <div class="desc">点击任一步骤进入对应功能 · 流程可顺序也可独立使用</div>
+      </div>
+      <div class="pipeline-flow">
+        <a href="/ui/search" class="pipe-step">
+          <div class="pipe-circle"><i class="ph ph-magnifying-glass"></i></div>
+          <div class="pipe-label">① 需求检索</div>
+          <div class="pipe-sub">关键词/地区/行业</div>
+        </a>
+        <a href="/ui/notice-list" class="pipe-step">
+          <div class="pipe-circle"><i class="ph ph-arrows-split"></i></div>
+          <div class="pipe-label">② 跨平台去重</div>
+          <div class="pipe-sub">ccgp + chinabidding</div>
+        </a>
+        <a href="/ui/detail" class="pipe-step">
+          <div class="pipe-circle"><i class="ph ph-line-segment"></i></div>
+          <div class="pipe-label">③ 证据验证</div>
+          <div class="pipe-sub">6 字段证据高亮</div>
+        </a>
+        <a href="/ui/quality-dashboard#rejects" class="pipe-step">
+          <div class="pipe-circle"><i class="ph ph-x-circle"></i></div>
+          <div class="pipe-label">④ 拒绝与冲突</div>
+          <div class="pipe-sub">错误归因分析</div>
+        </a>
+        <a href="/ui/org" class="pipe-step">
+          <div class="pipe-circle"><i class="ph ph-users-three"></i></div>
+          <div class="pipe-label">⑤ 组织画像</div>
+          <div class="pipe-sub">6 维信用评分</div>
+        </a>
+        <a href="/ui/quality-dashboard" class="pipe-step">
+          <div class="pipe-circle"><i class="ph ph-chart-bar-horizontal"></i></div>
+          <div class="pipe-label">⑥ 评测结果</div>
+          <div class="pipe-sub">消融对比 + IoU</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ===== 3. 四大能力入口 ===== -->
+    <div class="section-title">
+      <i class="ph-bold ph-grid-four"></i>四大能力
+      <span class="desc">每个能力对应一个核心业务域 · 点击进入对应工作区</span>
+    </div>
+    <div class="cap-grid">
+      <a href="/ui/search" class="cap-card">
+        <div class="cap-icon blue"><i class="ph-bold ph-magnifying-glass-plus"></i></div>
+        <div class="cap-title">招标检索</div>
+        <div class="cap-desc">多平台招标公告检索，支持关键词、地区、行业多维度筛选，跨平台去重合并。</div>
+        <i class="ph ph-arrow-up-right cap-arrow"></i>
+      </a>
+      <a href="/ui/detail" class="cap-card">
+        <div class="cap-icon green"><i class="ph-bold ph-shield-check"></i></div>
+        <div class="cap-title">证据验证</div>
+        <div class="cap-desc">6 类核心字段证据级核验，原文高亮定位，IoU 相似度评分，过程可信可追溯。</div>
+        <i class="ph ph-arrow-up-right cap-arrow"></i>
+      </a>
+      <a href="/ui/org" class="cap-card">
+        <div class="cap-icon orange"><i class="ph-bold ph-user-circle-gear"></i></div>
+        <div class="cap-title">组织画像</div>
+        <div class="cap-desc">采购方/中标方实体画像，6 维度信用评分，参与项目、金额属实、活跃度全掌握。</div>
+        <i class="ph ph-arrow-up-right cap-arrow"></i>
+      </a>
+      <a href="/ui/quality-dashboard" class="cap-card">
+        <div class="cap-icon purple"><i class="ph-bold ph-chart-line-up"></i></div>
+        <div class="cap-title">质量评测</div>
+        <div class="cap-desc">A/B/C/D 四组消融实验对比，真实 IoU 分布，错误案例归因，成本性能一目了然。</div>
+        <i class="ph ph-arrow-up-right cap-arrow"></i>
+      </a>
+    </div>
+
+    <!-- ===== 4. Recent + Quick ===== -->
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-head">
+          <h2><i class="ph-bold ph-clock-counter-clockwise"></i>最近任务</h2>
+          <a href="/ui/quality-dashboard" class="more">查看全部 →</a>
+        </div>
+        <div class="recent-list">
+          <a href="/ui/detail" class="recent-item">
+            <div class="recent-icon blue"><i class="ph ph-file-text"></i></div>
+            <div class="recent-body">
+              <div class="recent-title">医疗设备采购项目 · 证据验证</div>
+              <div class="recent-meta">北京大学第三医院 · 331.3万元 · 2026-07-31</div>
+            </div>
+            <div class="recent-status ok">已验证</div>
+          </a>
+          <a href="/ui/org" class="recent-item">
+            <div class="recent-icon orange"><i class="ph ph-users-three"></i></div>
+            <div class="recent-body">
+              <div class="recent-title">北京大学第三医院 · 组织画像</div>
+              <div class="recent-meta">331 条记录 · 信用分 87.5 · 2026-07-31</div>
+            </div>
+            <div class="recent-status info">已画像</div>
+          </a>
+          <a href="/ui/quality-dashboard" class="recent-item">
+            <div class="recent-icon purple"><i class="ph ph-chart-bar"></i></div>
+            <div class="recent-body">
+              <div class="recent-title">W3 全量评测报告 · 99 篇</div>
+              <div class="recent-meta">精确率 97.3% · 无依据率 0% · 2026-07-31</div>
+            </div>
+            <div class="recent-status ok">已完成</div>
+          </a>
+          <a href="/ui/notice-list" class="recent-item">
+            <div class="recent-icon green"><i class="ph ph-arrows-split"></i></div>
+            <div class="recent-body">
+              <div class="recent-title">跨平台去重 · ccgp + chinabidding</div>
+              <div class="recent-meta">99 篇公告 · 2 平台 · 2026-07-31</div>
+            </div>
+            <div class="recent-status info">已去重</div>
+          </a>
+        </div>
+      </div>
+      <div class="col-card">
+        <div class="col-head">
+          <h2><i class="ph-bold ph-lightning"></i>快捷操作</h2>
+          <a href="/ui/chat" class="more">智能问答 →</a>
+        </div>
+        <div class="quick-grid">
+          <a href="/ui/search" class="quick-btn">
+            <i class="ph ph-magnifying-glass"></i><span>开始招标检索</span>
+          </a>
+          <a href="/ui/chat" class="quick-btn">
+            <i class="ph ph-chats-circle"></i><span>智能问答（6 Agent）</span>
+          </a>
+          <a href="/ui/org" class="quick-btn">
+            <i class="ph ph-user-plus"></i><span>查看组织画像</span>
+          </a>
+          <a href="/ui/detail" class="quick-btn">
+            <i class="ph ph-shield-check"></i><span>证据验证详情</span>
+          </a>
+          <a href="/ui/quality-dashboard" class="quick-btn">
+            <i class="ph ph-chart-bar"></i><span>质量评测 Dashboard</span>
+          </a>
+          <a href="/ui/versions" class="quick-btn">
+            <i class="ph ph-git-branch"></i><span>版本历史链</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <div class="footer">
+      <span class="real">● 真实数据</span> · 99 篇 W3 冻结样本集 · 321 条证据（IoU ≥ 0.5） ·
+      <span class="src">deepseek-v4-flash</span> · 证据验证 + 来源谱系 + 展示等级 ·
+      标小智 v4.1 · GOAI 2026 初赛
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

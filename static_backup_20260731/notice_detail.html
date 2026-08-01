@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1366, initial-scale=1">
+<title>标讯详情 · 证据高亮</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;height:100vh;overflow:hidden}
+.header{background:white;padding:12px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:16px}
+.back-link{color:#1976d2;text-decoration:none;font-size:14px}
+h1{font-size:18px;color:#1a1a2e}
+.doc-id{font-size:12px;color:#999}
+.legend{display:flex;gap:16px;font-size:12px}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-color{width:14px;height:14px;border-radius:3px}
+.legend-primary{background:rgba(239,83,80,.3);border:1px solid #ef5350}
+.legend-context{background:rgba(255,193,7,.3);border:1px solid #ffc107}
+.legend-qualifier{background:rgba(33,150,243,.3);border:1px solid #2196f3}
+.legend-unsupported{background:#f5f5f5;border:1px solid #ddd}
+.main-container{display:flex;height:calc(100vh - 57px)}
+.text-panel{flex:1;display:flex;flex-direction:column;border-right:1px solid #e8e8e8;background:white;min-width:0}
+.panel-header{padding:12px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+.panel-header h2{font-size:14px;color:#1a1a2e}
+.char-count{font-size:12px;color:#999}
+.text-container{flex:1;overflow:auto;padding:20px}
+.raw-text{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-all;color:#333}
+.hl{border-radius:2px;cursor:pointer;transition:all .15s}
+.hl-primary{background:rgba(239,83,80,.28);border-bottom:2px solid #ef5350}
+.hl-context{background:rgba(255,193,7,.28);border-bottom:2px solid #ffc107}
+.hl-qualifier{background:rgba(33,150,243,.28);border-bottom:2px solid #2196f3}
+.hl-active{box-shadow:0 0 0 2px rgba(25,118,210,.5)}
+.fields-panel{width:420px;display:flex;flex-direction:column;background:#fafbfc;min-width:420px}
+.fields-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;border-bottom:1px solid #f0f0f0}
+.field-nav-item{padding:8px 10px;background:white;border:1px solid #e0e0e0;border-radius:6px;cursor:pointer;text-align:center;font-size:12px;transition:all .15s}
+.field-nav-item:hover{border-color:#1976d2;color:#1976d2}
+.field-nav-item.active{background:#e3f2fd;border-color:#1976d2;color:#1565c0;font-weight:600}
+.field-nav-item.unsupported{background:#fafafa;color:#999;border-color:#eee}
+.field-nav-item.unsupported.active{background:#f5f5f5;border-color:#999;color:#666}
+.field-nav-item .count{font-size:11px;color:#999;display:block;margin-top:2px}
+.fields-container{flex:1;overflow-y:auto;padding:12px}
+.field-card{background:white;border:1px solid #e8e8e8;border-radius:8px;margin-bottom:12px;overflow:hidden}
+.field-card-header{padding:12px 14px;background:#f8f9ff;border-bottom:1px solid #eef0f8;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.field-card-header:hover{background:#f0f2ff}
+.field-card-title{font-size:14px;font-weight:600;color:#1a1a2e}
+.field-card-badge{font-size:11px;padding:2px 8px;border-radius:10px}
+.badge-supported{background:#e8f5e9;color:#2e7d32}
+.badge-unsupported{background:#fff3e0;color:#e65100}
+.badge-absent{background:#f5f5f5;color:#999}
+.field-card-body{padding:0;max-height:0;overflow:hidden;transition:max-height .3s ease}
+.field-card.expanded .field-card-body{max-height:2000px;padding:14px}
+.field-value{padding:12px;background:#fafbfc;border-radius:6px;margin-bottom:10px;border:1px solid #eef0f5}
+.field-value-label{font-size:11px;color:#999;margin-bottom:6px}
+.field-value-text{font-size:14px;color:#1a1a2e;font-weight:500;word-break:break-all}
+.field-value-raw{font-size:12px;color:#999;margin-top:4px}
+.evidence-list{margin-top:10px}
+.evidence-item{padding:8px 10px;background:white;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+.evidence-item:hover{border-color:#1976d2;background:#f5f9ff}
+.evidence-item.active{border-color:#1976d2;background:#e3f2fd}
+.evidence-role{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;margin-bottom:4px;font-weight:600}
+.role-primary{background:#ffebee;color:#c62828}
+.role-context{background:#fff8e1;color:#f57f17}
+.role-qualifier{background:#e3f2fd;color:#1565c0}
+.evidence-text{font-size:12px;color:#333;line-height:1.5;word-break:break-all}
+.evidence-offset{font-size:10px;color:#999;margin-top:4px;font-family:monospace}
+.no-evidence{color:#c62828;font-size:12px;padding:8px 0}
+.empty-state{text-align:center;padding:40px 20px;color:#999;font-size:13px}
+.amt-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.amt-budget{background:#e3f2fd;color:#1565c0}
+.amt-ceiling{background:#fff3e0;color:#e65100}
+.amt-award{background:#e8f5e9;color:#2e7d32}
+.amt-contract{background:#f3e5f5;color:#7b1fa2}
+.amt-unit_price{background:#fce4ec;color:#c62828}
+.amt-unknown{background:#f5f5f5;color:#999}
+@media(max-width:900px){.fields-panel{width:340px;min-width:340px}}
+
+/* ===== Stepper 主链路步骤条 ===== */
+.stepper{background:white;border-bottom:1px solid #e8e8e8;padding:18px 40px 14px;display:flex;align-items:flex-start;justify-content:center;gap:0;position:sticky;top:0;z-index:9}
+.stepper-track{position:absolute;top:34px;left:calc(50% - 480px);width:960px;height:2px;background:#e0e0e0;z-index:0}
+.stepper-steps{display:flex;gap:0;width:100%;max-width:960px;position:relative;z-index:1;justify-content:space-between}
+.stepper-step{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;text-decoration:none;flex:1;position:relative}
+.stepper-circle{width:36px;height:36px;border-radius:50%;background:#e8eaf6;color:#999;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s ease;border:2px solid transparent;z-index:2}
+.stepper-step.active .stepper-circle{background:#1976d2;color:white;border-color:#1565c0;box-shadow:0 0 0 4px rgba(25,118,210,.12)}
+.stepper-step.done .stepper-circle{background:#1976d2;color:white}
+.stepper-label{font-size:12px;color:#999;font-weight:500;text-align:center;white-space:nowrap;transition:color .2s ease;line-height:1.4}
+.stepper-step.active .stepper-label{color:#1565c0;font-weight:700}
+.stepper-step.done .stepper-label{color:#555}
+.stepper-step:hover .stepper-circle:not(.active){background:#c5cae9;color:#1a1a2e}
+.stepper-step:hover .stepper-label{color:#1976d2}
+@media(max-width:960px){.stepper{padding:14px 16px 10px}.stepper-label{font-size:10px}.stepper-circle{width:30px;height:30px;font-size:14px}.stepper-track{top:28px}}
+
+/* ===== 标小智品牌头 ===== */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
+.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800}
+</style>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
+</head>
+<body>
+<!-- 主链路 Stepper（6 步全流程打通） -->
+<nav class="stepper" id="mainStepper" aria-label="主链路 6 步流程"></nav>
+<div class="header">
+  <div class="header-left">
+    <div class="brand"><div class="brand-logo">标</div><span>标小智</span></div>
+    <a href="/ui/search" class="back-link"><i class="ph ph-arrow-bend-double-up-right" style="transform:rotate(135deg);display:inline-block"></i> 返回列表</a>
+    <h1>标讯详情 · 证据高亮</h1>
+    <span class="doc-id" id="docId">--</span>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-color legend-primary"></span>主证据</div>
+    <div class="legend-item"><span class="legend-color legend-context"></span>上下文</div>
+    <div class="legend-item"><span class="legend-color legend-qualifier"></span>限定条件</div>
+    <div class="legend-item"><span class="legend-color legend-unsupported"></span>无依据</div>
+  </div>
+</div>
+<div class="main-container">
+  <section class="text-panel">
+    <div class="panel-header"><h2>清洗后原文</h2><span class="char-count" id="charCount">0 字符</span></div>
+    <div class="text-container"><pre id="rawText" class="raw-text">加载中...</pre></div>
+  </section>
+  <section class="fields-panel">
+    <div class="panel-header"><h2>六类核心字段</h2><span style="font-size:12px;color:#999;">点击查看证据</span></div>
+    <nav class="fields-nav" id="fieldsNav"></nav>
+    <div class="fields-container" id="fieldsContainer"><div class="empty-state">加载中...</div></div>
+  </section>
+</div>
+<script>
+function renderMainStepper(){
+  const steps=[
+    {path:'/ui/search',icon:'ph-magnifying-glass',label:'① 需求检索'},
+    {path:'/ui/notice-list',icon:'ph-arrows-split',label:'② 跨平台去重'},
+    {path:'/ui/detail',icon:'ph-line-segment',label:'③ 证据验证'},
+    {path:'/ui/quality-dashboard#rejects',icon:'ph-x-circle',label:'④ 拒绝与冲突'},
+    {path:'/ui/org',icon:'ph-users-three',label:'⑤ 组织画像'},
+    {path:'/ui/quality-dashboard',icon:'ph-chart-bar-horizontal',label:'⑥ 评测结果'},
+  ];
+  const pn=location.pathname;
+  const hash=location.hash;
+  let activeIdx=2;
+  for(let i=0;i<steps.length;i++){
+    const s=steps[i];
+    const sp=s.path.split('#')[0];
+    if(pn===sp||pn.startsWith(sp)){
+      if(s.path.includes('#')){
+        if(hash===s.path.split('#')[1]){activeIdx=i;break}
+      }else{activeIdx=i}
+    }
+  }
+  const el=document.getElementById('mainStepper');
+  if(!el)return;
+  el.innerHTML='<div class="stepper-track"></div><div class="stepper-steps">'+steps.map((s,i)=>{
+    const cls=(i===activeIdx)?' active':(i<activeIdx)?' done':'';
+    const href=s.path;
+    return `<a class="stepper-step${cls}" href="${href}">
+      <div class="stepper-circle"><i class="ph ${s.icon}"></i></div>
+      <div class="stepper-label">${s.label}</div>
+    </a>`;
+  }).join('')+'</div>';
+}
+renderMainStepper();
+
+const FL={project_identifier:'项目编号',purchaser_name:'采购人',winner_name:'中标人',amount:'金额',publish_date:'发布日期',bid_deadline:'投标截止日期'};const AMT_TYPE={budget:'预算金额',ceiling:'最高限价',award:'中标金额',contract:'合同金额',unit_price:'单价',unknown:'未知'};
+const FO=['project_identifier','purchaser_name','winner_name','amount','publish_date','bid_deadline'];
+let rawText='',fieldData=null,curField=null,activeEv=new Set();
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function renderText(evList){
+  if(!rawText)return;
+  const spans=evList.map(e=>({start:e.start||e.raw_start,end:e.end||e.raw_end,role:e.role,id:e.id||e.evidence_id}));
+  spans.sort((a,b)=>a.start-b.start);
+  const merged=[];
+  for(const s of spans){
+    if(!merged.length||s.start>=merged.at(-1).end){merged.push({...s,roles:[s.role],ids:[s.id]})}
+    else{const l=merged.at(-1);l.end=Math.max(l.end,s.end);if(!l.roles.includes(s.role))l.roles.push(s.role);l.ids.push(s.id)}
+  }
+  let html='',pos=0;
+  for(const m of merged){
+    if(m.start>pos)html+=esc(rawText.slice(pos,m.start));
+    const rc=m.roles.includes('primary')?'hl-primary':m.roles.includes('qualifier')?'hl-qualifier':'hl-context';
+    const ac=m.ids.some(id=>activeEv.has(id))?' hl-active':'';
+    html+=`<span class="hl ${rc}${ac}" data-ids="${m.ids.join(',')}">${esc(rawText.slice(m.start,m.end))}</span>`;
+    pos=m.end;
+  }
+  if(pos<rawText.length)html+=esc(rawText.slice(pos));
+  document.getElementById('rawText').innerHTML=html;
+  document.getElementById('charCount').textContent=rawText.length+' 字符';
+  document.querySelectorAll('.hl').forEach(el=>el.addEventListener('click',()=>{
+    const ids=el.dataset.ids.split(',');const fn=findField(ids);if(fn)selField(fn,ids[0])
+  }));
+}
+function findField(ids){
+  if(!fieldData)return null;
+  for(const f of fieldData.fields)for(const v of f.values||[])
+    for(let i=0;i<(v.evidences||[]).length;i++){
+      const eid=`${f.field_id}_0_${i}`;
+      if(ids.includes(eid))return f.field_id
+    }
+  return null;
+}
+function allEvidence(){
+  const r=[];if(!fieldData)return r;
+  for(const f of fieldData.fields)for(let vi=0;vi<(f.values||[]).length;vi++){
+    const v=f.values[vi];
+    for(let ei=0;ei<(v.evidences||[]).length;ei++){
+      const e=v.evidences[ei];
+      r.push({id:`${f.field_id}_${vi}_${ei}`,start:e.raw_start||e.start,end:e.raw_end||e.end,role:e.role||'primary',text:e.text})
+    }
+  }
+  return r;
+}
+function renderNav(){
+  document.getElementById('fieldsNav').innerHTML=FO.map(name=>{
+    const f=fieldData?.fields?.find(x=>x.field_id===name);
+    const cnt=f?.values?.length||0,st=f?.field_status||'absent';
+    const hasEv=cnt>0&&f.values.some(v=>(v.evidences||[]).length>0);
+    const cls=st==='absent'?'无此字段':hasEv?cnt+' 个值':'无依据';
+    const unsup=!hasEv&&st!=='absent'?' unsupported':st==='absent'?' unsupported':'';
+    return `<div class="field-nav-item${curField===name?' active':''}${unsup}" onclick="selField('${name}')">
+              ${FL[name]||name}<span class="count">${cls}</span></div>`;
+  }).join('');
+}
+function renderCards(){
+  const c=document.getElementById('fieldsContainer');
+  if(!fieldData){c.innerHTML='<div class="empty-state">暂无数据</div>';return}
+  c.innerHTML=FO.map(name=>{
+    const f=fieldData.fields.find(x=>x.field_id===name);if(!f)return '';
+    const st=f.field_status||'absent';
+    const hasEv=(f.values||[]).some(v=>(v.evidences||[]).length>0);
+    const bc=st==='absent'?'badge-absent':hasEv?'badge-supported':'badge-unsupported';
+    const bt=st==='absent'?'无此字段':hasEv?'有依据':'无依据';
+    const vHtml=(f.values||[]).map((v,vi)=>{
+      const evs=v.evidences||[];
+      const eh=evs.map((e,ei)=>{
+        const eid=`${name}_${vi}_${ei}`,role=e.role||'primary';
+        const rl=role==='primary'?'主证据':role==='context'?'上下文':role==='qualifier'?'限定条件':role;
+        const ac=activeEv.has(eid)?' active':'';
+        const os=e.raw_start!=null?`[${e.raw_start},${e.raw_end})`:`[${e.start},${e.end})`;
+        return `<div class="evidence-item${ac}" onclick="hlEv('${eid}',${e.raw_start||e.start},${e.raw_end||e.end})">
+          <span class="evidence-role role-${role}">${rl}</span>
+          <div class="evidence-text">${esc(e.text||'')}</div>
+          <div class="evidence-offset">偏移:${os} 方法:${e.match_method||'exact'}</div></div>`;
+      }).join('');
+      const nv=v.normalized_value||v.raw_value||'(空)';
+      const raw=v.raw_value&&v.raw_value!==v.normalized_value?
+        `<div class="field-value-raw">原值:${esc(v.raw_value)}</div>`:'';
+      return `<div class="field-value">
+        <div class="field-value-label">字段值 ${vi+1}${v.lot_id?' · '+v.lot_id:''}</div>
+        <div class="field-value-text">${esc(nv)}</div>${raw}
+        ${v.amount_type?`<div style="margin-top:6px;"><span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;" class="amt-tag amt-${v.amount_type}">${AMT_TYPE[v.amount_type]||v.amount_type}</span></div>`:''}
+        ${evs.length?`<div class="evidence-list">${eh}</div>`:'<div class="no-evidence"><i class="ph ph-warning" style="color:#c62828"></i> 无证据支持</div>'}
+      </div>`;
+    }).join('');
+    const exp=curField===name?' expanded':'';
+    return `<div class="field-card${exp}"><div class="field-card-header" onclick="toggleField('${name}')">
+      <span class="field-card-title">${FL[name]||name}</span>
+      <span class="field-card-badge ${bc}">${bt}</span></div>
+      <div class="field-card-body">${st==='absent'?
+        '<div class="no-evidence">该公告不含此字段（absent）</div>':
+        (vHtml||'<div class="no-evidence"><i class="ph ph-warning" style="color:#c62828"></i> 无依据 - 未找到证据支持</div>')}
+      </div></div>`;
+  }).join('');
+}
+function toggleField(n){if(curField===n){curField=null;clearHL()}else selField(n)}
+function selField(name,evId){
+  curField=name;activeEv.clear();
+  const f=fieldData?.fields?.find(x=>x.field_id===name);
+  if(f)(f.values||[]).forEach((v,vi)=>(v.evidences||[]).forEach((e,ei)=>{
+    const eid=`${name}_${vi}_${ei}`;if(!evId)activeEv.add(eid)
+  }));
+  if(evId)activeEv.add(evId);
+  renderText(allEvidence());renderNav();renderCards();
+  if(evId){const el=document.querySelector(`.hl[data-ids*="${evId}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
+}
+function hlEv(eid,s,e){
+  const ac=activeEv.has(eid);activeEv.clear();if(!ac)activeEv.add(eid);
+  renderText(allEvidence());renderCards();
+  if(activeEv.size){const el=document.querySelector(`.hl[data-ids*="${eid}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
+}
+function clearHL(){activeEv.clear();renderText(allEvidence());renderNav();renderCards()}
+async function loadData(){
+  const p=new URLSearchParams(window.location.search);
+  const tid=p.get('id');   // 真实 tender_id（A3 新增，优先）
+  const doc=p.get('doc');  // 金标 doc_id（兼容保留）
+  const docIdEl=document.getElementById('docId');
+  try{
+    let r;
+    if(tid){
+      // 真实 tender_id → /api/real/tenders/{id}/detail（W2-11 补齐）
+      docIdEl.textContent='tender:'+tid;
+      r=await fetch(`/api/real/tenders/${encodeURIComponent(tid)}/detail`);
+    }else{
+      // 金标 doc_id → /api/demo/tenders/{doc}/fields（兼容 Demo 模式）
+      const docId=doc||'tender_06_4e47868721c5';
+      docIdEl.textContent=docId;
+      r=await fetch(`/api/demo/tenders/${encodeURIComponent(docId)}/fields`);
+    }
+    if(!r.ok)throw new Error('加载失败');
+    const d=await r.json();
+    if(d.code!==200)throw new Error(d.msg||'加载失败');
+    rawText=d.data.clean_raw_text||'';fieldData=d.data;
+  }catch(e){
+    document.getElementById('rawText').textContent='加载失败: '+e.message+'\n\n请确保 API 已配置正确。';return
+  }
+  renderText(allEvidence());renderNav();renderCards();
+}
+loadData();
+</script>
+</body>
+</html>

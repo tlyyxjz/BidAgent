@@ -3,179 +3,131 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1366, initial-scale=1">
-<title>版本历史 · BidAgent</title>
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web">
+<title>版本历史 · 变更追踪</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --primary:#1677ff;--primary-bg:#e6f4ff;
-  --success:#52c41a;--success-bg:#f6ffed;
-  --warning:#faad14;--warning-bg:#fffbe6;
-  --error:#ff4d4f;--error-bg:#fff2f0;
-  --purple:#722ed1;--purple-bg:#f9f0ff;
-  --bg:#f5f7fa;--card-bg:#ffffff;
-  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
-  --border:#e8e8e8;--border-2:#f0f0f0;
-  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
-  --sidebar-width:208px;--header-h:52px;
-  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
-  --role-orig-bg:#e3f2fd;--role-orig-fg:#1565c0;
-  --role-repost-bg:#e0f7fa;--role-repost-fg:#00838f;
-  --role-comm-bg:#eceff1;--role-comm-fg:#546e7a;
-}
-body.dark{
-  --bg:#0d1117;--card-bg:#161b22;
-  --text:#e6edf3;--text-2:#adbac7;--text-3:#768390;
-  --border:#30363d;--border-2:#21262d;
-  --sidebar-bg:#010409;--sidebar-text:#8b949e;
-  --primary-bg:#0c1d33;--success-bg:#0d1f0d;--warning-bg:#1f1a0a;--error-bg:#1f0a0a;--purple-bg:#1a0d2e;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 1px 6px -1px rgba(0,0,0,.2);
-  --role-orig-bg:#0c2236;--role-orig-fg:#64b5f6;--role-repost-bg:#0a262a;--role-repost-fg:#4dd0e1;--role-comm-bg:#1c2128;--role-comm-fg:#90a4ae;
-}
-html,body{height:100%}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
+.header{background:white;padding:16px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header-left{display:flex;align-items:center;gap:16px}
+.back-link{color:#1976d2;text-decoration:none;font-size:14px}
+h1{font-size:18px;color:#1a1a2e}
+.source-info{font-size:12px;color:#999}
+.stats-bar{display:flex;gap:24px;padding:16px 24px;background:white;border-bottom:1px solid #f0f0f0}
+.stat-item{display:flex;flex-direction:column;gap:4px}
+.stat-label{font-size:12px;color:#999}
+.stat-value{font-size:20px;font-weight:600;color:#1a1a2e}
+.stat-value.primary{color:#1976d2}
+.stat-value.success{color:#2e7d32}
+.stat-value.warning{color:#f57c00}
+.main-container{max-width:900px;margin:0 auto;padding:24px}
+.timeline{position:relative;padding-left:40px}
+.timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:#e0e0e0}
+.version-card{background:white;border:1px solid #e8e8e8;border-radius:8px;padding:16px 20px;margin-bottom:20px;position:relative;transition:box-shadow .2s}
+.version-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.version-card::before{content:'';position:absolute;left:-32px;top:24px;width:12px;height:12px;border-radius:50%;background:#1976d2;border:3px solid white;box-shadow:0 0 0 2px #1976d2}
+.version-card.current::before{background:#43a047;box-shadow:0 0 0 2px #43a047}
+.version-card.create::before{background:#1976d2;box-shadow:0 0 0 2px #1976d2}
+.version-card.update_content::before{background:#1976d2}
+.version-card.update_material::before{background:#7b1fa2}
+.version-card.correction::before{background:#f57c00}
+.version-card.reissue::before{background:#c62828}
+.version-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.version-title{display:flex;align-items:center;gap:10px}
+.version-label{font-size:16px;font-weight:600;color:#1a1a2e}
+.version-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.badge-create{background:#e3f2fd;color:#1565c0}
+.badge-update_content{background:#e8f5e9;color:#2e7d32}
+.badge-update_material{background:#f3e5f5;color:#7b1fa2}
+.badge-correction{background:#fff3e0;color:#e65100}
+.badge-reissue{background:#ffebee;color:#c62828}
+.badge-current{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.version-date{font-size:12px;color:#999}
+.version-summary{font-size:13px;color:#555;margin-bottom:12px;line-height:1.6}
+.version-hashes{display:flex;gap:20px;padding:10px 12px;background:#f8f9ff;border-radius:6px;margin-bottom:12px;font-family:monospace;font-size:11px;color:#666}
+.hash-item{display:flex;flex-direction:column;gap:2px}
+.hash-label{font-size:10px;color:#999;font-family:sans-serif}
+.hash-value{color:#1a237e;font-family:monospace}
+.diff-summary{display:flex;gap:16px;margin-bottom:12px;font-size:12px}
+.diff-tag{padding:2px 8px;border-radius:4px;font-weight:500}
+.diff-add{background:#e8f5e9;color:#2e7d32}
+.diff-del{background:#ffebee;color:#c62828}
+.diff-mod{background:#fff3e0;color:#e65100}
+.material-section{border-top:1px solid #f0f0f0;padding-top:12px}
+.material-title{font-size:12px;font-weight:600;color:#666;margin-bottom:8px}
+.material-list{display:flex;flex-direction:column;gap:6px}
+.material-item{display:flex;align-items:center;gap:10px;padding:6px 10px;background:#fafbfc;border-radius:4px;font-size:12px}
+.material-icon{font-size:14px}
+.material-name{flex:1;color:#333}
+.material-action{font-size:11px;padding:1px 6px;border-radius:3px}
+.action-added{background:#e8f5e9;color:#2e7d32}
+.action-modified{background:#fff3e0;color:#e65100}
+.action-removed{background:#ffebee;color:#c62828}
+.material-size{font-size:11px;color:#999;font-family:monospace}
+.view-diff-btn{margin-top:10px;padding:6px 14px;background:#f5f7fa;border:1px solid #ddd;border-radius:4px;cursor:pointer;font-size:12px;color:#666;transition:all .15s}
+.view-diff-btn:hover{background:#e3f2fd;border-color:#1976d2;color:#1976d2}
+.diff-content{margin-top:10px;padding:12px;background:#1e1e1e;border-radius:6px;font-family:monospace;font-size:12px;line-height:1.6;display:none;max-height:300px;overflow:auto}
+.diff-content.show{display:block}
+.diff-line{padding:2px 8px}
+.diff-add{background:rgba(76,175,80,.2);color:#a5d6a7}
+.diff-del{background:rgba(244,67,54,.2);color:#ef9a9a}
+.diff-ctx{color:#999}
+@media(max-width:768px){.main-container{padding:16px}.timeline{padding-left:30px}.timeline::before{left:10px}.version-card::before{left:-27px}}}
 
-/* ===== Sidebar ===== */
-.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
-.sidebar-logo{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+/* ===== 标小智品牌头 ===== */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
+.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800}
+
+/* ===== Unified Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:208px;height:100vh;background:#001529;display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:52px;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:#1677ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
 .sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
 .sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
 .nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:#1677ff}
 .nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
-.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:#1677ff;color:#fff;font-weight:600}
 .sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
-.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
-
-/* ===== Main ===== */
-.main-wrap{margin-left:var(--sidebar-width);min-height:100vh;display:flex;flex-direction:column}
-.top-header{height:var(--header-h);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.sidebar-footer .comp-tag{color:#1677ff;font-weight:600}
+/* ===== Unified Main Wrap ===== */
+.main-wrap{margin-left:208px;min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:52px;background:#fff;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02)}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-title{font-size:15px;font-weight:600;color:var(--text)}
-.header-title i{color:var(--primary);margin-right:6px}
+.header-title{font-size:15px;font-weight:600;color:#1a1a2e}
+.header-title i{color:#1677ff;margin-right:6px}
 .header-right{display:flex;align-items:center;gap:10px}
 .h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
-.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
-.h-badge.data{background:var(--success-bg);color:var(--success)}
-.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
-.theme-btn{width:32px;height:32px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:16px;transition:all .15s}
-.theme-btn:hover{border-color:var(--primary);color:var(--primary)}
+.h-badge.comp{background:#e6f4ff;color:#1677ff}
+.h-badge.data{background:#f6ffed;color:#52c41a}
+.h-badge.vers{background:#f5f7fa;color:#595959;border:1px solid #e8e8e8}
+body{background:#f5f7fa}
 
-/* ===== Content ===== */
-.content{flex:1;padding:16px 20px 40px}
-.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:12px}
-.breadcrumb a{color:var(--primary);text-decoration:none}
-.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
-.page-head h1{font-size:22px;color:var(--text);font-weight:700;letter-spacing:.3px}
-.page-head h1 i{color:var(--primary);margin-right:8px}
-.page-head .sub{font-size:12px;color:var(--text-3);margin-top:6px}
-.page-head .right-info{display:flex;gap:8px}
-
-/* ===== Card ===== */
-.card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;box-shadow:var(--shadow)}
-.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.card-head h2{font-size:14px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:6px}
-.card-head h2 i{color:var(--primary);font-size:17px}
-.card-head .desc{font-size:11px;color:var(--text-3);font-weight:400}
-
-/* ===== Tags ===== */
-.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;white-space:nowrap}
-.tag.info{background:var(--primary-bg);color:var(--primary)}
-.tag.ok{background:var(--success-bg);color:var(--success)}
-.tag.warn{background:var(--warning-bg);color:var(--warning)}
-.tag.err{background:var(--error-bg);color:var(--error)}
-.tag.purple{background:var(--purple-bg);color:var(--purple)}
-.role-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:4px;font-weight:600;white-space:nowrap}
-.role-tag.official_original{background:var(--role-orig-bg);color:var(--role-orig-fg)}
-.role-tag.official_repost{background:var(--role-repost-bg);color:var(--role-repost-fg)}
-.role-tag.commercial_repost{background:var(--role-comm-bg);color:var(--role-comm-fg)}
-
-/* ===== Provenance concept ===== */
-.prov-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow)}
-.prov-intro{font-size:12px;color:var(--text-2);line-height:1.7;margin-bottom:12px}
-.prov-intro i{color:var(--primary)}
-.prov-roles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.prov-role{border:1px solid var(--border-2);border-radius:8px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;background:var(--bg)}
-.pr-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.pr-icon.orig{background:var(--role-orig-bg);color:var(--role-orig-fg)}
-.pr-icon.repost{background:var(--role-repost-bg);color:var(--role-repost-fg)}
-.pr-icon.comm{background:var(--role-comm-bg);color:var(--role-comm-fg)}
-.pr-body{flex:1;min-width:0}
-.pr-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
-.pr-desc{font-size:11px;color:var(--text-3);line-height:1.5}
-
-/* ===== Timeline ===== */
-.timeline{position:relative;padding-left:8px}
-.timeline::before{content:'';position:absolute;left:18px;top:6px;bottom:6px;width:2px;background:var(--border)}
-.tl-node{position:relative;padding:0 0 16px 44px}
-.tl-node:last-child{padding-bottom:0}
-.tl-dot{position:absolute;left:10px;top:2px;width:18px;height:18px;border-radius:50%;background:var(--card-bg);border:3px solid var(--primary);z-index:1}
-.tl-node.repost .tl-dot{border-color:#00838f}
-.tl-node.comm .tl-dot{border-color:#546e7a}
-.tl-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;box-shadow:var(--shadow);transition:border-color .15s}
-.tl-card:hover{border-color:var(--primary)}
-.tl-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-.tl-ver{font-size:14px;font-weight:700;color:var(--text)}
-.tl-time{font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums}
-.tl-simhash{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--success-bg);color:var(--success)}
-.tl-simhash.mid{background:var(--warning-bg);color:var(--warning)}
-.tl-simhash.low{background:var(--error-bg);color:var(--error)}
-.tl-desc{font-size:12px;color:var(--text-2);line-height:1.6}
-.tl-desc .hl{color:var(--primary);font-weight:600}
-
-/* ===== Chart ===== */
-.chart-box{width:100%;height:280px}
-.chart-note{font-size:11px;color:var(--text-3);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:4px;line-height:1.5}
-.chart-note i{color:var(--primary);margin-right:4px}
-
-/* ===== Tables ===== */
-.tbl-wrap{overflow-x:auto}
-.tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{font-size:11px;color:var(--text-3);font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
-.tbl td{padding:9px 12px;border-bottom:1px solid var(--border-2);color:var(--text-2);font-variant-numeric:tabular-nums;vertical-align:top}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:var(--primary-bg)}
-.tbl .num{font-weight:700;color:var(--text)}
-.tbl .grp{font-weight:700;color:var(--primary)}
-.tbl .code{font-family:Consolas,monospace;font-size:11px;color:var(--text-3)}
-.conflict-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600}
-.conflict-tag.change{background:var(--warning-bg);color:var(--warning)}
-.conflict-tag.add{background:var(--success-bg);color:var(--success)}
-.conflict-tag.del{background:var(--error-bg);color:var(--error)}
-
-/* ===== Footer ===== */
-.footer{margin-top:16px;padding:12px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3);line-height:1.7;text-align:center;box-shadow:var(--shadow)}
-.footer .real{color:var(--success);font-weight:600}
-.footer .src{color:var(--primary);font-weight:600}
-
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-track{background:transparent}
 </style>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
 </head>
 <body>
-
 <!-- ===== Sidebar ===== -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-icon">B</div>
-    <div class="logo-text">BidAgent</div>
+    <div class="logo-icon">标</div>
+    <div class="logo-text">标小智</div>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-section-label">功能导航</div>
-    <a class="nav-item" href="/ui/search"><i class="ph ph-magnifying-glass"></i>检索</a>
-    <a class="nav-item" href="/ui/notice-list"><i class="ph ph-file-text"></i>公告</a>
-    <a class="nav-item" href="/ui/detail"><i class="ph ph-list-bullets"></i>详情</a>
-    <a class="nav-item" href="/ui/quality-dashboard"><i class="ph ph-chart-bar"></i>评测<span class="nav-badge">W3</span></a>
-    <a class="nav-item" href="/ui/org"><i class="ph ph-user-circle"></i>画像</a>
-    <a class="nav-item active" href="/ui/version"><i class="ph ph-git-branch"></i>版本</a>
+    <div class="nav-section-label">主导航</div>
+<a href="/ui" class="nav-item"><i class="ph-bold ph-house"></i><span>工作台</span></a>
+<a href="/ui/search" class="nav-item"><i class="ph-bold ph-magnifying-glass"></i><span>招标检索</span></a>
+<a href="/ui/notice-list" class="nav-item"><i class="ph-bold ph-list-magnifying-glass"></i><span>跨平台去重</span></a>
+<a href="/ui/detail" class="nav-item"><i class="ph-bold ph-line-segment"></i><span>证据验证</span></a>
+<a href="/ui/org" class="nav-item"><i class="ph-bold ph-users-three"></i><span>组织画像</span></a>
+<a href="/ui/quality-dashboard" class="nav-item"><i class="ph-bold ph-chart-bar"></i><span>质量评测</span></a>
+<a href="/ui/versions" class="nav-item active"><i class="ph-bold ph-git-branch"></i><span>版本历史</span></a>
+<a href="/ui/chat" class="nav-item"><i class="ph-bold ph-chats-circle"></i><span>智能问答</span><span class="nav-badge">AI</span></a>
   </nav>
   <div class="sidebar-footer">
-    <div>AI + 金融 · 招投标数据服务</div>
-    <div class="comp-tag">GOAI 2026 参赛演示</div>
+    <div><span class="comp-tag">标小智</span> v4.1</div>
+    <div>GOAI 2026 初赛 · W3</div>
   </div>
 </aside>
 
@@ -188,226 +140,102 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="header-right">
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
       <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
-      <div class="h-badge vers">k3 · 99篇</div>
-      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题"><i class="ph ph-moon" id="themeIcon"></i></button>
+      <div class="h-badge vers">v4.1 · 99篇</div>
     </div>
   </header>
+  <div class="content-area" style="flex:1;padding:16px 20px 40px">
 
-  <main class="content">
-    <div class="breadcrumb"><a href="/ui/search">首页</a> / <a href="/ui/version">版本</a> / 版本历史</div>
 
-    <div class="page-head">
-      <div>
-        <h1><i class="ph-bold ph-tree-structure"></i>来源谱系与版本历史</h1>
-        <div class="sub">六 Agent 协同 · 来源谱系 (provenance) + SimHash 相似度 + 事实冲突检测</div>
-      </div>
-      <div class="right-info">
-        <div class="h-badge info"><i class="ph ph-fingerprint"></i>w3_correction_093</div>
-        <div class="h-badge vers"><i class="ph ph-stack"></i>5 版本</div>
-      </div>
-    </div>
+<div class="source-info" id="sourceInfo" style="font-size:12px;color:#8c8c8c;margin-bottom:8px">加载中...</div>
+  <div class="stats-bar" id="statsBar"></div>
+<div class="main-container">
+  <div class="timeline" id="timeline"></div>
+</div>
+<script>
 
-    <!-- ===== Provenance concept ===== -->
-    <div class="prov-card">
-      <div class="card-head">
-        <h2><i class="ph ph-share-network"></i>来源谱系 (Provenance)<span class="desc">三种来源角色 · 追溯每条数据的传播路径</span></h2>
-        <span class="tag info">3 角色</span>
-      </div>
-      <div class="prov-intro">
-        <i class="ph ph-info"></i>来源谱系记录公告从首发到转载的完整传播链路。每个版本标注来源角色, 用于评估数据可信度与版本一致性。SimHash 相似度衡量版本间文本指纹差异, 低于 0.90 触发事实冲突检测。
-      </div>
-      <div class="prov-roles">
-        <div class="prov-role">
-          <div class="pr-icon orig"><i class="ph-bold ph-seal-check"></i></div>
-          <div class="pr-body">
-            <div class="pr-name"><span class="role-tag official_original">official_original</span></div>
-            <div class="pr-desc">官方原始发布。采购网/交易平台首发的公告, 可信度最高, 作为版本基线 (baseline)。</div>
-          </div>
+const CT={create:'初始创建',update_content:'内容更新',update_material:'附件更新',correction:'更正公告',reissue:'重新发布'};
+function fmtSize(b){if(b<1024)return b+' B';if(b<1024*1024)return(b/1024).toFixed(1)+' KB';return(b/1024/1024).toFixed(1)+' MB'}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function renderStats(d){
+  document.getElementById('sourceInfo').textContent=d.source_platform+' · '+d.source_url;
+  const s=document.getElementById('statsBar');
+  const added=d.versions.reduce((a,v)=>a+(v.diff_highlight?.added||0),0);
+  const removed=d.versions.reduce((a,v)=>a+(v.diff_highlight?.removed||0),0);
+  const mats=d.versions.reduce((a,v)=>a+(v.material_changes?.length||0),0);
+  s.innerHTML=`<div class="stat-item"><span class="stat-label">总版本数</span><span class="stat-value primary">${d.total_versions}</span></div>
+    <div class="stat-item"><span class="stat-label">当前版本</span><span class="stat-value success">v${d.current_version}.0</span></div>
+    <div class="stat-item"><span class="stat-label">内容变更行</span><span class="stat-value">+${added} / -${removed}</span></div>
+    <div class="stat-item"><span class="stat-label">附件变更</span><span class="stat-value warning">${mats} 次</span></div>`;
+}
+function renderTimeline(versions){
+  const tl=document.getElementById('timeline');
+  tl.innerHTML=versions.map((v,i)=>{
+    const isCur=i===0;
+    const ct=v.change_type;
+    const matHtml=v.material_changes?.length?`<div class="material-section">
+      <div class="material-title"><i class="ph ph-paperclip" style="color:#1976d2"></i> 附件变更 (${v.material_changes.length})</div>
+      <div class="material-list">${v.material_changes.map(m=>`<div class="material-item">
+        <span class="material-icon"><i class="ph ph-file" style="color:#666"></i></span>
+        <span class="material-name">${esc(m.name)}</span>
+        <span class="material-action action-${m.action}">${m.action==='added'?'新增':m.action==='modified'?'修改':'删除'}</span>
+        <span class="material-size">${fmtSize(m.size)}</span>
+      </div>`).join('')}</div>
+    </div>`:'';
+    const diff=v.diff_highlight;
+    return `<div class="version-card ${ct}${isCur?' current':''}" id="v${v.version_id}">
+      <div class="version-header">
+        <div class="version-title">
+          <span class="version-label">${v.version_label}</span>
+          <span class="version-badge badge-${ct}">${CT[ct]||ct}</span>
+          ${isCur?'<span class="version-badge badge-current">当前版本</span>':''}
         </div>
-        <div class="prov-role">
-          <div class="pr-icon repost"><i class="ph-bold ph-arrow-fat-lines-right"></i></div>
-          <div class="pr-body">
-            <div class="pr-name"><span class="role-tag official_repost">official_repost</span></div>
-            <div class="pr-desc">官方转发。同一官方体系内的同步转载, 内容主体一致, 可信度高。</div>
-          </div>
-        </div>
-        <div class="prov-role">
-          <div class="pr-icon comm"><i class="ph-bold ph-storefront"></i></div>
-          <div class="pr-body">
-            <div class="pr-name"><span class="role-tag commercial_repost">commercial_repost</span></div>
-            <div class="pr-desc">商业平台转载。第三方数据服务商转载, 可能有摘要改写, 需交叉验证。</div>
-          </div>
-        </div>
+        <span class="version-date">${v.publish_time.replace('T',' ')}</span>
       </div>
-    </div>
-
-    <!-- ===== Timeline ===== -->
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head">
-        <h2><i class="ph ph-timeline"></i>版本时间线<span class="desc">5 个版本节点 · SimHash 相似度对比基线 v1.0</span></h2>
-        <span class="tag purple">5 节点</span>
+      <div class="version-summary">${esc(v.change_summary)}</div>
+      <div class="version-hashes">
+        <div class="hash-item"><span class="hash-label">content_sha256</span><span class="hash-value">${v.content_sha256}</span></div>
+        <div class="hash-item"><span class="hash-label">material_sha256</span><span class="hash-value">${v.material_sha256}</span></div>
       </div>
-      <div class="timeline" id="timeline"></div>
-    </div>
-
-    <!-- ===== Bar Chart ===== -->
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head">
-        <h2><i class="ph ph-chart-bar"></i>版本 SimHash 相似度对比<span class="desc">5 个版本相对基线 v1.0 的文本指纹相似度</span></h2>
-        <span class="tag ok">平均 0.942</span>
+      <div class="diff-summary">
+        <span class="diff-tag diff-add">+ ${diff.added} 行新增</span>
+        <span class="diff-tag diff-del">- ${diff.removed} 行删除</span>
+        <span class="diff-tag diff-mod">~ ${diff.modified} 处修改</span>
       </div>
-      <div id="chart-bar" class="chart-box"></div>
-      <div class="chart-note"><i class="ph ph-info"></i>v2.0 相似度 0.876 低于 0.90 阈值, 触发事实冲突检测 (因更正公告变更了金额并删除联系电话)。</div>
-    </div>
-
-    <!-- ===== Conflict Table ===== -->
-    <div class="card">
-      <div class="card-head">
-        <h2><i class="ph ph-warning-octagon"></i>事实冲突检测<span class="desc">3 条冲突记录 · fact_assertion_key 唯一标识</span></h2>
-        <span class="tag err">3 冲突</span>
+      ${matHtml}
+      <button class="view-diff-btn" onclick="toggleDiff(${v.version_id})"><i class="ph ph-file-text" style="color:#666;margin-right:4px"></i>查看 Diff</button>
+      <div class="diff-content" id="diff-${v.version_id}">
+        <div class="diff-line diff-add">+ 新增内容示例：项目名称：信息化系统建设项目</div>
+        <div class="diff-line diff-add">+ 预算金额：1,200,000.00 元</div>
+        <div class="diff-line diff-ctx">...</div>
+        <div class="diff-line diff-del">- 投标截止：2026年8月1日</div>
+        <div class="diff-line diff-add">+ 投标截止：2026年8月15日</div>
+        <div class="diff-line diff-ctx">...</div>
       </div>
-      <div class="tbl-wrap">
-        <table class="tbl" id="conflictTable"></table>
-      </div>
-    </div>
-
-    <div class="footer">
-      <span class="real">版本数据基于真实公告 w3_correction_093 的来源谱系模拟</span> · 数据源文件: k3_annotations_batch2.json · SimHash 阈值 0.90<br>
-      BidAgent · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
-    </div>
-  </main>
+    </div>`;
+  }).join('');
+}
+function toggleDiff(vid){
+  const el=document.getElementById('diff-'+vid);
+  el.classList.toggle('show');
+}
+async function loadData(){
+  const p=new URLSearchParams(window.location.search);
+  const sid=p.get('source')||'ccgp_001';
+  try{
+    const r=await fetch(`/api/demo/sources/${encodeURIComponent(sid)}/versions`);
+    if(!r.ok)throw new Error('加载失败');
+    const d=await r.json();
+    if(d.code!==200)throw new Error(d.msg||'加载失败');
+    renderStats(d.data);
+    renderTimeline(d.data.versions);
+  }catch(e){
+    document.getElementById('timeline').innerHTML='<div style="text-align:center;padding:60px;color:#999;">加载失败: '+e.message+'</div>';
+  }
+}
+loadData();
+</script>
+</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-<script>
-/* ================================================================
- * 版本历史数据 - 基于 w3_correction_093 的来源谱系
- * ================================================================ */
-var VERSIONS = [
-  { ver:"v1.0", time:"2026-07-25 09:30", role:"official_original", simhash:1.000,
-    desc:"原始招标公告由 <span class='hl'>广西政府采购网</span> 首发发布, 作为版本基线 (baseline)。" },
-  { ver:"v1.1", time:"2026-07-26 14:12", role:"official_repost", simhash:0.982,
-    desc:"自治区财政厅同步转发, <span class='hl'>微调排版格式</span>, 主体内容一致。" },
-  { ver:"v1.2", time:"2026-07-27 10:45", role:"commercial_repost", simhash:0.941,
-    desc:"商业数据平台转载, <span class='hl'>摘要改写</span> 并补充联系方式, 需交叉验证。" },
-  { ver:"v2.0", time:"2026-07-30 16:56", role:"official_original", simhash:0.876,
-    desc:"官方发布 <span class='hl'>更正公告</span>, 变更采购金额并删除联系电话, 触发事实冲突检测。" },
-  { ver:"v2.1", time:"2026-07-30 18:20", role:"official_repost", simhash:0.913,
-    desc:"官方更正内容同步转发, 主体与 v2.0 一致, <span class='hl'>SimHash 回升</span>。" }
-];
-
-var CONFLICTS = [
-  { field:"amount (中标金额)", va:"86.5 万元", vb:"78.5 万元", type:"change", typeText:"值变更",
-    key:"fact#amount#w3_correction_093" },
-  { field:"winner_name (中标人)", va:"(v1.2 缺失)", vb:"新疆拓源工程管理咨询有限公司", type:"add", typeText:"新增",
-    key:"fact#winner_name#w3_correction_093" },
-  { field:"contact_phone (联系电话)", va:"0771-6822xxx", vb:"(v2.0 已删除)", type:"del", typeText:"删除",
-    key:"fact#contact_phone#w3_correction_093" }
-];
-
-var charts = {};
-var isDark = false;
-
-function theme() {
-  return isDark
-    ? { t:'#adbac7', al:'#768390', gl:'#21262d', bg:'#161b22', bt:'#e6edf3' }
-    : { t:'#595959', al:'#8c8c8c', gl:'#f0f0f0', bg:'#ffffff', bt:'#1a1a2e' };
-}
-
-/* ===== Timeline ===== */
-function renderTimeline() {
-  var html = VERSIONS.map(function(v){
-    var nodeCls = v.role === 'official_repost' ? 'repost' : (v.role === 'commercial_repost' ? 'comm' : '');
-    var simCls = v.simhash >= 0.95 ? '' : (v.simhash >= 0.90 ? 'mid' : 'low');
-    var roleName = v.role === 'official_original' ? '官方原始' : (v.role === 'official_repost' ? '官方转发' : '商业转载');
-    return '<div class="tl-node ' + nodeCls + '">' +
-      '<div class="tl-dot"></div>' +
-      '<div class="tl-card">' +
-        '<div class="tl-top">' +
-          '<span class="tl-ver">' + v.ver + '</span>' +
-          '<span class="role-tag ' + v.role + '"><i class="ph ph-tag"></i>' + v.role + '</span>' +
-          '<span class="tl-time"><i class="ph ph-clock"></i>' + v.time + '</span>' +
-          '<span class="tl-simhash ' + simCls + '"><i class="ph ph-fingerprint"></i>SimHash ' + v.simhash.toFixed(3) + '</span>' +
-        '</div>' +
-        '<div class="tl-desc">' + v.desc + '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-  document.getElementById('timeline').innerHTML = html;
-}
-
-/* ===== Bar Chart ===== */
-function initBar() {
-  var el = document.getElementById('chart-bar');
-  var c = echarts.init(el);
-  charts.bar = c;
-  var th = theme();
-  var vers = VERSIONS.map(function(v){ return v.ver; });
-  var sims = VERSIONS.map(function(v){ return +(v.simhash * 100).toFixed(1); });
-  var colors = sims.map(function(s){
-    if (s >= 95) return '#52c41a';
-    if (s >= 90) return '#faad14';
-    return '#ff4d4f';
-  });
-  c.setOption({
-    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
-      formatter: function(p) {
-        var v = VERSIONS[p[0].dataIndex];
-        return '<b>' + v.ver + '</b> (' + v.role + ')<br/>' +
-          p[0].marker + ' SimHash: ' + v.simhash.toFixed(3) + '<br/>' +
-          '时间: ' + v.time;
-      }
-    },
-    grid: { left:50, right:30, top:30, bottom:35 },
-    xAxis: { type:'category', data:vers,
-      axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
-    yAxis: { type:'value', name:'相似度 %', nameTextStyle:{color:th.al,fontSize:10}, min:80, max:101,
-      axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
-    series: [{
-      type:'bar', barWidth:38, data: sims.map(function(v,i){ return { value:v, itemStyle:{ color:colors[i], borderRadius:[3,3,0,0] } }; }),
-      markLine:{ silent:true, symbol:'none', lineStyle:{ color:'#ff4d4f', type:'dashed', width:1.5 },
-        data:[ { yAxis:90, label:{ formatter:'阈值 90%', color:'#ff4d4f', fontSize:10, position:'insideEndTop' } } ] },
-      label:{ show:true, position:'top', color:th.bt, fontSize:11, fontWeight:600, formatter:'{c}%' }
-    }]
-  });
-}
-
-/* ===== Conflict Table ===== */
-function renderConflictTable() {
-  var html = '<thead><tr><th>字段名</th><th>版本A值</th><th>版本B值</th><th>冲突类型</th><th>fact_assertion_key</th></tr></thead><tbody>';
-  CONFLICTS.forEach(function(c){
-    html += '<tr>' +
-      '<td class="grp">' + c.field + '</td>' +
-      '<td>' + c.va + '</td>' +
-      '<td>' + c.vb + '</td>' +
-      '<td><span class="conflict-tag ' + c.type + '"><i class="ph ph-arrows-left-right"></i>' + c.typeText + '</span></td>' +
-      '<td class="code">' + c.key + '</td>' +
-    '</tr>';
-  });
-  html += '</tbody>';
-  document.getElementById('conflictTable').innerHTML = html;
-}
-
-function destroyAllCharts(){
-  Object.keys(charts).forEach(function(k){ if(charts[k]){ charts[k].dispose(); delete charts[k]; } });
-}
-function initAllCharts(){ initBar(); }
-
-function toggleTheme(){
-  isDark = !isDark;
-  document.body.classList.toggle('dark', isDark);
-  document.getElementById('themeIcon').className = isDark ? 'ph ph-sun' : 'ph ph-moon';
-  destroyAllCharts();
-  initAllCharts();
-}
-window.addEventListener('resize', function(){
-  Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].resize(); });
-});
-window.addEventListener('DOMContentLoaded', function(){
-  renderTimeline();
-  renderConflictTable();
-  initAllCharts();
-});
-</script>
 </body>
 </html>

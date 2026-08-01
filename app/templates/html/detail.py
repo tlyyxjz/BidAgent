@@ -81,12 +81,18 @@ h1{font-size:18px;color:#1a1a2e}
 .support-level{font-size:11px;color:#666;margin-top:6px}
 .empty-state{text-align:center;padding:40px 20px;color:#999;font-size:13px}
 @media(max-width:900px){.fields-panel{width:340px;min-width:340px}}
+
+/* ===== 标小智品牌头 ===== */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
+.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800}
 </style>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
 </head>
 <body>
 <div class="header">
   <div class="header-left">
-    <a href="/ui/tenders" class="back-link">← 返回列表</a>
+    <a href="/ui/notice-list" class="back-link">← 返回列表</a>
+    <div class="brand"><div class="brand-logo">标</div><span>标小智</span></div>
     <h1>招标详情 · 字段高亮 Demo</h1>
     <span class="doc-id" id="docId">--</span>
   </div>
@@ -239,6 +245,8 @@ async function loadData(){
   renderText(allEvidence());renderNav();renderCards();
 }
 loadData();
+</script>
+<script>
 </script>
 </body>
 </html>"""

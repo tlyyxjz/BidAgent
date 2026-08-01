@@ -12,7 +12,7 @@
 | 1 | 作品简介（500 字） | 必需 | ✅ 已完成 | GOAI_初赛提交材料_正式版.md 第一节 | 500 字整，含六 Agent/三金融能力/合规边界 |
 | 2 | 方案 PPT/PDF | 必需 | ✅ 已定稿 | _w2_report/proposal.pptx | 28 页 629.9KB，4:3 布局，含王祯明团队页，路线图含 W4 React 升级 |
 | 3 | 合规边界声明 | 建议附 | ✅ 已创建（2026-07-28，117 行，5601 字节） | _w2_report/compliance.md | 4 大块：数据来源/隐私保护/AI 反幻觉/行业边界 |
-| 4 | Demo 视频（90 秒） | 可选加分 | ⏳ 脚本就绪待录 | BidAgent_Demo_脚本.md | 90 秒 4 场景分镜，571 tests 数据已更新 |
+| 4 | Demo 视频（90 秒） | 可选加分 | ⏳ 脚本就绪待录 | 标小智_Demo_脚本.md | 90 秒 4 场景分镜，571 tests 数据已更新 |
 | 5 | 代码仓库链接 | 建议附 | ✅ 已公开 | GitHub: tlyyxjz/BidAgent | feature/glm-w2-evidence + feature/glm-w2-06 已推送 |
 | 6 | W2-06 前端字段高亮 Demo | 内部交付 | ✅ 已入库 | feature/glm-w2-06 分支 commit 79b2f35 | 12 项 Playwright + 9 项冒烟全过 |
 
@@ -25,7 +25,7 @@
 | F1 | proposal.pptx | GOAI 提交材料标"已完成 30 页"，实际文件不存在 | ✅ 已生成 28 页 629.9KB PPT |
 | F2 | compliance.md | 同上，标"已完成"，实际文件不存在 | ✅ 已生成 5.5KB（117 行） |
 | F3 | 测试数 511 | Demo 脚本写"511 tests"，实际 571 | ✅ 已完成（511→571） |
-| F4 | 路演讲稿 | 还是 ScrapeFlow 时代（5 层架构），未更新到 BidAgent 六 Agent | ⏳ W3 任务 |
+| F4 | 路演讲稿 | 还是 ScrapeFlow 时代（5 层架构），未更新到标小智六 Agent | ⏳ W3 任务 |
 | F5 | PPT 页脚 "null / 30" | slideNumber 在 addSlide 时为 null + 总页数硬编码 30 | ✅ 改用全局计数器，页脚显示 "X / 28" |
 | F6 | PPT 目录页码错 | 目录写 14-21/22-25 等，实际页码 14-19/20-23 等 | ✅ 已修正目录页码引用 |
 | F7 | 数据夸大 | compliance.md 实际 5.5KB，之前说 8KB | ✅ 已更正 |
@@ -62,7 +62,7 @@
 
 | 页码 | 内容 |
 |------|------|
-| 1 | 封面：BidAgent 智能标讯助手 |
+| 1 | 封面：标小智 |
 | 2 | 目录 |
 | 3-7 | 01 项目背景与定位（数据孤岛/痛点/用户/市场/方案） |
 | 8-12 | 02 六 Agent 协同架构（架构图/各 Agent 详解/金融分析核心） |
@@ -77,14 +77,14 @@
 ### P0 必须做（8/16 截止前）
 
 1. ~~**更新 Demo 脚本过时数据**~~：✅ 已完成（511 → 571 tests）
-2. **录制 Demo 视频**：按 BidAgent_Demo_脚本.md 4 场景分镜录制
+2. **录制 Demo 视频**：按 标小智_Demo_脚本.md 4 场景分镜录制
 3. ~~**GitHub 仓库公开**~~：✅ 已完成（tlyyxjz/BidAgent，双分支已推送）
 4. ~~**金标扩展至 20 篇**~~：✅ 已完成（W2-07，实际 22 篇，193 个证据偏移量全部验证正确）
 5. ~~**PPT 团队页补王祯明信息**~~：✅ 已完成（28 页 4:3 布局定稿）
 
 ### P1 应该做（W3 阶段）
 
-5. **更新路演讲稿**：从 ScrapeFlow 5 层架构更新到 BidAgent 六 Agent（已派给 K3 润色）
+5. **更新路演讲稿**：从 ScrapeFlow 5 层架构更新到标小智六 Agent（已派给 K3 润色）
 6. ~~**W2-06 前端字段高亮**~~：✅ 已完成（feature/glm-w2-06，commit 79b2f35）
 7. ~~**聊天 UI**~~：✅ 已完成（`app/api/chat.py` + `app/templates/html/chat.py`，含 6 Agent 进度面板）
 
@@ -96,16 +96,16 @@
 ## 六、提交步骤
 
 1. 访问 https://goaihz.com/#register
-2. 注册账号（邮箱：13566878907@163.com）
+2. 注册账号（邮箱：135****8907@163.com）
 3. 登录后选择赛道：**无界应用 → AI+金融**
 4. 填写项目信息：
-   - 项目名称：BidAgent 智能标讯助手
+   - 项目名称：标小智
    - 团队名称：标小智
 5. 上传材料：
    - 作品简介：复制 `GOAI_初赛提交材料_正式版.md` 第一节
    - 方案 PPT：上传 `_w2_report/proposal.pptx`
    - 补充材料（可选）：`_w2_report/compliance.md`
-   - Demo 视频（可选）：`BidAgent_Demo_90s.mp4`（待录制）
+   - Demo 视频（可选）：`标小智_Demo_90s.mp4`（待录制）
 6. 提交，截止日期：**2026-08-16 23:59**
 
 ## 七、关键文件路径汇总
@@ -117,9 +117,9 @@
 | 合规声明 | `_w2_report/compliance.md` | ✅ |
 | W2 评测报告 | `_w2_report/W2_评测报告.md` | ✅ |
 | W2 标注质检报告 | `_w2_report/W2_标注质检报告.md` | ✅ |
-| Demo 脚本 | `BidAgent_Demo_脚本.md` | ✅ 571 tests 数据已更新 |
-| 第二周任务清单 | `BidAgent_第二周任务清单.md` | ✅ |
-| 项目代码 | `C:\Users\Lenovo\Desktop\BidAgent\` | ✅ 571 测试通过 |
+| Demo 脚本 | `标小智_Demo_脚本.md` | ✅ 571 tests 数据已更新 |
+| 第二周任务清单 | `标小智_第二周任务清单.md` | ✅ |
+| 项目代码 | GitHub 仓库 tlyyxjz/BidAgent | ✅ 826 测试通过 |
 
 ## 八、Git 状态
 

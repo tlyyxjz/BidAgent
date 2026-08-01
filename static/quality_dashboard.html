@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1366, initial-scale=1">
-<title>数据质量评测 · BidAgent</title>
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web">
+<title>数据质量评测 · 标小智</title>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -131,28 +131,30 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 ::-webkit-scrollbar-track{background:transparent}
+
 </style>
 </head>
 <body>
-
 <!-- ===== Sidebar ===== -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-icon">B</div>
-    <div class="logo-text">BidAgent</div>
+    <div class="logo-icon">标</div>
+    <div class="logo-text">标小智</div>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-section-label">功能导航</div>
-    <a class="nav-item" href="/ui/search"><i class="ph ph-magnifying-glass"></i>检索</a>
-    <a class="nav-item" href="/ui/notice-list"><i class="ph ph-file-text"></i>公告</a>
-    <a class="nav-item" href="/ui/detail"><i class="ph ph-list-bullets"></i>详情</a>
-    <a class="nav-item active" href="/ui/quality-dashboard"><i class="ph ph-chart-bar"></i>评测<span class="nav-badge">W3</span></a>
-    <a class="nav-item" href="/ui/org"><i class="ph ph-user-circle"></i>画像</a>
-    <a class="nav-item" href="/ui/versions"><i class="ph ph-git-branch"></i>版本</a>
+    <div class="nav-section-label">主导航</div>
+<a href="/ui" class="nav-item"><i class="ph-bold ph-house"></i><span>工作台</span></a>
+<a href="/ui/search" class="nav-item"><i class="ph-bold ph-magnifying-glass"></i><span>招标检索</span></a>
+<a href="/ui/notice-list" class="nav-item"><i class="ph-bold ph-list-magnifying-glass"></i><span>跨平台去重</span></a>
+<a href="/ui/detail" class="nav-item"><i class="ph-bold ph-line-segment"></i><span>证据验证</span></a>
+<a href="/ui/org" class="nav-item"><i class="ph-bold ph-users-three"></i><span>组织画像</span></a>
+<a href="/ui/quality-dashboard" class="nav-item active"><i class="ph-bold ph-chart-bar"></i><span>质量评测</span></a>
+<a href="/ui/versions" class="nav-item"><i class="ph-bold ph-git-branch"></i><span>版本历史</span></a>
+<a href="/ui/chat" class="nav-item"><i class="ph-bold ph-chats-circle"></i><span>智能问答</span><span class="nav-badge">AI</span></a>
   </nav>
   <div class="sidebar-footer">
-    <div>AI + 金融 · 招投标数据服务</div>
-    <div class="comp-tag">GOAI 2026 参赛演示</div>
+    <div><span class="comp-tag">标小智</span> v4.1</div>
+    <div>GOAI 2026 初赛 · W3</div>
   </div>
 </aside>
 
@@ -160,17 +162,15 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 <div class="main-wrap">
   <header class="top-header">
     <div class="header-left">
-      <div class="header-title"><i class="ph-bold ph-chart-bar-up"></i>数据质量评测 Dashboard</div>
+      <div class="header-title"><i class="ph-bold ph-chart-bar"></i>质量评测</div>
     </div>
     <div class="header-right">
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
       <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
       <div class="h-badge vers">v4.1 · 99篇</div>
-      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题"><i class="ph ph-moon" id="themeIcon"></i></button>
     </div>
   </header>
-
-  <main class="content">
+<main class="content">
     <div class="breadcrumb"><a href="/ui/search">首页</a> / <a href="/ui/quality-dashboard">评测</a> / 数据质量 Dashboard</div>
 
     <div class="page-head">
@@ -214,7 +214,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
         <div id="chart-iou" class="chart-box"></div>
         <div class="chart-note"><i class="ph ph-info"></i>完美(>=0.99): 163 个 (50.8%) | 良好(0.7-0.99): 59 个 (18.4%) | 一般(0.5-0.7): 99 个 (30.8%)</div>
       </div>
-      <div class="card">
+      <div class="card" id="rejects">
         <div class="card-head">
           <h2><i class="ph ph-warning"></i>错误案例归因<span class="desc">D 组 35 个 incorrect 按字段分布</span></h2>
         </div>
@@ -246,7 +246,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
         <table class="tbl" id="bootstrapTable"></table>
         <div>
           <div id="chart-bootstrap" class="chart-box sm"></div>
-          <div class="chart-note" style="margin-top:8px"><i class="ph ph-info"></i>指标为聚合比率 (sum/sum), CI 界等于点估计. A/B 无验证证据 -> precision=0; C/D 验证通过 -> precision=1.</div>
+          <div class="chart-note" style="margin-top:8px"><i class="ph ph-info"></i>真实 IoU 评测 Bootstrap 95% CI (1000 次重采样). 柱高=点估计, 误差线范围=[CI 下界, CI 上界], 三指标有明显区分度.</div>
         </div>
       </div>
     </div>
@@ -254,12 +254,12 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <!-- ===== Footer ===== -->
     <div class="footer">
       <span class="real">全部数据来自真实评测</span> · 数据源文件: w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json / w3_03_evidence_full_99.json / w3_error_analysis.json / w3_bootstrap_ci_full_99.json<br>
-      BidAgent · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
+      标小智 · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
     </div>
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/static/vendor/echarts/echarts.min.js"></script>
 <script>
 /* ================================================================
  * 真实数据 - 从 _w3_outputs/ JSON 文件提取
@@ -310,11 +310,10 @@ var DATA = {
       { key:"project_identifier", name:"项目编号", count:1 }
     ]
   },
-  bootstrap: {
-    A: { recall:{p:1.0,l:1.0,u:1.0}, precision:{p:0.0,l:0.0,u:0.0}, iou_avg:{p:0.0,l:0.0,u:0.0} },
-    B: { recall:{p:1.0,l:1.0,u:1.0}, precision:{p:0.0,l:0.0,u:0.0}, iou_avg:{p:0.0,l:0.0,u:0.0} },
-    C: { recall:{p:1.0,l:1.0,u:1.0}, precision:{p:1.0,l:1.0,u:1.0}, iou_avg:{p:1.0,l:1.0,u:1.0} },
-    D: { recall:{p:1.0,l:1.0,u:1.0}, precision:{p:1.0,l:1.0,u:1.0}, iou_avg:{p:1.0,l:1.0,u:1.0} }
+  bootstrap_ci: {
+    recall:    { p:0.6796, l:0.6366, u:0.7195 },
+    precision: { p:0.5441, l:0.5098, u:0.5772 },
+    iou_avg:   { p:0.4541, l:0.4277, u:0.4795 }
   }
 };
 
@@ -371,11 +370,11 @@ function initAblation() {
           p.map(function(x){ return x.marker + ' ' + x.seriesName + ': ' + x.value + '%'; }).join('<br/>');
       }
     },
-    legend: { data:['字段精确率','无依据率'], top:0, right:0, textStyle:{color:th.t,fontSize:11}, itemWidth:12, itemHeight:8 },
-    grid: { left:50, right:50, top:30, bottom:30 },
+    legend: { data:['字段精确率','无依据率'], top:5, left:'center', itemGap:24, textStyle:{color:th.t,fontSize:11}, itemWidth:12, itemHeight:8 },
+    grid: { left:55, right:55, top:50, bottom:35 },
     xAxis: { type:'category', data:groups, axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
     yAxis: [
-      { type:'value', name:'精确率 %', nameTextStyle:{color:th.al,fontSize:10}, min:80, max:100, axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
+      { type:'value', name:'比率 %', nameTextStyle:{color:th.al,fontSize:10}, min:80, max:100, axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
       { type:'value', name:'无依据率 %', nameTextStyle:{color:th.al,fontSize:10}, min:0, max:100, axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{show:false}, axisLine:{show:false}, axisTick:{show:false} }
     ],
     series: [
@@ -477,7 +476,7 @@ function initError() {
         return e.name + ' (' + e.key + ')<br/>' + p[0].marker + ' 错误数: ' + e.count + ' (' + pctv + '%)';
       }
     },
-    grid: { left:120, right:40, top:15, bottom:25 },
+    grid: { left:165, right:40, top:15, bottom:25 },
     xAxis: { type:'value', name:'错误数', nameTextStyle:{color:th.al,fontSize:10},
       axisLabel:{color:th.al,fontSize:10}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
     yAxis: { type:'category', data:names,
@@ -509,8 +508,8 @@ function initCost() {
           '成本: ' + ab.cost_cny + ' CNY | 无依据率: ' + pct(ab.unjustified_rate) + '%';
       }
     },
-    legend: { data:['Tokens','延迟(ms)'], top:0, right:0, textStyle:{color:th.t,fontSize:10}, itemWidth:10, itemHeight:8 },
-    grid: { left:55, right:50, top:28, bottom:25 },
+    legend: { data:['Tokens','延迟(ms)'], top:5, left:'center', itemGap:24, textStyle:{color:th.t,fontSize:10}, itemWidth:10, itemHeight:8 },
+    grid: { left:55, right:55, top:50, bottom:30 },
     xAxis: { type:'category', data:groups, axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
     yAxis: [
       { type:'value', name:'Tokens', nameTextStyle:{color:th.al,fontSize:9}, axisLabel:{color:th.al,fontSize:9,formatter:function(v){return v/1000+'k';}}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
@@ -529,35 +528,81 @@ function initBootstrap() {
   var c = echarts.init(el);
   charts.bootstrap = c;
   var th = theme();
-  var groups = ['A','B','C','D'];
+  var bs = DATA.bootstrap_ci;
   var metrics = ['recall','precision','iou_avg'];
   var mNames = { recall:'Recall', precision:'Precision', iou_avg:'IoU Avg' };
   var colors = { recall:'#52c41a', precision:'#1677ff', iou_avg:'#722ed1' };
-  var series = metrics.map(function(m) {
+  var pointData = metrics.map(function(m, i){
     return {
-      name: mNames[m], type:'bar', barWidth:14,
-      data: groups.map(function(g){ return +(DATA.bootstrap[g][m].p * 100).toFixed(0); }),
-      itemStyle: { color: colors[m], borderRadius:[3,3,0,0] },
-      label: { show:true, position:'top', color:th.t, fontSize:9, formatter:function(p){ return p.value + '%'; } }
+      value: +(bs[m].p*100).toFixed(2),
+      itemStyle: { color: colors[metrics[i]], borderRadius:[3,3,0,0] }
     };
   });
+  var errorBarData = metrics.map(function(m, i){
+    return [i, +(bs[m].l*100).toFixed(2), +(bs[m].u*100).toFixed(2)];
+  });
   c.setOption({
-    tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
+    tooltip: {
+      trigger:'axis', axisPointer:{type:'shadow'},
       formatter: function(p) {
-        var g = p[0].axisValue;
-        var bs = DATA.bootstrap[g];
-        var s = '<b>组 ' + g + '</b><br/>';
-        metrics.forEach(function(m,i) {
-          s += p[i].marker + ' ' + mNames[m] + ': ' + (bs[m].p*100).toFixed(0) + '% [CI ' + (bs[m].l*100).toFixed(0) + ', ' + (bs[m].u*100).toFixed(0) + ']<br/>';
-        });
-        return s;
+        var idx = p[0].dataIndex;
+        var m = metrics[idx];
+        var v = bs[m];
+        return '<b>' + mNames[m] + '</b><br/>' +
+          '点估计 ' + (v.p*100).toFixed(2) + '%<br/>' +
+          '95% CI: [' + (v.l*100).toFixed(2) + '%, ' + (v.u*100).toFixed(2) + '%]';
       }
     },
-    legend: { top:0, right:0, textStyle:{color:th.t,fontSize:10}, itemWidth:10, itemHeight:8 },
-    grid: { left:40, right:20, top:28, bottom:25 },
-    xAxis: { type:'category', data:groups, axisLabel:{color:th.al,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
-    yAxis: { type:'value', min:0, max:110, axisLabel:{color:th.al,fontSize:9,formatter:'{value}%'}, splitLine:{lineStyle:{color:th.gl}}, axisLine:{show:false}, axisTick:{show:false} },
-    series: series
+    grid: { left:45, right:25, top:30, bottom:30 },
+    xAxis: {
+      type:'category',
+      data:metrics.map(function(m){return mNames[m];}),
+      axisLabel:{color:th.al,fontSize:11},
+      axisLine:{lineStyle:{color:th.gl}},
+      axisTick:{show:false}
+    },
+    yAxis: {
+      type:'value', min:0, max:80, name:'比率 %', nameTextStyle:{color:th.al,fontSize:10},
+      axisLabel:{color:th.al,fontSize:9,formatter:'{value}%'},
+      splitLine:{lineStyle:{color:th.gl}},
+      axisLine:{show:false}, axisTick:{show:false}
+    },
+    series: [
+      {
+        name:'点估计', type:'bar', barWidth:36,
+        data: pointData,
+        label: {
+          show:true, position:'top', color:th.t, fontSize:11, fontWeight:600,
+          formatter:function(p){ return p.value + '%'; }
+        },
+        z: 2
+      },
+      {
+        name:'CI 误差线', type:'custom',
+        renderItem: function(params, api) {
+          var idx = api.value(0);
+          var low = api.value(1);
+          var high = api.value(2);
+          var highPt = api.coord([idx, high]);
+          var lowPt = api.coord([idx, low]);
+          if (!highPt || !lowPt) return;
+          var xCenter = highPt[0];
+          var halfW = 10;
+          var strokeColor = th.bt;
+          return {
+            type:'group',
+            children: [
+              { type:'line', shape:{ x1:xCenter, y1:highPt[1], x2:xCenter, y2:lowPt[1] }, style:{ stroke:strokeColor, lineWidth:1.5 } },
+              { type:'line', shape:{ x1:xCenter-halfW, y1:highPt[1], x2:xCenter+halfW, y2:highPt[1] }, style:{ stroke:strokeColor, lineWidth:1.5 } },
+              { type:'line', shape:{ x1:xCenter-halfW, y1:lowPt[1], x2:xCenter+halfW, y2:lowPt[1] }, style:{ stroke:strokeColor, lineWidth:1.5 } }
+            ]
+          };
+        },
+        encode: { x:0, y:[1,2] },
+        data: errorBarData,
+        z: 10
+      }
+    ]
   });
 }
 
@@ -579,15 +624,16 @@ function renderCostTable() {
 }
 
 function renderBootstrapTable() {
-  var groups = ['A','B','C','D'];
-  var html = '<thead><tr><th>组</th><th>Recall</th><th>Precision</th><th>IoU Avg</th></tr></thead><tbody>';
-  groups.forEach(function(g) {
-    var bs = DATA.bootstrap[g];
-    function fmt(m) {
-      var v = bs[m];
-      return '<td><span class="num">' + pct(v.p,0) + '%</span><div class="ci-text">CI [' + pct(v.l,0) + ', ' + pct(v.u,0) + ']</div></td>';
-    }
-    html += '<tr><td class="grp">' + g + '</td>' + fmt('recall') + fmt('precision') + fmt('iou_avg') + '</tr>';
+  var bs = DATA.bootstrap_ci;
+  var metrics = ['recall','precision','iou_avg'];
+  var mNames = { recall:'Recall', precision:'Precision', iou_avg:'IoU Avg' };
+  var html = '<thead><tr><th>指标</th><th>点估计</th><th>95% CI 下界</th><th>95% CI 上界</th></tr></thead><tbody>';
+  metrics.forEach(function(m) {
+    var v = bs[m];
+    html += '<tr><td class="grp">' + mNames[m] + '</td>' +
+      '<td class="num">' + pct(v.p,2) + '%</td>' +
+      '<td>' + pct(v.l,2) + '%</td>' +
+      '<td>' + pct(v.u,2) + '%</td></tr>';
   });
   html += '</tbody>';
   document.getElementById('bootstrapTable').innerHTML = html;
@@ -630,6 +676,9 @@ window.addEventListener('DOMContentLoaded', function() {
   renderBootstrapTable();
   initAllCharts();
 });
+
 </script>
+</div>
+
 </body>
 </html>

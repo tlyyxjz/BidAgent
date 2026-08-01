@@ -3,177 +3,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1366, initial-scale=1">
-<title>公告详情 · BidAgent</title>
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web">
+<title>标讯详情 · 证据高亮</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --primary:#1677ff;--primary-bg:#e6f4ff;
-  --success:#52c41a;--success-bg:#f6ffed;
-  --warning:#faad14;--warning-bg:#fffbe6;
-  --error:#ff4d4f;--error-bg:#fff2f0;
-  --purple:#722ed1;--purple-bg:#f9f0ff;
-  --bg:#f5f7fa;--card-bg:#ffffff;
-  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
-  --border:#e8e8e8;--border-2:#f0f0f0;
-  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
-  --sidebar-width:208px;--header-h:52px;
-  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
-  --tender-bg:#e3f2fd;--tender-fg:#1565c0;
-  --award-bg:#e8f5e9;--award-fg:#2e7d32;
-  --correction-bg:#fff8e1;--correction-fg:#f57f17;
-}
-body.dark{
-  --bg:#0d1117;--card-bg:#161b22;
-  --text:#e6edf3;--text-2:#adbac7;--text-3:#768390;
-  --border:#30363d;--border-2:#21262d;
-  --sidebar-bg:#010409;--sidebar-text:#8b949e;
-  --primary-bg:#0c1d33;--success-bg:#0d1f0d;--warning-bg:#1f1a0a;--error-bg:#1f0a0a;--purple-bg:#1a0d2e;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 1px 6px -1px rgba(0,0,0,.2);
-  --tender-bg:#0c2236;--tender-fg:#64b5f6;--award-bg:#0d2818;--award-fg:#81c784;--correction-bg:#2a2110;--correction-fg:#ffb74d;
-}
-html,body{height:100%}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;height:100vh;overflow:hidden}
+.header{background:white;padding:12px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:16px}
+.back-link{color:#1976d2;text-decoration:none;font-size:14px}
+h1{font-size:18px;color:#1a1a2e}
+.doc-id{font-size:12px;color:#999}
+.legend{display:flex;gap:16px;font-size:12px}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-color{width:14px;height:14px;border-radius:3px}
+.legend-primary{background:rgba(239,83,80,.3);border:1px solid #ef5350}
+.legend-context{background:rgba(255,193,7,.3);border:1px solid #ffc107}
+.legend-qualifier{background:rgba(33,150,243,.3);border:1px solid #2196f3}
+.legend-unsupported{background:#f5f5f5;border:1px solid #ddd}
+.main-container{display:flex;height:calc(100vh - 57px)}
+.text-panel{flex:1;display:flex;flex-direction:column;border-right:1px solid #e8e8e8;background:white;min-width:0}
+.panel-header{padding:12px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+.panel-header h2{font-size:14px;color:#1a1a2e}
+.char-count{font-size:12px;color:#999}
+.text-container{flex:1;overflow:auto;padding:20px}
+.raw-text{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-all;color:#333}
+.hl{border-radius:2px;cursor:pointer;transition:all .15s}
+.hl-primary{background:rgba(239,83,80,.28);border-bottom:2px solid #ef5350}
+.hl-context{background:rgba(255,193,7,.28);border-bottom:2px solid #ffc107}
+.hl-qualifier{background:rgba(33,150,243,.28);border-bottom:2px solid #2196f3}
+.hl-active{box-shadow:0 0 0 2px rgba(25,118,210,.5)}
+.fields-panel{width:420px;display:flex;flex-direction:column;background:#fafbfc;min-width:420px}
+.fields-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;border-bottom:1px solid #f0f0f0}
+.field-nav-item{padding:8px 10px;background:white;border:1px solid #e0e0e0;border-radius:6px;cursor:pointer;text-align:center;font-size:12px;transition:all .15s}
+.field-nav-item:hover{border-color:#1976d2;color:#1976d2}
+.field-nav-item.active{background:#e3f2fd;border-color:#1976d2;color:#1565c0;font-weight:600}
+.field-nav-item.unsupported{background:#fafafa;color:#999;border-color:#eee}
+.field-nav-item.unsupported.active{background:#f5f5f5;border-color:#999;color:#666}
+.field-nav-item .count{font-size:11px;color:#999;display:block;margin-top:2px}
+.fields-container{flex:1;overflow-y:auto;padding:12px}
+.field-card{background:white;border:1px solid #e8e8e8;border-radius:8px;margin-bottom:12px;overflow:hidden}
+.field-card-header{padding:12px 14px;background:#f8f9ff;border-bottom:1px solid #eef0f8;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.field-card-header:hover{background:#f0f2ff}
+.field-card-title{font-size:14px;font-weight:600;color:#1a1a2e}
+.field-card-badge{font-size:11px;padding:2px 8px;border-radius:10px}
+.badge-supported{background:#e8f5e9;color:#2e7d32}
+.badge-unsupported{background:#fff3e0;color:#e65100}
+.badge-absent{background:#f5f5f5;color:#999}
+.field-card-body{padding:0;max-height:0;overflow:hidden;transition:max-height .3s ease}
+.field-card.expanded .field-card-body{max-height:2000px;padding:14px}
+.field-value{padding:12px;background:#fafbfc;border-radius:6px;margin-bottom:10px;border:1px solid #eef0f5}
+.field-value-label{font-size:11px;color:#999;margin-bottom:6px}
+.field-value-text{font-size:14px;color:#1a1a2e;font-weight:500;word-break:break-all}
+.field-value-raw{font-size:12px;color:#999;margin-top:4px}
+.evidence-list{margin-top:10px}
+.evidence-item{padding:8px 10px;background:white;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+.evidence-item:hover{border-color:#1976d2;background:#f5f9ff}
+.evidence-item.active{border-color:#1976d2;background:#e3f2fd}
+.evidence-role{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;margin-bottom:4px;font-weight:600}
+.role-primary{background:#ffebee;color:#c62828}
+.role-context{background:#fff8e1;color:#f57f17}
+.role-qualifier{background:#e3f2fd;color:#1565c0}
+.evidence-text{font-size:12px;color:#333;line-height:1.5;word-break:break-all}
+.evidence-offset{font-size:10px;color:#999;margin-top:4px;font-family:monospace}
+.no-evidence{color:#c62828;font-size:12px;padding:8px 0}
+.empty-state{text-align:center;padding:40px 20px;color:#999;font-size:13px}
+.amt-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.amt-budget{background:#e3f2fd;color:#1565c0}
+.amt-ceiling{background:#fff3e0;color:#e65100}
+.amt-award{background:#e8f5e9;color:#2e7d32}
+.amt-contract{background:#f3e5f5;color:#7b1fa2}
+.amt-unit_price{background:#fce4ec;color:#c62828}
+.amt-unknown{background:#f5f5f5;color:#999}
+@media(max-width:900px){.fields-panel{width:340px;min-width:340px}}
 
-/* ===== Sidebar ===== */
-.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
-.sidebar-logo{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+/* ===== 标小智品牌头 ===== */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
+.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800}
+
+/* ===== Unified Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:208px;height:100vh;background:#001529;display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:52px;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:#1677ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
 .sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
 .sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
 .nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:#1677ff}
 .nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
-.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:#1677ff;color:#fff;font-weight:600}
 .sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
-.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
-
-/* ===== Main ===== */
-.main-wrap{margin-left:var(--sidebar-width);min-height:100vh;display:flex;flex-direction:column}
-.top-header{height:var(--header-h);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.sidebar-footer .comp-tag{color:#1677ff;font-weight:600}
+/* ===== Unified Main Wrap ===== */
+.main-wrap{margin-left:208px;min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:52px;background:#fff;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02)}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-title{font-size:15px;font-weight:600;color:var(--text)}
-.header-title i{color:var(--primary);margin-right:6px}
+.header-title{font-size:15px;font-weight:600;color:#1a1a2e}
+.header-title i{color:#1677ff;margin-right:6px}
 .header-right{display:flex;align-items:center;gap:10px}
 .h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
-.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
-.h-badge.data{background:var(--success-bg);color:var(--success)}
-.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
-.theme-btn{width:32px;height:32px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:16px;transition:all .15s}
-.theme-btn:hover{border-color:var(--primary);color:var(--primary)}
+.h-badge.comp{background:#e6f4ff;color:#1677ff}
+.h-badge.data{background:#f6ffed;color:#52c41a}
+.h-badge.vers{background:#f5f7fa;color:#595959;border:1px solid #e8e8e8}
+body{background:#f5f7fa}
 
-/* ===== Content ===== */
-.content{flex:1;padding:16px 20px 40px}
-.breadcrumb{font-size:12px;color:var(--text-3);margin-bottom:12px}
-.breadcrumb a{color:var(--primary);text-decoration:none}
-.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
-.page-head h1{font-size:22px;color:var(--text);font-weight:700;letter-spacing:.3px}
-.page-head h1 i{color:var(--primary);margin-right:8px}
-.page-head .sub{font-size:12px;color:var(--text-3);margin-top:6px}
-.page-head .right-info{display:flex;gap:8px}
-
-/* ===== Card ===== */
-.card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;box-shadow:var(--shadow)}
-.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.card-head h2{font-size:14px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:6px}
-.card-head h2 i{color:var(--primary);font-size:17px}
-.card-head .desc{font-size:11px;color:var(--text-3);font-weight:400}
-
-/* ===== Meta Info ===== */
-.meta-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow)}
-.meta-title-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
-.meta-title-row h2{font-size:16px;color:var(--text);font-weight:600;line-height:1.4;flex:1}
-.meta-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding-top:12px;border-top:1px solid var(--border-2)}
-.meta-item{display:flex;flex-direction:column;gap:3px}
-.meta-item .ml{font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
-.meta-item .mv{font-size:13px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;word-break:break-all}
-
-/* ===== Tags ===== */
-.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;white-space:nowrap}
-.tag.info{background:var(--primary-bg);color:var(--primary)}
-.tag.ok{background:var(--success-bg);color:var(--success)}
-.tag.warn{background:var(--warning-bg);color:var(--warning)}
-.tag.err{background:var(--error-bg);color:var(--error)}
-.tag.purple{background:var(--purple-bg);color:var(--purple)}
-.type-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:4px;font-weight:600;flex-shrink:0}
-.type-tag.tender{background:var(--tender-bg);color:var(--tender-fg)}
-.type-tag.award{background:var(--award-bg);color:var(--award-fg)}
-.type-tag.correction{background:var(--correction-bg);color:var(--correction-fg)}
-.grade-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600}
-.grade-tag.high{background:var(--success-bg);color:var(--success)}
-.grade-tag.review{background:var(--warning-bg);color:var(--warning)}
-.grade-tag.low{background:var(--error-bg);color:var(--error)}
-
-/* ===== Two-column ===== */
-.detail-row{display:grid;grid-template-columns:1fr 420px;gap:14px;align-items:start;margin-bottom:14px}
-.source-text{font-size:13px;color:var(--text-2);line-height:1.9;white-space:pre-wrap;word-break:break-all;max-height:520px;overflow-y:auto;padding:2px 4px}
-.source-text .ev-hl{background:var(--primary-bg);color:var(--primary);padding:1px 3px;border-radius:3px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--primary)}
-.source-text .ev-hl:hover{background:var(--primary);color:#fff}
-.src-toolbar{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-3);margin-bottom:8px}
-
-/* ===== Field cards ===== */
-.field-list{display:flex;flex-direction:column;gap:10px}
-.field-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .15s}
-.field-card:hover{border-color:var(--primary)}
-.fc-head{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none}
-.fc-head:hover{background:var(--primary-bg)}
-.fc-name{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text);min-width:88px}
-.fc-name i{color:var(--primary);font-size:15px}
-.fc-val{flex:1;font-size:13px;color:var(--text);font-weight:600;word-break:break-all;min-width:0}
-.fc-val.empty{color:var(--text-3);font-weight:400;font-style:italic}
-.fc-meta{display:flex;align-items:center;gap:5px;flex-shrink:0}
-.fc-chev{color:var(--text-3);font-size:15px;transition:transform .2s}
-.field-card.open .fc-chev{transform:rotate(90deg)}
-.fc-body{display:none;padding:0 14px 12px;border-top:1px solid var(--border-2);margin-top:0}
-.field-card.open .fc-body{display:block}
-.fc-row{display:flex;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px dashed var(--border-2)}
-.fc-row:last-child{border-bottom:none}
-.fc-row .rk{color:var(--text-3);min-width:80px;font-weight:600}
-.fc-row .rv{color:var(--text-2);flex:1;word-break:break-all}
-.fc-row .rv.code{font-family:Consolas,monospace;font-size:11px}
-.ev-frag{background:var(--bg);border:1px solid var(--border-2);border-left:3px solid var(--primary);border-radius:4px;padding:8px 10px;font-size:12px;color:var(--text-2);line-height:1.7;margin-top:6px}
-.iou-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--success-bg);color:var(--success)}
-.iou-pill.mid{background:var(--warning-bg);color:var(--warning)}
-.iou-pill.low{background:var(--error-bg);color:var(--error)}
-.verified-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--success-bg);color:var(--success)}
-
-/* ===== Chart ===== */
-.chart-box{width:100%;height:300px}
-.chart-note{font-size:11px;color:var(--text-3);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:4px;line-height:1.5}
-.chart-note i{color:var(--primary);margin-right:4px}
-
-/* ===== Footer ===== */
-.footer{margin-top:16px;padding:12px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3);line-height:1.7;text-align:center;box-shadow:var(--shadow)}
-.footer .real{color:var(--success);font-weight:600}
-.footer .src{color:var(--primary);font-weight:600}
-
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-track{background:transparent}
 </style>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
 </head>
 <body>
-
 <!-- ===== Sidebar ===== -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-icon">B</div>
-    <div class="logo-text">BidAgent</div>
+    <div class="logo-icon">标</div>
+    <div class="logo-text">标小智</div>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-section-label">功能导航</div>
-    <a class="nav-item" href="/ui/search"><i class="ph ph-magnifying-glass"></i>检索</a>
-    <a class="nav-item" href="/ui/notice-list"><i class="ph ph-file-text"></i>公告</a>
-    <a class="nav-item active" href="/ui/detail"><i class="ph ph-list-bullets"></i>详情</a>
-    <a class="nav-item" href="/ui/quality-dashboard"><i class="ph ph-chart-bar"></i>评测<span class="nav-badge">W3</span></a>
-    <a class="nav-item" href="/ui/org"><i class="ph ph-user-circle"></i>画像</a>
-    <a class="nav-item" href="/ui/version"><i class="ph ph-git-branch"></i>版本</a>
+    <div class="nav-section-label">主导航</div>
+<a href="/ui" class="nav-item"><i class="ph-bold ph-house"></i><span>工作台</span></a>
+<a href="/ui/search" class="nav-item"><i class="ph-bold ph-magnifying-glass"></i><span>招标检索</span></a>
+<a href="/ui/notice-list" class="nav-item"><i class="ph-bold ph-list-magnifying-glass"></i><span>跨平台去重</span></a>
+<a href="/ui/detail" class="nav-item active"><i class="ph-bold ph-line-segment"></i><span>证据验证</span></a>
+<a href="/ui/org" class="nav-item"><i class="ph-bold ph-users-three"></i><span>组织画像</span></a>
+<a href="/ui/quality-dashboard" class="nav-item"><i class="ph-bold ph-chart-bar"></i><span>质量评测</span></a>
+<a href="/ui/versions" class="nav-item"><i class="ph-bold ph-git-branch"></i><span>版本历史</span></a>
+<a href="/ui/chat" class="nav-item"><i class="ph-bold ph-chats-circle"></i><span>智能问答</span><span class="nav-badge">AI</span></a>
   </nav>
   <div class="sidebar-footer">
-    <div>AI + 金融 · 招投标数据服务</div>
-    <div class="comp-tag">GOAI 2026 参赛演示</div>
+    <div><span class="comp-tag">标小智</span> v4.1</div>
+    <div>GOAI 2026 初赛 · W3</div>
   </div>
 </aside>
 
@@ -181,277 +137,172 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 <div class="main-wrap">
   <header class="top-header">
     <div class="header-left">
-      <div class="header-title"><i class="ph-bold ph-file-text"></i>公告详情</div>
+      <div class="header-title"><i class="ph-bold ph-line-segment"></i>证据验证</div>
     </div>
     <div class="header-right">
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
       <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
-      <div class="h-badge vers">k3 · 99篇</div>
-      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题"><i class="ph ph-moon" id="themeIcon"></i></button>
+      <div class="h-badge vers">v4.1 · 99篇</div>
     </div>
   </header>
-
-  <main class="content">
-    <div class="breadcrumb"><a href="/ui/search">首页</a> / <a href="/ui/notice-list">公告</a> / 公告详情</div>
-
-    <div class="page-head">
-      <div>
-        <h1><i class="ph-bold ph-file-search"></i>公告字段抽取与证据验证</h1>
-        <div class="sub">六 Agent 协同 · 证据定位 + IoU 验证 + 来源谱系 + 展示等级 (display_grade)</div>
-      </div>
-      <div class="right-info">
-        <div class="h-badge info"><i class="ph ph-fingerprint"></i>k3-w3-01</div>
-        <div class="h-badge vers"><i class="ph ph-hash"></i>deepseek-v4-flash</div>
-      </div>
-    </div>
-
-    <!-- ===== Meta Info ===== -->
-    <div class="meta-card">
-      <div class="meta-title-row">
-        <span class="type-tag correction"><i class="ph ph-arrow-clockwise"></i>更正公告 correction</span>
-        <h2 id="metaTitle">广西众鑫工程项目管理有限公司关于马山县金钗镇大凌水厂管网改造工程的更正公告</h2>
-      </div>
-      <div class="meta-grid">
-        <div class="meta-item"><span class="ml">document_id</span><span class="mv" id="metaDocId">w3_correction_093</span></div>
-        <div class="meta-item"><span class="ml">文件名</span><span class="mv" id="metaFile">w3_correction_093.txt</span></div>
-        <div class="meta-item"><span class="ml">采集时间</span><span class="mv">2026-07-30 16:56:00</span></div>
-        <div class="meta-item"><span class="ml">来源平台</span><span class="mv">广西政府采购网</span></div>
-        <div class="meta-item"><span class="ml">公告类型</span><span class="mv"><span class="type-tag correction">correction</span></span></div>
-      </div>
-    </div>
-
-    <!-- ===== Two-column: Source + Fields ===== -->
-    <div class="detail-row">
-      <div class="card">
-        <div class="card-head">
-          <h2><i class="ph ph-text-aa"></i>公告原文<span class="desc">点击高亮证据 span 可定位到右侧字段</span></h2>
-          <span class="tag info" id="srcLen">前 500 字</span>
-        </div>
-        <div class="src-toolbar">
-          <i class="ph ph-info"></i>蓝色高亮 = 已定位证据 (acceptable_evidence_span), 数字为字符偏移区间
-        </div>
-        <div class="source-text" id="sourceText"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2><i class="ph ph-squares-four"></i>字段抽取结果<span class="desc">6 核心字段 · 点击卡片展开证据</span></h2>
-          <span class="tag purple" id="fieldStat">6 字段</span>
-        </div>
-        <div class="field-list" id="fieldList"></div>
-      </div>
-    </div>
-
-    <!-- ===== Radar ===== -->
-    <div class="card">
-      <div class="card-head">
-        <h2><i class="ph ph-radar"></i>字段抽取质量雷达<span class="desc">6 维度评估 · 综合质量分</span></h2>
-        <span class="tag ok" id="totalScore">综合 84.2</span>
-      </div>
-      <div id="chart-radar" class="chart-box"></div>
-      <div class="chart-note"><i class="ph ph-info"></i>完整性=字段存在率 | 准确性=IoU 验证通过率 | 证据支持=有证据字段占比 | 来源可信=来源谱系评分 | 格式规范=规范符合率 | 交叉验证=多源一致率</div>
-    </div>
-
-    <div class="footer">
-      <span class="real">公告数据来自真实标注集</span> · 数据源文件: k3_annotations_batch2.json (document_id: w3_correction_093) · 字段值与证据 span 真实可溯<br>
-      BidAgent · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
-    </div>
-  </main>
+<div class="main-container">
+  <section class="text-panel">
+    <div class="panel-header"><h2>清洗后原文</h2><span class="char-count" id="charCount">0 字符</span></div>
+    <div class="text-container"><pre id="rawText" class="raw-text">加载中...</pre></div>
+  </section>
+  <section class="fields-panel">
+    <div class="panel-header"><h2>六类核心字段</h2><span style="font-size:12px;color:#999;">点击查看证据</span></div>
+    <nav class="fields-nav" id="fieldsNav"></nav>
+    <div class="fields-container" id="fieldsContainer"><div class="empty-state">加载中...</div></div>
+  </section>
+</div>
+<script>
+const FL={project_identifier:'项目编号',purchaser_name:'采购人',winner_name:'中标人',amount:'金额',publish_date:'发布日期',bid_deadline:'投标截止日期'};const AMT_TYPE={budget:'预算金额',ceiling:'最高限价',award:'中标金额',contract:'合同金额',unit_price:'单价',unknown:'未知'};
+const FO=['project_identifier','purchaser_name','winner_name','amount','publish_date','bid_deadline'];
+let rawText='',fieldData=null,curField=null,activeEv=new Set();
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function renderText(evList){
+  if(!rawText)return;
+  const spans=evList.map(e=>({start:e.start||e.raw_start,end:e.end||e.raw_end,role:e.role,id:e.id||e.evidence_id}));
+  spans.sort((a,b)=>a.start-b.start);
+  const merged=[];
+  for(const s of spans){
+    if(!merged.length||s.start>=merged.at(-1).end){merged.push({...s,roles:[s.role],ids:[s.id]})}
+    else{const l=merged.at(-1);l.end=Math.max(l.end,s.end);if(!l.roles.includes(s.role))l.roles.push(s.role);l.ids.push(s.id)}
+  }
+  let html='',pos=0;
+  for(const m of merged){
+    if(m.start>pos)html+=esc(rawText.slice(pos,m.start));
+    const rc=m.roles.includes('primary')?'hl-primary':m.roles.includes('qualifier')?'hl-qualifier':'hl-context';
+    const ac=m.ids.some(id=>activeEv.has(id))?' hl-active':'';
+    html+=`<span class="hl ${rc}${ac}" data-ids="${m.ids.join(',')}">${esc(rawText.slice(m.start,m.end))}</span>`;
+    pos=m.end;
+  }
+  if(pos<rawText.length)html+=esc(rawText.slice(pos));
+  document.getElementById('rawText').innerHTML=html;
+  document.getElementById('charCount').textContent=rawText.length+' 字符';
+  document.querySelectorAll('.hl').forEach(el=>el.addEventListener('click',()=>{
+    const ids=el.dataset.ids.split(',');const fn=findField(ids);if(fn)selField(fn,ids[0])
+  }));
+}
+function findField(ids){
+  if(!fieldData)return null;
+  for(const f of fieldData.fields)for(const v of f.values||[])
+    for(let i=0;i<(v.evidences||[]).length;i++){
+      const eid=`${f.field_id}_0_${i}`;
+      if(ids.includes(eid))return f.field_id
+    }
+  return null;
+}
+function allEvidence(){
+  const r=[];if(!fieldData)return r;
+  for(const f of fieldData.fields)for(let vi=0;vi<(f.values||[]).length;vi++){
+    const v=f.values[vi];
+    for(let ei=0;ei<(v.evidences||[]).length;ei++){
+      const e=v.evidences[ei];
+      r.push({id:`${f.field_id}_${vi}_${ei}`,start:e.raw_start||e.start,end:e.raw_end||e.end,role:e.role||'primary',text:e.text})
+    }
+  }
+  return r;
+}
+function renderNav(){
+  document.getElementById('fieldsNav').innerHTML=FO.map(name=>{
+    const f=fieldData?.fields?.find(x=>x.field_id===name);
+    const cnt=f?.values?.length||0,st=f?.field_status||'absent';
+    const hasEv=cnt>0&&f.values.some(v=>(v.evidences||[]).length>0);
+    const cls=st==='absent'?'无此字段':hasEv?cnt+' 个值':'无依据';
+    const unsup=!hasEv&&st!=='absent'?' unsupported':st==='absent'?' unsupported':'';
+    return `<div class="field-nav-item${curField===name?' active':''}${unsup}" onclick="selField('${name}')">
+              ${FL[name]||name}<span class="count">${cls}</span></div>`;
+  }).join('');
+}
+function renderCards(){
+  const c=document.getElementById('fieldsContainer');
+  if(!fieldData){c.innerHTML='<div class="empty-state">暂无数据</div>';return}
+  c.innerHTML=FO.map(name=>{
+    const f=fieldData.fields.find(x=>x.field_id===name);if(!f)return '';
+    const st=f.field_status||'absent';
+    const hasEv=(f.values||[]).some(v=>(v.evidences||[]).length>0);
+    const bc=st==='absent'?'badge-absent':hasEv?'badge-supported':'badge-unsupported';
+    const bt=st==='absent'?'无此字段':hasEv?'有依据':'无依据';
+    const vHtml=(f.values||[]).map((v,vi)=>{
+      const evs=v.evidences||[];
+      const eh=evs.map((e,ei)=>{
+        const eid=`${name}_${vi}_${ei}`,role=e.role||'primary';
+        const rl=role==='primary'?'主证据':role==='context'?'上下文':role==='qualifier'?'限定条件':role;
+        const ac=activeEv.has(eid)?' active':'';
+        const os=e.raw_start!=null?`[${e.raw_start},${e.raw_end})`:`[${e.start},${e.end})`;
+        return `<div class="evidence-item${ac}" onclick="hlEv('${eid}',${e.raw_start||e.start},${e.raw_end||e.end})">
+          <span class="evidence-role role-${role}">${rl}</span>
+          <div class="evidence-text">${esc(e.text||'')}</div>
+          <div class="evidence-offset">偏移:${os} 方法:${e.match_method||'exact'}</div></div>`;
+      }).join('');
+      const nv=v.normalized_value||v.raw_value||'(空)';
+      const raw=v.raw_value&&v.raw_value!==v.normalized_value?
+        `<div class="field-value-raw">原值:${esc(v.raw_value)}</div>`:'';
+      return `<div class="field-value">
+        <div class="field-value-label">字段值 ${vi+1}${v.lot_id?' · '+v.lot_id:''}</div>
+        <div class="field-value-text">${esc(nv)}</div>${raw}
+        ${v.amount_type?`<div style="margin-top:6px;"><span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;" class="amt-tag amt-${v.amount_type}">${AMT_TYPE[v.amount_type]||v.amount_type}</span></div>`:''}
+        ${evs.length?`<div class="evidence-list">${eh}</div>`:'<div class="no-evidence"><i class="ph ph-warning" style="color:#c62828"></i> 无证据支持</div>'}
+      </div>`;
+    }).join('');
+    const exp=curField===name?' expanded':'';
+    return `<div class="field-card${exp}"><div class="field-card-header" onclick="toggleField('${name}')">
+      <span class="field-card-title">${FL[name]||name}</span>
+      <span class="field-card-badge ${bc}">${bt}</span></div>
+      <div class="field-card-body">${st==='absent'?
+        '<div class="no-evidence">该公告不含此字段（absent）</div>':
+        (vHtml||'<div class="no-evidence"><i class="ph ph-warning" style="color:#c62828"></i> 无依据 - 未找到证据支持</div>')}
+      </div></div>`;
+  }).join('');
+}
+function toggleField(n){if(curField===n){curField=null;clearHL()}else selField(n)}
+function selField(name,evId){
+  curField=name;activeEv.clear();
+  const f=fieldData?.fields?.find(x=>x.field_id===name);
+  if(f)(f.values||[]).forEach((v,vi)=>(v.evidences||[]).forEach((e,ei)=>{
+    const eid=`${name}_${vi}_${ei}`;if(!evId)activeEv.add(eid)
+  }));
+  if(evId)activeEv.add(evId);
+  renderText(allEvidence());renderNav();renderCards();
+  if(evId){const el=document.querySelector(`.hl[data-ids*="${evId}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
+}
+function hlEv(eid,s,e){
+  const ac=activeEv.has(eid);activeEv.clear();if(!ac)activeEv.add(eid);
+  renderText(allEvidence());renderCards();
+  if(activeEv.size){const el=document.querySelector(`.hl[data-ids*="${eid}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'center'})}
+}
+function clearHL(){activeEv.clear();renderText(allEvidence());renderNav();renderCards()}
+async function loadData(){
+  const p=new URLSearchParams(window.location.search);
+  const tid=p.get('id');   // 真实 tender_id（A3 新增，优先）
+  const doc=p.get('doc');  // 金标 doc_id（兼容保留）
+  const docIdEl=document.getElementById('docId');
+  try{
+    let r;
+    if(tid){
+      // 真实 tender_id → /api/real/tenders/{id}/detail（W2-11 补齐）
+      docIdEl.textContent='tender:'+tid;
+      r=await fetch(`/api/real/tenders/${encodeURIComponent(tid)}/detail`);
+    }else{
+      // 金标 doc_id → /api/demo/tenders/{doc}/fields（兼容 Demo 模式）
+      const docId=doc||'tender_06_4e47868721c5';
+      docIdEl.textContent=docId;
+      r=await fetch(`/api/demo/tenders/${encodeURIComponent(docId)}/fields`);
+    }
+    if(!r.ok)throw new Error('加载失败');
+    const d=await r.json();
+    if(d.code!==200)throw new Error(d.msg||'加载失败');
+    rawText=d.data.clean_raw_text||'';fieldData=d.data;
+  }catch(e){
+    document.getElementById('rawText').textContent='加载失败: '+e.message+'\n\n请确保 API 已配置正确。';return
+  }
+  renderText(allEvidence());renderNav();renderCards();
+}
+loadData();
+</script>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-<script>
-/* ================================================================
- * 真实数据 - 取自 k3_annotations_batch2.json 第一条公告 w3_correction_093
- * ================================================================ */
-var NOTICE = {
-  document_id: "w3_correction_093",
-  file: "w3_correction_093.txt",
-  notice_type: "correction",
-  title: "广西众鑫工程项目管理有限公司关于马山县金钗镇大凌水厂管网改造工程的更正公告",
-  annotated_at: "2026-07-30 16:56:00",
-  platform: "广西政府采购网",
-  /* 公告原文 (模拟正文, 含真实证据 span 文本) */
-  source_text: "广西众鑫工程项目管理有限公司关于马山县金钗镇大凌水厂管网改造工程的更正公告\n\n一、项目基本情况\n原公告的采购项目编号：NNZC2026-C2-240099-ZXXM\n原公告的采购项目名称：马山县金钗镇大凌水厂管网改造工程\n首次公告日期：2026年07月25日\n\n二、更正信息\n更正事项：采购公告\n更正原因：因原公告中部分内容表述需要调整,现对相关事项予以更正。\n更正日期：2026年07月30日\n\n三、其他补充事宜\n名    称：马山县水利局\n地    址：马山县白山镇西华路\n联系方式：0771-6822xxx\n本项目更正内容不涉及投标截止时间及开标时间的调整,原定投标截止时间维持不变。各潜在供应商请及时关注更正信息,因未及时查看造成的后果由供应商自行承担。\n四、凡对本次公告内容提出询问,请按以下方式联系。\n采购单位名称：马山县水利局\n采购代理机构：广西众鑫工程项目管理有限公司",
-  fields: [
-    { key:"project_identifier", name:"项目编号", icon:"ph-hash",
-      gold_status:"present", value:"NNZC2026-C2-240099-ZXXM",
-      display_grade:"high", support_level:"high", iou:0.97, verified:true,
-      span:{start:153,end:188,text:"原公告的采购项目编号：\nNNZC2026-C2-240099-ZXXM"} },
-    { key:"purchaser_name", name:"采购人名称", icon:"ph-building-office",
-      gold_status:"present", value:"马山县水利局",
-      display_grade:"high", support_level:"high", iou:0.91, verified:true,
-      span:{start:583,end:597,text:"名    称：\n马山县水利局"} },
-    { key:"amount", name:"中标金额", icon:"ph-currency-cny",
-      gold_status:"absent", value:"", display_grade:"low", support_level:"none", iou:0, verified:false, span:null },
-    { key:"publish_date", name:"发布/更正日期", icon:"ph-calendar-blank",
-      gold_status:"present", value:"2026年07月30日",
-      display_grade:"high", support_level:"high", iou:0.95, verified:true,
-      span:{start:389,end:406,text:"更正日期：\n2026年07月30日"} },
-    { key:"winner_name", name:"中标人名称", icon:"ph-trophy",
-      gold_status:"not_applicable", value:"", display_grade:"review", support_level:"none", iou:0, verified:false, span:null },
-    { key:"bid_deadline", name:"投标截止时间", icon:"ph-timer",
-      gold_status:"not_applicable", value:"", display_grade:"review", support_level:"none", iou:0, verified:false, span:null }
-  ]
-};
-
-var charts = {};
-var isDark = false;
-
-function theme() {
-  return isDark
-    ? { t:'#adbac7', al:'#768390', gl:'#21262d', bg:'#161b22', bt:'#e6edf3', sp:'#0c1d33' }
-    : { t:'#595959', al:'#8c8c8c', gl:'#f0f0f0', bg:'#ffffff', bt:'#1a1a2e', sp:'#e6f4ff' };
-}
-
-function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-/* ===== Render source text with evidence highlights =====
- * 证据 span 文本含 \n, 但原文同位置未必有换行, 故用正则将 \n 转为 \s* 做弹性匹配,
- * 高亮时仍按原文布局包裹, 不改变正文显示。
- */
-function renderSource() {
-  var raw = NOTICE.source_text;
-  var html = escHtml(raw);
-  NOTICE.fields.forEach(function(f, i){
-    if(!f.span){ return; }
-    var clean = escHtml(f.span.text);
-    /* 转义正则特殊字符, 再把实际换行替换为 \s* 做弹性匹配 */
-    var reSrc = clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\n/g, '\\s*');
-    /* 高亮内容: 去掉换行, 保持原文单行布局 */
-    var hlInner = clean.replace(/\n/g, '');
-    var hl = '<span class="ev-hl" data-field="' + i + '">' + hlInner + '</span>';
-    try { html = html.replace(new RegExp(reSrc, 'g'), hl); } catch(e) {}
-  });
-  document.getElementById('sourceText').innerHTML = html;
-  document.getElementById('srcLen').textContent = raw.length + ' 字';
-}
-
-/* ===== Render field cards ===== */
-function renderFields() {
-  var html = NOTICE.fields.map(function(f, idx){
-    var gradeCls = f.display_grade;
-    var gradeName = f.display_grade === 'high' ? 'HIGH' : (f.display_grade === 'review' ? 'REVIEW' : 'LOW');
-    var valHtml = f.value
-      ? '<span class="fc-val">' + escHtml(f.value) + '</span>'
-      : '<span class="fc-val empty">' + statusText(f.gold_status) + '</span>';
-    var supTag = f.support_level === 'high' ? '<span class="tag ok">support: high</span>'
-      : (f.support_level === 'none' ? '<span class="tag err">support: none</span>' : '<span class="tag warn">support: mid</span>');
-    var evBtn = f.span
-      ? '<span class="tag info"><i class="ph ph-highlighter"></i>证据 span [' + f.span.start + ':' + f.span.end + ']</span>'
-      : '<span class="tag" style="background:var(--bg);color:var(--text-3);border:1px solid var(--border)">无证据</span>';
-
-    /* 展开体 */
-    var body = '';
-    if (f.span) {
-      var iouCls = f.iou >= 0.9 ? '' : (f.iou >= 0.7 ? 'mid' : 'low');
-      body += '<div class="fc-row"><span class="rk">证据原文</span><span class="rv"><div class="ev-frag">' + highlightEv(f.span.text) + '</div></span></div>';
-      body += '<div class="fc-row"><span class="rk">IoU 分数</span><span class="rv"><span class="iou-pill ' + iouCls + '"><i class="ph ph-ruler"></i>' + f.iou.toFixed(2) + '</span> &nbsp;区间 [' + f.span.start + ', ' + f.span.end + ']</span></div>';
-      body += '<div class="fc-row"><span class="rk">验证状态</span><span class="rv"><span class="verified-pill"><i class="ph ph-seal-check"></i>evidence_verified: true</span></span></div>';
-      body += '<div class="fc-row"><span class="rk">gold_status</span><span class="rv code">' + f.gold_status + '</span></div>';
-    } else {
-      body += '<div class="fc-row"><span class="rk">gold_status</span><span class="rv code">' + f.gold_status + '</span></div>';
-      body += '<div class="fc-row"><span class="rk">说明</span><span class="rv">' + statusExplain(f.gold_status) + '</span></div>';
-      body += '<div class="fc-row"><span class="rk">证据定位</span><span class="rv"><span class="tag err">无匹配证据</span> &nbsp;evidence_verified: false</span></div>';
-    }
-    body += '<div class="fc-row"><span class="rk">field_name</span><span class="rv code">' + f.key + '</span></div>';
-
-    return '<div class="field-card" id="fc-' + idx + '">' +
-      '<div class="fc-head" onclick="toggleField(' + idx + ')">' +
-        '<span class="fc-name"><i class="ph ' + f.icon + '"></i>' + f.name + '</span>' +
-        valHtml +
-        '<span class="fc-meta">' +
-          '<span class="grade-tag ' + gradeCls + '">' + gradeName + '</span>' +
-          supTag + evBtn +
-          '<i class="ph ph-caret-right fc-chev"></i>' +
-        '</span>' +
-      '</div>' +
-      '<div class="fc-body">' + body + '</div>' +
-    '</div>';
-  }).join('');
-  document.getElementById('fieldList').innerHTML = html;
-  var present = NOTICE.fields.filter(function(f){ return f.gold_status === 'present'; }).length;
-  document.getElementById('fieldStat').textContent = present + '/6 命中';
-}
-
-function statusText(s){
-  return s === 'absent' ? '未提及 (absent)' : (s === 'not_applicable' ? '不适用 (N/A)' : '');
-}
-function statusExplain(s){
-  if (s === 'absent') return '该字段在公告正文中未出现, 本公告为更正公告, 未涉及金额信息';
-  if (s === 'not_applicable') return '更正公告不涉及中标结果与投标截止时间, 该字段不适用';
-  return '';
-}
-function highlightEv(text){
-  return escHtml(text).replace(/\n/g,'<br>');
-}
-
-function toggleField(idx){
-  var el = document.getElementById('fc-' + idx);
-  el.classList.toggle('open');
-}
-
-/* ===== Radar Chart ===== */
-function initRadar() {
-  var el = document.getElementById('chart-radar');
-  var c = echarts.init(el);
-  charts.radar = c;
-  var th = theme();
-  var indicators = [
-    { name:'完整性', max:100 },
-    { name:'准确性', max:100 },
-    { name:'证据支持', max:100 },
-    { name:'来源可信', max:100 },
-    { name:'格式规范', max:100 },
-    { name:'交叉验证', max:100 }
-  ];
-  var values = [67, 94, 100, 96, 88, 60];
-  c.setOption({
-    tooltip: { trigger:'item' },
-    radar: {
-      indicator: indicators,
-      center: ['50%','52%'],
-      radius: '62%',
-      axisName: { color:th.t, fontSize:12, fontWeight:600 },
-      splitLine: { lineStyle:{ color:th.gl } },
-      splitArea: { areaStyle:{ color:[th.bg, th.gl] } },
-      axisLine: { lineStyle:{ color:th.gl } }
-    },
-    series: [{
-      type:'radar',
-      data: [{
-        value: values,
-        name:'本公告质量',
-        areaStyle:{ color:'rgba(22,119,255,.18)' },
-        lineStyle:{ color:'#1677ff', width:2 },
-        itemStyle:{ color:'#1677ff' },
-        symbol:'circle', symbolSize:6,
-        label:{ show:true, color:th.bt, fontSize:11, fontWeight:600, formatter:function(p){ return p.value; } }
-      }]
-    }]
-  });
-}
-
-function destroyAllCharts(){
-  Object.keys(charts).forEach(function(k){ if(charts[k]){ charts[k].dispose(); delete charts[k]; } });
-}
-function initAllCharts(){ initRadar(); }
-
-function toggleTheme(){
-  isDark = !isDark;
-  document.body.classList.toggle('dark', isDark);
-  document.getElementById('themeIcon').className = isDark ? 'ph ph-sun' : 'ph ph-moon';
-  destroyAllCharts();
-  initAllCharts();
-}
-window.addEventListener('resize', function(){
-  Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].resize(); });
-});
-window.addEventListener('DOMContentLoaded', function(){
-  renderSource();
-  renderFields();
-  initAllCharts();
-});
-</script>
 </body>
 </html>

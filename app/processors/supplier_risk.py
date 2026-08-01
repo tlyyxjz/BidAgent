@@ -6,7 +6,7 @@
 1. 基于历史中标记录生成供应商风险评分
 2. 风险维度：集中度风险 / 金额异常 / 频率异常 / 地域集中 / 采购人集中
 3. 风险等级：low / medium / high
-4. 接入 finance_agent.py 的 _run_supplier_analysis TODO
+4. 已接入 finance_agent.py 的 _run_supplier_analysis（W3-03 完成）
 
 W3 周验收要求：基础组织实体活动画像
 
@@ -366,7 +366,7 @@ def analyze_supplier(
     normalized_name: str,
     win_records: list,
 ) -> SupplierRiskResult:
-    """供应商风险分析主函数（接入 finance_agent.py TODO）。
+    """供应商风险分析主函数（已接入 finance_agent.py，W3-03 完成）。
 
     流程：
     1. 生成供应商画像（build_supplier_profile）

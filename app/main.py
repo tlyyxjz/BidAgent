@@ -14,7 +14,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -29,9 +29,10 @@ from app.api.tender import router as tender_router
 from app.api.ui import router as ui_router
 from app.api.evidence_demo import router as evidence_demo_router
 from app.api.real_demo import router as real_demo_router
+from app.api.demo_api import router as demo_router, demo_org_by_name
 from app.config import settings
 from app.core.rate_limit import limiter
-from app.models.database import engine, init_database
+from app.models.database import engine, get_db, init_database
 # 导入所有 ORM 模型，确保 create_all 能创建新表
 from app.models.subscription import Subscription, PushLog  # noqa: F401
 from app.models.tender import Tender  # noqa: F401
@@ -203,6 +204,14 @@ app.include_router(ui_router)
 app.include_router(evidence_demo_router)
 # /api/demo Demo 数据接口（Turbo-W3 前端页面用，无需认证）
 app.include_router(real_demo_router)
+# /api/demo Demo data (incl. /api/demo/orgs/by-name/{name} 6-dim credit)
+app.include_router(demo_router)
+
+@app.get('/api/org/{name:path}', include_in_schema=False, tags=['demo'])
+async def org_by_name_alias(name: str, db=Depends(get_db)):
+    """Frontend alias: /api/org/{name} -> /api/demo/orgs/by-name/{name}."""
+    return await demo_org_by_name(name, db)
+
 
 # 静态文件服务（Web Demo 页面：notice_detail/version_history/org_profile）
 STATIC_DIR = Path("static")
