@@ -155,17 +155,18 @@ async def _trigger_push(
         report_path = state.get("report_path", "")
         push_results = await push_to_channels(sub, report_path, len(unpushed))
 
-    # 解析推送结果
+    # 解析推送结果（push_to_channels 返回 dict, channels 是列表）
+    channels = push_results.get("channels", []) if isinstance(push_results, dict) else push_results
     email_sent = any(
         r.get("channel") == "email" and r.get("delivered")
-        for r in push_results
+        for r in channels
     )
     webhook_sent = any(
         r.get("channel") == "webhook" and r.get("delivered")
-        for r in push_results
+        for r in channels
     )
     message_id = next(
-        (r.get("message_id") for r in push_results if r.get("message_id")),
+        (r.get("message_id") for r in channels if r.get("message_id")),
         None,
     )
 

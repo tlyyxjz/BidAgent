@@ -1,7 +1,8 @@
 """中国政府采购网（ccgp.gov.cn）招投标公告抓取模板。
 
-面向公告列表页，列表项选择器 ul.cggg-list li 已经过线上验证；
-字段级选择器为基于页面结构的合理推测，可在请求时显式覆盖。
+面向公告列表页(2026-08-02 实测更新)：
+- list_selector: ul.vT-srch-result-list-bid li (旧 ul.cggg-list li 已失效)
+- 字段选择器基于真实页面结构验证
 """
 
 from __future__ import annotations
@@ -18,8 +19,8 @@ CCGP_TEMPLATE = ScrapeTemplate(
         "detail_url": "a",
         "content": ".content, .summary, p",
     },
-    list_selector="ul.cggg-list li",  # 已验证
-    wait_for_selector="ul.cggg-list li",
+    list_selector="ul.vT-srch-result-list-bid li",  # 2026-08-02 实测验证
+    wait_for_selector="ul.vT-srch-result-list-bid li",
     next_page_selector="a.next",
     max_pages=1,
 )

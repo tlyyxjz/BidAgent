@@ -145,7 +145,7 @@ body{background:#f5f7fa}
     <div class="header-right">
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
       <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
-      <div class="h-badge vers">v4.1 · 99篇</div>
+      <div class="h-badge vers">v4.1 · 107篇</div>
     </div>
   </header>
 <main class="page-main">
@@ -318,7 +318,7 @@ function apply(){
       <td><span class="date">${x.date}</span></td>
       <td><div class="field-grid">${x.fields.map(f=>`<span class="fd fd-${f.v}">${f.n}</span>`).join('')}</div></td>
       <td><span class="badge badge-${x.grade==='low'?'warn':'ok'}">${x.grade.toUpperCase()}</span></td>
-      <td class="act"><a class="link" href="/ui/detail?id=${x.realId||1}">详情</a><a class="link" href="/ui/version?src=${x.id}">版本</a></td>
+      <td class="act"><a class="link" href="/ui/detail?id=${x.realId||1}">详情</a><a class="link" href="/ui/versions?src=${x.id}">版本</a></td>
     </tr>`).join('') || '<tr><td colspan="10" style="padding:40px;text-align:center;color:#999">无符合条件的公告</td></tr>';
   const end=Math.min(state.page*state.ps,d.length);
   document.getElementById('pInfo').textContent=`第 ${state.page===1?1:(state.page-1)*state.ps+1}-${end} 条 / 共 ${d.length} 条`;

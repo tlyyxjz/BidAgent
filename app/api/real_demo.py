@@ -233,10 +233,10 @@ async def get_tender_versions(tender_id: int, db: AsyncSession = Depends(get_db)
         return _err(f"公告 {tender_id} 不存在")
 
     raw_text = tender.core_content or ""
-    content_sha = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()[:16]
+    content_sha = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()  # 完整 64 位 SHA256
     material_sha = hashlib.sha256(
         (raw_text[:500] + raw_text[-500:]).encode("utf-8")
-    ).hexdigest()[:16]
+    ).hexdigest()  # 完整 64 位 SHA256
 
     # 真实版本：初始抓取
     versions = [{

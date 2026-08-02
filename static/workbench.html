@@ -261,7 +261,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
   <div class="sidebar-footer">
     <div><span class="comp-tag">标小智</span> v4.1</div>
     <div>GOAI 2026 初赛</div>
-    <div>W3 · 99 篇冻结集</div>
+    <div>W3 · 100 篇评测集</div>
   </div>
 </aside>
 
@@ -275,7 +275,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       <input class="global-search" type="text" placeholder="搜索项目/组织/公告..." />
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
       <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
-      <div class="h-badge vers">v4.1 · 99篇</div>
+      <div class="h-badge vers">v4.1 · 107篇</div>
     </div>
   </header>
 
@@ -298,8 +298,8 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
         <div class="kpi-icon blue"><i class="ph-bold ph-file-text"></i></div>
         <div class="kpi-body">
           <div class="kpi-label">公告总数</div>
-          <div class="kpi-value">99<span class="unit">篇</span></div>
-          <div class="kpi-sub">W3 冻结样本集</div>
+          <div class="kpi-value" id="kpiTotalTenders">--<span class="unit">篇</span></div>
+          <div class="kpi-sub">W3 评测集 + 实时采集</div>
         </div>
         <div class="kpi-trend info">W3</div>
       </div>
@@ -470,7 +470,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
           <a href="/ui/quality-dashboard" class="recent-item">
             <div class="recent-icon purple"><i class="ph ph-chart-bar"></i></div>
             <div class="recent-body">
-              <div class="recent-title">W3 全量评测报告 · 99 篇</div>
+              <div class="recent-title">W3 全量评测报告 · 107 篇</div>
               <div class="recent-meta">精确率 97.3% · 无依据率 0% · 2026-07-31</div>
             </div>
             <div class="recent-status ok">已完成</div>
@@ -479,7 +479,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
             <div class="recent-icon green"><i class="ph ph-arrows-split"></i></div>
             <div class="recent-body">
               <div class="recent-title">跨平台去重 · ccgp + chinabidding</div>
-              <div class="recent-meta">99 篇公告 · 2 平台 · 2026-07-31</div>
+              <div class="recent-meta">107 篇公告 · 2 平台 · 2026-07-31</div>
             </div>
             <div class="recent-status info">已去重</div>
           </a>
@@ -515,7 +515,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 
     <!-- ===== Footer ===== -->
     <div class="footer">
-      <span class="real">● 真实数据</span> · 99 篇 W3 冻结样本集 · 321 条证据（IoU ≥ 0.5） ·
+      <span class="real">● 真实数据</span> · 107 篇真实公告（W3 评测集 + 实时采集） · 321 条证据（IoU ≥ 0.5） ·
       <span class="src">deepseek-v4-flash</span> · 证据验证 + 来源谱系 + 展示等级 ·
       标小智 v4.1 · GOAI 2026 初赛
     </div>
@@ -660,6 +660,21 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     if (btn) btn.addEventListener('click', function(){ load(false); });
   });
 })();
+
+    // 动态加载真实公告总数
+    (async function() {
+      try {
+        const r = await fetch('/api/real/tenders');
+        if (r.ok) {
+          const d = await r.json();
+          const total = (d.data && d.data.tenders) ? d.data.tenders.length : 0;
+          const el = document.getElementById('kpiTotalTenders');
+          if (el && total > 0) {
+            el.innerHTML = total + '<span class="unit">篇</span>';
+          }
+        }
+      } catch (e) { console.warn('load tenders count failed', e); }
+    })();
 </script>
 
 

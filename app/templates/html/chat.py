@@ -152,7 +152,7 @@ body{background:#f5f7fa}
     <div class="header-right">
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
       <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
-      <div class="h-badge vers">v4.1 · 99篇</div>
+      <div class="h-badge vers">v4.1 · 107篇</div>
     </div>
   </header>
   <div class="content-area" style="flex:1;padding:0;overflow:hidden">
@@ -280,14 +280,18 @@ async function sendMsg(){
     `正在启动 6 个 Agent 协作处理，请稍候...`;
   // A1 修复：启动真实 pipeline 并轮询
   try{
-    const sr=await fetch(`/api/demo/pipeline/start?query=${encodeURIComponent(text)}`);
+    const sr=await fetch(`/api/demo/pipeline/start?query=${encodeURIComponent(text)}`,{method:'POST'});
     const sd=await sr.json();
     if(sd.code===200 && sd.data.session_id){
       _pipelineSid=sd.data.session_id;
       const result=await runReal();
       _pipelineSid=null;
-      const foundCount=result&&result.result&&result.result.items?result.result.items.length:0;
-      const rn=`招标分析报告_${slots.keyword||'自定义'}_${new Date().toISOString().slice(0,10)}.docx`;
+      const r=result&&result.result||{};
+      const cs=r.collect_summary||{};
+      const ps=r.process_summary||{};
+      const foundCount=cs.total||ps.total_processed||0;
+      const reportName=slots.keyword||'招标分析';
+      const rn=`招标分析报告_${reportName}_${new Date().toISOString().slice(0,10)}.docx`;
       botMsg.querySelector('.bubble').innerHTML=
         `处理完成！共找到 <b>${foundCount}</b> 条相关招标公告。`+
         `<div class="report-card">
@@ -317,7 +321,8 @@ function parseSlots(text){
   else if(text.includes('30天')||text.includes('一个月'))s.time_range='最近 30 天';
   else if(text.includes('今天')||text.includes('今日'))s.time_range='今日';
   else s.time_range='最近 15 天';
-  if(text.includes('IT')||text.includes('信息化')||text.includes('软件')){s.keyword='IT / 信息化';s.industry='信息技术'}
+  if(text.includes('充电桩')||text.includes('充电站')||text.includes('充电设备')){s.keyword='充电桩';s.industry='新能源'}
+  else if(text.includes('IT')||text.includes('信息化')||text.includes('软件')){s.keyword='IT / 信息化';s.industry='信息技术'}
   else if(text.includes('医疗')||text.includes('医院')||text.includes('设备')){s.keyword='医疗设备';s.industry='医疗卫生'}
   else if(text.includes('教育')||text.includes('学校')||text.includes('大学')){s.keyword='教育系统';s.industry='教育'}
   else if(text.includes('基建')||text.includes('工程')||text.includes('建筑')){s.keyword='基建工程';s.industry='建筑工程'}

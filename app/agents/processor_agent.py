@@ -48,23 +48,69 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
     from app.models.tender import Tender
     from sqlalchemy import select
 
+    # 从 parsed_filters 提取 topic/region/keywords 用于过滤
+    parsed = state.get("parsed_filters")
+    topic = getattr(parsed, "topic", "") if parsed else ""
+    region = getattr(parsed, "region", "") if parsed else ""
+    keywords = getattr(parsed, "keywords", []) if parsed else []
+
+    # 构建关键词列表（topic + keywords + query 分词）
+    search_words = []
+    if topic:
+        search_words.append(topic)
+    search_words.extend(keywords)
+    # 从 raw_query 提取额外关键词
+    raw_query = getattr(parsed, "raw_query", "") if parsed else ""
+    if raw_query:
+        # 去掉地区词后剩下的作为关键词
+        region_words = ["北京", "上海", "广东", "深圳", "浙江", "江苏", "四川",
+                        "湖北", "山东", "河南", "福建", "安徽", "最近", "的", "招标", "公告"]
+        extra = [w for w in raw_query.replace("招标", "").replace("公告", "").split()
+                 if w and w not in region_words and w not in search_words]
+        search_words.extend(extra)
+
     async with AsyncSessionLocal() as db:
-        # 查询本次订阅采集的 tenders（按时间倒序）
-        result = await db.execute(
-            select(Tender)
-            .where(Tender.source_platform.in_(
+        # 查询数据库：按 topic/keywords 过滤（采集失败时 fallback 到库内已有数据）
+        from sqlalchemy import or_, and_
+
+        query = select(Tender).where(
+            Tender.source_platform.in_(
                 collect_summary.get("platforms_collected", ["ccgp"])
-            ))
-            .order_by(Tender.id.desc())
-            .limit(100)
+            )
+        )
+
+        # 如果有搜索关键词，按 project_name 或 core_content 过滤
+        if search_words:
+            keyword_filters = []
+            for kw in search_words:
+                if kw:
+                    keyword_filters.append(
+                        or_(
+                            Tender.project_name.ilike(f"%{kw}%"),
+                            Tender.core_content.ilike(f"%{kw}%"),
+                        )
+                    )
+            if keyword_filters:
+                query = query.where(and_(*keyword_filters) if len(keyword_filters) == 1
+                                    else or_(*keyword_filters))
+
+        # 按 region 过滤
+        if region:
+            query = query.where(
+                or_(
+                    Tender.tender_org.ilike(f"%{region}%"),
+                    Tender.core_content.ilike(f"%{region}%"),
+                )
+            )
+
+        result = await db.execute(
+            query.order_by(Tender.id.desc()).limit(100)
         )
         tenders = result.scalars().all()
 
     # 分类标注 + 相关性评分
     category_dist: dict[str, int] = {}
     relevance_scores: list[float] = []
-    parsed = state.get("parsed_filters")
-    topic = getattr(parsed, "topic", "") if parsed else ""
 
     for t in tenders:
         # 分类标注（基于 project_name 关键词匹配）

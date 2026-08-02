@@ -84,6 +84,12 @@ async def ui_org() -> HTMLResponse:
     return _serve_static_html("org_profile.html")
 
 
+@router.get("/version", response_class=HTMLResponse, include_in_schema=False)
+async def ui_version_legacy_redirect():
+    """兼容旧链接 /ui/version -> /ui/versions。"""
+    return RedirectResponse(url="/ui/versions", status_code=307)
+
+
 @router.get("/versions", response_class=HTMLResponse)
 async def ui_versions() -> HTMLResponse:
     """版本历史页别名（侧边栏/Stepper 用 /ui/versions，兼容原 /ui/version）。"""

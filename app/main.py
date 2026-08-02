@@ -224,6 +224,17 @@ if STATIC_DIR.exists():
 
 # ==== 基础端点 ====
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """SVG favicon."""
+    from fastapi.responses import Response
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' \
+        '<rect width="32" height="32" rx="7" fill="#1677ff"/>' \
+        '<text x="16" y="23" font-size="20" font-weight="bold" ' \
+        'text-anchor="middle" fill="white" font-family="sans-serif">\u6807</text></svg>'
+    return Response(content=svg.encode("utf-8"), media_type="image/svg+xml")
+
+
 @app.get("/health", tags=["meta"])
 async def health() -> dict[str, str]:
     """健康检查（无需认证）。"""

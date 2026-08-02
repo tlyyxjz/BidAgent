@@ -853,6 +853,7 @@ async def _query_real_org_by_name(name: str, db: AsyncSession) -> dict | None:
 
         # 推断 org_type 和 region
         org_role = "winner" if any(f.field_name == "winner_name" for f, t in all_occurrences) else "purchaser"
+        from app.api.real_demo import _infer_org_meta  # 局部导入避免循环依赖
         _org_type, _region = _infer_org_meta(name, org_role)
 
         # 构造 meta（用于 5 维度评分，对齐 supplier_risk.py 口径）

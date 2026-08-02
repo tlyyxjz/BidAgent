@@ -23,14 +23,14 @@
 
 - 文件：_w2_report/proposal.pptx
 - 页数：28 页
-- 大小：约 629 KB
+- 大小：约 102 KB
 
 ---
 
 ## 三、代码仓库
 
 - GitHub: https://github.com/tlyyxjz/BidAgent
-- 分支：feature/glm-w2-evidence
+- 分支：feature/glm-w4-k3-data
 - 测试：826 passed, 1 skipped（K3 独立复跑确认）
 
 ---

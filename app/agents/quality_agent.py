@@ -67,13 +67,13 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
         for t in tenders:
             if not t.core_content or not t.source_url:
                 continue
-            # check_content(text, source_text) → (ok, issues)
-            ok, issues = check_content(t.core_content, t.core_content)
-            if not ok:
+            # check_content 返回 CheckReport 对象(有 .passed / .facts 属性)
+            report = check_content(t.core_content, t.core_content)
+            if not report.passed:
                 hallucination_flags += 1
                 logger.warning(
-                    "quality_agent hallucination detected tender_id={} issues={}",
-                    t.id, issues,
+                    "quality_agent hallucination detected tender_id={} total={} verified={} hallucinated={}",
+                    t.id, report.total_facts, report.verified_facts, report.hallucinated_facts,
                 )
 
     # 质量评分：去重率 + 反幻觉通过率
