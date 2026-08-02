@@ -102,10 +102,13 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="ScrapeFlow API",
-    description="REST API that turns any URL into structured JSON.",
-    version="0.1.0",
+    title="标小智 - 智能招投标助手",
+    description="AI+金融方向的招投标数据服务系统",
+    version="2.0.0",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 app.state.limiter = limiter
 
@@ -228,11 +231,7 @@ async def health() -> dict[str, str]:
 
 
 @app.get("/", include_in_schema=False)
-async def root() -> dict[str, str]:
-    """根路径欢迎信息。"""
-    return {
-        "name": "ScrapeFlow API",
-        "version": "0.1.0",
-        "docs": "/docs",
-        "health": "/health",
-    }
+async def root():
+    """根路径重定向到工作台。"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/ui", status_code=307)
