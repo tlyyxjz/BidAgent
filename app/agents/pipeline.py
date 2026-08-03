@@ -170,7 +170,7 @@ def _build_six_agent_graph() -> AgentGraph:
     )
     graph.add_agent(
         name="finance",
-        description="金融分析：BOQ 异常 + 废标风险 + 供应商信用评分",
+        description="金融分析：BOQ 异常（实验性）+ 废标风险 + 供应商公开活动观察度",
         func=finance_agent,
         next_agent="delivery",
     )
