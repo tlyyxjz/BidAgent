@@ -1,0 +1,160 @@
+{
+  "test_name": "v4.1_compliance_smoke",
+  "timestamp": "2026-08-03 10:53:25",
+  "python_version": "3.10.11",
+  "total": 25,
+  "passed": 25,
+  "failed": 0,
+  "results": [
+    {
+      "name": "Argon2id hash/verify",
+      "status": "PASS",
+      "detail": "PHC format OK, verify OK",
+      "timestamp": "2026-08-03 10:53:24"
+    },
+    {
+      "name": "AES-GCM encrypt/decrypt",
+      "status": "PASS",
+      "detail": "round-trip OK",
+      "timestamp": "2026-08-03 10:53:24"
+    },
+    {
+      "name": "Session token",
+      "status": "PASS",
+      "detail": "generate/verify OK",
+      "timestamp": "2026-08-03 10:53:24"
+    },
+    {
+      "name": "API Key HMAC-SHA256",
+      "status": "PASS",
+      "detail": "key len=43",
+      "timestamp": "2026-08-03 10:53:24"
+    },
+    {
+      "name": "首次请求不等待",
+      "status": "PASS",
+      "detail": "waited=0.0",
+      "timestamp": "2026-08-03 10:53:24"
+    },
+    {
+      "name": "同域名二次请求等待",
+      "status": "PASS",
+      "detail": "waited=0.100s elapsed=0.109s",
+      "timestamp": "2026-08-03 10:53:24"
+    },
+    {
+      "name": "不同域名互不阻塞",
+      "status": "PASS",
+      "detail": "waited=0.0",
+      "timestamp": "2026-08-03 10:53:24"
+    },
+    {
+      "name": "release 回滚",
+      "status": "PASS",
+      "detail": "release 后立即放行",
+      "timestamp": "2026-08-03 10:53:24"
+    },
+    {
+      "name": "robots.txt 允许",
+      "status": "PASS",
+      "detail": "allow_all parser",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "robots.txt 禁止",
+      "status": "PASS",
+      "detail": "disallow / parser",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "robots.txt 404 全允许",
+      "status": "PASS",
+      "detail": "RFC 9309",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "首次 get 返回 None",
+      "status": "PASS",
+      "detail": "cache miss",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "set/get 命中",
+      "status": "PASS",
+      "detail": "etag=\"abc123\"",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "条件请求头",
+      "status": "PASS",
+      "detail": "headers=['If-None-Match', 'If-Modified-Since']",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "handle_304 返回缓存",
+      "status": "PASS",
+      "detail": "304 复用缓存",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "invalidate 失效",
+      "status": "PASS",
+      "detail": "invalidate 后 miss",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "首次保存新版本",
+      "status": "PASS",
+      "detail": "v1 hash=60329bc85480d3c6",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "相同内容不创建新版本",
+      "status": "PASS",
+      "detail": "v1 unchanged",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "内容变化创建新版本",
+      "status": "PASS",
+      "detail": "v2 material=True",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "历史版本查询",
+      "status": "PASS",
+      "detail": "versions=2",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "统计信息",
+      "status": "PASS",
+      "detail": "urls=1 versions=2",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "首次检查返回 True",
+      "status": "PASS",
+      "detail": "first record",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "相同结构返回 False",
+      "status": "PASS",
+      "detail": "unchanged",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "结构变化返回 True",
+      "status": "PASS",
+      "detail": "structure changed",
+      "timestamp": "2026-08-03 10:53:25"
+    },
+    {
+      "name": "统计信息",
+      "status": "PASS",
+      "detail": "templates=1",
+      "timestamp": "2026-08-03 10:53:25"
+    }
+  ]
+}

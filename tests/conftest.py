@@ -5,6 +5,7 @@
 - 在导入 app 模块之前设置环境变量。
 - 每个 test class 重置数据库。
 - 重置内存速率限制计数器。
+- 重置域名级采集频率限制器状态（避免测试间相互阻塞）。
 """
 
 from __future__ import annotations
@@ -40,6 +41,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import generate_api_key, hash_api_key
 from app.core.rate_limit import reset_memory_counter
+from app.core.rate_limiter import domain_rate_limiter
+from app.core.robots_checker import robots_checker
 from app.main import app
 from app.models.database import AsyncSessionLocal, Base, engine
 from app.models.user import (
@@ -52,7 +55,7 @@ from app.models.user import (
 
 @pytest.fixture(autouse=True)
 async def _reset_db_and_rate_limit(monkeypatch):
-    """每个测试前：重置数据库 + 内存速率限制计数器。
+    """每个测试前：重置数据库 + 内存速率限制计数器 + 域名级频率限制状态。
 
     M-2 修复（第四轮）：mock 掉 is_safe_url / is_safe_url_async 避免测试做真实
     DNS 解析（避免 reddit.com 解析到保留 IPv6 被拦截导致测试不稳定）。
@@ -61,6 +64,9 @@ async def _reset_db_and_rate_limit(monkeypatch):
     避免因 basetemp 残留文件清理失败（PermissionError）连锁中断后续测试的
     fixture setup，导致 120 errors。setup 阶段 drop_all 同样容错，防止
     "no such table" / "table already exists" 异常。
+
+    v4.1 §13：重置 domain_rate_limiter 状态，避免前一个测试对某域名的
+    _last_request 记录导致后续测试同域名请求被 sleep 8 秒拖慢。
     """
     Path("data").mkdir(parents=True, exist_ok=True)
     # setup：先 drop（容错：表可能不存在），再 create
@@ -76,6 +82,10 @@ async def _reset_db_and_rate_limit(monkeypatch):
             # 表可能已存在（前次 setup 中断），忽略
             print(f"[conftest setup] create_all warning: {e}")
     reset_memory_counter()
+    # 重置域名级频率限制器：清空 _last_request 和 _domain_intervals
+    domain_rate_limiter.reset()
+    # 重置 robots.txt 检查器缓存：避免测试间缓存干扰
+    robots_checker.reset()
 
     # mock SSRF 校验：测试环境跳过真实 DNS 解析
     async def _mock_safe_async(url: str) -> tuple[bool, str]:
@@ -89,6 +99,15 @@ async def _reset_db_and_rate_limit(monkeypatch):
     monkeypatch.setattr("app.utils.url_safety.is_safe_url_async", _mock_safe_async)
     # patch scraper 模块里已 import 的引用（from ... import 形式不会跟随模块属性）
     monkeypatch.setattr("app.core.scraper.is_safe_url", _mock_safe)
+
+    # v4.1 §5.2：mock robots_checker.is_allowed，避免测试发起真实 HTTP 请求
+    # 测试 robots_checker 本身时用独立实例（不受此 mock 影响）
+    async def _mock_robots_allowed(url: str, user_agent: str = "*") -> bool:
+        return True
+
+    monkeypatch.setattr(
+        "app.core.scraper.robots_checker.is_allowed", _mock_robots_allowed
+    )
 
     yield
     # teardown：drop_all 容错，避免 PermissionError 中断后续测试

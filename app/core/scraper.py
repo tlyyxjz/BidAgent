@@ -32,6 +32,8 @@ from app.core.proxy import (
     get_random_user_agent,
     report_proxy_failure,
 )
+from app.core.rate_limiter import domain_rate_limiter
+from app.core.robots_checker import robots_checker
 from app.templates import get_template
 from app.templates.base import ScrapeTemplate
 from app.utils.hostname_cache import HostnameLRUCache
@@ -87,6 +89,22 @@ class Scraper:
         if not safe:
             logger.warning("SSRF blocked url=%s reason=%s", url[:80], reason)
             raise ScrapeError(f"URL 不安全: {reason}")
+
+        # v4.1 §5.2 合规原则：检查 robots.txt 是否允许采集该 URL
+        # 在频率限制前检查：若 robots.txt 禁止，无需等待
+        allowed = await robots_checker.is_allowed(url)
+        if not allowed:
+            logger.warning("robots.txt disallowed url=%s", url[:80])
+            raise ScrapeError(f"robots.txt 禁止采集该 URL: {url[:80]}")
+
+        # v4.1 §13 合规采集层：域名级频率限制（默认 8 秒间隔，按域名独立计数）
+        # 在 SSRF 校验通过后、模板合并前等待，确保真实请求前已满足间隔
+        waited = await domain_rate_limiter.wait(url)
+        if waited > 0:
+            logger.info(
+                "domain_rate_limit waited=%.2fs url=%s",
+                waited, url[:80],
+            )
 
         # 合并模板默认配置
         merged = self._merge_template(request)
@@ -159,6 +177,9 @@ class Scraper:
                 last_error = exc
                 logger.exception("抓取未知错误 url=%s attempt=%d", url, attempt)
                 break  # 非代理类错误不重试
+
+        # 抓取失败：回滚域名级频率限制的"预订"，避免下次同域名请求被多等一个间隔
+        await domain_rate_limiter.release(url)
 
         raise ScrapeError(f"抓取失败: {last_error}") from last_error
 

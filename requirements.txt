@@ -27,3 +27,7 @@ ddddocr>=1.4.7
 # SimHash 分词
 jieba>=0.42.1
 
+
+# v4.1 sec 13.1 credentials: Argon2id + AES-GCM
+argon2-cffi>=23.1.0
+cryptography>=42.0.0
