@@ -1,5 +1,5 @@
 services:
-  scrapeflow:
+  biaoxiaozhi:
     build: .
     ports:
       - "8000:8000"
@@ -9,7 +9,7 @@ services:
     environment:
       SECRET_KEY: ${SECRET_KEY}
       ADMIN_SECRET: ${ADMIN_SECRET}
-      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/scrapeflow.db}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/bidagent.db}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       PROXY_LIST: ${PROXY_LIST:-}
       PLAYWRIGHT_HEADLESS: ${PLAYWRIGHT_HEADLESS:-true}
@@ -33,7 +33,7 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
       SMTP_FROM_ADDR: ${SMTP_FROM_ADDR:-}
-      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-ScrapeFlow 招标推送}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-标小智 招标推送}
       SMTP_TIMEOUT: ${SMTP_TIMEOUT:-30}
       ANTI_DETECT_SESSION_DIR: ${ANTI_DETECT_SESSION_DIR:-data/sessions}
       BROWSER_POOL_SIZE: ${BROWSER_POOL_SIZE:-2}
@@ -67,7 +67,7 @@ services:
     environment:
       SECRET_KEY: ${SECRET_KEY}
       ADMIN_SECRET: ${ADMIN_SECRET}
-      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/scrapeflow.db}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/bidagent.db}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       PROXY_LIST: ${PROXY_LIST:-}
       PLAYWRIGHT_HEADLESS: ${PLAYWRIGHT_HEADLESS:-true}
@@ -95,7 +95,7 @@ services:
     environment:
       SECRET_KEY: ${SECRET_KEY}
       ADMIN_SECRET: ${ADMIN_SECRET}
-      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/scrapeflow.db}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/bidagent.db}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
@@ -110,7 +110,7 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
       SMTP_FROM_ADDR: ${SMTP_FROM_ADDR:-}
-      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-ScrapeFlow 招标推送}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-标小智 招标推送}
       SMTP_TIMEOUT: ${SMTP_TIMEOUT:-30}
     depends_on:
       redis:
