@@ -686,7 +686,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
     注：本接口为公开活动观察度（0-100），不输出信用评分（v4.1 §9.1）。
     meta 字段有限，部分维度以代理指标估算。
     """
-    # 每项 score 0-100，进度条颜色：>=85 green、>=70 amber、其余 red
+    # v4.1 §9.1: 不输出信用评分，score/grade 设为 None，仅保留观察值
     def _grade(s: float) -> str:
         if s >= 85:
             return "high"
@@ -709,8 +709,8 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "key": "concentration",
             "name": "集中度",
             "icon": "ph-graph",
-            "score": round(conc, 1),
-            "grade": _grade(conc),
+            "score": None,
+            "grade": None,
             "display": f"{meta['total_projects']:,} 个",
             "description": "中标次数分散度，次数越多集中度风险越低（对齐 observation_signals.py）",
         },
@@ -718,8 +718,8 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "key": "amount_anomaly",
             "name": "金额异常",
             "icon": "ph-shield-check",
-            "score": round(amt, 1),
-            "grade": _grade(amt),
+            "score": None,
+            "grade": None,
             "display": f"{amt:.1f} / 100",
             "description": "金额一致性，越高异常越低（对齐 observation_signals.py）",
         },
@@ -727,8 +727,8 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "key": "frequency",
             "name": "频率异常",
             "icon": "ph-clock",
-            "score": round(freq, 1),
-            "grade": _grade(freq),
+            "score": None,
+            "grade": None,
             "display": f"{meta['active_days_30d']} / 30 天",
             "description": "中标频率稳定性，活跃越稳定频率异常越低（对齐 observation_signals.py）",
         },
@@ -736,8 +736,8 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "key": "region",
             "name": "地域集中",
             "icon": "ph-bezier-curve",
-            "score": round(reg, 1),
-            "grade": _grade(reg),
+            "score": None,
+            "grade": None,
             "display": f"{meta['type_coverage_count']} / 12 类",
             "description": "地域分散度（以公告类型覆盖度代理），越分散越低（对齐 observation_signals.py）",
         },
@@ -745,8 +745,8 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "key": "purchaser",
             "name": "采购人集中",
             "icon": "ph-trophy",
-            "score": round(pur, 1),
-            "grade": _grade(pur),
+            "score": None,
+            "grade": None,
             "display": f"{meta['award_win_rate'] * 100:.1f}%",
             "description": "采购人分散度（以中标率代理），越分散越低（对齐 observation_signals.py）",
         },
@@ -972,7 +972,8 @@ async def demo_org_by_name(name: str, db: AsyncSession = Depends(get_db)) -> JSO
             "region": 0.15,
             "purchaser": 0.20,
         }
-        overall = round(sum(d["score"] * _WEIGHTS.get(d["key"], 0.0) for d in dims), 1)
+        # v4.1 §9.1: 不输出综合评分
+        overall = None
     else:
         # 真实数据未命中：每个维度 score 为 None，overall 为 None，不伪造数字
         dims = _build_5d_credit_no_data()
@@ -1023,7 +1024,8 @@ async def demo_org_by_name(name: str, db: AsyncSession = Depends(get_db)) -> JSO
             "org_type": meta["org_type"],
             "region": meta["region"],
             # 5 维度公开活动观察度（对齐 observation_signals.py 口径）
-            "observation_score": overall,
+            "observation_score": None,  # v4.1 §9.1: 不输出信用评分
+            "observation_note": "基于公开招投标数据的观察信号，不输出信用评分（v4.1 §9.1）",
             "credit_dimensions": dims,
             "data_source": data_source,
             # 活动画像（兼容 org_profile.html 原字段）
