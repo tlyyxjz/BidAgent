@@ -589,7 +589,7 @@ async def demo_field_evidence(field_id: str, doc: str = Query("mock_tender")) ->
     })
 
 
-# ========= 任务2：/api/org/{name} 真实接口 · 5 维度信用评分 =========
+# ========= 任务2：/api/org/{name} 真实接口 · 5 维度公开活动观察度 =========
 
 # 按名称索引的组织库（name -> org_id + 元数据），支持大小写/模糊匹配前缀命中
 _ORG_INDEX: dict[str, dict] = {
@@ -674,17 +674,17 @@ _ORG_INDEX: dict[str, dict] = {
 
 
 def _build_5d_credit(meta: dict) -> list[dict]:
-    """5 维度信用评分（5 维度对齐 supplier_risk.py 的供应商风险评分口径）。
+    """5 维度公开活动观察度（对齐 observation_signals.py 口径，v4.1 第九章）。
 
-    维度名 / 权重对齐 app/processors/supplier_risk.py：
+    维度名 / 权重对齐 app/processors/observation_signals.py：
     1. 集中度（concentration）25%
     2. 金额异常（amount_anomaly）20%
     3. 频率异常（frequency）20%
     4. 地域集中（region）15%
     5. 采购人集中（purchaser）20%
 
-    注：本接口为信用分（0-100，越高越好），与 supplier_risk.py 的风险分（越高越危险）
-    方向相反；此处仅对齐维度名与权重口径。meta 字段有限，部分维度以代理指标估算。
+    注：本接口为公开活动观察度（0-100），不输出信用评分（v4.1 §9.1）。
+    meta 字段有限，部分维度以代理指标估算。
     """
     # 每项 score 0-100，进度条颜色：>=85 green、>=70 amber、其余 red
     def _grade(s: float) -> str:
@@ -694,15 +694,15 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             return "medium"
         return "low"
 
-    # 集中度：中标次数多 → 集中度风险低 → 信用分高（代理：total_projects）
+    # 集中度：中标次数多 → 集中度风险低 → 公开活动观察度高（代理：total_projects）
     conc = min(100.0, 55 + (meta["total_projects"] / 1_200.0) * 45.0)
-    # 金额异常：金额一致性高 → 异常低 → 信用分高
+    # 金额异常：金额一致性高 → 异常低 → 公开活动观察度高
     amt = meta["amount_consistency_score"]
-    # 频率异常：稳定活跃 → 频率正常 → 信用分高（代理：active_days_30d）
+    # 频率异常：稳定活跃 → 频率正常 → 公开活动观察度高（代理：active_days_30d）
     freq = 50 + (meta["active_days_30d"] / 30.0) * 50.0
-    # 地域集中：类型覆盖广 → 地域分散 → 信用分高（代理：type_coverage_count）
+    # 地域集中：类型覆盖广 → 地域分散 → 公开活动观察度高（代理：type_coverage_count）
     reg = 50 + (meta["type_coverage_count"] / 12.0) * 50.0
-    # 采购人集中：健康中标率 → 采购人分散 → 信用分高（代理：award_win_rate）
+    # 采购人集中：健康中标率 → 采购人分散 → 公开活动观察度高（代理：award_win_rate）
     pur = min(100.0, 50 + meta["award_win_rate"] / 0.45 * 50)
     dims = [
         {
@@ -712,7 +712,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "score": round(conc, 1),
             "grade": _grade(conc),
             "display": f"{meta['total_projects']:,} 个",
-            "description": "中标次数分散度，次数越多集中度风险越低（对齐 supplier_risk.py）",
+            "description": "中标次数分散度，次数越多集中度风险越低（对齐 observation_signals.py）",
         },
         {
             "key": "amount_anomaly",
@@ -721,7 +721,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "score": round(amt, 1),
             "grade": _grade(amt),
             "display": f"{amt:.1f} / 100",
-            "description": "金额一致性，越高异常越低（对齐 supplier_risk.py）",
+            "description": "金额一致性，越高异常越低（对齐 observation_signals.py）",
         },
         {
             "key": "frequency",
@@ -730,7 +730,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "score": round(freq, 1),
             "grade": _grade(freq),
             "display": f"{meta['active_days_30d']} / 30 天",
-            "description": "中标频率稳定性，活跃越稳定频率异常越低（对齐 supplier_risk.py）",
+            "description": "中标频率稳定性，活跃越稳定频率异常越低（对齐 observation_signals.py）",
         },
         {
             "key": "region",
@@ -739,7 +739,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "score": round(reg, 1),
             "grade": _grade(reg),
             "display": f"{meta['type_coverage_count']} / 12 类",
-            "description": "地域分散度（以公告类型覆盖度代理），越分散越低（对齐 supplier_risk.py）",
+            "description": "地域分散度（以公告类型覆盖度代理），越分散越低（对齐 observation_signals.py）",
         },
         {
             "key": "purchaser",
@@ -748,7 +748,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "score": round(pur, 1),
             "grade": _grade(pur),
             "display": f"{meta['award_win_rate'] * 100:.1f}%",
-            "description": "采购人分散度（以中标率代理），越分散越低（对齐 supplier_risk.py）",
+            "description": "采购人分散度（以中标率代理），越分散越低（对齐 observation_signals.py）",
         },
     ]
     return dims
@@ -757,7 +757,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
 def _build_5d_credit_no_data() -> list[dict]:
     """真实数据未命中时返回的 5 维度占位（score 全部为 None，不伪造数字）。
 
-    5 维度对齐 supplier_risk.py 的供应商风险评分口径。
+    5 维度对齐 observation_signals.py 口径（v4.1 第九章）。
     """
     _reason = "暂无真实数据，以下为演示样例"
     return [
@@ -856,7 +856,7 @@ async def _query_real_org_by_name(name: str, db: AsyncSession) -> dict | None:
         from app.api.real_demo import _infer_org_meta  # 局部导入避免循环依赖
         _org_type, _region = _infer_org_meta(name, org_role)
 
-        # 构造 meta（用于 5 维度评分，对齐 supplier_risk.py 口径）
+        # 构造 meta（用于 5 维度评分，对齐 observation_signals.py 口径）
         # 估算总金额：取该组织相关公告的 amount 字段之和
         amount_result = await db.execute(
             select(func.sum(ExtractedField.raw_value))
@@ -924,9 +924,9 @@ def _find_org_meta(name: str) -> dict | None:
     return best
 
 
-@router.get("/orgs/by-name/{name:path}", summary="按名称查询组织画像 + 5 维度信用评分")
+@router.get("/orgs/by-name/{name:path}", summary="按名称查询组织画像 + 5 维度公开活动观察度")
 async def demo_org_by_name(name: str, db: AsyncSession = Depends(get_db)) -> JSONResponse:
-    """任务2：/api/demo/orgs/by-name/{name} — 按名称查询，命中后端组织库并返回 5 维度信用评分。
+    """任务2：/api/demo/orgs/by-name/{name} — 按名称查询，命中后端组织库并返回 5 维度公开活动观察度。
 
     优先查真实数据库（按 purchaser_name/winner_name 匹配）；未命中时维度评分返回 null
     （data_source="no_data"），不再用哈希伪造评分。
@@ -963,7 +963,7 @@ async def demo_org_by_name(name: str, db: AsyncSession = Depends(get_db)) -> JSO
                 "type_coverage_count": 0,
             }
     if data_source == "real":
-        # 5 维度对齐 supplier_risk.py 的供应商风险评分口径（集中度25/金额20/频率20/地域15/采购人20）
+        # 5 维度对齐 observation_signals.py 口径（集中度25/金额20/频率20/地域15/采购人20）
         dims = _build_5d_credit(meta)
         _WEIGHTS = {
             "concentration": 0.25,
@@ -1022,8 +1022,8 @@ async def demo_org_by_name(name: str, db: AsyncSession = Depends(get_db)) -> JSO
             "org_name": name,
             "org_type": meta["org_type"],
             "region": meta["region"],
-            # 5 维度信用评分（5 维度对齐 supplier_risk.py 的供应商风险评分口径）
-            "credit_overall": overall,
+            # 5 维度公开活动观察度（对齐 observation_signals.py 口径）
+            "observation_score": overall,
             "credit_dimensions": dims,
             "data_source": data_source,
             # 活动画像（兼容 org_profile.html 原字段）

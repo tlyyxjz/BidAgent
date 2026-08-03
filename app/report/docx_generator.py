@@ -204,7 +204,7 @@ def _risk_item_level_label(level: str) -> str:
     }.get(level, level or "未知")
 
 
-# 供应商风险 5 维度名映射（对齐 supplier_risk.py 口径）
+# 供应商公开活动观察度维度名映射（对齐 observation_signals.py 口径）
 _SUPPLIER_DIM_LABELS = {
     "concentration": "集中度",
     "amount_anomaly": "金额",
@@ -220,8 +220,7 @@ _SUPPLIER_DIM_ORDER = [
 def _add_finance_section(doc: Document, finance_summary: dict[str, Any] | None) -> None:
     """添加金融分析章节（BOQ 异常 + 废标风险 + 供应商风险评分）。
 
-    金融分析章节对齐 supplier_risk.py 5 维度口径：
-    集中度 / 金额 / 频率 / 地域 / 采购人。
+    金融分析章节对齐 observation_signals.py 口径（v4.1 第九章 6 信号）。
     """
     h = doc.add_heading("四、金融分析", level=1)
     for run in h.runs:
