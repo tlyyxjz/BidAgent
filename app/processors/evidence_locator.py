@@ -29,6 +29,9 @@ from typing import List, Optional, Tuple
 
 from app.processors.normalizer import normalize_text, OffsetMapping
 
+# v4.1 §10.12 证据定位规则版本
+EVIDENCE_RULE_VERSION = "evidence_locator_v1.0"
+
 
 class MatchType(str, Enum):
     """匹配类型枚举。"""

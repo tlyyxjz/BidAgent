@@ -61,12 +61,18 @@ def add_detail_table(doc: Document, items: list[dict[str, Any]]) -> None:
         else:
             pt = "-"
 
+        # v4.1 sec 8: 若 item 携带 display_grade，在核心内容前标注可信度徽标
+        core_content = str(item.get("core_content") or "-")[:200]
+        item_grade = item.get("display_grade")
+        if item_grade in ("high", "review", "low"):
+            grade_label = {"high": "可信", "review": "待核", "low": "存疑"}
+            core_content = f"[{grade_label.get(item_grade, item_grade)}] {core_content}"
         values = [
             str(idx),
             str(item.get("project_name") or "-"),
             pt,
             str(item.get("source_url") or "-"),
-            str(item.get("core_content") or "-")[:200],  # 核心内容截断
+            core_content,
             str(item.get("attachment_url") or "-"),
         ]
         for i, val in enumerate(values):
@@ -95,6 +101,21 @@ def add_analysis(doc: Document, items: list[dict[str, Any]]) -> None:
     if not items:
         doc.add_paragraph("暂无数据可分析。")
         return
+
+    # v4.1 sec 8: 数据可信度说明（展示等级三档分级）
+    grade_p = doc.add_paragraph()
+    grade_run = grade_p.add_run("数据可信度说明：")
+    grade_run.font.bold = True
+    grade_run.font.size = Pt(10)
+    _set_run_font(grade_run, "黑体")
+    grade_desc = grade_p.add_run(
+        "本报告字段遵循 v4.1 §8 展示等级规范，按支持度与来源质量分为三档："
+        "high（可信，直接证据+程序校验通过）、"
+        "review（待核，有值但证据未验证或校验未通过）、"
+        "low（存疑，无证据支持）。low 档字段已按选择性输出策略拒绝展示。"
+    )
+    grade_desc.font.size = Pt(9)
+    _set_run_font(grade_desc, "宋体")
 
     # 按预算排序找 top 3
     sorted_items = sorted(

@@ -75,6 +75,36 @@ MATCH_METHODS = {
     "not_found": "L5 未匹配",
 }
 
+# 交叉验证状态（v4.1 §4.8 6 态 enum）
+CROSS_VERIFY_STATUSES = {
+    "independent": "独立来源（不同平台不同发布主体）",
+    "consistent_unknown": "一致但来源未知（同平台不同页面）",
+    "same_origin": "同源转载（同一原始来源的不同转载）",
+    "version_difference": "版本差异（同来源不同时间版本）",
+    "conflict": "冲突（不同来源字段值不一致）",
+    "single_source": "单源（仅一个来源，未交叉验证）",
+}
+
+# 来源质量类别（v4.1 §4.6 6 类）
+SOURCE_QUALITY_TYPES = {
+    "official_original": "官方原始（政府平台首发）",
+    "official_repost": "官方转载（政府平台间转载）",
+    "authorized_original": "授权原始（被授权的商业平台首发）",
+    "commercial_repost": "商业转载（商业平台转载官方信息）",
+    "index_only": "仅索引（仅提供索引链接，无正文）",
+    "unknown": "未知",
+}
+
+# 字段类型（v4.1 §4.8）
+FIELD_TYPES = {
+    "amount": "金额类型",
+    "date": "日期类型",
+    "organization": "组织类型",
+    "identifier": "标识符类型",
+    "fact": "事实类型",
+    "text": "文本类型",
+}
+
 # 六类核心字段（Sol 要求：不修改字段定义）
 CORE_FIELDS = {
     "project_identifier": "项目编号",
@@ -118,6 +148,13 @@ class ExtractedField(Base):
     currency: Mapped[str | None] = mapped_column(String(10), nullable=True)
     # 分包 ID（多分包场景）
     lot_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # ==== v4.1 §7.2 多金额模型：补齐 8 键 ====
+    # 原始单位（如 '万元' / '元' / '亿美元'）
+    original_unit: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # 含税状态：included / excluded / unknown
+    tax_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # 原文显示精度（如 '0.01万元' / '1元'），用于金额容差判定
+    display_precision: Mapped[str | None] = mapped_column(String(30), nullable=True)
 
     # ==== W2-05 新增：抽取支持度 ====
     support_level: Mapped[str] = mapped_column(
@@ -145,6 +182,22 @@ class ExtractedField(Base):
     cross_verified: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+
+    # ==== v4.1 §4.8 三维质量维度独立保存（6 态 enum 替代布尔）====
+    # 交叉验证状态（6 种：independent/consistent_unknown/same_origin/version_difference/conflict/single_source）
+    # 注：保留 cross_verified 布尔做向后兼容；新逻辑应使用 cross_verify_status
+    # 关系：cross_verified = cross_verify_status in {"independent", "consistent_unknown"}
+    cross_verify_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="single_source"
+    )
+    # 抽取时来源质量快照（保存抽取时的 source_quality 类别，避免后续来源质量变化影响追溯）
+    source_quality_snapshot: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    # 字段类型（amount/date/organization/identifier/fact/text，用于 FactAssertionKey 跨源比较）
+    field_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # 字段业务语义角色（如 budget_amount/award_amount/purchaser/winner，用于 FactAssertionKey）
+    semantic_role: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # 多值字段计数（同一 field_name 的值数量，避免压平）
+    value_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     # ==== W3-05 新增：展示等级规则版本 ====
     # 规则版本号（如 v0.1-calib / v1.0-frozen），用于追溯字段展示等级是基于哪版规则计算的

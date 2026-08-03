@@ -8,7 +8,7 @@ EVIDENCE_DEMO_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BidAgent - 公告详情与证据验证</title>
+<title>标小智 - 公告详情与证据验证</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #333; }
@@ -53,7 +53,7 @@ body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f
 </head>
 <body>
 <div class="header">
-    <h1>BidAgent 智能标讯助手</h1>
+    <h1>标小智 智能标讯助手</h1>
     <div class="subtitle">可验证招投标数据引擎 - 公告详情与证据验证</div>
 </div>
 <div class="container">

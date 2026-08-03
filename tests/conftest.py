@@ -46,6 +46,7 @@ from app.core.snapshot_manager import snapshot_manager
 from app.core.template_monitor import template_monitor
 from app.core.rate_limiter import domain_rate_limiter
 from app.core.robots_checker import robots_checker
+from app.core.source_whitelist import source_whitelist
 from app.main import app
 from app.models.database import AsyncSessionLocal, Base, engine
 from app.models.user import (

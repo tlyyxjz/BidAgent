@@ -65,6 +65,11 @@ from app.processors.field_validator import (
     ValidationResult,
 )
 from app.processors.display_grade import compute_display_grade
+from app.eval.set_metrics import (
+    compute_multi_value_field_metrics,
+    is_multi_value_field,
+)
+from scripts.experiment_meta import collect_experiment_meta
 
 
 # 7 篇金标 (W1 已有 + W2 D2 验证过的)
@@ -82,7 +87,7 @@ DEFAULT_DOCS = [
 @dataclass
 class GoldField:
     field_name: str
-    gold_status: str  # present/absent/ambiguous/multi_value
+    gold_status: str  # v4.1 §10.3: present/absent/not_applicable/ambiguous/attachment_only/unreadable
     values: list  # [{"raw_value": ..., "acceptable_evidence_spans": [{"start","end","text"}]}]
 
 
@@ -106,6 +111,7 @@ class GroupResult:
     field_validated: bool  # 字段是否通过确定性校验 (C 才有)
     unjustified: bool  # 无依据输出 (有值但无证据/证据不存在)
     correct: Optional[bool]  # 字段值是否与金标一致 (None=无法判断)
+    multi_value_f1: Optional[float] = None  # v4.1 sec 7.4 多值字段集合级 F1 (None=非多值字段)
 
 
 @dataclass
@@ -129,6 +135,23 @@ class ExpSummary:
     latency_ms_avg: float
     invalid_docs_count: int = 0  # P2: LLM 失败被排除的文档数
     invalid_docs: list = field(default_factory=list)  # P2: 失败文档 ID 列表
+    multi_value_f1_avg: float = 0.0  # v4.1 sec 7.4 多值字段平均集合级 F1
+    null_false_positive_rate: float = 0.0  # v4.1 §10 空值误报率（should_not_have_value 字段中系统错误输出值的比例）
+    # ==== v4.1 §10.12 实验复现信息（14 项新增，prompt_hash/model_id 已有）====
+    model_role: str = "primary"
+    provider: str = "deepseek"
+    model_snapshot: Optional[str] = None
+    request_time: str = ""
+    temperature: float = 0.0
+    top_p: float = 1.0
+    seed: Optional[int] = None
+    request_id: Optional[str] = None
+    response_hash: Optional[str] = None
+    normalizer_version: str = "unknown"
+    evidence_rule_version: str = "unknown"
+    display_rule_version: str = "unknown"
+    dataset_version: Optional[str] = None
+    code_commit: Optional[str] = None
 
 
 def load_gold_all_w3() -> list[GoldDoc]:
@@ -220,8 +243,88 @@ def _status_matches(gold: str, pred: str) -> bool:
     return False
 
 
+def _extract_amount_unit(raw: str) -> str | None:
+    """从金额字符串中提取单位 (元/万元/亿元)。"""
+    if not raw:
+        return None
+    if "亿元" in raw or "亿" in raw:
+        return "亿元"
+    if "万元" in raw or "万" in raw:
+        return "万元"
+    if "元" in raw:
+        return "元"
+    return None
+
+
+def _amount_correct(pred_raw: str, gold_raw: str) -> bool:
+    """v4.1 sec 7.3 金额正确性判定 (基于显示精度的容差策略)。
+
+    1. 用 validate_amount 把 pred 和 gold 都转换为元
+    2. 用 _compute_tolerance_from_precision 计算容差 (基于 gold 单位推断)
+    3. |pred_yuan - gold_yuan| <= tolerance -> 正确
+
+    回退: 解析失败时退化为数字字符串精确匹配。
+    """
+    from app.processors.field_validator import (
+        validate_amount,
+        _compute_tolerance_from_precision,
+    )
+
+    pred_vr = validate_amount(pred_raw)
+    gold_vr = validate_amount(gold_raw)
+    if not pred_vr.valid or not gold_vr.valid:
+        # 回退: 数字字符串精确匹配
+        pred_num = re.findall(r"\d+\.?\d*", pred_raw)
+        gold_num = re.findall(r"\d+\.?\d*", gold_raw)
+        return bool(pred_num and gold_num and pred_num[0] == gold_num[0])
+
+    pred_yuan = pred_vr.normalized_value or 0.0
+    gold_yuan = gold_vr.normalized_value or 0.0
+
+    # 容差: 优先用 gold 的 display_precision (金标通常无此字段, 这里为 None),
+    # 退化到 original_unit 推断 (如 "万元" -> 50 元容差)
+    gold_unit = _extract_amount_unit(gold_raw)
+    tolerance = _compute_tolerance_from_precision(None, gold_unit)
+    if tolerance is None:
+        tolerance = 0.0  # 无法判定容差时, 要求精确相等
+
+    diff = abs(pred_yuan - gold_yuan)
+    return diff <= tolerance
+
+
+def _classify_gold_status(gold_status: str) -> str:
+    """将金标状态分类为评测口径。
+
+    v4.1 §10.3 6 种金标状态分为 4 类评测口径：
+    - "should_have_value": present/ambiguous/multi_value → 系统应输出值
+    - "should_not_have_value": absent/not_applicable → 系统不应输出值
+    - "attachment_only": 字段在附件中，正文抽取算无依据但不算错误
+    - "unreadable": 无法判定，correct=None
+
+    Args:
+        gold_status: 金标状态（6 种之一）
+
+    Returns:
+        评测口径类别
+    """
+    if gold_status in ("present", "ambiguous", "multi_value"):
+        return "should_have_value"
+    if gold_status in ("absent", "not_applicable"):
+        return "should_not_have_value"
+    if gold_status == "attachment_only":
+        return "attachment_only"
+    if gold_status == "unreadable":
+        return "unreadable"
+    # 默认按 should_have_value 处理（向后兼容）
+    return "should_have_value"
+
+
 def _value_correct(field_name: str, pred_value: str, gold_field: GoldField) -> bool:
-    """粗略判断字段值是否与金标一致 (子串匹配)。"""
+    """判断字段值是否与金标一致。
+
+    - amount 字段: v4.1 sec 7.3 容差策略 (单位转换 + 显示精度容差)
+    - 其他字段: 子串匹配 (容错：LLM 可能多带前后缀)
+    """
     if not pred_value or not gold_field.values:
         return False
     pred = pred_value.strip()
@@ -229,17 +332,45 @@ def _value_correct(field_name: str, pred_value: str, gold_field: GoldField) -> b
         gold_v = (v.get("raw_value") or "").strip()
         if not gold_v:
             continue
-        # 子串匹配 (容错：LLM 可能多带前后缀)
+        # amount 字段: 走 v4.1 sec 7.3 容差比较
+        if field_name == "amount":
+            if _amount_correct(pred, gold_v):
+                return True
+            continue
+        # 其他字段: 子串匹配 (容错：LLM 可能多带前后缀)
         if gold_v in pred or pred in gold_v:
             return True
-        # 数字类字段：去掉单位后比较
-        if field_name == "amount":
-            import re
-            pred_num = re.findall(r"\d+\.?\d*", pred)
-            gold_num = re.findall(r"\d+\.?\d*", gold_v)
-            if pred_num and gold_num and pred_num[0] == gold_num[0]:
-                return True
     return False
+
+
+# ========== v4.1 sec 7.4 多值字段集合级评测辅助函数 ==========
+
+def _collect_pred_values_by_name(fields: list) -> dict[str, list[str]]:
+    """按 field_name 收集所有预测值（多值字段不被压平）。"""
+    result: dict[str, list[str]] = {}
+    for f in fields:
+        if f.raw_value:
+            result.setdefault(f.field_name, []).append(f.raw_value)
+    return result
+
+
+def _collect_gold_values(gold_field: GoldField) -> list[str]:
+    """从 gold_field.values 收集所有金标值。"""
+    values = []
+    for v in gold_field.values:
+        raw = v.get("raw_value")
+        if raw:
+            values.append(raw)
+    return values
+
+
+def _compute_mv_f1(field_name: str, pred_values: list[str], gold_field: GoldField) -> Optional[float]:
+    """对多值字段计算集合级 F1，非多值字段返回 None。"""
+    if not is_multi_value_field(field_name):
+        return None
+    gold_values = _collect_gold_values(gold_field)
+    metrics = compute_multi_value_field_metrics(pred_values, gold_values)
+    return round(metrics.f1, 4)
 
 
 # ========== A 组：Direct LLM（直接输出字段，无证据要求）==========
@@ -266,15 +397,30 @@ async def run_group_a(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
         return [], meta
 
     pred_by_name = {f.field_name: f for f in result.fields}
+    pred_values_by_name = _collect_pred_values_by_name(result.fields)
     rows: list[GroupResult] = []
     for gf in doc.fields:
         pred = pred_by_name.get(gf.field_name)
         pred_status = pred.field_status if pred else "missing"
         has_value = bool(pred and pred.raw_value)
         # A 组不评证据 (无证据 prompt，candidate_evidences 必为空)
-        correct = _value_correct(gf.field_name, pred.raw_value if pred else "", gf) if has_value else None
-        if gf.gold_status == "absent":
+        pred_value = pred.raw_value if pred else ""
+        # v4.1 §10.3: 金标状态分类判定
+        gold_category = _classify_gold_status(gf.gold_status)
+        if gold_category == "should_not_have_value":
+            # absent/not_applicable: 系统不应输出值
             correct = (pred_status == "absent") if pred else True
+        elif gold_category == "attachment_only":
+            # attachment_only: 字段在附件中，正文抽取算无依据但不算值错误
+            correct = None  # 无法判定，correct=None
+        elif gold_category == "unreadable":
+            # unreadable: 无法判定
+            correct = None
+        else:
+            # should_have_value: 走原有值匹配逻辑
+            correct = _value_correct(gf.field_name, pred_value, gf) if has_value else False
+        # v4.1 sec 7.4: 多值字段集合级 F1
+        mv_f1 = _compute_mv_f1(gf.field_name, pred_values_by_name.get(gf.field_name, []), gf)
         rows.append(GroupResult(
             group="A", doc_id=doc.document_id, field_name=gf.field_name,
             gold_status=gf.gold_status, pred_status=pred_status,
@@ -283,6 +429,7 @@ async def run_group_a(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
             # A 组无证据要求：有值即算无依据 (对比 B/C 组通过证据降低无依据率)
             unjustified=has_value,
             correct=correct,
+            multi_value_f1=mv_f1,
         ))
     return rows, meta
 
@@ -311,6 +458,7 @@ async def run_group_b(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
         return [], meta
 
     pred_by_name = {f.field_name: f for f in result.fields}
+    pred_values_by_name = _collect_pred_values_by_name(result.fields)
     locator = EvidenceLocator(raw_text)
     rows: list[GroupResult] = []
     for gf in doc.fields:
@@ -319,9 +467,23 @@ async def run_group_b(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
         has_value = bool(pred and pred.raw_value)
         has_evidence = bool(pred and len(pred.candidate_evidences) > 0)
         # B 组不验证证据，evidence_verified=False
-        correct = _value_correct(gf.field_name, pred.raw_value if pred else "", gf) if has_value else None
-        if gf.gold_status == "absent":
+        pred_value = pred.raw_value if pred else ""
+        # v4.1 §10.3: 金标状态分类判定
+        gold_category = _classify_gold_status(gf.gold_status)
+        if gold_category == "should_not_have_value":
+            # absent/not_applicable: 系统不应输出值
             correct = (pred_status == "absent") if pred else True
+        elif gold_category == "attachment_only":
+            # attachment_only: 字段在附件中，正文抽取算无依据但不算值错误
+            correct = None  # 无法判定，correct=None
+        elif gold_category == "unreadable":
+            # unreadable: 无法判定
+            correct = None
+        else:
+            # should_have_value: 走原有值匹配逻辑
+            correct = _value_correct(gf.field_name, pred_value, gf) if has_value else False
+        # v4.1 sec 7.4: 多值字段集合级 F1
+        mv_f1 = _compute_mv_f1(gf.field_name, pred_values_by_name.get(gf.field_name, []), gf)
         rows.append(GroupResult(
             group="B", doc_id=doc.document_id, field_name=gf.field_name,
             gold_status=gf.gold_status, pred_status=pred_status,
@@ -329,6 +491,7 @@ async def run_group_b(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
             field_validated=False,
             unjustified=has_value and not has_evidence,
             correct=correct,
+            multi_value_f1=mv_f1,
         ))
     return rows, meta
 
@@ -359,6 +522,7 @@ async def run_group_c(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
         return [], meta
 
     pred_by_name = {f.field_name: f for f in result.fields}
+    pred_values_by_name = _collect_pred_values_by_name(result.fields)
     locator = EvidenceLocator(raw_text)
     rows: list[GroupResult] = []
     for gf in doc.fields:
@@ -394,9 +558,23 @@ async def run_group_c(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
             except Exception:
                 field_validated = False
 
-        correct = _value_correct(gf.field_name, pred.raw_value if pred else "", gf) if has_value else None
-        if gf.gold_status == "absent":
+        pred_value = pred.raw_value if pred else ""
+        # v4.1 §10.3: 金标状态分类判定
+        gold_category = _classify_gold_status(gf.gold_status)
+        if gold_category == "should_not_have_value":
+            # absent/not_applicable: 系统不应输出值
             correct = (pred_status == "absent") if pred else True
+        elif gold_category == "attachment_only":
+            # attachment_only: 字段在附件中，正文抽取算无依据但不算值错误
+            correct = None  # 无法判定，correct=None
+        elif gold_category == "unreadable":
+            # unreadable: 无法判定
+            correct = None
+        else:
+            # should_have_value: 走原有值匹配逻辑
+            correct = _value_correct(gf.field_name, pred_value, gf) if has_value else False
+        # v4.1 sec 7.4: 多值字段集合级 F1
+        mv_f1 = _compute_mv_f1(gf.field_name, pred_values_by_name.get(gf.field_name, []), gf)
         rows.append(GroupResult(
             group="C", doc_id=doc.document_id, field_name=gf.field_name,
             gold_status=gf.gold_status, pred_status=pred_status,
@@ -405,6 +583,7 @@ async def run_group_c(doc: GoldDoc, raw_text: str) -> tuple[list[GroupResult], d
             # C 组：有值但 (无证据 OR 证据未验证 OR 字段未通过校验) 算无依据
             unjustified=has_value and (not evidence_verified or not field_validated),
             correct=correct,
+            multi_value_f1=mv_f1,
         ))
     return rows, meta
 
@@ -467,6 +646,7 @@ async def run_group_d(rows_c: list[GroupResult], meta_c: dict) -> tuple[list[Gro
             evidence_verified=r.evidence_verified, field_validated=r.field_validated,
             unjustified=unjustified,
             correct=correct,
+            multi_value_f1=r.multi_value_f1,  # v4.1 sec 7.4: 透传 C 组多值 F1
         ))
 
     # 独立记录 meta (添加 display_grade 分布)
@@ -489,8 +669,29 @@ def summarize(
     f_validated = sum(1 for r in all_rows if r.field_validated)
     unjustified = sum(1 for r in all_rows if r.unjustified)
     correct = sum(1 for r in all_rows if r.correct is True)
+    # v4.1 §10.3: unreadable/attachment_only 状态不计入可评测字段 (correct=None)
     evaluable = sum(1 for r in all_rows if r.correct is not None)
     invalid_docs = invalid_docs or []
+
+    # v4.1 sec 7.4: 多值字段平均集合级 F1
+    mv_f1s = [r.multi_value_f1 for r in all_rows if r.multi_value_f1 is not None]
+    mv_f1_avg = round(sum(mv_f1s) / max(len(mv_f1s), 1), 4) if mv_f1s else 0.0
+
+    # v4.1 §10: 空值误报率（should_not_have_value 字段中系统错误输出值的比例）
+    should_not_have_value_fields = [r for r in all_rows if _classify_gold_status(r.gold_status) == "should_not_have_value"]
+    null_false_positives = sum(1 for r in should_not_have_value_fields if r.has_value)
+    null_false_positive_rate = round(
+        null_false_positives / len(should_not_have_value_fields), 4
+    ) if should_not_have_value_fields else 0.0
+
+    # v4.1 §10.12 收集实验复现信息（16 项）
+    _model_id = metas[0].get("model_id", "unknown") if metas else "unknown"
+    _prompt_hash = metas[0].get("prompt_hash", "") if metas else ""
+    meta = collect_experiment_meta(
+        model_id=_model_id,
+        prompt_hash=_prompt_hash,
+        dataset_path=None,
+    )
 
     return ExpSummary(
         group=group,
@@ -508,12 +709,29 @@ def summarize(
         # C 组字段级证据验证率 (已验证证据字段 / 有证据字段)
         # 命名澄清 (P3): 此处是字段级，非证据级，与 W2-09 证据级精确率口径不同
         evidence_precision=round(ev_verified / max(with_evidence, 1), 4) if group in ("C", "D") else 0.0,
-        model_id=metas[0].get("model_id", "unknown") if metas else "unknown",
-        prompt_hash=metas[0].get("prompt_hash", "") if metas else "",
+        model_id=_model_id,
+        prompt_hash=_prompt_hash,
         total_tokens=sum(m.get("total_tokens", 0) for m in metas),
         latency_ms_avg=round(sum(m.get("latency_ms", 0) for m in metas) / max(len(metas), 1), 1),
         invalid_docs_count=len(invalid_docs),
         invalid_docs=invalid_docs,
+        multi_value_f1_avg=mv_f1_avg,
+        null_false_positive_rate=null_false_positive_rate,
+        # ==== v4.1 §10.12 实验复现信息（14 项新增）====
+        model_role=meta.model_role,
+        provider=meta.provider,
+        model_snapshot=meta.model_snapshot,
+        request_time=meta.request_time,
+        temperature=meta.temperature,
+        top_p=meta.top_p,
+        seed=meta.seed,
+        request_id=meta.request_id,
+        response_hash=meta.response_hash,
+        normalizer_version=meta.normalizer_version,
+        evidence_rule_version=meta.evidence_rule_version,
+        display_rule_version=meta.display_rule_version,
+        dataset_version=meta.dataset_version,
+        code_commit=meta.code_commit,
     )
 
 
@@ -643,6 +861,8 @@ async def main():
     print(f"{'字段正确数':<24} {sum_a.fields_correct:>12} {sum_b.fields_correct:>12} {sum_c.fields_correct:>12} {sum_d.fields_correct:>12}")
     print(f"{'字段精确率':<24} {sum_a.field_precision:>12.2%} {sum_b.field_precision:>12.2%} {sum_c.field_precision:>12.2%} {sum_d.field_precision:>12.2%}")
     print(f"{'证据精确率':<24} {'N/A':>12} {'N/A':>12} {sum_c.evidence_precision:>12.2%} {sum_d.evidence_precision:>12.2%}")
+    print(f"{'多值字段 F1':<24} {sum_a.multi_value_f1_avg:>12.4f} {sum_b.multi_value_f1_avg:>12.4f} {sum_c.multi_value_f1_avg:>12.4f} {sum_d.multi_value_f1_avg:>12.4f}")
+    print(f"{'空值误报率':<24} {sum_a.null_false_positive_rate:>12.4f} {sum_b.null_false_positive_rate:>12.4f} {sum_c.null_false_positive_rate:>12.4f} {sum_d.null_false_positive_rate:>12.4f}")
     print(f"{'总 tokens':<24} {sum_a.total_tokens:>12} {sum_b.total_tokens:>12} {sum_c.total_tokens:>12} {sum_d.total_tokens:>12}")
     print(f"{'平均延迟 ms':<24} {sum_a.latency_ms_avg:>12.0f} {sum_b.latency_ms_avg:>12.0f} {sum_c.latency_ms_avg:>12.0f} {sum_d.latency_ms_avg:>12.0f}")
 

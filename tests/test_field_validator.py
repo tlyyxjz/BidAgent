@@ -658,3 +658,146 @@ class TestIdentifierFallback:
         result = validate_project_identifier(raw)
         assert result.valid
         assert result.raw_value == raw
+
+
+
+class TestParseDisplayPrecision:
+    """v4.1 sec 7.3: _parse_display_precision 单位转换 + 容差计算。"""
+
+    def test_wan_yuan_precision(self):
+        """0.01万元 -> (100.0, 50.0)。"""
+        from app.processors.field_validator import _parse_display_precision
+        result = _parse_display_precision("0.01万元")
+        assert result == (100.0, 50.0)
+
+    def test_yuan_precision(self):
+        """1元 -> (1.0, 0.5)。"""
+        from app.processors.field_validator import _parse_display_precision
+        result = _parse_display_precision("1元")
+        assert result == (1.0, 0.5)
+
+    def test_yi_yuan_precision(self):
+        """0.001亿元 -> (100000.0, 50000.0)。"""
+        from app.processors.field_validator import _parse_display_precision
+        result = _parse_display_precision("0.001亿元")
+        assert result == (100000.0, 50000.0)
+
+    def test_1_wan_yuan(self):
+        """1万元 -> (10000.0, 5000.0)。"""
+        from app.processors.field_validator import _parse_display_precision
+        result = _parse_display_precision("1万元")
+        assert result == (10000.0, 5000.0)
+
+    def test_fullwidth_digits(self):
+        """全角数字 ０.０１万元 -> (100.0, 50.0)。"""
+        from app.processors.field_validator import _parse_display_precision
+        result = _parse_display_precision("０.０１万元")
+        assert result == (100.0, 50.0)
+
+    def test_empty_string_returns_none(self):
+        from app.processors.field_validator import _parse_display_precision
+        assert _parse_display_precision("") is None
+
+    def test_none_returns_none(self):
+        from app.processors.field_validator import _parse_display_precision
+        assert _parse_display_precision(None) is None
+
+    def test_whitespace_returns_none(self):
+        from app.processors.field_validator import _parse_display_precision
+        assert _parse_display_precision("   ") is None
+
+    def test_no_unit_returns_none(self):
+        """无单位 -> None。"""
+        from app.processors.field_validator import _parse_display_precision
+        assert _parse_display_precision("100") is None
+
+    def test_usd_unit_returns_none(self):
+        """美元单位不支持（需汇率）-> None。"""
+        from app.processors.field_validator import _parse_display_precision
+        assert _parse_display_precision("0.01万美元") is None
+
+    def test_wan_yuan_renminbi(self):
+        """万元人民币 子串匹配 -> 10000 倍。"""
+        from app.processors.field_validator import _parse_display_precision
+        result = _parse_display_precision("0.01万元人民币")
+        assert result == (100.0, 50.0)
+
+    def test_longest_unit_match_first(self):
+        """长单位优先于短单位：万元 不被 元 抢先匹配。"""
+        from app.processors.field_validator import _parse_display_precision
+        # 如果 "元" 抢先匹配，结果会是 (0.01, 0.005) 而非 (100.0, 50.0)
+        result = _parse_display_precision("0.01万元")
+        assert result is not None
+        assert result[0] == 100.0  # 0.01 * 10000，不是 0.01 * 1
+
+
+class TestComputeToleranceFromPrecision:
+    """v4.1 sec 7.3: _compute_tolerance_from_precision 容差计算。"""
+
+    def test_with_display_precision(self):
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision("0.01万元") == 50.0
+
+    def test_with_display_precision_yuan(self):
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision("1元") == 0.5
+
+    def test_with_display_precision_yi(self):
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision("0.001亿元") == 50000.0
+
+    def test_fallback_to_wan_yuan_unit(self):
+        """display_precision=None, original_unit='万元' -> 50.0 (保守容差)。"""
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision(None, "万元") == 50.0
+
+    def test_fallback_to_yuan_unit(self):
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision(None, "元") == 0.005
+
+    def test_fallback_to_yi_unit(self):
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision(None, "亿元") == 500000.0
+
+    def test_both_none_returns_none(self):
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision(None, None) is None
+
+    def test_empty_strings_return_none(self):
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision("", "") is None
+
+    def test_unknown_unit_returns_none(self):
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        assert _compute_tolerance_from_precision(None, "美元") is None
+
+    def test_display_precision_takes_priority_over_unit(self):
+        """display_precision 优先于 original_unit。"""
+        from app.processors.field_validator import _compute_tolerance_from_precision
+        # display_precision='1元' -> 0.5, original_unit='万元' -> 50.0
+        # 应取 display_precision 的 0.5
+        assert _compute_tolerance_from_precision("1元", "万元") == 0.5
+
+
+class TestComputeToleranceDeprecated:
+    """旧版 _compute_tolerance 向后兼容测试。"""
+
+    def test_large_amount(self):
+        from app.processors.field_validator import _compute_tolerance
+        assert _compute_tolerance(100000) == 50.0
+
+    def test_medium_amount(self):
+        from app.processors.field_validator import _compute_tolerance
+        assert _compute_tolerance(500) == 0.5
+
+    def test_small_amount(self):
+        from app.processors.field_validator import _compute_tolerance
+        assert _compute_tolerance(10) == 0.005
+
+    def test_boundary_10000(self):
+        from app.processors.field_validator import _compute_tolerance
+        assert _compute_tolerance(10000) == 50.0
+
+    def test_boundary_100(self):
+        from app.processors.field_validator import _compute_tolerance
+        assert _compute_tolerance(100) == 0.5

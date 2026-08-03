@@ -554,3 +554,219 @@ class TestCallExtractionLLMNoEvidence:
             EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
         )
         assert result.prompt_hash == no_ev_hash
+
+
+
+class TestAmountObjectKeys:
+    """v4.1 sec 7.2: amount object must support 4 new keys.
+
+    New keys: original_unit / tax_status / display_precision / normalized_value
+    """
+
+    def test_amount_new_keys_parsed(self):
+        """LLM outputs all 4 new keys -> FieldExtraction receives them."""
+        data = {
+            "fields": [
+                {
+                    "field_name": "amount",
+                    "field_status": "present",
+                    "raw_value": "331.30万元",
+                    "amount_type": "budget",
+                    "currency": "CNY",
+                    "lot_id": None,
+                    "original_unit": "万元",
+                    "tax_status": "included",
+                    "display_precision": "0.01万元",
+                    "normalized_value": None,
+                    "candidate_evidences": [
+                        {"evidence_text": "预算金额：331.30万元", "role": "primary"}
+                    ],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test-model", 50, 100)
+        assert len(result.fields) == 1
+        amt = result.fields[0]
+        assert amt.field_name == "amount"
+        assert amt.raw_value == "331.30万元"
+        assert amt.original_unit == "万元"
+        assert amt.tax_status == "included"
+        assert amt.display_precision == "0.01万元"
+        assert amt.normalized_value is None  # LLM leaves null, program fills later
+
+    def test_amount_new_keys_default_none_when_omitted(self):
+        """LLM omits new keys -> FieldExtraction defaults to None (backward compat)."""
+        data = {
+            "fields": [
+                {
+                    "field_name": "amount",
+                    "field_status": "present",
+                    "raw_value": "100万元",
+                    "amount_type": "budget",
+                    "currency": "CNY",
+                    "candidate_evidences": [],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test-model", 50, 100)
+        amt = result.fields[0]
+        assert amt.original_unit is None
+        assert amt.tax_status is None
+        assert amt.display_precision is None
+        assert amt.normalized_value is None
+
+    def test_amount_normalized_value_dict_to_json(self):
+        """normalized_value as dict -> JSON string (parse layer normalization)."""
+        data = {
+            "fields": [
+                {
+                    "field_name": "amount",
+                    "field_status": "present",
+                    "raw_value": "100万元",
+                    "amount_type": "budget",
+                    "currency": "CNY",
+                    "normalized_value": {"value": 1000000, "unit": "元"},
+                    "candidate_evidences": [],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test-model", 50, 100)
+        amt = result.fields[0]
+        # dict -> JSON string
+        assert isinstance(amt.normalized_value, str)
+        assert "1000000" in amt.normalized_value
+
+    def test_amount_normalized_value_list_to_json(self):
+        """normalized_value as list -> JSON string."""
+        data = {
+            "fields": [
+                {
+                    "field_name": "amount",
+                    "field_status": "multi_value",
+                    "raw_value": "100万元",
+                    "amount_type": "budget",
+                    "currency": "CNY",
+                    "normalized_value": [1000000, 2000000],
+                    "candidate_evidences": [],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test-model", 50, 100)
+        amt = result.fields[0]
+        assert isinstance(amt.normalized_value, str)
+        assert "1000000" in amt.normalized_value
+
+    def test_amount_normalized_value_int_to_str(self):
+        """normalized_value as int -> str."""
+        data = {
+            "fields": [
+                {
+                    "field_name": "amount",
+                    "field_status": "present",
+                    "raw_value": "100万元",
+                    "amount_type": "budget",
+                    "currency": "CNY",
+                    "normalized_value": 1000000,
+                    "candidate_evidences": [],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test-model", 50, 100)
+        amt = result.fields[0]
+        assert amt.normalized_value == "1000000"
+
+    def test_amount_all_tax_statuses(self):
+        """tax_status supports included / excluded / unknown."""
+        for tax in ["included", "excluded", "unknown"]:
+            data = {
+                "fields": [
+                    {
+                        "field_name": "amount",
+                        "field_status": "present",
+                        "raw_value": "100万元",
+                        "amount_type": "budget",
+                        "currency": "CNY",
+                        "tax_status": tax,
+                        "candidate_evidences": [],
+                    }
+                ]
+            }
+            result = parse_extraction_response(data, "test-model", 50, 100)
+            assert result.fields[0].tax_status == tax
+
+    def test_amount_display_precision_various_formats(self):
+        """display_precision supports various formats: 0.01万元 / 1元 / 0.001亿元."""
+        for prec in ["0.01万元", "1元", "0.001亿元", "0.1万"]:
+            data = {
+                "fields": [
+                    {
+                        "field_name": "amount",
+                        "field_status": "present",
+                        "raw_value": "100万元",
+                        "amount_type": "budget",
+                        "currency": "CNY",
+                        "display_precision": prec,
+                        "candidate_evidences": [],
+                    }
+                ]
+            }
+            result = parse_extraction_response(data, "test-model", 50, 100)
+            assert result.fields[0].display_precision == prec
+
+    def test_non_amount_field_new_keys_ignored(self):
+        """Non-amount field with new keys -> keys accepted but typically None."""
+        # Schema allows new keys on any field, but they are meaningful only for amount.
+        # This test verifies the parser does not reject non-amount fields carrying new keys.
+        data = {
+            "fields": [
+                {
+                    "field_name": "project_identifier",
+                    "field_status": "present",
+                    "raw_value": "ZFCG-2026-001",
+                    "original_unit": None,
+                    "tax_status": None,
+                    "display_precision": None,
+                    "normalized_value": None,
+                    "candidate_evidences": [],
+                }
+            ]
+        }
+        result = parse_extraction_response(data, "test-model", 50, 100)
+        pid = result.fields[0]
+        assert pid.field_name == "project_identifier"
+        assert pid.original_unit is None
+        assert pid.tax_status is None
+
+    def test_fewshot_examples_contain_new_keys(self):
+        """Few-shot examples must include 4 new keys for amount field (v4.1 sec 7.2)."""
+        from app.llm.extractor import (
+            EXTRACTION_FEWSHOT_EXAMPLES,
+            EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
+        )
+
+        for examples in [EXTRACTION_FEWSHOT_EXAMPLES, EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE]:
+            amount_fields = [
+                f
+                for ex in examples
+                for f in ex["result"]["fields"]
+                if f["field_name"] == "amount"
+            ]
+            assert len(amount_fields) > 0
+            for amt in amount_fields:
+                assert "original_unit" in amt, f"amount fewshot missing original_unit"
+                assert "tax_status" in amt, f"amount fewshot missing tax_status"
+                assert "display_precision" in amt, f"amount fewshot missing display_precision"
+                assert "normalized_value" in amt, f"amount fewshot missing normalized_value"
+
+    def test_system_prompt_documents_new_keys(self):
+        """System prompt must document 4 new keys for amount field."""
+        from app.llm.extractor import (
+            EXTRACTION_SYSTEM_PROMPT,
+            EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+        )
+
+        for prompt in [EXTRACTION_SYSTEM_PROMPT, EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE]:
+            assert "original_unit" in prompt
+            assert "tax_status" in prompt
+            assert "display_precision" in prompt
+            assert "normalized_value" in prompt

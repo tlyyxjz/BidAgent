@@ -21,6 +21,14 @@ class TestHealth:
         body = resp.json()
         assert body["name"] == "ScrapeFlow API"
 
+    async def test_root_html_redirects_to_ui(self, client: AsyncClient) -> None:
+        """Browser Accept: text/html should redirect to /ui (307)."""
+        resp = await client.get(
+            "/", headers={"Accept": "text/html,application/xhtml+xml"}
+        )
+        assert resp.status_code == 307
+        assert resp.headers["location"] == "/ui"
+
 
 class TestAdminAuth:
     """Admin 路由不能被 API key 中间件拦截，但需要 X-Admin-Secret。"""

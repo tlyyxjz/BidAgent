@@ -1,6 +1,6 @@
 """多 Agent 协作模块（GOAI 大赛答辩差异化亮点）。
 
-六 Agent 协同架构（BidAgent）：
+六 Agent 协同架构（标小智）：
 - Agent 1: 意图解析（app/agents/intent_agent.py）
 - Agent 2: 采集执行（app/agents/collector_agent.py）
 - Agent 3: 数据加工（app/agents/processor_agent.py）

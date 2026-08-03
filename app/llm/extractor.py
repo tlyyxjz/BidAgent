@@ -70,6 +70,10 @@ EXTRACTION_SYSTEM_PROMPT = """你是一个政府采购公告字段抽取助手�
 3. amount 字段必须输出：
    - amount_type：金额类型（budget/ceiling/award/contract/unit_price）
    - currency：货币（CNY/USD/EUR）
+   - original_unit：原始单位（如 "万元"/"元"/"亿元"，从原文提取）
+   - tax_status：含税状态（included/excluded/unknown，无法判断留 null）
+   - display_precision：原文显示精度（如 "0.01万元"/"1元"，用于金额容差判定）
+   - normalized_value：归一化数值（留 null，由程序校验后填充）
 
 4. 多值字段（multi_value）：
    - 如多分包金额，每个分包单独输出一条
@@ -85,6 +89,10 @@ EXTRACTION_SYSTEM_PROMPT = """你是一个政府采购公告字段抽取助手�
       "amount_type": null,
       "currency": null,
       "lot_id": null,
+      "original_unit": null,
+      "tax_status": null,
+      "display_precision": null,
+      "normalized_value": null,
       "candidate_evidences": [
         {"evidence_text": "一、项目编号：ZFCG-2026-001", "role": "primary"}
       ]
@@ -142,6 +150,10 @@ EXTRACTION_FEWSHOT_EXAMPLES = [
                     "amount_type": "budget",
                     "currency": "CNY",
                     "lot_id": None,
+                    "original_unit": "万元",
+                    "tax_status": "unknown",
+                    "display_precision": "0.01万元",
+                    "normalized_value": None,
                     "candidate_evidences": [
                         {"evidence_text": "预算金额：100.00万元", "role": "primary"}
                     ],
@@ -198,6 +210,10 @@ EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE = """你是一个政府采购公告字段�
 2. amount 字段必须输出：
    - amount_type：金额类型（budget/ceiling/award/contract/unit_price）
    - currency：货币（CNY/USD/EUR）
+   - original_unit：原始单位（如 "万元"/"元"/"亿元"，从原文提取）
+   - tax_status：含税状态（included/excluded/unknown，无法判断留 null）
+   - display_precision：原文显示精度（如 "0.01万元"/"1元"，用于金额容差判定）
+   - normalized_value：归一化数值（留 null，由程序校验后填充）
 
 3. 多值字段（multi_value）：
    - 如多分包金额，每个分包单独输出一条
@@ -212,7 +228,11 @@ EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE = """你是一个政府采购公告字段�
       "raw_value": "ZFCG-2026-001",
       "amount_type": null,
       "currency": null,
-      "lot_id": null
+      "lot_id": null,
+      "original_unit": null,
+      "tax_status": null,
+      "display_precision": null,
+      "normalized_value": null
     }
   ]
 }
@@ -259,6 +279,10 @@ EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE = [
                     "amount_type": "budget",
                     "currency": "CNY",
                     "lot_id": None,
+                    "original_unit": "万元",
+                    "tax_status": "unknown",
+                    "display_precision": "0.01万元",
+                    "normalized_value": None,
                 },
                 {
                     "field_name": "publish_date",
@@ -444,6 +468,12 @@ def parse_extraction_response(
                 raw_value = json.dumps(raw_value, ensure_ascii=False)
             elif raw_value is not None and not isinstance(raw_value, str):
                 raw_value = str(raw_value)
+            # v4.1 sec 7.2: amount object 4 new keys (LLM outputs, program may override normalized_value)
+            normalized_value = field_data.get("normalized_value")
+            if isinstance(normalized_value, (dict, list)):
+                normalized_value = json.dumps(normalized_value, ensure_ascii=False)
+            elif normalized_value is not None and not isinstance(normalized_value, str):
+                normalized_value = str(normalized_value)
             field_ext = FieldExtraction(
                 field_name=field_data["field_name"],
                 field_status=field_data.get("field_status", "present"),
@@ -451,6 +481,10 @@ def parse_extraction_response(
                 amount_type=field_data.get("amount_type"),
                 currency=field_data.get("currency"),
                 lot_id=field_data.get("lot_id"),
+                normalized_value=normalized_value,
+                original_unit=field_data.get("original_unit"),
+                tax_status=field_data.get("tax_status"),
+                display_precision=field_data.get("display_precision"),
                 candidate_evidences=evidences,
             )
             fields.append(field_ext)

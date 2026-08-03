@@ -7,7 +7,7 @@
 - 支持顺序执行 + 简单条件分支
 - 完整的执行日志，便于答辩时展示协作流程
 
-六 Agent 协同架构（BidAgent）：
+六 Agent 协同架构（标小智）：
 - Agent 1: 意图解析（app/agents/intent_agent.py）
 - Agent 2: 采集执行（app/agents/collector_agent.py）
 - Agent 3: 数据加工（app/agents/processor_agent.py）

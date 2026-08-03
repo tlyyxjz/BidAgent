@@ -68,10 +68,20 @@ class FieldInput:
     amount_type: Optional[str] = None
     currency: Optional[str] = None
     lot_id: Optional[str] = None
+    # v4.1 sec 7.2: amount object new keys (persisted to ExtractedField)
+    original_unit: Optional[str] = None
+    tax_status: Optional[str] = None
+    display_precision: Optional[str] = None
     support_level: str = "unsupported"
     support_reason: Optional[str] = None
     derivation_rule: Optional[str] = None
     validator_version: Optional[str] = None
+    # ==== v4.1 §4.8 三维质量维度 ====
+    cross_verify_status: str = "single_source"
+    source_quality_snapshot: Optional[str] = None
+    field_type: Optional[str] = None
+    semantic_role: Optional[str] = None
+    value_count: int = 1
     # 关联的证据（EvidenceInput 列表 + 角色）
     evidences: List[Tuple[EvidenceInput, str]] = field(default_factory=list)
     # evidences: List[(EvidenceInput, evidence_role)]
@@ -211,12 +221,22 @@ async def create_field_with_evidence(
         amount_type=field_input.amount_type,
         currency=field_input.currency,
         lot_id=field_input.lot_id,
+        # v4.1 sec 7.2: persist amount object new keys
+        original_unit=field_input.original_unit,
+        tax_status=field_input.tax_status,
+        display_precision=field_input.display_precision,
         support_level=field_input.support_level,
         support_reason=field_input.support_reason,
         derivation_rule=field_input.derivation_rule,
         validator_version=field_input.validator_version,
         version_id=1,  # 简化：实际应查询最大 version_id + 1
         is_current=True,
+        # ==== v4.1 §4.8 新增 5 字段 ====
+        cross_verify_status=field_input.cross_verify_status,
+        source_quality_snapshot=field_input.source_quality_snapshot,
+        field_type=field_input.field_type,
+        semantic_role=field_input.semantic_role,
+        value_count=field_input.value_count,
     )
     db.add(field_obj)
     await db.flush()  # 获取 field_obj.id

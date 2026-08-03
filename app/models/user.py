@@ -1,7 +1,8 @@
 """用户与 API Key 模型。
 
 工程规范：
-- API Key 以 SHA256 hash 存储，不存明文。
+- API Key 以 HMAC-SHA256 摘要存储（v4.1 §13.1 升级），不存明文。
+  HMAC 引入服务端 SECRET_KEY，相比纯 SHA256 抗离线爆破。
 - 用户套餐 plan 决定速率限制（free/starter/pro）。
 - 联合表无 id 字段时不按 id 排序（本 MVP 暂无联合表）。
 """
@@ -52,7 +53,13 @@ class User(Base):
 
 
 class ApiKey(Base):
-    """用户拥有的 API Key，以 SHA256 hash 存储."""
+    """用户拥有的 API Key，以 HMAC-SHA256 摘要存储（v4.1 §13.1）。
+
+    摘要由 `app.utils.credentials.hash_api_key` 生成：以 SECRET_KEY 环境变量
+    作为 HMAC 密钥，对 API Key 明文计算 SHA256 摘要。相比纯 SHA256，HMAC 引入
+    服务端密钥使得即使数据库泄露，攻击者也无法离线爆破出原始 API Key。
+    摘要长度仍为 64 字符 hex，与原 SHA256 hexdigest 长度一致，DB schema 无需变更。
+    """
 
     __tablename__ = "api_keys"
 
@@ -60,7 +67,9 @@ class ApiKey(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    # SHA256 hexdigest，64 字符
+    # HMAC-SHA256 hexdigest（v4.1 §13.1），64 字符。
+    # 由 app.utils.credentials.hash_api_key 生成，使用 SECRET_KEY 作为 HMAC 密钥。
+    # 注意：原 SHA256 hash 字段已废弃，新存储的 key 一律使用 HMAC 摘要。
     key_hash: Mapped[str] = mapped_column(
         String(64), unique=True, index=True, nullable=False
     )

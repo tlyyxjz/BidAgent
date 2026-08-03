@@ -11,7 +11,9 @@ from __future__ import annotations
 import pytest
 
 from app.processors.source_lineage import (
+    SOURCE_ROLE_AUTHORIZED_ORIGINAL,
     SOURCE_ROLE_COMMERCIAL_REPOST,
+    SOURCE_ROLE_INDEX_ONLY,
     SOURCE_ROLE_OFFICIAL_ORIGINAL,
     SOURCE_ROLE_OFFICIAL_REPOST,
     SOURCE_ROLE_UNKNOWN,
@@ -359,3 +361,95 @@ class TestJudgeFieldConflict:
         assert not j.is_conflict
         assert not j.is_version_diff
         assert "同值" in j.reason
+
+
+# ========== v4.1 §4.6 来源质量 6 类测试 ==========
+
+
+class TestSourceQualitySixTypes:
+    """v4.1 §4.6 来源质量 6 类完整性测试。"""
+
+    def test_all_six_types_exist(self):
+        """6 类来源质量常量都存在。"""
+        assert SOURCE_ROLE_OFFICIAL_ORIGINAL == "official_original"
+        assert SOURCE_ROLE_OFFICIAL_REPOST == "official_repost"
+        assert SOURCE_ROLE_AUTHORIZED_ORIGINAL == "authorized_original"
+        assert SOURCE_ROLE_COMMERCIAL_REPOST == "commercial_repost"
+        assert SOURCE_ROLE_INDEX_ONLY == "index_only"
+        assert SOURCE_ROLE_UNKNOWN == "unknown"
+
+
+class TestAuthorizedOriginal:
+    """authorized_original 授权原始测试。"""
+
+    def test_authorized_original_commercial_domain(self):
+        """商业域名 + is_authorized_original=True → authorized_original。"""
+        role, reason = judge_source_role(
+            "https://www.chinabidding.cn/notice/1",
+            content_text="这是授权首发的公告正文内容",
+            is_authorized_original=True,
+        )
+        assert role == SOURCE_ROLE_AUTHORIZED_ORIGINAL
+        assert "授权" in reason
+
+    def test_not_authorized_commercial_domain(self):
+        """商业域名 + is_authorized_original=False → commercial_repost。"""
+        role, reason = judge_source_role(
+            "https://www.chinabidding.cn/notice/1",
+            content_text="这是普通商业平台的公告正文内容",
+        )
+        assert role == SOURCE_ROLE_COMMERCIAL_REPOST
+
+    def test_authorized_original_official_domain(self):
+        """官方域名 + is_authorized_original=True → official_original（官方优先）。"""
+        role, reason = judge_source_role(
+            "https://www.ccgp.gov.cn/notice/1",
+            content_text="这是官方公告正文内容",
+            is_authorized_original=True,
+        )
+        assert role == SOURCE_ROLE_OFFICIAL_ORIGINAL
+
+
+class TestIndexOnly:
+    """index_only 仅索引页测试。"""
+
+    def test_index_only_explicit(self):
+        """is_index_only=True → index_only。"""
+        role, reason = judge_source_role(
+            "https://www.chinabidding.cn/notice/1",
+            content_text="内容",
+            is_index_only=True,
+        )
+        assert role == SOURCE_ROLE_INDEX_ONLY
+
+    def test_index_only_short_content_commercial(self):
+        """商业域名 + 正文过短 → index_only。"""
+        role, reason = judge_source_role(
+            "https://www.chinabidding.cn/notice/1",
+            content_text="短",  # < 50 字符
+        )
+        assert role == SOURCE_ROLE_INDEX_ONLY
+
+    def test_index_only_empty_content_commercial(self):
+        """商业域名 + 空正文 → index_only。"""
+        role, reason = judge_source_role(
+            "https://www.chinabidding.cn/notice/1",
+            content_text="",
+        )
+        assert role == SOURCE_ROLE_INDEX_ONLY
+
+    def test_not_index_only_official_short_content(self):
+        """官方域名 + 正文过短 → 不是 index_only（官方优先）。"""
+        role, reason = judge_source_role(
+            "https://www.ccgp.gov.cn/notice/1",
+            content_text="短",
+        )
+        assert role != SOURCE_ROLE_INDEX_ONLY
+
+    def test_not_index_only_long_content(self):
+        """商业域名 + 正文足够长 → 不是 index_only。"""
+        role, reason = judge_source_role(
+            "https://www.chinabidding.cn/notice/1",
+            content_text="这是一段足够长的公告正文内容，超过50个字符，不应被判定为仅索引页。" * 2,
+        )
+        assert role != SOURCE_ROLE_INDEX_ONLY

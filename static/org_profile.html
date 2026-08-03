@@ -82,7 +82,7 @@ h1{font-size:18px;color:#1a1a2e}
 .org-search-btn{background:#1976d2;color:white;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
 .org-search-btn:hover{background:#1565c0;transform:translateY(-1px)}
 
-/* ===== 5维度信用评分卡 ===== */
+/* ===== 5维度公开活动观察度卡 ===== */
 .credit-section{grid-column:1/-1;margin-bottom:4px}
 .credit-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .credit-score-circle-wrap{flex-shrink:0}
@@ -215,26 +215,30 @@ body{background:#f5f7fa}
     </div>
   </div>
 
-  <!-- 5维度信用评分卡（最顶部） -->
+  <!-- 5维度公开活动观察度卡（最顶部） -->
   <div class="card card-full credit-section" id="creditSection">
     <div class="credit-header">
       <div class="credit-score-circle-wrap">
         <div class="credit-overall" id="creditOverallBg" style="background:conic-gradient(#2e7d32 0% 87.5%,#e0e0e0 87.5% 100%)">
           <div class="credit-overall-inner">
             <div class="credit-overall-value" id="creditOverallValue" style="color:#2e7d32">87.5</div>
-            <div class="credit-overall-label">综合信用</div>
+            <div class="credit-overall-label">综合观察度</div>
           </div>
         </div>
       </div>
       <div class="credit-title-area">
-        <div class="credit-title"><i class="ph ph-shield-check" style="color:#2e7d32;margin-right:6px"></i>5 维度信用综合评估</div>
-        <div class="credit-subtitle">基于该组织近 90 天公告数据，从集中度、金额、频率、地域、采购人 5 个维度加权评分（权重 25/20/20/15/20，对齐 supplier_risk.py 供应商风险评分口径）。每一项指标均可溯源至具体公告证据。</div>
+        <div class="credit-title"><i class="ph ph-shield-check" style="color:#2e7d32;margin-right:6px"></i>6 信号公开活动观察度综合评估</div>
+        <div class="credit-subtitle">基于该组织公开招投标公告数据，输出 6 个 MVP 信号：中标活跃度、公开中标集中度、废标公告关联、明确投标否决、信息冲突观察、高频共现提示。对齐 observation_signals.py 口径（v4.1 第九章），不输出信用评分，仅供人工尽调参考。</div>
       </div>
     </div>
     <div class="credit-grid" id="creditGrid"></div>
-    <!-- 5 维度雷达图（ECharts 实现，与其他页面图表风格统一） -->
+    <!-- 高频共现免责声明（v4.1 第 9.3 节） -->
+    <div id="cooccurrenceDisclaimer" style="margin-top:12px;padding:10px 14px;background:#fff3e0;border-left:3px solid #ef6c00;border-radius:6px;font-size:12px;color:#e65100;display:none">
+      <i class="ph ph-info" style="margin-right:4px"></i><strong>高频共现提示免责声明：</strong><span id="cooccurrenceDisclaimerText"></span>
+    </div>
+    <!-- 6 信号雷达图（ECharts 实现，与其他页面图表风格统一） -->
     <div class="credit-radar-wrap">
-      <div class="credit-radar-title"><i class="ph ph-target"></i>5 维度信用雷达图</div>
+      <div class="credit-radar-title"><i class="ph ph-target"></i>6 信号公开活动观察度雷达图</div>
       <div id="creditRadar" style="width:100%;height:380px;"></div>
     </div>
   </div>
@@ -290,72 +294,79 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(nm)document.getElementById('orgSearchInput').value=nm;
 });
 
-function creditColor(score){return score>=85?'#2e7d32':score>=70?'#f57f17':'#c62828'}
-const _BG_BY_KEY={concentration:'#1976d2',amount_anomaly:'#2e7d32',frequency:'#7b1fa2',region:'#00838f',purchaser:'#ef6c00'};
-function renderCreditScores(orgData){
-  // 对接 /api/org/{name} 真实字段：credit_overall + credit_dimensions + data_source
-  // 5 维度对齐 supplier_risk.py 的供应商风险评分口径
-  const dims=orgData&&Array.isArray(orgData.credit_dimensions)?orgData.credit_dimensions:null;
-  const ds=orgData&&orgData.data_source?orgData.data_source:'real';
-  if(!dims){
-    // API 失败时只置空，不再用假数据
-    document.getElementById('creditOverallValue').textContent='--';
-    document.getElementById('creditOverallValue').style.color='#999';
-    document.getElementById('creditGrid').innerHTML='<div style="grid-column:1/-1;text-align:center;color:#999;padding:40px">信用评分数据加载失败</div>';
+// 6 个 MVP 信号元数据（v4.1 第 9.2 节）：图标与配色
+const COOCCURRENCE_DISCLAIMER='高频共现可能由行业集中度、区域市场和项目准入条件等多种因素造成。仅凭共现不能判断企业关联关系或围标行为。';
+const SIGNAL_META={
+  '中标活跃度':{icon:'ph-chart-line-up',bg:'#1976d2'},
+  '公开中标集中度':{icon:'ph-trophy',bg:'#f57f17'},
+  '废标公告关联':{icon:'ph-warning',bg:'#c62828'},
+  '明确投标否决':{icon:'ph-prohibit',bg:'#6a1b9a'},
+  '信息冲突观察':{icon:'ph-warning-circle',bg:'#00838f'},
+  '高频共现提示':{icon:'ph-users-three',bg:'#ef6c00'}
+};
+function renderCreditScores(payload){
+  // payload: {signals:[...], data_completeness:{...}} 或 null
+  // 数据来源：/api/organizations/{org_id}（v4.1 第 12 节），解析 signals 数组
+  const signals=payload&&Array.isArray(payload.signals)?payload.signals:null;
+  const dc=payload&&payload.data_completeness?payload.data_completeness:{};
+  const valEl=document.getElementById('creditOverallValue');
+  const lblEl=document.querySelector('.credit-overall-label');
+  if(!signals){
+    document.getElementById('creditOverallBg').style.background='conic-gradient(#bdbdbd 0% 100%,#e0e0e0 100% 100%)';
+    valEl.textContent='--';valEl.style.color='#999';
+    document.getElementById('creditGrid').innerHTML='<div style="grid-column:1/-1;text-align:center;color:#999;padding:40px">观察信号数据加载失败</div>';
+    document.getElementById('cooccurrenceDisclaimer').style.display='none';
+    if(lblEl)lblEl.textContent='有效公告数';
     return;
   }
-  const overall=orgData.credit_overall;
-  const noData=ds==='no_data'||overall==null;
-  const valEl=document.getElementById('creditOverallValue');
-  if(noData){
-    // 真实数据未命中：综合分置 --，不伪造数字
-    document.getElementById('creditOverallBg').style.background='conic-gradient(#bdbdbd 0% 100%,#e0e0e0 100% 100%)';
-    valEl.textContent='--';
-    valEl.style.color='#999';
-  }else{
-    const c=creditColor(overall);
-    const pct=Math.min(overall,100);
-    document.getElementById('creditOverallBg').style.background=`conic-gradient(${c} 0% ${pct}%,#e0e0e0 ${pct}% 100%)`;
-    valEl.textContent=overall.toFixed(overall%1===0?0:1);
-    valEl.style.color=c;
-  }
-  document.getElementById('creditGrid').innerHTML=dims.map(s=>{
-    const hasScore=s.score!=null;
-    const sc=hasScore?creditColor(s.score):null;
-    const bg=_BG_BY_KEY[s.key]||'#1976d2';
-    const name=s.name||s.key;
-    const desc=noData?(s.reason||'暂无真实数据，以下为演示样例'):(s.description||s.desc||'');
-    const disp=s.display||(hasScore?'':'--');
-    const scoreTxt=hasScore?s.score:'--';
-    const barW=hasScore?s.score:0;
+  // 综合位置展示有效公告数（v4.1 第 9.4 节数据完整性）
+  const validCount=Number(dc.valid_notice_count!=null?dc.valid_notice_count:0);
+  document.getElementById('creditOverallBg').style.background='conic-gradient(#1976d2 0% 100%)';
+  valEl.textContent=validCount;
+  valEl.style.color='#1976d2';
+  if(lblEl)lblEl.textContent='有效公告数';
+  document.getElementById('creditGrid').innerHTML=signals.map(s=>{
+    const meta=SIGNAL_META[s.signal_name]||{icon:'ph-circle',bg:'#1976d2'};
+    const val=s.observed_value!=null?s.observed_value:'--';
+    const period=s.observation_period||'';
+    const note=s.coverage_note||'';
+    const disclaimer=s.disclaimer||'';
     return `<div class="credit-card">
       <div class="credit-card-head">
-        <div class="credit-card-icon" style="background:${bg}"><i class="ph ${s.icon||'ph-circle'}"></i></div>
-        <div class="credit-card-name">${name}<small>${disp||'近 90 天数据'}</small></div>
+        <div class="credit-card-icon" style="background:${meta.bg}"><i class="ph ${meta.icon}"></i></div>
+        <div class="credit-card-name">${esc(s.signal_name||'')}<small>${esc(period)}</small></div>
       </div>
       <div class="credit-score-row">
-        <span class="credit-score-big" style="color:${sc||'#999'}">${scoreTxt}</span>
-        <span class="credit-score-unit">/ 100</span>
+        <span class="credit-score-big" style="color:${meta.bg}">${val}</span>
       </div>
-      <div class="credit-bar"><div class="credit-bar-fill" style="width:${barW}%;background:${sc||'#e0e0e0'}"></div></div>
-      <div class="credit-desc">${desc}</div>
+      <div class="credit-desc">${esc(note)}${disclaimer?'<br/><span style="color:#999;font-size:11px">'+esc(disclaimer)+'</span>':''}</div>
     </div>`;
   }).join('');
-  renderCreditRadar(dims, overall);
+  // 高频共现免责声明（仅当高频共现信号 observed_value > 0 时展示）
+  const cooc=signals.find(s=>s.signal_name==='高频共现提示');
+  const coocEl=document.getElementById('cooccurrenceDisclaimer');
+  const coocTxt=document.getElementById('cooccurrenceDisclaimerText');
+  if(cooc&&Number(cooc.observed_value)>0&&coocTxt){
+    coocTxt.textContent=COOCCURRENCE_DISCLAIMER;
+    coocEl.style.display='block';
+  }else{
+    coocEl.style.display='none';
+  }
+  renderCreditRadar(signals);
 }
 
-function renderCreditRadar(dims, overall){
+function renderCreditRadar(signals){
   const el=document.getElementById('creditRadar');
-  if(!el||!window.echarts||!dims||!dims.length)return;
+  if(!el||!window.echarts||!signals||!signals.length)return;
   const chart=echarts.init(el);
-  const indicators=dims.map(d=>({name:d.name||d.key,max:100}));
-  const values=dims.map(d=>d.score==null?0:d.score);
+  // 各信号 observed_value 量纲不同，按各自最大值放大 1.5 倍作为坐标轴上限
+  const indicators=signals.map(s=>({name:s.signal_name||'',max:Math.max(Number(s.observed_value)||0,1)*1.5}));
+  const values=signals.map(s=>Number(s.observed_value)||0);
   chart.setOption({
-    title:{text:'综合信用 '+((overall!=null)?overall.toFixed(1):'--')+' 分',left:'center',top:6,textStyle:{fontSize:13,color:'#1a1a2e',fontWeight:600}},
+    title:{text:'6 信号观察值',left:'center',top:6,textStyle:{fontSize:13,color:'#1a1a2e',fontWeight:600}},
     tooltip:{trigger:'item',formatter:p=>{
       const v=p.value;
-      const names=dims.map(d=>d.name||d.key);
-      return names.map((n,i)=>n+': '+(v[i]!=null?v[i]:'--')).join('<br/>');
+      return signals.map((s,i)=>s.signal_name+': '+(v[i]!=null?v[i]:'--')).join('<br/>');
     }},
     radar:{
       indicator:indicators,
@@ -371,7 +382,7 @@ function renderCreditRadar(dims, overall){
       type:'radar',
       data:[{
         value:values,
-        name:'信用评分',
+        name:'观察信号',
         areaStyle:{color:'rgba(25,118,210,.20)'},
         lineStyle:{color:'#1976d2',width:2},
         itemStyle:{color:'#1976d2'}
@@ -464,7 +475,19 @@ async function loadData(){
     renderPurchasers(o.top3_purchasers);
     renderWaste(o.waste_bid_related);
     renderCompleteness(o.data_completeness);
-    renderCreditScores(o);
+    // 观察信号走 v4.1 第 12 节 /api/organizations/{org_id} 端点，解析 signals 数组
+    try{
+      const sr=await fetch(`/api/organizations/${encodeURIComponent(o.org_name)}`);
+      if(sr.ok){
+        const sd=await sr.json();
+        if(sd&&sd.code===0){renderCreditScores(sd.data);}
+        else{renderCreditScores(null);}
+      }else{
+        renderCreditScores(null);
+      }
+    }catch(_e){
+      renderCreditScores(null);
+    }
   }catch(e){
     renderCreditScores(null);
     document.querySelector('.main-container').innerHTML='<div style="text-align:center;padding:60px;color:#999;">加载失败: '+e.message+'</div>';

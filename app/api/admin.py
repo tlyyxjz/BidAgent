@@ -205,3 +205,274 @@ async def list_api_keys(
             "msg": "ok",
         },
     )
+
+
+
+
+# ==== v4.1 §5.2 source whitelist management ====
+
+class AddSourceRequest(BaseModel):
+    """Add a source to the whitelist."""
+    domain: str = Field(..., description="domain or URL, auto-normalized")
+    platform_name: str = Field(..., max_length=200)
+    platform_type: str = Field(default="commercial", description="government/authorized/commercial/unknown")
+    notes: str = Field(default="", max_length=500)
+
+
+class DecommissionRequest(BaseModel):
+    """Decommission a source."""
+    reason: str = Field(..., min_length=1, max_length=500, description="decommission reason, required")
+
+
+@admin_router.get("/sources/whitelist")
+async def list_whitelist_sources(
+    status: str | None = None,
+    _: None = Depends(verify_admin),
+) -> JSONResponse:
+    """List all sources in the whitelist (filterable by status)."""
+    from app.core.source_whitelist import source_whitelist
+
+    sources = source_whitelist.list_sources(status=status)
+    return JSONResponse(
+        status_code=200,
+        content={"code": 200, "data": sources, "msg": "ok"},
+    )
+
+
+@admin_router.post("/sources/whitelist")
+async def add_whitelist_source(
+    req: AddSourceRequest,
+    _: None = Depends(verify_admin),
+) -> JSONResponse:
+    """Add a new source to the whitelist."""
+    from app.core.source_whitelist import source_whitelist
+
+    try:
+        entry = await source_whitelist.add_source(
+            domain=req.domain,
+            platform_name=req.platform_name,
+            platform_type=req.platform_type,
+            notes=req.notes,
+        )
+        logger.info(
+            "whitelist source added domain=%s platform=%s",
+            entry.domain, entry.platform_name,
+        )
+        return JSONResponse(
+            status_code=201,
+            content={"code": 201, "data": entry.to_dict(), "msg": "created"},
+        )
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=400,
+            content={"code": 400, "data": None, "msg": str(exc)},
+        )
+
+
+@admin_router.post("/sources/whitelist/{domain}/decommission")
+async def decommission_whitelist_source(
+    domain: str,
+    req: DecommissionRequest,
+    _: None = Depends(verify_admin),
+) -> JSONResponse:
+    """Decommission a source (stop new scraping, do not delete historical data)."""
+    from app.core.source_whitelist import source_whitelist
+
+    try:
+        entry = await source_whitelist.decommission(domain, reason=req.reason)
+        logger.warning(
+            "whitelist source decommissioned domain=%s reason=%s",
+            entry.domain, req.reason,
+        )
+        return JSONResponse(
+            status_code=200,
+            content={"code": 200, "data": entry.to_dict(), "msg": "decommissioned"},
+        )
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=404,
+            content={"code": 404, "data": None, "msg": str(exc)},
+        )
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=400,
+            content={"code": 400, "data": None, "msg": str(exc)},
+        )
+
+
+@admin_router.post("/sources/whitelist/{domain}/recommission")
+async def recommission_whitelist_source(
+    domain: str,
+    _: None = Depends(verify_admin),
+) -> JSONResponse:
+    """Recommission a previously decommissioned source."""
+    from app.core.source_whitelist import source_whitelist
+
+    try:
+        entry = await source_whitelist.recommission(domain)
+        logger.info("whitelist source recommissioned domain=%s", entry.domain)
+        return JSONResponse(
+            status_code=200,
+            content={"code": 200, "data": entry.to_dict(), "msg": "recommissioned"},
+        )
+    except KeyError as exc:
+        return JSONResponse(
+            status_code=404,
+            content={"code": 404, "data": None, "msg": str(exc)},
+        )
+
+
+
+# ========== v4.1 sec 13.3 数据删除 API ==========
+
+class DeletionRequest(BaseModel):
+    """数据删除请求体。"""
+    target: str = Field(..., description="删除目标 (URL/platform/source_id/version_id/user_id)")
+    request_basis: str = Field(..., description="删除依据 (如 GDPR Article 17 / 用户注销 / 平台下架)")
+    operator: str = Field("admin", description="操作人标识")
+
+
+@admin_router.post("/deletion/by-source-url", dependencies=[Depends(verify_admin)])
+async def delete_by_source_url(
+    req: DeletionRequest,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """按来源 URL 删除数据 (v4.1 sec 13.3 scope 1)。"""
+    from app.services.data_deletion import DataDeletionService
+    service = DataDeletionService()
+    result = await service.delete_by_source_url(
+        db, req.target, req.request_basis, req.operator
+    )
+    logger.info("deletion by_source_url target=%s counts=%s", req.target, result.deleted_counts)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "code": 200,
+            "data": {
+                "scope": result.scope.value,
+                "deleted_counts": result.deleted_counts,
+                "audit_id": result.audit_id,
+                "executed_at": result.executed_at,
+                "error": result.error,
+            },
+            "msg": "deleted" if result.error is None else result.error,
+        },
+    )
+
+
+@admin_router.post("/deletion/by-source-platform", dependencies=[Depends(verify_admin)])
+async def delete_by_source_platform(
+    req: DeletionRequest,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """按来源平台删除数据 (v4.1 sec 13.3 scope 2)。"""
+    from app.services.data_deletion import DataDeletionService
+    service = DataDeletionService()
+    result = await service.delete_by_source_platform(
+        db, req.target, req.request_basis, req.operator
+    )
+    logger.info("deletion by_source_platform target=%s counts=%s", req.target, result.deleted_counts)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "code": 200,
+            "data": {
+                "scope": result.scope.value,
+                "deleted_counts": result.deleted_counts,
+                "audit_id": result.audit_id,
+                "executed_at": result.executed_at,
+                "error": result.error,
+            },
+            "msg": "deleted" if result.error is None else result.error,
+        },
+    )
+
+
+@admin_router.post("/deletion/notice-source/{source_id}", dependencies=[Depends(verify_admin)])
+async def delete_notice_source_instance(
+    source_id: str,
+    req: DeletionRequest,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """删除单个公告来源实例 (v4.1 sec 13.3 scope 3)。
+
+    source_id 在路径中，req.target 会被忽略（以路径参数为准）。
+    """
+    from app.services.data_deletion import DataDeletionService
+    service = DataDeletionService()
+    result = await service.delete_notice_source_instance(
+        db, source_id, req.request_basis, req.operator
+    )
+    logger.info("deletion notice_source source_id=%s counts=%s", source_id, result.deleted_counts)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "code": 200,
+            "data": {
+                "scope": result.scope.value,
+                "deleted_counts": result.deleted_counts,
+                "audit_id": result.audit_id,
+                "executed_at": result.executed_at,
+                "error": result.error,
+            },
+            "msg": "deleted" if result.error is None else result.error,
+        },
+    )
+
+
+@admin_router.post("/deletion/page-snapshot/{version_id}", dependencies=[Depends(verify_admin)])
+async def delete_page_snapshot(
+    version_id: str,
+    req: DeletionRequest,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """删除页面快照 (v4.1 sec 13.3 scope 4)。"""
+    from app.services.data_deletion import DataDeletionService
+    service = DataDeletionService()
+    result = await service.delete_page_snapshot(
+        db, version_id, req.request_basis, req.operator
+    )
+    logger.info("deletion page_snapshot version_id=%s counts=%s", version_id, result.deleted_counts)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "code": 200,
+            "data": {
+                "scope": result.scope.value,
+                "deleted_counts": result.deleted_counts,
+                "audit_id": result.audit_id,
+                "executed_at": result.executed_at,
+                "error": result.error,
+            },
+            "msg": "deleted" if result.error is None else result.error,
+        },
+    )
+
+
+@admin_router.post("/deletion/user-authorized-data/{user_id}", dependencies=[Depends(verify_admin)])
+async def delete_user_authorized_data(
+    user_id: int,
+    req: DeletionRequest,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """删除用户授权数据 (v4.1 sec 13.3 scope 5)。"""
+    from app.services.data_deletion import DataDeletionService
+    service = DataDeletionService()
+    result = await service.delete_user_authorized_data(
+        db, user_id, req.request_basis, req.operator
+    )
+    logger.info("deletion user_authorized_data user_id=%s counts=%s", user_id, result.deleted_counts)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "code": 200,
+            "data": {
+                "scope": result.scope.value,
+                "deleted_counts": result.deleted_counts,
+                "audit_id": result.audit_id,
+                "executed_at": result.executed_at,
+                "error": result.error,
+            },
+            "msg": "deleted" if result.error is None else result.error,
+        },
+    )

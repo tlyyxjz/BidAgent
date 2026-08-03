@@ -32,6 +32,9 @@ GRADE_REVIEW = "review"
 GRADE_LOW = "low"
 VALID_GRADES = (GRADE_HIGH, GRADE_REVIEW, GRADE_LOW)
 
+# v4.1 §10.12 展示等级规则版本
+DISPLAY_RULE_VERSION = "v1.0-frozen"
+
 # SupportLevel → 强度映射（v4.1 第八章 STRONG/MEDIUM/WEAK）
 _STRENGTH_HIGH = {SupportLevel.DIRECT.value, SupportLevel.EQUIVALENT.value}
 _STRENGTH_MID = {SupportLevel.INFERRED.value}
@@ -48,6 +51,18 @@ def _sl_value(sl: Union[str, SupportLevel, None]) -> str:
     if isinstance(sl, SupportLevel):
         return sl.value
     return str(sl)
+
+
+def cross_verify_status_to_bool(cross_verify_status: str) -> bool:
+    """将 cross_verify_status 6 态 enum 转换为布尔值（向后兼容）。
+
+    Args:
+        cross_verify_status: 6 态 enum 之一
+
+    Returns:
+        True 如果是 independent 或 consistent_unknown（视为已交叉验证）
+    """
+    return cross_verify_status in {"independent", "consistent_unknown"}
 
 
 def compute_display_grade(

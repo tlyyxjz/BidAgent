@@ -103,7 +103,16 @@ async def _set_sqlite_pragmas() -> None:
 
 
 async def init_database() -> None:
-    """初始化数据库：设置 PRAGMA → 建表 → 轻量迁移。"""
+    """初始化数据库：设置 PRAGMA → 建表 → 轻量迁移。
+
+    四层实体表（tender_projects / tender_notices / notice_sources /
+    notice_versions / notice_participants / project_identifiers）通过
+    导入 tender_project 模块注册到 Base.metadata，由 create_all 一并创建。
+    现有 Tender 表保留（向后兼容）。
+    """
+    # 导入四层实体模型 + organization（FK 依赖），确保表注册到 Base.metadata
+    from app.models import organization, tender_project  # noqa: F401
+
     await _set_sqlite_pragmas()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

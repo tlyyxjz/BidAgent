@@ -30,6 +30,7 @@ from app.api.ui import router as ui_router
 from app.api.evidence_demo import router as evidence_demo_router
 from app.api.real_demo import router as real_demo_router
 from app.api.demo_api import router as demo_router, demo_org_by_name
+from app.api.v41_api import router as v41_router
 from app.config import settings
 from app.core.rate_limit import limiter
 from app.models.database import engine, get_db, init_database
@@ -209,6 +210,8 @@ app.include_router(evidence_demo_router)
 app.include_router(real_demo_router)
 # /api/demo Demo data (incl. /api/demo/orgs/by-name/{name} 6-dim credit)
 app.include_router(demo_router)
+# v4.1 第12节标准 REST API（12 个端点，prefix 已在 router 内设为 /api）
+app.include_router(v41_router, prefix="")
 
 @app.get('/api/org/{name:path}', include_in_schema=False, tags=['demo'])
 async def org_by_name_alias(name: str, db=Depends(get_db)):
@@ -242,7 +245,21 @@ async def health() -> dict[str, str]:
 
 
 @app.get("/", include_in_schema=False)
-async def root():
-    """根路径重定向到工作台。"""
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/ui", status_code=307)
+async def root(request: Request):
+    """根路径：浏览器重定向到 /ui，API 客户端返回服务信息。
+
+    内容协商策略：
+    - Accept: text/html -> 307 重定向到 /ui 工作台（浏览器 UX）
+    - 其他（含 application/json、*/*）-> 返回 API 元信息 JSON
+    """
+    accept = request.headers.get("accept", "").lower()
+    if "text/html" in accept:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/ui", status_code=307)
+    return {
+        "name": "ScrapeFlow API",
+        "version": "4.1",
+        "docs": "/docs",
+        "health": "/health",
+        "ui": "/ui",
+    }
