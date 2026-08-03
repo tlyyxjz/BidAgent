@@ -40,6 +40,7 @@ class CacheEntry:
     content_type: Optional[str] = None
     fetched_at: float = field(default_factory=time.time)
     hit_count: int = 0
+    last_access_seq: int = 0
 
     def is_expired(self, ttl: Optional[float]) -> bool:
         """Check if cache entry is expired."""
@@ -69,6 +70,7 @@ class CacheManager:
         self._max_entries: int = max_entries
         self._cache: dict[str, CacheEntry] = {}
         self._lock: asyncio.Lock = asyncio.Lock()
+        self._access_counter: int = 0
 
     async def get(self, url: str) -> Optional[CacheEntry]:
         """Get cache entry; returns None if missing or expired."""
@@ -81,6 +83,8 @@ class CacheManager:
                 logger.debug("cache expired url=%s", url[:80])
                 return None
             entry.hit_count += 1
+            self._access_counter += 1
+            entry.last_access_seq = self._access_counter
             return entry
 
     async def set(
@@ -95,9 +99,11 @@ class CacheManager:
         async with self._lock:
             if url not in self._cache and len(self._cache) >= self._max_entries:
                 self._evict_lru()
+            self._access_counter += 1
             entry = CacheEntry(
                 url=url, body=body, etag=etag,
                 last_modified=last_modified, content_type=content_type,
+                last_access_seq=self._access_counter,
             )
             self._cache[url] = entry
             return entry
@@ -123,10 +129,10 @@ class CacheManager:
         return entry.body
 
     def _evict_lru(self) -> None:
-        """LRU eviction (caller must hold lock)."""
+        """LRU eviction based on last_access_seq (caller must hold lock)."""
         if not self._cache:
             return
-        oldest_url = min(self._cache, key=lambda u: self._cache[u].fetched_at)
+        oldest_url = min(self._cache, key=lambda u: self._cache[u].last_access_seq)
         del self._cache[oldest_url]
 
     def reset(self) -> None:

@@ -68,6 +68,9 @@ class TemplateMonitor:
         Returns:
             bool: True if structure changed (or first record); False if unchanged.
         """
+        if page is None:
+            logger.warning("template_monitor check failed name=%s err=page is None", template_name)
+            return False
         try:
             selector_hits: dict[str, int] = {}
             for field_name, sel in selectors.items():

@@ -13,6 +13,8 @@
 
 from __future__ import annotations
 
+import json
+
 from typing import Any
 from urllib.parse import urlparse
 
@@ -32,8 +34,11 @@ from app.core.proxy import (
     get_random_user_agent,
     report_proxy_failure,
 )
+from app.core.cache_manager import cache_manager
 from app.core.rate_limiter import domain_rate_limiter
 from app.core.robots_checker import robots_checker
+from app.core.snapshot_manager import snapshot_manager
+from app.core.template_monitor import template_monitor
 from app.templates import get_template
 from app.templates.base import ScrapeTemplate
 from app.utils.hostname_cache import HostnameLRUCache
@@ -97,6 +102,17 @@ class Scraper:
             logger.warning("robots.txt disallowed url=%s", url[:80])
             raise ScrapeError(f"robots.txt 禁止采集该 URL: {url[:80]}")
 
+        # v4.1 §5.3 cache_manager：检查内容缓存（命中则直接返回，不走 rate_limit）
+        cached_entry = await cache_manager.get(url)
+        if cached_entry is not None:
+            try:
+                cached_result = json.loads(cached_entry.body)
+                logger.info("cache hit url=%s hits=%d", url[:80], cached_entry.hit_count)
+                cached_result["from_cache"] = True
+                return cached_result
+            except (json.JSONDecodeError, TypeError) as exc:
+                logger.warning("cache parse failed url=%s err=%s", url[:80], exc)
+
         # v4.1 §13 合规采集层：域名级频率限制（默认 8 秒间隔，按域名独立计数）
         # 在 SSRF 校验通过后、模板合并前等待，确保真实请求前已满足间隔
         waited = await domain_rate_limiter.wait(url)
@@ -152,7 +168,14 @@ class Scraper:
                     cookies=cookies,
                     extra_headers=extra_headers,
                     storage_state=storage_state,
+                    template_name=merged.get("template"),
                 )
+                # v4.1 §5.3 cache_manager：抓取成功后缓存结果
+                try:
+                    await cache_manager.set(url, json.dumps(result, ensure_ascii=False))
+                    logger.debug("cache set url=%s", url[:80])
+                except (TypeError, ValueError) as exc:
+                    logger.warning("cache set failed url=%s err=%s", url[:80], exc)
                 return result
             except HttpForbiddenError as exc:
                 # #34 修复：HTTP 403 表示被反爬封禁，必须立即停止，
@@ -233,6 +256,7 @@ class Scraper:
         cookies: list[dict[str, Any]] | None = None,
         extra_headers: dict[str, str] | None = None,
         storage_state: dict[str, Any] | None = None,
+        template_name: str | None = None,
     ) -> dict[str, Any]:
         """启动 Playwright 执行实际抓取。"""
         ua = get_random_user_agent()
@@ -370,6 +394,39 @@ class Scraper:
                                 pass
                     else:
                         break
+
+                # v4.1 §5.3 snapshot_manager：保存页面快照（SHA256 哈希 + 版本管理）
+                try:
+                    html_content = await page.content()
+                    snap_record = await snapshot_manager.save_snapshot(
+                        url, html_content,
+                        material=False,
+                    )
+                    if snap_record.is_new_version:
+                        logger.info(
+                            "snapshot saved url=%s v%d hash=%s",
+                            url[:80], snap_record.version_number,
+                            snap_record.content_hash[:16],
+                        )
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("snapshot save failed url=%s err=%s", url[:80], exc)
+
+                # v4.1 §5.3 template_monitor：检测页面模板结构变更
+                if selectors and template_name:
+                    try:
+                        changed = await template_monitor.check(
+                            template_name, page, selectors,
+                        )
+                        if changed:
+                            logger.warning(
+                                "template structure may have changed name=%s url=%s",
+                                template_name, url[:80],
+                            )
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning(
+                            "template_monitor check failed name=%s err=%s",
+                            template_name, exc,
+                        )
 
                 return {
                     "url": url,
