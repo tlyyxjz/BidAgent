@@ -14,6 +14,7 @@ Sol S-11/S-1 升级：
     3. scraper.scrape({"template": "qianlima", "url": "..."}) 自动加载 storage_state
     4. Session 失效时返回 401，提示用户重新登录
 """
+# pragma: no cover — qianlima 登录已删除，模板为死代码
 
 from __future__ import annotations
 

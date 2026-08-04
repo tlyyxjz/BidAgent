@@ -3,7 +3,7 @@
 > 面向供应链金融贷前尽调的可验证招投标数据引擎 · GOAI 2026。将不可核验的 LLM 输出转化为可复核、可追踪的数据资产——LLM 只生成候选，确定性程序负责验证。
 
 **当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
-**测试**：1316 passed · **评测数据**：107 篇真实公告 · **分支**：feature/glm-w4-k3-data
+**测试**：1882 passed · **评测数据**：107 篇真实公告 · **分支**：feature/glm-w4-k3-data
 
 ---
 
@@ -162,7 +162,7 @@ TenderProject（采购项目）
 
 ### 测试
 
-- 1316 passed · 0 errors / 0 failures
+- 1882 passed · 0 errors / 0 failures
 - 30 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
 
 ---

@@ -218,21 +218,19 @@ class TestIndividualAgents:
         assert _compute_relevance("任意项目", "内容", "") == 0.5
 
     @pytest.mark.asyncio
-    async def test_finance_agent_returns_default_when_modules_missing(self):
-        """金融分析 Agent 在模块未交付时返回默认值。"""
+    async def test_finance_agent_returns_default_when_no_tenders(self):
+        """金融分析 Agent 在无公告数据时返回空观察信号（v4.1 合规版）。"""
         from app.agents.finance_agent import finance_agent
 
-        state = await finance_agent({
+        state = await finance_agent.run({
             "quality_summary": {},
             "subscription_id": 1,
             "collect_summary": {},
         })
 
-        summary = state["finance_summary"]
-        assert summary["boq_anomalies"] == 0
-        assert summary["risk_items"] == 0
-        assert summary["supplier_scores"] == []
-        assert summary["avg_supplier_score"] == 0.0
+        # v4.1: 只输出观察信号，不输出 BOQ/废标/信用评分
+        assert "observation_signals" in state
+        assert state["observation_signals"] == {}
 
 
 # ==== 3. Pipeline session 管理测试 ====

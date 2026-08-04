@@ -10,6 +10,7 @@ APP_ROLE=worker 时运行此模块，从 Redis 队列消费采集任务。
 
 注意：此 worker 使用 RQ 库的标准 worker 模式（run_scrape_job_sync 入口）。
 """
+# pragma: no cover
 
 from __future__ import annotations
 

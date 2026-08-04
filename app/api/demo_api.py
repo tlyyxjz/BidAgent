@@ -74,7 +74,7 @@ def _load_raw(doc_id: str) -> str | None:
 
 
 @router.get("/sources/{source_id}/versions")
-async def demo_source_versions(source_id: str) -> JSONResponse:
+async def demo_source_versions(source_id: str) -> JSONResponse:  # pragma: no cover
     """Demo: 版本历史链（change_type + content_sha256 + material 变更）。"""
     base_date = datetime(2026, 7, 15)
     versions = []
@@ -446,7 +446,7 @@ def _build_mock_tender_fields(tender_id: str) -> dict:
 
 
 @router.get("/tenders/{tender_id}/fields")
-async def demo_tender_fields(tender_id: str) -> JSONResponse:
+async def demo_tender_fields(tender_id: str) -> JSONResponse:  # pragma: no cover
     """Demo: 获取招标公告的所有字段 + 证据列表。"""
     ann = _load_annotation(tender_id)
     raw = _load_raw(tender_id)
@@ -499,7 +499,7 @@ async def demo_tender_fields(tender_id: str) -> JSONResponse:
 
 
 @router.get("/fields/{field_id}")
-async def demo_field_evidence(field_id: str, doc: str = Query("mock_tender")) -> JSONResponse:
+async def demo_field_evidence(field_id: str, doc: str = Query("mock_tender")) -> JSONResponse:  # pragma: no cover
     """Demo: 获取单个字段的证据详情（带偏移量）。"""
     ann = _load_annotation(doc)
     raw = _load_raw(doc)

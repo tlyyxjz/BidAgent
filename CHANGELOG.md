@@ -19,7 +19,7 @@
 ### 优化
 - 项目更名为"标小智"
 - 消融实验从三组扩展为四组，金标从 22 篇扩展到 99 篇
-- 测试用例扩充至 826 项（含 parametrize 展开），覆盖率提升至 97%
+- 测试用例扩充至 1882 项（含 parametrize 展开），覆盖率提升至 90.17%
 - 前端品牌名统一、Stepper 残留清理、emoji 清理
 - PPT 数据全面对齐 W3 最新结果
 
@@ -53,4 +53,4 @@
 - 千里马登录态持久化（16 cookies）
 - patchright + stealth 反检测
 - Docker 多阶段构建 + 三角色部署（web/worker/scheduler）
-- 826 项测试用例（含 parametrize 展开），核心模块覆盖率 97%+
+- 1882 项测试用例（含 parametrize 展开），核心模块覆盖率 90.17%

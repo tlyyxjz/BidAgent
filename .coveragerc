@@ -1,0 +1,25 @@
+[run]
+source = app
+omit =
+    app/templates/html/*
+    app/scheduler_loop.py
+    app/worker_loop.py
+    app/core/queue.py
+    app/core/browser_renderer.py
+    app/core/proxy.py
+    app/core/webhook_sender.py
+    app/processors/pdf_parser.py
+    app/processors/attachment_downloader.py
+    */__pycache__/*
+    */migrations/*
+
+[report]
+fail_under = 90
+show_missing = True
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod

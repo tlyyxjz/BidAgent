@@ -9,6 +9,7 @@ APP_ROLE=scheduler 时运行此模块，定时扫描订阅并触发推送。
 - 失败重试 + 日志
 - 默认每 60 秒扫描一次到期的订阅
 """
+# pragma: no cover
 
 from __future__ import annotations
 

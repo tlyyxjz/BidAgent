@@ -37,6 +37,7 @@ os.chdir(_PROJECT_ROOT)
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import generate_api_key, hash_api_key
@@ -47,6 +48,7 @@ from app.core.template_monitor import template_monitor
 from app.core.rate_limiter import domain_rate_limiter
 from app.core.robots_checker import robots_checker
 from app.core.source_whitelist import source_whitelist
+import app.models  # noqa: F401  # 确保 Base.metadata 注册全部表（含 v4.1 四层模型）
 from app.main import app
 from app.models.database import AsyncSessionLocal, Base, engine
 from app.models.user import (
@@ -56,6 +58,15 @@ from app.models.user import (
     User,
 )
 
+
+async def _drop_all_tables() -> None:
+    """逐表 DROP IF EXISTS，每个表独立事务，避免表缺失导致事务 aborted。"""
+    for table_name in reversed(list(Base.metadata.tables.keys())):
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(text(f"DROP TABLE IF EXISTS [{table_name}]"))
+        except Exception:
+            pass
 
 @pytest.fixture(autouse=True)
 async def _reset_db_and_rate_limit(monkeypatch):
@@ -73,18 +84,13 @@ async def _reset_db_and_rate_limit(monkeypatch):
     _last_request 记录导致后续测试同域名请求被 sleep 8 秒拖慢。
     """
     Path("data").mkdir(parents=True, exist_ok=True)
-    # setup：先 drop（容错：表可能不存在），再 create
-    async with engine.begin() as conn:
-        try:
-            await conn.run_sync(Base.metadata.drop_all)
-        except Exception as e:
-            # 表可能不存在（首个测试或前次 teardown 已清理），忽略
-            print(f"[conftest setup] drop_all warning: {e}")
-        try:
+    # setup：先逐表 DROP（独立事务、容错），再 create_all（checkfirst 默认跳过已存在表）
+    await _drop_all_tables()
+    try:
+        async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        except Exception as e:
-            # 表可能已存在（前次 setup 中断），忽略
-            print(f"[conftest setup] create_all warning: {e}")
+    except Exception as e:
+        print(f"[conftest setup] create_all warning: {e}")
     reset_memory_counter()
     # 重置域名级频率限制器：清空 _last_request 和 _domain_intervals
     domain_rate_limiter.reset()
@@ -118,13 +124,8 @@ async def _reset_db_and_rate_limit(monkeypatch):
     )
 
     yield
-    # teardown：drop_all 容错，避免 PermissionError 中断后续测试
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-    except Exception as e:
-        # teardown 失败不应影响后续测试，下个 setup 会重新 drop+create
-        print(f"[conftest teardown] drop_all warning: {e}")
+    # teardown：逐表 DROP 容错，避免 PermissionError 中断后续测试
+    await _drop_all_tables()
 
 
 @pytest.fixture

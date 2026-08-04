@@ -48,48 +48,6 @@ from app.models import (  # noqa: F401
 from app.models.organization import Organization  # noqa: F401
 
 
-@pytest.fixture(autouse=True)
-async def _reset_db_and_rate_limit(monkeypatch):
-    """覆盖 conftest 的同名 fixture，避免其 drop_all+create_all 同事务导致表丢失。"""
-    from pathlib import Path
-    Path("data").mkdir(parents=True, exist_ok=True)
-    from app.core.rate_limit import reset_memory_counter
-    reset_memory_counter()
-
-    async def _mock_safe_async(url: str) -> tuple[bool, str]:
-        return True, ""
-
-    def _mock_safe(url: str) -> tuple[bool, str]:
-        return True, ""
-
-    monkeypatch.setattr("app.utils.url_safety.is_safe_url", _mock_safe)
-    monkeypatch.setattr("app.utils.url_safety.is_safe_url_async", _mock_safe_async)
-    monkeypatch.setattr("app.core.scraper.is_safe_url", _mock_safe)
-    yield
-
-
-@pytest.fixture(autouse=True)
-async def _ensure_clean_tables(_reset_db_and_rate_limit):
-    """在每个测试前重建所有表（独立事务，避免 conftest 同事务问题）。
-
-    策略：
-    1. 逐表 DROP IF EXISTS（SQLite 下绝对安全）在一个事务
-    2. create_all（checkfirst=True 默认）在另一个事务
-    """
-    # 每个 DROP TABLE IF EXISTS 在独立事务中执行，
-    # 避免单个 DROP 失败导致整个事务 aborted、后续 DROP 全部静默失败。
-    for table_name in reversed(list(Base.metadata.tables.keys())):
-        try:
-            async with engine.begin() as conn:
-                await conn.execute(text(f"DROP TABLE IF EXISTS [{table_name}]"))
-        except Exception:
-            pass
-    # create_all 在独立事务中创建缺失的表（checkfirst=True 默认跳过已存在的表）
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-
-
 async def _seed_tender(
     project_name: str = "测试医疗设备采购项目",
     bid_number: str = "TEST-2026-001",
@@ -321,8 +279,6 @@ async def test_get_notice_sources_from_notice_source_table():
     assert src["quality_reason"] == "测试标注：授权转载"
 
 
-
-
 # ==== 5. GET /api/notices/{notice_id}/participants ====
 
 async def test_get_notice_participants():
@@ -472,8 +428,6 @@ async def test_get_source_versions_src_links_to_notice_version():
     assert data["total_versions"] == 2
 
 
-
-
 # ==== 7. GET /api/fields/{field_id} ====
 
 async def test_get_field_with_evidence():
@@ -563,7 +517,6 @@ async def test_get_extract_task_not_found():
         resp = await ac.get("/api/extract/tasks/nonexistent-task-id")
     assert resp.status_code == 404
     assert resp.json()["code"] == 404
-
 
 
 # ==== P1-8: worker 真实流转测试 ====

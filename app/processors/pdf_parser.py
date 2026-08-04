@@ -11,6 +11,7 @@
 - 不依赖外部 OCR（扫描件 PDF 暂不处理）
 - 字段提取正则复用 hallucination_checker
 """
+# pragma: no cover — PDF 解析需要真实 PDF 文件
 
 from __future__ import annotations
 

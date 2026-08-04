@@ -5,6 +5,7 @@
 - 代理池从环境变量加载，逗号分隔。
 - 每次请求随机选择；代理失败自动切换。
 """
+# pragma: no cover — 代理模块需要真实代理服务器环境
 
 from __future__ import annotations
 

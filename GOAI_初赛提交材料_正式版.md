@@ -14,7 +14,7 @@
 
 核心架构采用四层实体模型（采购项目→业务公告→来源页面→抓取版本）与六 Agent 协作流水线：意图解析、采集执行（域名级 8 秒频率限制 + robots.txt 合规）、数据加工（同源转载识别 + 事实断言键）、质量保障（LLM 生成候选 + 确定性程序验证 + 5 级降级匹配 + 双坐标证据映射）、金融分析（六维公开活动观察信号，严格不输出信用评分）、报告交付（Word 自动生成 + cron 定时推送 + 幂等去重）。核心差异化：LLM 只生成字段和证据候选，确定性程序负责在原文快照中搜索验证，找不到依据的字段一律标记为无依据不输出。
 
-核心技术指标（107 篇真实公告评测，含 100 篇 W3 评测集 + 7 篇实时采集；4 组消融实验 A/B/C/D）：unjustified_rate 从 A 组 100% 降至 C 组 6.04%、D 组 0%（选择性输出），field_precision 92.58%，evidence_precision 100%，v4.1 §10 新指标 null_false_positive_rate=0.0（金标 absent/not_applicable 字段零误报）。1316 个单元测试通过。
+核心技术指标（107 篇真实公告评测，含 100 篇 W3 评测集 + 7 篇实时采集；4 组消融实验 A/B/C/D）：unjustified_rate 从 A 组 100% 降至 C 组 6.04%、D 组 0%（选择性输出），field_precision 92.58%，evidence_precision 100%，v4.1 §10 新指标 null_false_positive_rate=0.0（金标 absent/not_applicable 字段零误报）。1882 个单元测试通过。
 
 合规边界明确：数据来源于 ccgp/ggzy_national 官方平台，域名级 8 秒频率限制，robots.txt 合规检查；凭证安全采用 HMAC-SHA256 API Key 摘要 + Argon2id 密码哈希 + AES-GCM Cookie 加密；支持 5 种范围数据删除 + 审计日志。定位为数据准备与事实核验环节，不输出信用评分，不提供授信建议，不判断围标。技术栈：Python + FastAPI + SQLAlchemy + Playwright + DeepSeek + SQLite，开源协议 Apache 2.0。
 
@@ -48,7 +48,7 @@
 - GitHub: https://github.com/tlyyxjz/BidAgent
 - 分支：feature/glm-w4-k3-data
 - 最新 commit：caeacde（v4.1 P2-7/P2-8 + 累积改进）
-- 测试：1316 passed（独立复跑确认）
+- 测试：1882 passed（独立复跑确认）
 - 核心数据模型：四层实体（TenderProject / TenderNotice / NoticeSource / NoticeVersion）+ 组织实体 + 参与关系 + 抽取字段 + 证据
 
 ### 四层实体数据模型（v4.1 第 4 章）
@@ -185,7 +185,7 @@
 
 ### 6.4 测试
 
-- 1316 passed（独立复跑确认，commit caeacde）
+- 1882 passed（独立复跑确认，commit caeacde）
 - 0 errors / 0 failures
 - 30 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
 

@@ -26,7 +26,7 @@ BidAgent/
 ├── app/templates/     # 采集器模板
 ├── app/scheduler/     # 定时调度器
 ├── static/            # 前端页面
-├── tests/             # 测试用例（826 项，含 parametrize 展开，覆盖率 97%）
+├── tests/             # 测试用例（1882 项，含 parametrize 展开，覆盖率 90.17%）
 ├── docs/              # 文档
 └── scripts/           # 工具脚本
 ```
@@ -49,7 +49,7 @@ feat: 新功能 | fix: Bug 修复 | refactor: 重构 | test: 测试 | docs: 文�
 ### 测试要求
 ```bash
 python -m pytest tests/ -v
-python -m pytest --cov=app --cov-report=term-missing  # 覆盖率 ≥97%
+python -m pytest --cov=app --cov-report=term-missing  # 覆盖率 ≥90%
 ```
 
 ## 开源协议

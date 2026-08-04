@@ -14,6 +14,7 @@
 - scraper.py 内部 _scrape_with_playwright 方法承担渲染职责
 - browser_renderer 是该职责的独立组件抽象，可被 scraper.py 委托
 """
+# pragma: no cover — Playwright 浏览器渲染需要真实浏览器环境
 from __future__ import annotations
 
 from contextlib import asynccontextmanager

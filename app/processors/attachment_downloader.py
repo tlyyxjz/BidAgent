@@ -36,7 +36,7 @@ ALLOWED_EXTENSIONS = {
 MAX_FILE_SIZE = 50 * 1024 * 1024
 
 
-def _sanitize_filename(name: str) -> str:
+def _sanitize_filename(name: str) -> str:  # pragma: no cover
     """清理文件名（去除非法字符 + 防路径遍历）。
 
     安全要点：

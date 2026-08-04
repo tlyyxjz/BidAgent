@@ -168,61 +168,12 @@ def _add_summary(doc: Document, filters: ParsedFilters, items: list[dict[str, An
     doc.add_paragraph()
 
 
-def _boq_risk_level(score: float) -> str:
-    """BOQ 清单评分转风险等级（对齐 boq_engine.py 口径）。"""
-    if score < 60:
-        return "高风险"
-    if score < 80:
-        return "中风险"
-    return "低风险"
-
-
-def _boq_status_label(status: str) -> str:
-    """BOQ 异常状态转中文标签。"""
-    return {
-        "underpriced": "低价异常（疑似漏项）",
-        "overpriced": "高价异常（建议核查）",
-        "normal": "正常",
-    }.get(status, status)
-
-
-def _risk_level_label(score: float) -> str:
-    """废标风险评分转风险等级（对齐 risk_engine.py 口径）。"""
-    if score >= 60:
-        return "高风险"
-    if score >= 30:
-        return "中风险"
-    return "低风险"
-
-
-def _risk_item_level_label(level: str) -> str:
-    """风险项等级（low/medium/high）转中文。"""
-    return {
-        "high": "高风险",
-        "medium": "中风险",
-        "low": "低风险",
-    }.get(level, level or "未知")
-
-
-# 供应商公开活动观察度维度名映射（对齐 observation_signals.py 口径）
-_SUPPLIER_DIM_LABELS = {
-    "concentration": "集中度",
-    "amount_anomaly": "金额",
-    "frequency": "频率",
-    "region": "地域",
-    "purchaser": "采购人",
-}
-_SUPPLIER_DIM_ORDER = [
-    "concentration", "amount_anomaly", "frequency", "region", "purchaser",
-]
-
-
 def _add_finance_section(doc: Document, finance_summary: dict[str, Any] | None) -> None:
-    """添加金融分析章节（BOQ 异常 + 废标风险 + 供应商风险评分）。
+    """添加金融分析章节（v4.1 6 维公开活动观察信号）。
 
-    金融分析章节对齐 observation_signals.py 口径（v4.1 第九章 6 信号）。
+    严格对齐 observation_signals.py 口径，不输出信用评分、不调用 BOQ/废标引擎。
     """
-    h = doc.add_heading("四、金融分析", level=1)
+    h = doc.add_heading("四、公开活动观察信号", level=1)
     for run in h.runs:
         _set_run_font(run, "黑体")
 
@@ -231,164 +182,58 @@ def _add_finance_section(doc: Document, finance_summary: dict[str, Any] | None) 
         doc.add_paragraph()
         return
 
-    # ===== 4.1 BOQ 报价异常检测 =====
-    h2 = doc.add_heading("4.1 BOQ 报价异常检测", level=2)
-    for run in h2.runs:
-        _set_run_font(run, "黑体")
-
-    boq_report = finance_summary.get("boq_report")
-    if not boq_report:
+    signals = finance_summary.get("observation_signals") or {}
+    if not signals:
         doc.add_paragraph("本期无相关数据。")
-    else:
-        reports = boq_report.get("reports") or []
-        suspicious_count = finance_summary.get("boq_anomalies", 0)
-        if reports:
-            scores = [float(r.get("score", 100) or 100) for r in reports]
-            avg_score = sum(scores) / len(scores) if scores else 100.0
-            risk_level = _boq_risk_level(avg_score)
-        else:
-            avg_score = 100.0
-            risk_level = "低风险"
+        doc.add_paragraph()
+        return
 
-        p = doc.add_paragraph()
-        p.add_run(f"异常项总数：{suspicious_count}　")
-        p.add_run(f"风险等级：{risk_level}　")
-        p.add_run(f"清单评分：{avg_score:.1f}")
+    # 6 维公开活动观察信号（对齐 observation_signals.py）
+    signal_items = [
+        ("中标活跃度", "award_activity", "近 90 天公开中标次数和金额趋势"),
+        ("公开中标集中度", "award_concentration", "Top 3 采购人及地区占比"),
+        ("废标公告关联", "cancellation_link", "企业在废标/流标公告中被观察到的次数"),
+        ("明确投标否决", "explicit_rejection", "公告明确写明企业投标被否决的次数"),
+        ("信息冲突观察", "info_conflict", "相同事实断言在不同来源中的矛盾"),
+        ("高频共现提示", "high_freq_cooccurrence", "企业与其他企业在同一标段被反复观察到"),
+    ]
 
-        all_items = boq_report.get("items") or []
-        anomalies = [it for it in all_items if it.get("status") != "normal"]
-        if anomalies:
-            p = doc.add_paragraph()
-            p.add_run("异常项明细（前 5 项）：").font.bold = True
-            for item in anomalies[:5]:
-                name = item.get("name", "-")
-                qty = item.get("quantity", "-")
-                unit = item.get("unit", "")
-                price = float(item.get("unit_price") or 0)
-                judgment = _boq_status_label(item.get("status", "normal"))
-                p = doc.add_paragraph(style="List Bullet")
-                p.add_run(f"{name}：").font.bold = True
-                p.add_run(f"数量 {qty}{unit}，单价 ¥{price:,.0f}，判定：{judgment}")
-        else:
-            p = doc.add_paragraph()
-            run = p.add_run("未检测到报价异常项。")
-            run.font.color.rgb = RGBColor(0x00, 0x80, 0x00)
-
+    doc.add_paragraph(
+        "本章节仅呈现基于公开招投标公告可观察到的活动信号，"
+        "不构成对任何企业信用的评价或评分。所有信号均来源于公开数据，"
+        "供供应链金融贷前尽调参考。"
+    )
     doc.add_paragraph()
 
-    # ===== 4.2 废标风险预警 =====
-    h2 = doc.add_heading("4.2 废标风险预警", level=2)
-    for run in h2.runs:
-        _set_run_font(run, "黑体")
-
-    risk_report = finance_summary.get("risk_report")
-    if not risk_report:
-        doc.add_paragraph("本期无相关数据。")
-    else:
-        reports = risk_report.get("reports") or []
-        risk_items_count = finance_summary.get("risk_items", 0)
-        if reports:
-            scores = [float(r.get("risk_score", 0) or 0) for r in reports]
-            avg_score = sum(scores) / len(scores) if scores else 0.0
-            risk_level = _risk_level_label(avg_score)
-        else:
-            avg_score = 0.0
-            risk_level = "低风险"
-
-        p = doc.add_paragraph()
-        p.add_run(f"风险评分：{avg_score:.1f}　")
-        p.add_run(f"风险等级：{risk_level}　")
-        p.add_run(f"风险条数：{risk_items_count}")
-
-        all_items = risk_report.get("items") or []
-        if all_items:
-            p = doc.add_paragraph()
-            p.add_run("风险项明细（前 5 条）：").font.bold = True
-            for idx, item in enumerate(all_items[:5], 1):
-                clause = item.get("clause", "-")
-                level = _risk_item_level_label(item.get("risk_level", ""))
-                law = item.get("law_ref", "") or "—"
-                suggestion = item.get("suggestion", "-")
-                p = doc.add_paragraph()
-                run = p.add_run(f"{idx}. 规则：{clause}")
-                run.font.bold = True
-                p.add_run(f" ｜ 等级：{level} ｜ 法规引用：{law}")
-                p = doc.add_paragraph()
-                run = p.add_run(f"　　建议：{suggestion}")
-                run.font.size = Pt(10)
-        else:
-            p = doc.add_paragraph()
-            run = p.add_run("未检测到废标风险项。")
-            run.font.color.rgb = RGBColor(0x00, 0x80, 0x00)
-
-    doc.add_paragraph()
-
-    # ===== 4.3 供应商风险评分 =====
-    h2 = doc.add_heading("4.3 供应商风险评分", level=2)
-    for run in h2.runs:
-        _set_run_font(run, "黑体")
-
-    supplier_scores = finance_summary.get("supplier_scores") or []
-    avg_score = float(finance_summary.get("avg_supplier_score") or 0.0)
-
-    p = doc.add_paragraph()
-    p.add_run(f"平均供应商风险评分：{avg_score:.2f}")
-
-    if not supplier_scores:
-        p = doc.add_paragraph()
-        run = p.add_run("本期无相关数据。")
-        run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
-    else:
-        headers = (
-            ["供应商"]
-            + [_SUPPLIER_DIM_LABELS[d] for d in _SUPPLIER_DIM_ORDER]
-            + ["总分", "风险等级"]
-        )
-        table = doc.add_table(rows=1 + len(supplier_scores), cols=len(headers))
-        table.style = "Light Grid Accent 1"
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-        # 表头
-        hdr = table.rows[0].cells
-        for i, header in enumerate(headers):
-            hdr[i].text = ""
-            para = hdr[i].paragraphs[0]
-            para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            run = para.add_run(header)
-            run.font.bold = True
-            run.font.size = Pt(10)
+    for label, key, desc in signal_items:
+        h2 = doc.add_heading(f"4.{signal_items.index((label, key, desc)) + 1} {label}", level=2)
+        for run in h2.runs:
             _set_run_font(run, "黑体")
-            hdr[i].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
-        # 数据行
-        for idx, supplier in enumerate(supplier_scores, 1):
-            row = table.rows[idx].cells
-            name = (
-                supplier.get("normalized_name")
-                or supplier.get("organization_id")
-                or "-"
-            )
-            dim_scores = {
-                d.get("name"): d.get("score")
-                for d in supplier.get("dimensions", [])
-            }
+        p = doc.add_paragraph()
+        run = p.add_run(f"指标说明：{desc}")
+        run.font.size = Pt(10)
+        run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
 
-            values = [str(name)]
-            for dim_key in _SUPPLIER_DIM_ORDER:
-                score = dim_scores.get(dim_key)
-                values.append(f"{float(score):.1f}" if score is not None else "—")
-            values.append(f"{float(supplier.get('total_score') or 0):.1f}")
-            values.append(_risk_item_level_label(supplier.get("risk_level", "")))
+        value = signals.get(key)
+        if value is None:
+            p = doc.add_paragraph()
+            run = p.add_run("本期未观察到相关数据。")
+            run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+        elif isinstance(value, dict):
+            for sub_key, sub_val in value.items():
+                p = doc.add_paragraph(style="List Bullet")
+                p.add_run(f"{sub_key}：").font.bold = True
+                p.add_run(str(sub_val))
+        elif isinstance(value, list):
+            for item in value[:10]:
+                p = doc.add_paragraph(style="List Bullet")
+                p.add_run(str(item))
+        else:
+            p = doc.add_paragraph(style="List Bullet")
+            p.add_run(str(value))
 
-            for i, val in enumerate(values):
-                row[i].text = ""
-                para = row[i].paragraphs[0]
-                para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run = para.add_run(val)
-                run.font.size = Pt(9)
-                _set_run_font(run, "宋体")
-
-    doc.add_paragraph()
+        doc.add_paragraph()
 
 
 async def generate_report(
@@ -449,7 +294,7 @@ def _generate_report_sync(
     # 4. 分析建议
     add_analysis(doc, items)
 
-    # 5. 金融分析（BOQ 异常 + 废标风险 + 供应商风险评分）
+    # 5. 金融分析（v4.1 6 维公开活动观察信号）
     _add_finance_section(doc, finance_summary)
 
     # 6. 反幻觉校验报告（命题硬要求：core_content 与原文事实一致）

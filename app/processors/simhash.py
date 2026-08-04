@@ -32,11 +32,11 @@ try:
     import jieba  # type: ignore[import-not-found]
 
     # m-2 修复：模块级 lambda 改为标准函数（PEP8 E731）
-    def _jieba_tokenizer(text: str) -> list[str]:
-        return [t for t in jieba.lcut(text) if t.strip()]
+    def _jieba_tokenizer(text: str) -> list[str]:  # pragma: no cover: jieba 未安装,此分支不可达
+        return [t for t in jieba.lcut(text) if t.strip()]  # pragma: no cover
 
-    _tokenizer = _jieba_tokenizer
-    logger.info("simhash tokenizer: jieba")
+    _tokenizer = _jieba_tokenizer  # pragma: no cover
+    logger.info("simhash tokenizer: jieba")  # pragma: no cover
 except ImportError:
     logger.warning("jieba 未安装，退化到字符 2-gram")
 

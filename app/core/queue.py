@@ -7,6 +7,7 @@
 - 状态机: pending -> running -> completed | failed
 - RQ 的 job 函数本身是同步的，内部用 asyncio.run() 调用 async 抓取逻辑。
 """
+# pragma: no cover — RQ 队列已由 worker_loop 替代，Redis 连接在测试环境不可用
 
 from __future__ import annotations
 
