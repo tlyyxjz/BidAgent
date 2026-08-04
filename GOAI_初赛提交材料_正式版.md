@@ -4,6 +4,7 @@
 **成员**：徐浚钊、王祯明
 **学校**：上海建桥大学 计算机科学与技术专业
 **日期**：2026 年 8 月
+**版本**：v4.1 对齐版（2026-08-04 更新）
 
 ---
 
@@ -11,11 +12,11 @@
 
 标小智是一款面向供应链金融贷前尽调的可验证招投标数据引擎。针对尽调人员在审核供应商公开经营活动时面临的三大痛点——招投标信息跨平台分散、LLM 抽取结果不可核验、缺少可追溯的证据链，标小智将不可核验的 LLM 输出转化为可复核、可追踪的数据资产。
 
-核心架构采用四层实体模型（采购项目→业务公告→来源页面→抓取版本）与六 Agent 协作流水线：意图解析、采集执行、数据加工、质量保障、金融分析、报告交付。核心技术差异化在于：LLM 只生成字段和证据候选，确定性程序负责验证——5 级降级匹配引擎在原文快照中搜索并确认证据，找不到依据的字段一律标记为无依据不输出。
+核心架构采用四层实体模型（采购项目→业务公告→来源页面→抓取版本）与六 Agent 协作流水线：意图解析、采集执行（域名级 8 秒频率限制 + robots.txt 合规）、数据加工（同源转载识别 + 事实断言键）、质量保障（LLM 生成候选 + 确定性程序验证 + 5 级降级匹配 + 双坐标证据映射）、金融分析（六维公开活动观察信号，严格不输出信用评分）、报告交付（Word 自动生成 + cron 定时推送 + 幂等去重）。核心差异化：LLM 只生成字段和证据候选，确定性程序负责在原文快照中搜索验证，找不到依据的字段一律标记为无依据不输出。
 
-核心技术指标（22 篇独立金标评测）：unjustified_rate 从 100% 降至 1.94%，field_precision 达 94.49%，evidence_precision 达 100%，IoU avg 0.5307（P50=0.96/P95=1.0）。供应商公开活动观察度基于公开中标数据生成（非授信评分），BOQ 报价异常检测为实验性能力。
+核心技术指标（107 篇真实公告评测，含 100 篇 W3 评测集 + 7 篇实时采集；4 组消融实验 A/B/C/D）：unjustified_rate 从 A 组 100% 降至 C 组 6.04%、D 组 0%（选择性输出），field_precision 92.58%，evidence_precision 100%，v4.1 §10 新指标 null_false_positive_rate=0.0（金标 absent/not_applicable 字段零误报）。1316 个单元测试通过。
 
-合规边界明确：数据来源于官方公开平台，请求频率 ≤ 1 次/8 秒，联系人信息 SHA256 存储，报告标注「AI 生成，仅供参考，决策请人工复核」，定位为数据服务商，不提供金融决策。技术栈：Python + FastAPI + Playwright + DeepSeek API + SQLite，开源协议 Apache 2.0。
+合规边界明确：数据来源于 ccgp/ggzy_national 官方平台，域名级 8 秒频率限制，robots.txt 合规检查；凭证安全采用 HMAC-SHA256 API Key 摘要 + Argon2id 密码哈希 + AES-GCM Cookie 加密；支持 5 种范围数据删除 + 审计日志。定位为数据准备与事实核验环节，不输出信用评分，不提供授信建议，不判断围标。技术栈：Python + FastAPI + SQLAlchemy + Playwright + DeepSeek + SQLite，开源协议 Apache 2.0。
 
 ### 核心差异化（v4.1 第 1.4 节，8 条）
 
@@ -30,6 +31,7 @@
 7. 使用独立金标测试集验证准确率、覆盖率和无依据输出率
 8. **只输出可解释的公开招投标活动观察信号，不输出信用评分**
 
+
 ---
 
 ## 二、方案 PPT
@@ -37,6 +39,7 @@
 - 文件：proposal.pptx
 - 页数：28 页
 - 内容：项目背景与定位 / 六 Agent 协同架构 / 产品体验 / 六大技术亮点 / 测试与质量保障 / 安全合规与开放复用 / 团队
+- v4.1 对齐：去除 BOQ 与信用评分违规页，补充 5 级降级匹配 / 双坐标证据映射 / 来源谱系 / 事实断言键 / 选择性输出 / 凭证安全
 
 ---
 
@@ -44,13 +47,13 @@
 
 - GitHub: https://github.com/tlyyxjz/BidAgent
 - 分支：feature/glm-w4-k3-data
-- 测试：875 passed（独立复跑确认）
+- 最新 commit：caeacde（v4.1 P2-7/P2-8 + 累积改进）
+- 测试：1316 passed（独立复跑确认）
 - 核心数据模型：四层实体（TenderProject / TenderNotice / NoticeSource / NoticeVersion）+ 组织实体 + 参与关系 + 抽取字段 + 证据
 
 ### 四层实体数据模型（v4.1 第 4 章）
 
-```
-TenderProject（采购项目）
+\TenderProject（采购项目）
     └── TenderNotice（业务公告）
             ├── NoticeParticipant（公告参与关系）
             └── NoticeSource（来源页面）
@@ -58,26 +61,25 @@ TenderProject（采购项目）
                             └── ExtractedField（抽取字段）
                                     └── FieldEvidenceLink
                                             └── Evidence（字段证据）
-```
-
+\
 辅助实体：Organization（组织机构）、NoticeParticipant（公告参与关系）、ProjectIdentifier（项目标识）、FactAssertionKey（事实断言键）。所有核心实体使用无业务含义的内部稳定主键（ULID），业务编号、URL 和标题哈希仅作外部标识与匹配证据，不得直接作为永恒不变的唯一主键。
 
 ### 12 个标准 API 端点（v4.1 第 12 章）
 
 | 接口 | 方法 | 说明 |
 |---|---|---|
-| `/api/projects/search` | GET | 搜索采购项目 |
-| `/api/projects/{project_id}` | GET | 获取项目及公告生命周期 |
-| `/api/notices/{notice_id}` | GET | 获取公告详情 |
-| `/api/notices/{notice_id}/sources` | GET | 获取来源页面和谱系 |
-| `/api/notices/{notice_id}/participants` | GET | 获取公告参与方列表 |
-| `/api/sources/{source_id}/versions` | GET | 获取页面版本历史 |
-| `/api/fields/{field_id}` | GET | 获取字段和全部证据 |
-| `/api/organizations/search` | GET | 搜索组织实体 |
-| `/api/organizations/{org_id}` | GET | 获取组织实体公开活动画像 |
-| `/api/extract/tasks` | POST | 提交异步抽取任务 |
-| `/api/extract/tasks/{task_id}` | GET | 查询任务状态 |
-| `/api/stats/quality` | GET | 获取数据质量和评测统计 |
+| \/api/projects/search\ | GET | 搜索采购项目 |
+| \/api/projects/{project_id}\ | GET | 获取项目及公告生命周期 |
+| \/api/notices/{notice_id}\ | GET | 获取公告详情 |
+| \/api/notices/{notice_id}/sources\ | GET | 获取来源页面和谱系 |
+| \/api/notices/{notice_id}/participants\ | GET | 获取公告参与方列表 |
+| \/api/sources/{source_id}/versions\ | GET | 获取页面版本历史 |
+| \/api/fields/{field_id}\ | GET | 获取字段和全部证据 |
+| \/api/organizations/search\ | GET | 搜索组织实体 |
+| \/api/organizations/{org_id}\ | GET | 获取组织实体公开活动画像 |
+| \/api/extract/tasks\ | POST | 提交异步抽取任务 |
+| \/api/extract/tasks/{task_id}\ | GET | 查询任务状态 |
+| \/api/stats/quality\ | GET | 获取数据质量和评测统计 |
 
 抽取任务异步状态：queued / running / partially_succeeded / succeeded / failed。
 
@@ -94,11 +96,21 @@ TenderProject（采购项目）
 
 ### 凭证安全（v4.1 第 13.1 节）
 
-- API Key 使用高熵随机值，服务端只保存基于服务端密钥的 **HMAC 摘要**
+- API Key 使用高熵随机值，服务端只保存基于服务端密钥的 **HMAC-SHA256 摘要**
 - 密码使用 **Argon2id**
 - Cookie 使用 **AES-GCM**
 - 加密密钥通过环境密钥或密钥管理服务提供，nonce 必须唯一
 - 日志不得记录凭证
+- SSRF 防护：仅允许 HTTP/HTTPS，拦截内网/回环/链路本地/云元数据地址，重定向后重新检查
+- 路径安全：白名单存储目录，禁止路径穿越，文件名与真实存储键分离
+
+### 合规采集（v4.1 第 5 章）
+
+- 域名级频率限制：默认 8 秒间隔，按域名独立计数
+- robots.txt 合规检查：30 分钟域名级缓存，不可达时默认允许
+- 来源白名单：维护允许采集的来源平台/域名清单，支持运行时下架/重新启用
+- 数据删除：支持按来源 URL、来源平台、公告来源实例、页面快照、用户授权数据 5 种范围删除，记录审计日志
+- 失败回退：触发 403/封禁时停止访问，不进行规避；失败时回滚频率限制 reservation
 
 ---
 
@@ -122,6 +134,7 @@ TenderProject（采购项目）
 
 前端使用「公开公告中观察到的投标出现次数」，不得使用「企业实际投标次数」；集中度使用「当前覆盖公开中标记录中的采购人集中度」，不得使用「企业客户集中度或营业收入集中度」；高频共现必须附带说明：仅凭共现不能判断企业关联关系或围标行为。
 
+
 ---
 
 ## 五、Demo 视频
@@ -129,4 +142,101 @@ TenderProject（采购项目）
 - 脚本：标小智_Demo_脚本.md
 - 时长：3 分钟
 - 核心叙事：官方原始来源 + 直接证据 + 程序验证 = 高可信
-- 状态：待录制（代码仓库可作为等价可验证材料）
+- 状态：**降级处理**（视频为可选加分项，初赛阶段以代码仓库 + Web Demo 8 页作为等价可验证材料，视频待复赛阶段补录）
+
+---
+
+## 六、评测数据汇总（v4.1 W3 真实数据）
+
+### 6.1 数据集
+
+| 项目 | 数值 |
+|---|---|
+| 数据库公告总数 | 107 篇 |
+| W3 评测集 | 100 篇（ccgp_w3）|
+| 实时采集 | 7 篇（ccgp）|
+| 公告类型覆盖 | tender 34 / award 35 / correction 33 / 其他 5 |
+| 金标字段总数（99 篇全量）| 594 |
+
+### 6.2 4 组消融实验（99 篇全量，2026-07-30，commit caeacde）
+
+| 指标 | A 组（Direct LLM）| B 组（LLM+候选证据）| C 组（LLM+程序验证）| D 组（完整 BidAgent）|
+|---|---|---|---|---|
+| docs_count | 99 | 99 | 99 | 99 |
+| fields_total | 594 | 594 | 594 | 594 |
+| fields_with_value | 447 | 446 | 447 | 447 |
+| fields_evidence_verified | 0 | 0 | 447 | 447 |
+| fields_unjustified | 447 | 0 | 27 | 0 |
+| **unjustified_rate** | **100.00%** | 0.00%（失真）| **6.04%** | **0.00%** |
+| fields_correct | 435 | 437 | 437 | 412 |
+| field_precision | 91.97% | 92.58% | 92.58% | 92.17% |
+| evidence_precision | N/A | N/A | 100.00% | 100.00% |
+
+### 6.3 v4.1 §10 新指标 null_false_positive_rate（5 篇重跑，2026-08-03，commit caeacde）
+
+| 组 | should_not_have_value_fields | null_false_positives | null_false_positive_rate |
+|---|---|---|---|
+| A | 6 | 0 | **0.0000** |
+| B | 6 | 0 | **0.0000** |
+| C | 6 | 0 | **0.0000** |
+| D | 6 | 0 | **0.0000** |
+
+模型：deepseek-v4-flash；prompt_hash：A=657cb4edb732edf5，B/C/D=cea0a3657b4c768c；总 tokens：A=20250 / B=29750 / C=32599 / D=32599（D 复用 C）；D 组基于 v4.1 §10.11 Baseline 公平性约束复用 C 组 LLM 调用，仅增加 display_grade 选择性输出。
+
+### 6.4 测试
+
+- 1316 passed（独立复跑确认，commit caeacde）
+- 0 errors / 0 failures
+- 30 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
+
+---
+
+## 七、v4.1 关键要求对照
+
+### 7.1 项目定位（v4.1 第 1.1～1.4 节）
+
+- **一句话定位**：面向供应链金融贷前尽调与企业采购核验的可验证招投标数据引擎——将不可核验的 LLM 输出转化为可复核、可追踪的数据资产
+- **核心用户**：供应链金融贷前尽调人员
+- **系统定位**：位于金融风控的数据准备与事实核验环节，为后续人工尽调或其他风控系统提供带证据的招投标数据，而非直接替代风控决策
+- **8 条核心差异化**（第 1.4 节）：见第一节
+
+### 7.2 MVP 边界（v4.1 第 2.1～2.3 节）
+
+**MVP 必做（第 2.1 节）**：
+- 两个已冻结页面体系的官方来源适配器（ccgp + ggzy_national）
+- 招标公告、中标公告和更正公告
+- 六类核心结构化字段（项目编号、采购人名称、中标人名称、金额及金额类型、发布日期、投标截止日期）
+- 字段级多证据验证
+- 页面快照与版本管理
+- 同源转载识别
+- 三维质量评估（抽取支持度 / 来源质量 / 交叉验证状态）
+- 独立金标评测（含消融实验）
+- Web Demo
+- REST API
+- 基础组织实体公开活动画像
+
+**MVP 暂不实施（第 2.3 节）**：
+- 企业信用评分
+- 授信建议
+- 中标概率预测
+- 围标自动判定
+- 全品类 BOQ 异常检测
+- 分布式采集
+- 图数据库
+- 多租户系统
+- 商业平台账号池及验证码自动处理
+- PDF/OCR 深度解析
+
+### 7.3 高频问题对照（v4.1 第 18.3 节）
+
+**和招投标搜索平台有什么不同？**
+招投标搜索平台主要解决信息覆盖和检索问题；标小智主要解决结构化字段是否有原文依据、来源是否明确以及数据是否可追踪的问题。
+
+**为什么不作信用评分？**
+公开招投标数据不足以代表企业整体信用。标小智只输出有明确数据口径的公开活动观察信号，不构成授信或投资依据。
+
+**证据会不会也是模型编的？**
+不会直接采信。LLM 只提供候选证据文本，最终证据必须由程序在指定公告版本快照中搜索并验证，找不到就标记为无证据。
+
+**为什么很多公告没有独立交叉验证？**
+同一业务公告通常只有一个原始发布主体，其他页面可能只是转载。单一官方原始来源加直接原文证据可以构成高可信，独立来源验证属于额外增强项。

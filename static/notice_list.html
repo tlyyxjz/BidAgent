@@ -7,14 +7,6 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
-.header{background:white;padding:12px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.header-left{display:flex;align-items:center;gap:16px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;color:#1a1a2e}
-.brand-logo{width:28px;height:28px;background:linear-gradient(135deg,#1976d2,#4527a0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:800}
-.nav{display:flex;gap:4px}
-.nav a{padding:6px 14px;text-decoration:none;color:#555;font-size:13px;border-radius:6px;transition:all .15s}
-.nav a:hover{background:#f0f4ff;color:#1976d2}
-.nav a.active{background:#e3f2fd;color:#1565c0;font-weight:600}
 .page-main{max-width:1280px;margin:0 auto;padding:28px 24px 80px}
 .breadcrumb{font-size:12px;color:#888;margin-bottom:16px}
 .breadcrumb a{color:#1976d2;text-decoration:none}
@@ -61,6 +53,13 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
 .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
 .badge-ok{background:#e8f5e9;color:#2e7d32}
 .badge-warn{background:#fff3e0;color:#e65100}
+:root{--success-bg:#e8f5e9;--success:#2e7d32;--primary-bg:#e3f2fd;--primary:#1565c0;--warning-bg:#fff8e1;--warning:#f57f17;--purple-bg:#f3e5f5;--purple:#7b1fa2;--border-2:#f5f5f5;--text-3:#888;--error-bg:#ffebee;--error:#c62828}
+.cv-independent{background:var(--success-bg);color:var(--success)}
+.cv-consistent_unknown{background:var(--primary-bg);color:var(--primary)}
+.cv-same_origin{background:var(--warning-bg);color:var(--warning)}
+.cv-version_difference{background:var(--purple-bg);color:var(--purple)}
+.cv-conflict{background:var(--error-bg);color:var(--error)}
+.cv-single_source{background:var(--border-2);color:var(--text-3)}
 .pager{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid #f0f0f0;background:#fafbfc}
 .pager .info{font-size:12px;color:#888}
 .pager .btns{display:flex;gap:4px}
@@ -149,7 +148,7 @@ body{background:#f5f7fa}
     </div>
   </header>
 <main class="page-main">
-  <div class="breadcrumb"><a href="/ui/search">首页</a> / 公告列表</div>
+  <div class="breadcrumb"><a href="/ui">首页</a> / 公告列表</div>
   <div class="page-header">
     <h1><i class="ph ph-list-dashes" style="color:#1976d2"></i> 公告数据池（W3 · 90 条）</h1>
   </div>
@@ -166,6 +165,16 @@ body{background:#f5f7fa}
       <button class="tb-btn active" data-grade="all" onclick="filterGrade(this)">质量：全部</button>
       <button class="tb-btn" data-grade="high" onclick="filterGrade(this)">HIGH</button>
       <button class="tb-btn" data-grade="review" onclick="filterGrade(this)">REVIEW+</button>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tool-group" id="cvFilter">
+      <button type="button" class="tb-btn active" data-cv="all" onclick="filterCV(this)">交叉验证：全部</button>
+      <button type="button" class="tb-btn" data-cv="independent" onclick="filterCV(this)">独立</button>
+      <button type="button" class="tb-btn" data-cv="consistent_unknown" onclick="filterCV(this)">一致</button>
+      <button type="button" class="tb-btn" data-cv="same_origin" onclick="filterCV(this)">同源</button>
+      <button type="button" class="tb-btn" data-cv="version_difference" onclick="filterCV(this)">版本差异</button>
+      <button type="button" class="tb-btn" data-cv="conflict" onclick="filterCV(this)">冲突</button>
+      <button type="button" class="tb-btn" data-cv="single_source" onclick="filterCV(this)">单源</button>
     </div>
     <div class="tb-sep"></div>
     <div class="search-mini">
@@ -193,6 +202,7 @@ body{background:#f5f7fa}
         <th style="width:110px">发布日期</th>
         <th style="min-width:180px">字段质量</th>
         <th style="width:90px">质检</th>
+        <th style="width:110px">交叉验证</th>
         <th style="width:150px">操作</th>
       </tr></thead>
       <tbody id="tblBody"></tbody>
@@ -212,11 +222,13 @@ function makeGroup(prefix, n, type, titles){
   return Array.from({length:n}).map((_,i)=>{
     const ti=i%titles.length;
     const grade=i%5===0?'review':i%23===0?'low':'high';
+    const cvLevels=['independent','consistent_unknown','same_origin','version_difference','conflict','single_source'];
     return{
       id:`${prefix}_${String(i+1).padStart(3,'0')}`,
       title:titles[ti]+(i>=titles.length?'（包'+(i-titles.length+1)+'）':''),
       plat:plats[i%plats.length],
       type,grade,
+      cross_verify_status:cvLevels[i%cvLevels.length],
       date:`2026-07-${String(30-(i%28)).padStart(2,'0')}`,
       fields:[
         {n:'项目编号',v:'high'},{n:'采购人',v:'high'},{n:'中标人',v:type==='招标公告'?'low':'high'},
@@ -294,13 +306,18 @@ function mapType(t){
   return '其他';
 }
 
-let state={type:'all',grade:'all',q:'',page:1,ps:10};
+const CV_LABEL={independent:'独立',consistent_unknown:'一致',same_origin:'同源',version_difference:'版本差异',conflict:'冲突',single_source:'单源'};
+let state={type:'all',grade:'all',cv:'all',q:'',page:1,ps:10};
+// cross_verify_status 标签（带 _hc 空值保护）
+function cvLabel(v){return CV_LABEL[v]||'单源'}
 function fmt(n){return n>=1e8?(n/1e8).toFixed(2)+'亿':(n/1e4).toFixed(0)+'万'}
 function apply(){
   let d=currentData.slice();
   if(state.type!=='all')d=d.filter(x=>x.type===state.type);
   if(state.grade==='high')d=d.filter(x=>x.grade==='high');
   if(state.grade==='review')d=d.filter(x=>x.grade!=='low');
+  // cross_verify_status 筛选
+  if(state.cv!=='all')d=d.filter(x=>(x.cross_verify_status||'single_source')===state.cv);
   if(state.q){const k=state.q.toLowerCase();d=d.filter(x=>(x.title+x.id).toLowerCase().includes(k))}
   const _hc=document.getElementById('headCount'); if(_hc) _hc.textContent=d.length;
   document.getElementById('sTotal').innerHTML=d.length+'<span class="sub">条</span>';
@@ -318,8 +335,9 @@ function apply(){
       <td><span class="date">${x.date}</span></td>
       <td><div class="field-grid">${x.fields.map(f=>`<span class="fd fd-${f.v}">${f.n}</span>`).join('')}</div></td>
       <td><span class="badge badge-${x.grade==='low'?'warn':'ok'}">${x.grade.toUpperCase()}</span></td>
+      <td><span class="badge cv-${x.cross_verify_status||'single_source'}" title="cross_verify_status: ${x.cross_verify_status||'single_source'}">${cvLabel(x.cross_verify_status)}</span></td>
       <td class="act"><a class="link" href="/ui/detail?id=${x.realId||1}">详情</a><a class="link" href="/ui/versions?src=${x.id}">版本</a></td>
-    </tr>`).join('') || '<tr><td colspan="10" style="padding:40px;text-align:center;color:#999">无符合条件的公告</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="11" style="padding:40px;text-align:center;color:#999">无符合条件的公告</td></tr>';
   const end=Math.min(state.page*state.ps,d.length);
   document.getElementById('pInfo').textContent=`第 ${state.page===1?1:(state.page-1)*state.ps+1}-${end} 条 / 共 ${d.length} 条`;
   let btns='';
@@ -333,6 +351,7 @@ function viewEv(id){location.href='/ui/detail?doc='+id+'#ev'}
 function goPage(n){if(n<1)return;state.page=n;apply()}
 function filterType(b){document.querySelectorAll('[data-type]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.type=b.dataset.type;state.page=1;apply()}
 function filterGrade(b){document.querySelectorAll('[data-grade]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.grade=b.dataset.grade;state.page=1;apply()}
+function filterCV(b){document.querySelectorAll('[data-cv]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.cv=b.dataset.cv;state.page=1;apply()}
 function toggleAll(c){document.querySelectorAll('.tbl input.chk').forEach(x=>x.checked=c.checked)}
 document.getElementById('miniQ').oninput=e=>{state.q=e.target.value.trim();state.page=1;apply()};
 
@@ -388,6 +407,7 @@ async function loadRealData(){
         platform:t.platform||'',
         type:mapType(t.type||t.notice_type),
         grade:'review',
+        cross_verify_status:t.cross_verify_status||'single_source',
         date:t.publish_date||'—',
         amount:amt,
         amountText:amtStr||'—',

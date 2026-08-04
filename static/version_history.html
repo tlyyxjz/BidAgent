@@ -3,131 +3,245 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1366, initial-scale=1">
-<title>版本历史 · 变更追踪</title>
+<title>版本历史 · 标小智</title>
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
-.header{background:white;padding:16px 24px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.header-left{display:flex;align-items:center;gap:16px}
-.back-link{color:#1976d2;text-decoration:none;font-size:14px}
-h1{font-size:18px;color:#1a1a2e}
-.source-info{font-size:12px;color:#999}
-.stats-bar{display:flex;gap:24px;padding:16px 24px;background:white;border-bottom:1px solid #f0f0f0}
-.stat-item{display:flex;flex-direction:column;gap:4px}
-.stat-label{font-size:12px;color:#999}
-.stat-value{font-size:20px;font-weight:600;color:#1a1a2e}
-.stat-value.primary{color:#1976d2}
-.stat-value.success{color:#2e7d32}
-.stat-value.warning{color:#f57c00}
-.main-container{max-width:900px;margin:0 auto;padding:24px}
-.timeline{position:relative;padding-left:40px}
-.timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:#e0e0e0}
-.version-card{background:white;border:1px solid #e8e8e8;border-radius:8px;padding:16px 20px;margin-bottom:20px;position:relative;transition:box-shadow .2s}
-.version-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.version-card::before{content:'';position:absolute;left:-32px;top:24px;width:12px;height:12px;border-radius:50%;background:#1976d2;border:3px solid white;box-shadow:0 0 0 2px #1976d2}
-.version-card.current::before{background:#43a047;box-shadow:0 0 0 2px #43a047}
-.version-card.create::before{background:#1976d2;box-shadow:0 0 0 2px #1976d2}
-.version-card.update_content::before{background:#1976d2}
-.version-card.update_material::before{background:#7b1fa2}
-.version-card.correction::before{background:#f57c00}
-.version-card.reissue::before{background:#c62828}
-.version-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.version-title{display:flex;align-items:center;gap:10px}
-.version-label{font-size:16px;font-weight:600;color:#1a1a2e}
-.version-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
-.badge-create{background:#e3f2fd;color:#1565c0}
-.badge-update_content{background:#e8f5e9;color:#2e7d32}
-.badge-update_material{background:#f3e5f5;color:#7b1fa2}
-.badge-correction{background:#fff3e0;color:#e65100}
-.badge-reissue{background:#ffebee;color:#c62828}
-.badge-current{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
-.version-date{font-size:12px;color:#999}
-.version-summary{font-size:13px;color:#555;margin-bottom:12px;line-height:1.6}
-.version-hashes{display:flex;gap:20px;padding:10px 12px;background:#f8f9ff;border-radius:6px;margin-bottom:12px;font-family:monospace;font-size:11px;color:#666}
-.hash-item{display:flex;flex-direction:column;gap:2px}
-.hash-label{font-size:10px;color:#999;font-family:sans-serif}
-.hash-value{color:#1a237e;font-family:monospace}
-.diff-summary{display:flex;gap:16px;margin-bottom:12px;font-size:12px}
-.diff-tag{padding:2px 8px;border-radius:4px;font-weight:500}
-.diff-add{background:#e8f5e9;color:#2e7d32}
-.diff-del{background:#ffebee;color:#c62828}
-.diff-mod{background:#fff3e0;color:#e65100}
-.material-section{border-top:1px solid #f0f0f0;padding-top:12px}
-.material-title{font-size:12px;font-weight:600;color:#666;margin-bottom:8px}
-.material-list{display:flex;flex-direction:column;gap:6px}
-.material-item{display:flex;align-items:center;gap:10px;padding:6px 10px;background:#fafbfc;border-radius:4px;font-size:12px}
-.material-icon{font-size:14px}
-.material-name{flex:1;color:#333}
-.material-action{font-size:11px;padding:1px 6px;border-radius:3px}
-.action-added{background:#e8f5e9;color:#2e7d32}
-.action-modified{background:#fff3e0;color:#e65100}
-.action-removed{background:#ffebee;color:#c62828}
-.material-size{font-size:11px;color:#999;font-family:monospace}
-.view-diff-btn{margin-top:10px;padding:6px 14px;background:#f5f7fa;border:1px solid #ddd;border-radius:4px;cursor:pointer;font-size:12px;color:#666;transition:all .15s}
-.view-diff-btn:hover{background:#e3f2fd;border-color:#1976d2;color:#1976d2}
-.diff-content{margin-top:10px;padding:12px;background:#1e1e1e;border-radius:6px;font-family:monospace;font-size:12px;line-height:1.6;display:none;max-height:300px;overflow:auto}
-.diff-content.show{display:block}
-.diff-line{padding:2px 8px}
-.diff-add{background:rgba(76,175,80,.2);color:#a5d6a7}
-.diff-del{background:rgba(244,67,54,.2);color:#ef9a9a}
-.diff-ctx{color:#999}
-@media(max-width:768px){.main-container{padding:16px}.timeline{padding-left:30px}.timeline::before{left:10px}.version-card::before{left:-27px}}}
+:root{
+  --primary:#1677ff;--primary-bg:#e6f4ff;--primary-hover:#4096ff;
+  --success:#52c41a;--success-bg:#f6ffed;
+  --warning:#faad14;--warning-bg:#fffbe6;
+  --error:#ff4d4f;--error-bg:#fff2f0;
+  --purple:#722ed1;--purple-bg:#f9f0ff;
+  --bg:#f5f7fa;--card-bg:#ffffff;
+  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
+  --border:#e8e8e8;--border-2:#f0f0f0;
+  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
+  --sidebar-width:208px;--header-h:52px;
+  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
+}
+html,body{height:100%}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+a{color:inherit;text-decoration:none}
 
-/* ===== 标小智品牌头 ===== */
-.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:#1a1a2e}
-.brand-logo{width:26px;height:26px;background:linear-gradient(135deg,#1976d2,#1565c0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800}
-
-/* ===== Unified Sidebar ===== */
-.sidebar{position:fixed;left:0;top:0;width:208px;height:100vh;background:#001529;display:flex;flex-direction:column;z-index:100}
-.sidebar-logo{height:52px;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-logo .logo-icon{width:28px;height:28px;background:#1677ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+/* ===== Sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
 .sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
 .sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
 .nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:#1677ff}
+.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
 .nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
-.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:#1677ff;color:#fff;font-weight:600}
-.sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
-.sidebar-footer .comp-tag{color:#1677ff;font-weight:600}
-/* ===== Unified Main Wrap ===== */
-.main-wrap{margin-left:208px;min-height:100vh;display:flex;flex-direction:column}
-.top-header{height:52px;background:#fff;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02)}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
+.sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.7}
+.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
+
+/* ===== Main wrap ===== */
+.main-wrap{margin-left:var(--sidebar-width);min-height:100vh;display:flex;flex-direction:column}
+.top-header{height:var(--header-h);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-title{font-size:15px;font-weight:600;color:#1a1a2e}
-.header-title i{color:#1677ff;margin-right:6px}
+.header-title{font-size:15px;font-weight:600;color:var(--text)}
+.header-title i{color:var(--primary);margin-right:6px}
 .header-right{display:flex;align-items:center;gap:10px}
 .h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
-.h-badge.comp{background:#e6f4ff;color:#1677ff}
-.h-badge.data{background:#f6ffed;color:#52c41a}
-.h-badge.vers{background:#f5f7fa;color:#595959;border:1px solid #e8e8e8}
-body{background:#f5f7fa}
+.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
+.h-badge.data{background:var(--success-bg);color:var(--success)}
+.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
 
+/* ===== Breadcrumb ===== */
+.breadcrumb{padding:8px 20px;font-size:12px;color:var(--text-3);background:var(--card-bg);border-bottom:1px solid var(--border-2)}
+.breadcrumb a{color:var(--primary)}
+.breadcrumb a:hover{text-decoration:underline}
+
+/* ===== Notice selector bar ===== */
+.notice-bar{display:flex;align-items:center;gap:14px;padding:10px 20px;background:var(--card-bg);border-bottom:1px solid var(--border-2);flex-wrap:wrap}
+.notice-selector{display:flex;align-items:center;gap:8px}
+.notice-selector label{font-size:12px;color:var(--text-2);font-weight:600;display:flex;align-items:center;gap:4px}
+.notice-selector select{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);background:#fff;max-width:460px;outline:none;cursor:pointer}
+.notice-selector select:focus{border-color:var(--primary)}
+.notice-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nm-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;border-radius:4px;background:var(--bg);border:1px solid var(--border);color:var(--text-2)}
+.nm-tag i{font-size:12px}
+.nm-tag.blue{background:var(--primary-bg);color:var(--primary);border-color:var(--primary)}
+.nm-tag.green{background:var(--success-bg);color:var(--success);border-color:var(--success)}
+
+/* ===== Content ===== */
+.content{flex:1;padding:14px 20px 20px}
+.vh-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.vh-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.vh-card-head{padding:10px 14px;border-bottom:1px solid var(--border-2);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0;background:#fafbfc}
+.vh-card-head h2{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px}
+.vh-card-head h2 i{color:var(--primary)}
+.vh-card-head .vh-meta{font-size:11px;color:var(--text-3)}
+.vh-card-body{padding:12px 14px;overflow-y:auto;max-height:560px}
+
+/* ===== Source lineage ===== */
+.source-group{margin-bottom:14px}
+.source-group:last-child{margin-bottom:0}
+.sg-header{display:flex;align-items:center;gap:6px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--border)}
+.sg-label{font-size:11px;font-weight:600;color:var(--purple);font-family:monospace}
+.sg-count{font-size:10px;color:var(--text-3)}
+.source-card{padding:10px 12px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;transition:border-color .15s}
+.source-card:hover{border-color:var(--primary)}
+.sc-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px}
+.sc-platform{font-size:12px;font-weight:600;color:var(--text)}
+.sc-url{font-size:10px;color:var(--text-3);font-family:monospace;word-break:break-all;line-height:1.5}
+.sc-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:10px;color:var(--text-3);margin-top:4px}
+.sc-meta span{display:inline-flex;align-items:center;gap:2px}
+.sc-meta i{font-size:11px}
+
+/* source quality badges (6 types) */
+.sq-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;white-space:nowrap;display:inline-block}
+.sq-official_original{background:var(--primary-bg);color:var(--primary)}
+.sq-official_repost{background:#e6fffb;color:#08979c}
+.sq-authorized_original{background:var(--success-bg);color:var(--success)}
+.sq-commercial_repost{background:var(--warning-bg);color:#d48806}
+.sq-index_only{background:#f5f5f5;color:var(--text-3)}
+.sq-unknown{background:#f5f5f5;color:var(--text-3)}
+
+/* publication role badge */
+.pr-badge{font-size:9px;padding:1px 6px;border-radius:3px;font-weight:600;background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
+
+/* ===== Repost features ===== */
+.repost-section{margin-top:10px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border-2)}
+.repost-title{font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.repost-title i{color:var(--purple)}
+.rf-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:8px}
+.rf-item{display:flex;align-items:center;gap:5px;padding:4px 7px;background:#fff;border:1px solid var(--border-2);border-radius:4px;font-size:10px;color:var(--text-2)}
+.rf-icon{font-size:12px;flex-shrink:0}
+.rf-match{color:var(--success)}
+.rf-nomatch{color:var(--error)}
+.rf-unknown{color:var(--text-3)}
+.rf-bar-wrap{margin-top:6px}
+.rf-bar-label{font-size:10px;color:var(--text-3);display:flex;justify-content:space-between;margin-bottom:3px}
+.rf-bar{height:6px;background:var(--border-2);border-radius:3px;overflow:hidden}
+.rf-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.rf-verdict{margin-top:6px;font-size:11px;display:flex;align-items:center;gap:5px}
+.vd-same_source_repost{color:var(--warning);font-weight:600}
+.vd-likely_repost{color:#d48806;font-weight:600}
+.vd-independent{color:var(--success);font-weight:600}
+
+/* ===== Version timeline ===== */
+.vt-timeline{position:relative;padding-left:28px}
+.vt-timeline::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:var(--border)}
+.vt-node{position:relative;margin-bottom:14px}
+.vt-node:last-child{margin-bottom:0}
+.vt-node::before{content:"";position:absolute;left:-23px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--primary);border:2px solid #fff;box-shadow:0 0 0 2px var(--primary);z-index:1}
+.vt-node.ct-initial::before{background:var(--primary);box-shadow:0 0 0 2px var(--primary)}
+.vt-node.ct-none::before{background:var(--text-3);box-shadow:0 0 0 2px var(--text-3)}
+.vt-node.ct-minor::before{background:var(--warning);box-shadow:0 0 0 2px var(--warning)}
+.vt-node.ct-material::before{background:var(--error);box-shadow:0 0 0 2px var(--error)}
+.vt-node.ct-withdrawn::before{background:#1a1a2e;box-shadow:0 0 0 2px #1a1a2e}
+.vt-card{background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden;transition:border-color .15s}
+.vt-card:hover{border-color:var(--primary)}
+.vt-card-head{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer;background:#fafbfc}
+.vt-card-head:hover{background:var(--primary-bg)}
+.vt-head-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vt-vid{font-size:13px;font-weight:700;color:var(--text);font-family:monospace}
+.vt-date{font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.vt-head-right{display:flex;align-items:center;gap:6px}
+.vt-cb{cursor:pointer}
+.vt-card-body{padding:0;max-height:0;overflow:hidden;transition:max-height .3s ease}
+.vt-card.expanded .vt-card-body{max-height:600px;padding:10px 12px}
+.vt-detail-row{display:flex;gap:8px;margin-bottom:6px;font-size:11px;align-items:flex-start}
+.vt-detail-label{color:var(--text-3);min-width:90px;flex-shrink:0;font-weight:600}
+.vt-detail-val{color:var(--text);word-break:break-all;flex:1}
+.vt-sha{font-family:"SFMono-Regular",Consolas,monospace;font-size:10px;color:var(--text-2);word-break:break-all;line-height:1.6;padding:3px 6px;background:var(--bg);border-radius:3px;border:1px solid var(--border-2)}
+.vt-http{font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600;font-family:monospace}
+.vt-http.ok{background:var(--success-bg);color:var(--success)}
+.vt-http.err{background:var(--error-bg);color:var(--error)}
+
+/* change type badges (5 types) */
+.ct-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;white-space:nowrap;display:inline-block}
+.ct-initial{background:var(--primary-bg);color:var(--primary)}
+.ct-none{background:#f5f5f5;color:var(--text-3)}
+.ct-minor{background:var(--warning-bg);color:#d48806}
+.ct-material{background:var(--error-bg);color:var(--error)}
+.ct-withdrawn{background:#1a1a2e;color:#fff}
+
+/* ===== Version compare ===== */
+.vt-compare-bar{padding:8px 12px;border-top:1px solid var(--border-2);display:flex;align-items:center;gap:8px;flex-shrink:0;background:#fafbfc}
+.vt-compare-bar .vc-info{font-size:11px;color:var(--text-3);flex:1}
+.vt-compare-btn{padding:4px 12px;font-size:11px;font-weight:600;color:#fff;background:var(--primary);border:none;border-radius:4px;cursor:pointer;transition:background .15s}
+.vt-compare-btn:hover{background:var(--primary-hover)}
+.vt-compare-btn:disabled{background:var(--border);color:var(--text-3);cursor:not-allowed}
+.vc-panel{margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:6px;border:1px solid var(--border-2);display:none}
+.vc-panel.show{display:block}
+.vc-panel-head{font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.vc-panel-head i{color:var(--purple)}
+.vc-diff-table{width:100%;border-collapse:collapse;font-size:11px}
+.vc-diff-table th,.vc-diff-table td{padding:4px 8px;border:1px solid var(--border-2);text-align:left}
+.vc-diff-table th{background:#fff;color:var(--text-3);font-weight:600;font-size:10px}
+.vc-diff-table .vc-same{color:var(--text-3)}
+.vc-diff-table .vc-changed{color:var(--warning);font-weight:600}
+.vc-diff-table .vc-conflict{color:var(--error);font-weight:600}
+
+/* ===== Compatibility matrix ===== */
+.compat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);overflow:hidden}
+.compat-head{padding:10px 14px;border-bottom:1px solid var(--border-2);display:flex;justify-content:space-between;align-items:center;background:#fafbfc}
+.compat-head h2{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px}
+.compat-head h2 i{color:var(--primary)}
+.compat-head .compat-legend{display:flex;gap:10px;font-size:10px;color:var(--text-3)}
+.compat-legend .cl-item{display:flex;align-items:center;gap:3px}
+.cl-compatible{color:var(--success);font-weight:700}
+.cl-incompatible{color:var(--error);font-weight:700}
+.cl-unavailable{color:var(--text-3);font-weight:700}
+.compat-table-wrap{overflow-x:auto;padding:10px 14px}
+.compat-table{width:100%;border-collapse:collapse;font-size:11px}
+.compat-table th,.compat-table td{padding:6px 10px;border:1px solid var(--border-2);text-align:left;vertical-align:top}
+.compat-table th{background:var(--bg);color:var(--text-2);font-weight:600;font-size:10px;white-space:nowrap}
+.compat-table .ct-field-name{font-weight:600;color:var(--text);white-space:nowrap}
+.compat-table .ct-val{color:var(--text);word-break:break-all;max-width:200px;font-family:monospace;font-size:10px}
+.compat-table .ct-comp{text-align:center;font-size:14px;font-weight:700;white-space:nowrap}
+.compat-table .ct-comp.ok{color:var(--success)}
+.compat-table .ct-comp.bad{color:var(--error)}
+.compat-table .ct-comp.na{color:var(--text-3)}
+.compat-table .ct-src{font-size:10px;color:var(--text-3);font-family:monospace}
+
+/* ===== Footer ===== */
+.footer{margin-top:10px;padding:10px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-3);line-height:1.7;text-align:center;box-shadow:var(--shadow)}
+.footer .real{color:var(--success);font-weight:600}
+.footer .src{color:var(--primary);font-weight:600}
+
+/* ===== Empty / loading states ===== */
+.empty-state{text-align:center;padding:30px 20px;color:var(--text-3);font-size:13px}
+.empty-state i{font-size:28px;color:var(--text-3);display:block;margin-bottom:6px}
+.loading-state{text-align:center;padding:30px 20px;color:var(--text-3);font-size:13px}
+.loading-state i{font-size:24px;color:var(--primary);display:block;margin-bottom:6px;animation:spin 1.2s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.error-state{text-align:center;padding:20px;color:var(--error);font-size:12px}
+.error-state i{font-size:24px;display:block;margin-bottom:4px}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
 </style>
-<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
 </head>
 <body>
+
 <!-- ===== Sidebar ===== -->
 <aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">标</div>
-    <div class="logo-text">标小智</div>
-  </div>
+  <div class="sidebar-logo"><div class="logo-icon">标</div><div class="logo-text">标小智</div></div>
   <nav class="sidebar-nav">
     <div class="nav-section-label">主导航</div>
-<a href="/ui" class="nav-item"><i class="ph-bold ph-house"></i><span>工作台</span></a>
-<a href="/ui/search" class="nav-item"><i class="ph-bold ph-magnifying-glass"></i><span>招标检索</span></a>
-<a href="/ui/notice-list" class="nav-item"><i class="ph-bold ph-list-magnifying-glass"></i><span>跨平台去重</span></a>
-<a href="/ui/detail" class="nav-item"><i class="ph-bold ph-line-segment"></i><span>证据验证</span></a>
-<a href="/ui/org" class="nav-item"><i class="ph-bold ph-users-three"></i><span>组织画像</span></a>
-<a href="/ui/quality-dashboard" class="nav-item"><i class="ph-bold ph-chart-bar"></i><span>质量评测</span></a>
-<a href="/ui/versions" class="nav-item active"><i class="ph-bold ph-git-branch"></i><span>版本历史</span></a>
-<a href="/ui/chat" class="nav-item"><i class="ph-bold ph-chats-circle"></i><span>智能问答</span><span class="nav-badge">AI</span></a>
+    <a href="/ui" class="nav-item"><i class="ph-bold ph-house"></i><span>工作台</span></a>
+    <a href="/ui/search" class="nav-item"><i class="ph-bold ph-magnifying-glass"></i><span>招标检索</span></a>
+    <a href="/ui/notice-list" class="nav-item"><i class="ph-bold ph-list-magnifying-glass"></i><span>跨平台去重</span></a>
+    <a href="/ui/detail" class="nav-item"><i class="ph-bold ph-line-segment"></i><span>证据验证</span></a>
+    <a href="/ui/org?name=北京大学第三医院" class="nav-item"><i class="ph-bold ph-users-three"></i><span>组织画像</span></a>
+    <a href="/ui/quality-dashboard" class="nav-item"><i class="ph-bold ph-chart-bar"></i><span>质量评测</span></a>
+    <a href="/ui/versions" class="nav-item active"><i class="ph-bold ph-git-branch"></i><span>版本历史</span></a>
+    <div class="nav-section-label">辅助</div>
+    <a href="/ui/chat" class="nav-item"><i class="ph-bold ph-chats-circle"></i><span>智能问答</span><span class="nav-badge">AI</span></a>
   </nav>
   <div class="sidebar-footer">
     <div><span class="comp-tag">标小智</span> v4.1</div>
-    <div>GOAI 2026 初赛 · W3</div>
+    <div>GOAI 2026 初赛</div>
+    <div>W3 · 100 篇评测集</div>
   </div>
 </aside>
 
@@ -143,99 +257,713 @@ body{background:#f5f7fa}
       <div class="h-badge vers">v4.1 · 107篇</div>
     </div>
   </header>
-  <div class="content-area" style="flex:1;padding:16px 20px 40px">
 
+  <div class="breadcrumb"><a href="/ui">首页</a> / 版本历史</div>
 
-<div class="source-info" id="sourceInfo" style="font-size:12px;color:#8c8c8c;margin-bottom:8px">加载中...</div>
-  <div class="stats-bar" id="statsBar"></div>
-<div class="main-container">
-  <div class="timeline" id="timeline"></div>
-</div>
-<script>
+  <div class="notice-bar">
+    <div class="notice-selector">
+      <label><i class="ph-bold ph-file-text"></i>选择公告</label>
+      <select id="noticeSelect"><option value="">加载中...</option></select>
+    </div>
+    <div class="notice-meta" id="noticeMeta"></div>
+  </div>
 
-const CT={create:'初始创建',update_content:'内容更新',update_material:'附件更新',correction:'更正公告',reissue:'重新发布'};
-function fmtSize(b){if(b<1024)return b+' B';if(b<1024*1024)return(b/1024).toFixed(1)+' KB';return(b/1024/1024).toFixed(1)+' MB'}
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function renderStats(d){
-  document.getElementById('sourceInfo').textContent=d.source_platform+' · '+d.source_url;
-  const s=document.getElementById('statsBar');
-  const added=d.versions.reduce((a,v)=>a+(v.diff_highlight?.added||0),0);
-  const removed=d.versions.reduce((a,v)=>a+(v.diff_highlight?.removed||0),0);
-  const mats=d.versions.reduce((a,v)=>a+(v.material_changes?.length||0),0);
-  s.innerHTML=`<div class="stat-item"><span class="stat-label">总版本数</span><span class="stat-value primary">${d.total_versions}</span></div>
-    <div class="stat-item"><span class="stat-label">当前版本</span><span class="stat-value success">v${d.current_version}.0</span></div>
-    <div class="stat-item"><span class="stat-label">内容变更行</span><span class="stat-value">+${added} / -${removed}</span></div>
-    <div class="stat-item"><span class="stat-label">附件变更</span><span class="stat-value warning">${mats} 次</span></div>`;
-}
-function renderTimeline(versions){
-  const tl=document.getElementById('timeline');
-  tl.innerHTML=versions.map((v,i)=>{
-    const isCur=i===0;
-    const ct=v.change_type;
-    const matHtml=v.material_changes?.length?`<div class="material-section">
-      <div class="material-title"><i class="ph ph-paperclip" style="color:#1976d2"></i> 附件变更 (${v.material_changes.length})</div>
-      <div class="material-list">${v.material_changes.map(m=>`<div class="material-item">
-        <span class="material-icon"><i class="ph ph-file" style="color:#666"></i></span>
-        <span class="material-name">${esc(m.name)}</span>
-        <span class="material-action action-${m.action}">${m.action==='added'?'新增':m.action==='modified'?'修改':'删除'}</span>
-        <span class="material-size">${fmtSize(m.size)}</span>
-      </div>`).join('')}</div>
-    </div>`:'';
-    const diff=v.diff_highlight;
-    return `<div class="version-card ${ct}${isCur?' current':''}" id="v${v.version_id}">
-      <div class="version-header">
-        <div class="version-title">
-          <span class="version-label">${v.version_label}</span>
-          <span class="version-badge badge-${ct}">${CT[ct]||ct}</span>
-          ${isCur?'<span class="version-badge badge-current">当前版本</span>':''}
+  <main class="content">
+    <div class="vh-layout">
+      <!-- ===== Left: Source lineage + Repost features ===== -->
+      <div class="vh-card">
+        <div class="vh-card-head">
+          <h2><i class="ph-bold ph-share-network"></i>跨源谱系</h2>
+          <span class="vh-meta" id="lineageMeta">--</span>
         </div>
-        <span class="version-date">${v.publish_time.replace('T',' ')}</span>
+        <div class="vh-card-body" id="sourceLineageBody">
+          <div class="loading-state"><i class="ph ph-circle-notch"></i>加载来源谱系...</div>
+        </div>
       </div>
-      <div class="version-summary">${esc(v.change_summary)}</div>
-      <div class="version-hashes">
-        <div class="hash-item"><span class="hash-label">content_sha256</span><span class="hash-value">${v.content_sha256}</span></div>
-        <div class="hash-item"><span class="hash-label">material_sha256</span><span class="hash-value">${v.material_sha256}</span></div>
+
+      <!-- ===== Right: Version timeline ===== -->
+      <div class="vh-card">
+        <div class="vh-card-head">
+          <h2><i class="ph-bold ph-git-commit"></i>版本时间线</h2>
+          <span class="vh-meta" id="versionMeta">--</span>
+        </div>
+        <div class="vh-card-body" id="versionTimelineBody">
+          <div class="loading-state"><i class="ph ph-circle-notch"></i>加载版本链...</div>
+        </div>
+        <div class="vt-compare-bar">
+          <span class="vc-info" id="compareInfo">勾选 2 个版本进行对比</span>
+          <button class="vt-compare-btn" id="compareBtn" disabled>对比版本</button>
+        </div>
+        <div class="vc-panel" id="comparePanel" style="margin:0 14px 12px"></div>
       </div>
-      <div class="diff-summary">
-        <span class="diff-tag diff-add">+ ${diff.added} 行新增</span>
-        <span class="diff-tag diff-del">- ${diff.removed} 行删除</span>
-        <span class="diff-tag diff-mod">~ ${diff.modified} 处修改</span>
+    </div>
+
+    <!-- ===== Bottom: Compatibility matrix ===== -->
+    <div class="compat-card">
+      <div class="compat-head">
+        <h2><i class="ph-bold ph-key"></i>事实断言键兼容性矩阵</h2>
+        <div class="compat-legend">
+          <span class="cl-item"><span class="cl-compatible">&#10003;</span> 兼容</span>
+          <span class="cl-item"><span class="cl-incompatible">&#10007;</span> 不兼容</span>
+          <span class="cl-item"><span class="cl-unavailable">&mdash;</span> 无法判定</span>
+        </div>
       </div>
-      ${matHtml}
-      <button class="view-diff-btn" onclick="toggleDiff(${v.version_id})"><i class="ph ph-file-text" style="color:#666;margin-right:4px"></i>查看 Diff</button>
-      <div class="diff-content" id="diff-${v.version_id}">
-        <div class="diff-line diff-add">+ 新增内容示例：项目名称：信息化系统建设项目</div>
-        <div class="diff-line diff-add">+ 预算金额：1,200,000.00 元</div>
-        <div class="diff-line diff-ctx">...</div>
-        <div class="diff-line diff-del">- 投标截止：2026年8月1日</div>
-        <div class="diff-line diff-add">+ 投标截止：2026年8月15日</div>
-        <div class="diff-line diff-ctx">...</div>
+      <div class="compat-table-wrap">
+        <table class="compat-table" id="compatTable">
+          <thead><tr><th>字段</th><th>来源 / 值</th><th>兼容性</th></tr></thead>
+          <tbody id="compatTableBody">
+            <tr><td colspan="3" style="text-align:center;color:var(--text-3);padding:20px">请先选择公告</td></tr>
+          </tbody>
+        </table>
       </div>
-    </div>`;
-  }).join('');
-}
-function toggleDiff(vid){
-  const el=document.getElementById('diff-'+vid);
-  el.classList.toggle('show');
-}
-async function loadData(){
-  const p=new URLSearchParams(window.location.search);
-  const sid=p.get('source')||'ccgp_001';
-  try{
-    const r=await fetch(`/api/demo/sources/${encodeURIComponent(sid)}/versions`);
-    if(!r.ok)throw new Error('加载失败');
-    const d=await r.json();
-    if(d.code!==200)throw new Error(d.msg||'加载失败');
-    renderStats(d.data);
-    renderTimeline(d.data.versions);
-  }catch(e){
-    document.getElementById('timeline').innerHTML='<div style="text-align:center;padding:60px;color:#999;">加载失败: '+e.message+'</div>';
+    </div>
+
+    <div class="footer">
+      <span class="real">● 真实数据</span> · 跨源谱系 + 版本链追踪 + 事实断言键兼容性 ·
+      <span class="src">v4.1 §8 / §8.1 / §6.5 / §4.7</span> ·
+      标小智 v4.1 · GOAI 2026 初赛
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== _hc 空值保护（所有 DOM 操作必须通过此函数） ===== */
+  function _hc(id){ return document.getElementById(id); }
+  function _setText(id, t){ var e=_hc(id); if(e) e.textContent = (t==null?'':String(t)); }
+  function _setHtml(id, h){ var e=_hc(id); if(e) e.innerHTML = (h==null?'':h); }
+
+  /* ===== 工具函数 ===== */
+  function esc(s){
+    if(s==null) return '';
+    return String(s).replace(/[&<>"']/g,function(c){
+      var m={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+      return m[c];
+    });
   }
-}
-loadData();
+  function fmtTime(iso){
+    if(!iso) return '--';
+    try{
+      var d=new Date(iso);
+      if(isNaN(d.getTime())) return String(iso).replace('T',' ').replace('Z','');
+      function p(n){return String(n).padStart(2,'0');}
+      return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+    }catch(e){ return String(iso); }
+  }
+  function fmtSha(sha){
+    if(!sha) return '<span style="color:var(--text-3)">--</span>';
+    return esc(sha);
+  }
+  function shortId(id){
+    if(!id) return '';
+    var s=String(id);
+    return s.length>12 ? s.slice(0,8)+'...' : s;
+  }
+
+  /* ===== 常量映射 ===== */
+  var FIELD_LABELS={
+    'project_identifier':'项目编号','project_name':'项目名称',
+    'purchaser_name':'采购人','winner_name':'中标人',
+    'amount':'金额','publish_date':'发布日期','bid_deadline':'投标截止日期'
+  };
+  var FIELD_ORDER=['project_identifier','project_name','purchaser_name','winner_name','amount','publish_date','bid_deadline'];
+
+  var SQ_LABELS={
+    'official_original':'官方原始','official_repost':'官方转载',
+    'authorized_original':'授权原始','commercial_repost':'商业转载',
+    'index_only':'仅索引','unknown':'未知'
+  };
+  var CT_LABELS={
+    'initial':'初始','none':'无变化','minor':'小变更',
+    'material':'重大变更','withdrawn':'撤回'
+  };
+  var RF_LABELS={
+    'domain_match':'域名匹配','repost_marker':'转载标记',
+    'project_identifier_match':'项目编号匹配','notice_type_match':'公告类型匹配',
+    'title_similarity':'标题相似度','simhash_similar':'SimHash 相似',
+    'publisher_match':'发布方匹配','time_relation':'时间关联',
+    'attachment_link_match':'附件链接匹配','upstream_source_mention':'上游来源提及'
+  };
+  var RF_KEYS=['domain_match','repost_marker','project_identifier_match','notice_type_match','title_similarity','simhash_similar','publisher_match','time_relation','attachment_link_match','upstream_source_mention'];
+  var VERDICT_LABELS={
+    'same_source_repost':'同源转载','likely_repost':'可能转载','independent':'独立来源'
+  };
+
+  /* ===== 状态 ===== */
+  var state={
+    tenders:[], currentNoticeId:null,
+    sources:[], lineage:{},
+    versions:[], versionsDataSource:'',
+    selectedVersions:[]
+  };
+
+  /* ===== 1. 加载公告列表 ===== */
+  function loadTenders(){
+    fetch('/api/real/tenders').then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(j){
+      if(!j||j.code!==200||!j.data||!j.data.tenders) throw new Error('bad response');
+      state.tenders=j.data.tenders.slice(0,5);
+      renderNoticeSelector();
+    }).catch(function(e){
+      console.warn('load tenders failed:',e);
+      var sel=_hc('noticeSelect');
+      if(sel) sel.innerHTML='<option value="">加载失败</option>';
+    });
+  }
+
+  function renderNoticeSelector(){
+    var sel=_hc('noticeSelect');
+    if(!sel) return;
+    if(state.tenders.length===0){
+      sel.innerHTML='<option value="">无公告</option>';
+      return;
+    }
+    var html='<option value="">-- 请选择公告 --</option>';
+    for(var i=0;i<state.tenders.length;i++){
+      var t=state.tenders[i];
+      var label='#'+t.id+' '+(t.name||'未命名');
+      if(t.purchaser) label+=' · '+t.purchaser;
+      html+='<option value="'+t.id+'">'+esc(label)+'</option>';
+    }
+    sel.innerHTML=html;
+    sel.onchange=function(){
+      var v=sel.value;
+      if(v){ onNoticeSelected(v); }
+    };
+    var p=new URLSearchParams(window.location.search);
+    var initId=p.get('notice_id')||p.get('nid');
+    if(initId && state.tenders.some(function(t){return String(t.id)===String(initId);})){
+      sel.value=initId;
+      onNoticeSelected(initId);
+    }
+  }
+
+  function onNoticeSelected(nid){
+    state.currentNoticeId=nid;
+    var t=null;
+    for(var i=0;i<state.tenders.length;i++){
+      if(String(state.tenders[i].id)===String(nid)){ t=state.tenders[i]; break; }
+    }
+    var metaHtml='';
+    if(t){
+      if(t.platform) metaHtml+='<span class="nm-tag blue"><i class="ph ph-globe"></i>'+esc(t.platform)+'</span>';
+      if(t.publish_date) metaHtml+='<span class="nm-tag"><i class="ph ph-calendar"></i>'+esc(t.publish_date)+'</span>';
+      if(t.amount) metaHtml+='<span class="nm-tag green"><i class="ph ph-currency-cny"></i>'+esc(t.amount)+'</span>';
+    }
+    _setHtml('noticeMeta',metaHtml);
+
+    state.selectedVersions=[];
+    _setHtml('comparePanel','');
+    var cp=_hc('comparePanel'); if(cp) cp.classList.remove('show');
+    var cb=_hc('compareBtn'); if(cb) cb.disabled=true;
+    _setText('compareInfo','勾选 2 个版本进行对比');
+
+    loadSources(nid);
+    loadVersionsByNotice(nid);
+    loadCompatMatrix(nid);
+  }
+
+  /* ===== 2. 加载来源谱系 ===== */
+  function loadSources(nid){
+    _setHtml('sourceLineageBody','<div class="loading-state"><i class="ph ph-circle-notch"></i>加载来源谱系...</div>');
+    _setText('lineageMeta','--');
+    /* v4.1 从 versions 接口获取来源信息 */
+    fetch('/api/real/tenders/'+encodeURIComponent(nid)+'/versions').then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(j){
+      if(!j||j.code!==200||!j.data) throw new Error(j&&j.msg?j.msg:'bad response');
+      var stats=j.data.stats||{};
+      state.sources=[{
+        source_id:'src_'+nid,
+        source_platform:stats.source_platform||'',
+        source_url:stats.source_url||'',
+        source_quality:'authorized_original',
+        source_role:'primary',
+        first_seen:stats.first_seen||'',
+        total_versions:stats.total_versions||0
+      }];
+      state.lineage={source_count:1,cross_verified:false};
+      renderSources();
+    }).catch(function(e){
+      console.warn('load sources failed:',e);
+      _setHtml('sourceLineageBody','<div class="error-state"><i class="ph-bold ph-warning-circle"></i>来源谱系加载失败: '+esc(e.message)+'</div>');
+    });
+  }
+
+  function renderSources(){
+    var body=_hc('sourceLineageBody');
+    if(!body) return;
+    var sources=state.sources;
+    var lineage=state.lineage;
+
+    if(sources.length===0){
+      body.innerHTML='<div class="empty-state"><i class="ph ph-folder-open"></i>无来源数据</div>';
+      _setText('lineageMeta','0 个来源');
+      return;
+    }
+
+    _setText('lineageMeta',sources.length+' 个来源 · '+(lineage.source_group||'--'));
+
+    /* 按 source_group 分组 */
+    var groups={};
+    var groupOrder=[];
+    for(var i=0;i<sources.length;i++){
+      var s=sources[i];
+      var g=s.source_group||(lineage.source_group||'grp_default');
+      if(!groups[g]){ groups[g]=[]; groupOrder.push(g); }
+      groups[g].push(s);
+    }
+
+    var html='';
+    for(var gi=0;gi<groupOrder.length;gi++){
+      var gk=groupOrder[gi];
+      var gsrcs=groups[gk];
+      html+='<div class="source-group">';
+      html+='<div class="sg-header">';
+      html+='<i class="ph-bold ph-git-fork" style="color:var(--purple);font-size:14px"></i>';
+      html+='<span class="sg-label">'+esc(gk)+'</span>';
+      html+='<span class="sg-count">('+gsrcs.length+' 个来源)</span>';
+      html+='</div>';
+
+      for(var si=0;si<gsrcs.length;si++){
+        var src=gsrcs[si];
+        var sq=src.source_quality||'unknown';
+        var sqLabel=SQ_LABELS[sq]||sq;
+        var pr=src.publication_role||'';
+        var ptype=src.platform_type||inferPlatformType(src.source_platform);
+
+        html+='<div class="source-card">';
+        html+='<div class="sc-row">';
+        html+='<span class="sc-platform"><i class="ph ph-globe-hemisphere-west" style="color:var(--primary)"></i> '+esc(src.source_platform||'未知平台')+'</span>';
+        html+='<span class="sq-badge sq-'+sq+'">'+esc(sqLabel)+'</span>';
+        if(pr) html+='<span class="pr-badge">'+esc(pr)+'</span>';
+        html+='</div>';
+        html+='<div class="sc-url">'+esc(src.source_url||'--')+'</div>';
+        html+='<div class="sc-meta">';
+        if(ptype) html+='<span><i class="ph ph-tag"></i>'+esc(ptype)+'</span>';
+        html+='<span><i class="ph ph-fingerprint"></i>'+esc(shortId(src.source_id))+'</span>';
+        html+='<span><i class="ph ph-clock"></i>'+esc(fmtTime(src.first_seen_at))+'</span>';
+        if(src.data_source) html+='<span><i class="ph ph-database"></i>'+esc(src.data_source)+'</span>';
+        html+='</div>';
+        if(src.quality_reason){
+          html+='<div style="font-size:10px;color:var(--text-3);margin-top:4px;padding:3px 6px;background:var(--bg);border-radius:3px"><i class="ph ph-info" style="font-size:10px"></i> '+esc(src.quality_reason)+'</div>';
+        }
+        html+='</div>';
+      }
+
+      /* 转载特征（同组多来源时展示） */
+      html+=renderRepostFeatures(gsrcs,gk);
+
+      html+='</div>';
+    }
+
+    body.innerHTML=html;
+  }
+
+  function inferPlatformType(platform){
+    if(!platform) return '';
+    var p=String(platform).toLowerCase();
+    if(p.indexOf('ccgp')>=0||p.indexOf('gov')>=0) return 'government';
+    if(p.indexOf('chinabidding')>=0||p.indexOf('bid')>=0) return 'commercial';
+    return 'other';
+  }
+
+  /* ===== 3. 转载特征展示 ===== */
+  function renderRepostFeatures(gsrcs,gk){
+    var html='<div class="repost-section">';
+    html+='<div class="repost-title"><i class="ph-bold ph-link-simple-horizontal"></i>转载特征判定 (10 项)</div>';
+
+    /* 计算转载特征 */
+    var features={};
+    var matchCount=0;
+    var isMulti=gsrcs.length>1;
+
+    for(var fi=0;fi<RF_KEYS.length;fi++){
+      var key=RF_KEYS[fi];
+      var val=null;
+      if(isMulti){
+        /* 多来源时可计算的特征 */
+        if(key==='domain_match'){
+          var d0=extractDomain(gsrcs[0].source_url);
+          var d1=extractDomain(gsrcs[1].source_url);
+          val=(d0&&d1&&d0===d1);
+        }
+      }
+      features[key]=val;
+      if(val===true) matchCount++;
+    }
+
+    var total=RF_KEYS.length;
+    var matchPct=isMulti?Math.round(matchCount/total*100):0;
+
+    /* 特征网格 */
+    html+='<div class="rf-grid">';
+    for(var rk=0;rk<RF_KEYS.length;rk++){
+      var fkey=RF_KEYS[rk];
+      var fval=features[fkey];
+      var iconCls='rf-unknown';
+      var icon='&mdash;';
+      if(fval===true){ iconCls='rf-match'; icon='&#10003;'; }
+      else if(fval===false){ iconCls='rf-nomatch'; icon='&#10007;'; }
+      html+='<div class="rf-item">';
+      html+='<span class="rf-icon '+iconCls+'">'+icon+'</span>';
+      html+='<span>'+esc(RF_LABELS[fkey])+'</span>';
+      html+='</div>';
+    }
+    html+='</div>';
+
+    /* 匹配度进度条 */
+    html+='<div class="rf-bar-wrap">';
+    html+='<div class="rf-bar-label"><span>特征匹配度</span><span>'+matchCount+' / '+total+(isMulti?' ('+matchPct+'%)':'')+'</span></div>';
+    html+='<div class="rf-bar"><div class="rf-bar-fill" style="width:'+(isMulti?matchPct:0)+'%;background:'+(matchPct>=60?'var(--warning)':'var(--text-3)')+'"></div></div>';
+    html+='</div>';
+
+    /* 判定结果 */
+    var verdict='independent';
+    var verdictLabel='独立来源';
+    if(!isMulti){
+      verdict='independent'; verdictLabel='独立来源（单源无转载）';
+    }else if(matchCount>=7){
+      verdict='same_source_repost'; verdictLabel='同源转载';
+    }else if(matchCount>=4){
+      verdict='likely_repost'; verdictLabel='可能转载';
+    }else{
+      verdict='independent'; verdictLabel='独立来源';
+    }
+    html+='<div class="rf-verdict vd-'+verdict+'"><i class="ph-bold ph-shield-check"></i>判定结果：'+esc(verdictLabel)+'</div>';
+
+    html+='</div>';
+    return html;
+  }
+
+  function extractDomain(url){
+    if(!url) return '';
+    try{
+      var u=new URL(url);
+      return u.hostname;
+    }catch(e){
+      var m=String(url).match(/^(?:https?:\/\/)?([^\/\:]+)/i);
+      return m?m[1]:'';
+    }
+  }
+
+  /* ===== 4. 加载版本链 ===== */
+  function loadVersionsByNotice(nid){
+    _setHtml('versionTimelineBody','<div class="loading-state"><i class="ph ph-circle-notch"></i>加载版本链...</div>');
+    _setText('versionMeta','--');
+
+    /* v4.1 直连 /api/real/tenders/{id}/versions */
+    fetch('/api/real/tenders/'+encodeURIComponent(nid)+'/versions').then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(j){
+      if(!j||j.code!==200||!j.data) throw new Error(j&&j.msg?j.msg:'bad response');
+      state.versions=normalizeVersions(j.data.versions||[]);
+      state.versionsDataSource='real_api';
+      /* 用 stats 填充来源信息 */
+      if(j.data.stats){
+        _setText('sourceInfo',(j.data.stats.source_platform||'')+' \u00b7 '+(j.data.stats.source_url||''));
+        _setText('versionMeta','\u5171 '+(j.data.stats.total_versions||0)+' \u4e2a\u7248\u672c');
+      }
+      renderVersions();
+    }).catch(function(e){
+      console.warn('load versions failed:',e);
+      _setHtml('versionTimelineBody','<div class="error-state"><i class="ph-bold ph-warning-circle"></i>\u7248\u672c\u94fe\u52a0\u8f7d\u5931\u8d25: '+esc(e.message)+'</div>');
+    });
+  }
+
+  function normalizeVersions(versions){
+    /* 归一化新旧 change_type */
+    var typeMap={
+      'create':'initial','update_content':'minor',
+      'update_material':'material','correction':'material',
+      'reissue':'withdrawn'
+    };
+    return versions.map(function(v){
+      var ct=v.change_type||'initial';
+      ct=typeMap[ct]||ct;
+      return {
+        version_id:v.version_id,
+        fetched_at:v.fetched_at,
+        change_type:ct,
+        content_sha256:v.content_sha256||'',
+        raw_text_sha256:v.raw_text_sha256||v.material_sha256||'',
+        http_status:v.http_status||200,
+        snapshot_path:v.snapshot_path||null,
+        previous_version_id:v.previous_version_id||null,
+        change_summary:v.change_summary||v.diff_summary||'',
+        diff_lines:v.diff_lines||[]
+      };
+    });
+  }
+
+  function renderVersions(){
+    var body=_hc('versionTimelineBody');
+    if(!body) return;
+    var vs=state.versions;
+
+    if(vs.length===0){
+      body.innerHTML='<div class="empty-state"><i class="ph ph-folder-open"></i>无版本记录</div>';
+      _setText('versionMeta','0 个版本');
+      return;
+    }
+
+    _setText('versionMeta',vs.length+' 个版本'+(state.versionsDataSource?' · '+state.versionsDataSource:''));
+
+    var html='<div class="vt-timeline">';
+    for(var i=0;i<vs.length;i++){
+      var v=vs[i];
+      var ct=v.change_type;
+      var ctLabel=CT_LABELS[ct]||ct;
+      var httpCls=(v.http_status&&v.http_status>=200&&v.http_status<300)?'ok':'err';
+
+      html+='<div class="vt-node ct-'+ct+'">';
+      html+='<div class="vt-card" id="vcard-'+v.version_id+'">';
+      /* head */
+      html+='<div class="vt-card-head" onclick="window.__vh.toggleVer('+v.version_id+')">';
+      html+='<div class="vt-head-left">';
+      html+='<span class="vt-vid">v'+v.version_id+'</span>';
+      html+='<span class="ct-badge ct-'+ct+'">'+esc(ctLabel)+'</span>';
+      if(i===0) html+='<span class="ct-badge" style="background:var(--success-bg);color:var(--success)">最新</span>';
+      html+='</div>';
+      html+='<div class="vt-head-right">';
+      html+='<span class="vt-date">'+esc(fmtTime(v.fetched_at))+'</span>';
+      html+='<input type="checkbox" class="vt-cb" value="'+v.version_id+'" onclick="window.__vh.selectVer(event,'+v.version_id+')">';
+      html+='</div>';
+      html+='</div>';
+      /* body */
+      html+='<div class="vt-card-body">';
+      if(v.change_summary){
+        html+='<div class="vt-detail-row"><span class="vt-detail-label">变更摘要</span><span class="vt-detail-val">'+esc(v.change_summary)+'</span></div>';
+      }
+      html+='<div class="vt-detail-row"><span class="vt-detail-label">HTTP 状态</span><span class="vt-detail-val"><span class="vt-http '+httpCls+'">'+esc(v.http_status||'--')+'</span></span></div>';
+      html+='<div class="vt-detail-row"><span class="vt-detail-label">content_sha256</span><span class="vt-detail-val"><span class="vt-sha">'+fmtSha(v.content_sha256)+'</span></span></div>';
+      if(v.raw_text_sha256){
+        html+='<div class="vt-detail-row"><span class="vt-detail-label">raw_text_sha256</span><span class="vt-detail-val"><span class="vt-sha">'+fmtSha(v.raw_text_sha256)+'</span></span></div>';
+      }
+      if(v.previous_version_id){
+        html+='<div class="vt-detail-row"><span class="vt-detail-label">上一版本</span><span class="vt-detail-val"><span style="font-family:monospace;font-size:10px;color:var(--purple)">'+esc(v.previous_version_id)+'</span></span></div>';
+      }
+      if(v.diff_lines&&v.diff_lines.length>0){
+        html+='<div class="vt-detail-row"><span class="vt-detail-label">Diff 行</span><span class="vt-detail-val" style="font-family:monospace;font-size:10px;line-height:1.6">';
+        for(var dl=0;dl<v.diff_lines.length&&dl<10;dl++){
+          html+=esc(v.diff_lines[dl])+'<br>';
+        }
+        html+='</span></div>';
+      }
+      if(v.snapshot_path){
+        html+='<div class="vt-detail-row"><span class="vt-detail-label">快照路径</span><span class="vt-detail-val" style="font-family:monospace;font-size:10px;color:var(--text-3)">'+esc(v.snapshot_path)+'</span></div>';
+      }
+      html+='</div>'; /* body */
+      html+='</div>'; /* card */
+      html+='</div>'; /* node */
+    }
+    html+='</div>';
+    body.innerHTML=html;
+  }
+
+  /* ===== 版本展开/折叠 ===== */
+  function toggleVer(vid){
+    var card=_hc('vcard-'+vid);
+    if(card){
+      card.classList.toggle('expanded');
+    }
+  }
+
+  /* ===== 5. 版本对比 ===== */
+  function selectVer(ev,vid){
+    ev.stopPropagation();
+    var idx=state.selectedVersions.indexOf(vid);
+    if(idx>=0){
+      state.selectedVersions.splice(idx,1);
+    }else{
+      state.selectedVersions.push(vid);
+      if(state.selectedVersions.length>2){
+        var removed=state.selectedVersions.shift();
+        var oldCb=document.querySelector('.vt-cb[value="'+removed+'"]');
+        if(oldCb) oldCb.checked=false;
+      }
+    }
+    var cb=_hc('compareBtn');
+    var info=_hc('compareInfo');
+    if(state.selectedVersions.length===2){
+      if(cb) cb.disabled=false;
+      if(info) info.textContent='已选 v'+state.selectedVersions[0]+' vs v'+state.selectedVersions[1];
+    }else{
+      if(cb) cb.disabled=true;
+      if(info) info.textContent='勾选 2 个版本进行对比（已选 '+state.selectedVersions.length+'/2）';
+    }
+  }
+
+  function doCompare(){
+    if(state.selectedVersions.length!==2) return;
+    var v1=state.selectedVersions[0];
+    var v2=state.selectedVersions[1];
+    var va=null, vb=null;
+    for(var i=0;i<state.versions.length;i++){
+      if(state.versions[i].version_id===v1) va=state.versions[i];
+      if(state.versions[i].version_id===v2) vb=state.versions[i];
+    }
+    if(!va||!vb) return;
+
+    var panel=_hc('comparePanel');
+    if(!panel) return;
+
+    var shaSame=(va.content_sha256===vb.content_sha256);
+    var rawSame=(va.raw_text_sha256&&vb.raw_text_sha256&&va.raw_text_sha256===vb.raw_text_sha256);
+
+    var html='<div class="vc-panel-head"><i class="ph-bold ph-git-compare"></i>版本对比：v'+v1+' vs v'+v2+'</div>';
+    html+='<table class="vc-diff-table">';
+    html+='<tr><th>属性</th><th>v'+v1+'</th><th>v'+v2+'</th><th>状态</th></tr>';
+
+    html+='<tr><td>采集时间</td><td>'+esc(fmtTime(va.fetched_at))+'</td><td>'+esc(fmtTime(vb.fetched_at))+'</td>';
+    html+='<td class="'+(va.fetched_at===vb.fetched_at?'vc-same':'vc-changed')+'">'+(va.fetched_at===vb.fetched_at?'一致':'变化')+'</td></tr>';
+
+    html+='<tr><td>变更类型</td><td>'+esc(CT_LABELS[va.change_type]||va.change_type)+'</td><td>'+esc(CT_LABELS[vb.change_type]||vb.change_type)+'</td>';
+    html+='<td class="'+(va.change_type===vb.change_type?'vc-same':'vc-changed')+'">'+(va.change_type===vb.change_type?'一致':'变化')+'</td></tr>';
+
+    html+='<tr><td>HTTP 状态</td><td>'+esc(va.http_status)+'</td><td>'+esc(vb.http_status)+'</td>';
+    html+='<td class="'+(va.http_status===vb.http_status?'vc-same':'vc-changed')+'">'+(va.http_status===vb.http_status?'一致':'变化')+'</td></tr>';
+
+    html+='<tr><td>content_sha256</td><td style="font-family:monospace;font-size:9px;word-break:break-all">'+esc(va.content_sha256||'--')+'</td><td style="font-family:monospace;font-size:9px;word-break:break-all">'+esc(vb.content_sha256||'--')+'</td>';
+    html+='<td class="'+(shaSame?'vc-same':'vc-conflict')+'">'+(shaSame?'一致 ✓':'冲突 ✗')+'</td></tr>';
+
+    if(va.raw_text_sha256||vb.raw_text_sha256){
+      html+='<tr><td>raw_text_sha256</td><td style="font-family:monospace;font-size:9px;word-break:break-all">'+esc(va.raw_text_sha256||'--')+'</td><td style="font-family:monospace;font-size:9px;word-break:break-all">'+esc(vb.raw_text_sha256||'--')+'</td>';
+      var rawSt = rawSame?'一致 ✓':'冲突 ✗';
+      html+='<td class="'+(rawSame?'vc-same':'vc-conflict')+'">'+rawSt+'</td></tr>';
+    }
+
+    html+='<tr><td>上一版本</td><td>'+esc(va.previous_version_id||'--')+'</td><td>'+esc(vb.previous_version_id||'--')+'</td>';
+    html+='<td class="'+(va.previous_version_id===vb.previous_version_id?'vc-same':'vc-changed')+'">'+(va.previous_version_id===vb.previous_version_id?'一致':'变化')+'</td></tr>';
+
+    html+='</table>';
+
+    /* 字段级 diff 说明 */
+    html+='<div style="margin-top:8px;padding:6px 8px;background:#fff;border:1px dashed var(--border);border-radius:4px;font-size:10px;color:var(--text-2)">';
+    if(shaSame){
+      html+='<i class="ph ph-info" style="color:var(--success)"></i> 两版本 content_sha256 一致，内容无变化（version_difference: 无）';
+    }else{
+      html+='<i class="ph ph-warning" style="color:var(--warning)"></i> 两版本 content_sha256 不同，存在内容变更（version_difference: 字段级 diff 需快照对比，当前数据源未提供字段级 diff）';
+      if(!rawSame) html+='；raw_text_sha256 也不同，原文有实质性修改（conflict 可能）';
+    }
+    html+='</div>';
+
+    panel.innerHTML=html;
+    panel.classList.add('show');
+  }
+
+  /* ===== 6. 事实断言键兼容性矩阵 ===== */
+  function loadCompatMatrix(nid){
+    /* v4.1 修复：从 /api/real/tenders/{id}/detail 获取字段，不再调 /api/fields/* */
+    var fieldsToLoad=FIELD_ORDER;
+    var fieldData={};
+    fetch('/api/real/tenders/'+encodeURIComponent(nid)+'/detail').then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(j){
+      if(j&&j.code===200&&j.data&&j.data.fields){
+        (j.data.fields||[]).forEach(function(f){
+          if(f.field_name) fieldData[f.field_name]=f;
+        });
+      }
+    }).catch(function(e){
+      console.warn('load compat matrix failed:',e);
+    }).then(function(){
+      renderCompatMatrix(fieldData);
+    });
+  }
+
+    function renderCompatMatrix(fieldData){
+    var body=_hc('compatTableBody');
+    if(!body) return;
+
+    var html='';
+    var hasAny=false;
+
+    for(var i=0;i<FIELD_ORDER.length;i++){
+      var fname=FIELD_ORDER[i];
+      var fd=fieldData[fname];
+      var label=FIELD_LABELS[fname]||fname;
+
+      if(!fd||!fd.values||fd.values.length===0){
+        html+='<tr><td class="ct-field-name">'+esc(label)+'</td><td class="ct-val" style="color:var(--text-3)">--</td><td class="ct-comp na">&mdash;</td></tr>';
+        continue;
+      }
+
+      hasAny=true;
+      var vals=fd.values;
+
+      /* 计算兼容性 */
+      var compat='unavailable';
+      var compatCls='na';
+      var compatIcon='&mdash;';
+
+      if(vals.length===1){
+        compat='unavailable'; compatCls='na'; compatIcon='&mdash;';
+      }else{
+        var allSame=true;
+        var norm0=vals[0].normalized_value||vals[0].raw_value||'';
+        for(var vi=1;vi<vals.length;vi++){
+          var nv=vals[vi].normalized_value||vals[vi].raw_value||'';
+          if(nv!==norm0){ allSame=false; break; }
+        }
+        if(allSame){ compat='compatible'; compatCls='ok'; compatIcon='&#10003;'; }
+        else{ compat='incompatible'; compatCls='bad'; compatIcon='&#10007;'; }
+      }
+
+      /* 展示所有值 */
+      var valsHtml='';
+      for(var vj=0;vj<vals.length;vj++){
+        var val=vals[vj];
+        var raw=val.raw_value||'--';
+        var norm=val.normalized_value||'';
+        if(vj>0) valsHtml+='<hr style="border:none;border-top:1px dashed var(--border-2);margin:3px 0">';
+        valsHtml+='<div style="margin-bottom:2px">';
+        valsHtml+='<span class="ct-src">来源'+(vj+1)+'</span> ';
+        valsHtml+='<span class="ct-val">'+esc(raw)+'</span>';
+        if(norm&&norm!==raw) valsHtml+=' <span style="color:var(--text-3);font-size:9px">→ '+esc(norm)+'</span>';
+        if(val.amount_type) valsHtml+=' <span style="font-size:9px;color:var(--purple)">['+esc(val.amount_type)+']</span>';
+        valsHtml+='</div>';
+      }
+
+      var compatLabel=compat==='compatible'?'兼容':compat==='incompatible'?'不兼容':'无法判定';
+
+      html+='<tr>';
+      html+='<td class="ct-field-name">'+esc(label)+'</td>';
+      html+='<td>'+valsHtml+'</td>';
+      html+='<td class="ct-comp '+compatCls+'">'+compatIcon+' <span style="font-size:10px">'+compatLabel+'</span></td>';
+      html+='</tr>';
+    }
+
+    if(!hasAny){
+      html='<tr><td colspan="3" style="text-align:center;color:var(--text-3);padding:20px"><i class="ph ph-folder-open" style="font-size:20px;display:block;margin-bottom:4px"></i>该公告暂无字段数据</td></tr>';
+    }
+
+    body.innerHTML=html;
+  }
+
+  /* ===== 公开接口（onclick 调用） ===== */
+  window.__vh={
+    toggleVer:toggleVer,
+    selectVer:selectVer,
+    doCompare:doCompare
+  };
+
+  /* ===== 初始化 ===== */
+  document.addEventListener('DOMContentLoaded',function(){
+    loadTenders();
+    var cb=_hc('compareBtn');
+    if(cb) cb.addEventListener('click',doCompare);
+  });
+
+})();
 </script>
-</div>
-</div>
 
 </body>
 </html>

@@ -2,62 +2,197 @@
 
 > 面向供应链金融贷前尽调的可验证招投标数据引擎 · GOAI 2026。将不可核验的 LLM 输出转化为可复核、可追踪的数据资产——LLM 只生成候选，确定性程序负责验证。
 
-**当前状态**：MVP 开发阶段（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
+**当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
+**测试**：1316 passed · **评测数据**：107 篇真实公告 · **分支**：feature/glm-w4-k3-data
 
-## 核心定位
+---
 
-- **一句话定位**：面向供应链金融贷前尽调与企业采购核验的可验证招投标数据引擎
+## 核心定位（v4.1 §1）
+
+- **一句话定位**：面向供应链金融贷前尽调与企业采购核验的可验证招投标数据引擎——将不可核验的 LLM 输出转化为可复核、可追踪的数据资产
 - **核心用户**：供应链金融贷前尽调人员
-- **核心任务**：在审核供应商公开经营活动时，快速核验企业近期中标项目、金额、采购人及原始公告证据
-- **核心差异化**：LLM 只生成字段和证据候选，确定性程序负责验证；区分项目/公告/来源/版本四层实体；区分官方原始发布、官方转载、商业转载和索引页面
+- **系统定位**：位于金融风控的数据准备与事实核验环节，为后续人工尽调或其他风控系统提供带证据的招投标数据，而非直接替代风控决策
+- **核心差异化**：LLM 只生成字段和证据候选，确定性程序负责在原文快照中搜索验证，找不到依据的字段一律标记为无依据不输出
+
+### 8 条核心差异化（v4.1 §1.4）
+
+1. 每个字段可绑定多段原文证据，区分主证据、限定条件和推导输入
+2. LLM 只生成字段和证据候选，确定性程序负责验证
+3. 区分项目、公告、来源页面和页面版本四层实体
+4. 区分官方原始发布、官方转载、商业转载和索引页面
+5. 识别同源转载，避免将转载数量误判为独立交叉验证
+6. 将抽取支持度、来源质量和交叉验证状态独立保存
+7. 使用独立金标测试集验证准确率、覆盖率和无依据输出率
+8. 只输出可解释的公开招投标活动观察信号，不输出信用评分
+
+---
 
 ## 核心能力
 
-- **四层实体数据模型**：TenderProject（采购项目）→ TenderNotice（业务公告）→ NoticeSource（来源页面）→ NoticeVersion（抓取版本），辅以 Organization（组织实体）/ NoticeParticipant（参与关系）/ ProjectIdentifier（项目标识）
-- **六 Agent 协同架构**：意图解析 → 采集执行 → 数据加工 → 质量保障 → 金融分析 → 报告交付
-- **多平台采集**：ccgp / chinabidding / ggzy / 千里马（登录态采集，16 cookies 持久化）
-- **可验证抽取引擎**（核心差异化）：
-  - LLM 只生成字段和证据候选，确定性程序负责验证
-  - 5 级降级匹配（L1 精确→L2 去空白→L3 去标点→L4 核心子串→L5 失败标记）
-  - 双坐标映射（normalized_index ↔ raw_index），证据偏移量在快照中可稳定复现
-  - 找不到依据的字段一律标记为无依据不输出
-- **来源谱系与版本追踪**：
-  - 来源角色判定（official_original / official_repost / commercial_repost / unknown）
-  - 同源转载识别（SimHash 汉明距离 ≤ 3），避免将转载数量误判为独立交叉验证
-  - 事实断言键（FactAssertionKey）：跨源比较前确保双方表达同一业务事实
-  - 页面版本追踪，历史版本不被新版本覆盖
-- **展示等级与选择性输出**：
-  - 三级分类（high / review / low）：基于抽取支持度 + 来源质量 + 交叉验证状态
-  - 四种输出策略：strict / default / loose / audit
-- **供应商公开活动观察度**（非授信评分）：
-  - 五维度：集中度 + 金额异常 + 频率异常 + 地域集中 + 采购人集中
-  - 仅反映公开招投标活动观察信号，不构成授信或投资依据
-- **废标风险预警**：18 条规则覆盖排他性资质、付款风险、交货期、资质门槛
-- **BOQ 报价异常检测**（实验性能力）：32 类基准价格库，结果仅供研究参考
-- **质量保障**：SimHash 64 位去重 + 反幻觉校验（金额/日期归一化 + 事实比对）
-- **数据质量评测**：证据 recall / precision / IoU 三大指标 + Bootstrap 95% 置信区间 + 四组消融实验（A/B/C/D）
-- **Web Demo**：8 个 UI 页面（工作台 / 招标检索 / 跨平台去重 / 证据验证 / 组织画像 / 质量评测 / 版本历史 / 智能问答）
-- **推送**：SMTP 邮件 + Webhook HMAC 签名，at-least-once 语义 + content_hash 幂等去重
-- **安全**：SSRF 三层防护 / LIKE 注入防护 / 邮件头注入防护 / 路径穿越防护
+### 四层实体数据模型（v4.1 §4）
 
-## MVP 边界
+```
+TenderProject（采购项目）
+  └── TenderNotice（业务公告）
+        ├── NoticeParticipant（公告参与关系）
+        └── NoticeSource（来源页面）
+              └── NoticeVersion（抓取版本）
+                    └── ExtractedField（抽取字段）
+                          └── FieldEvidenceLink
+                                └── Evidence（字段证据）
+```
 
-**已实现**:
-- 六 Agent 骨架 + 编排器
-- BOQ 异常检测引擎(25 测试)
-- 废标风险预警引擎(41 测试,含否定语境检测)
-- 千里马登录态采集(实测通过)
-- SMTP 邮件实发(163 邮箱联调通过)
-- W3 证据验证与来源谱系(EvidenceLocator + FieldValidator + source_lineage)
-- W3 展示等级与选择性输出(display_grade + 4 种输出策略)
-- W3/W4 数据质量评测(召回/精确/IoU + Bootstrap CI + 四组消融)
-- W3 Web Demo(6 个 UI 页面)
-- 826 测试全过,3 模块覆盖率 100%(bootstrap_ci/display_grade/output_strategies)
+辅助实体：Organization（组织机构）、NoticeParticipant（参与关系）、ProjectIdentifier（项目标识）、FactAssertionKey（事实断言键）。所有核心实体使用无业务含义的内部稳定主键（ULID）。
 
-**规划中**:
-- 30+ 数据源注册(S-4)
-- 全量 90 篇评测(等测试集冻结后运行)
-- Demo 视频录制
+### 六 Agent 协同架构
+
+意图解析 → 采集执行 → 数据加工 → 质量保障 → 金融分析 → 报告交付
+
+### 可验证抽取引擎（核心差异化）
+
+- LLM 只生成字段和证据候选，确定性程序负责验证
+- 5 级降级匹配：L1 精确 → L2 空白归一化 → L3 全半角统一 → L4 金额日期格式变体 → L5 模糊匹配/失败标记
+- 双坐标映射（normalized_index ↔ raw_index），证据偏移量在快照中可稳定复现，前端不依赖实时网页 DOM
+- 找不到依据的字段一律标记为无依据不输出
+
+### 来源谱系与版本追踪
+
+- 来源角色判定：official_original / official_repost / commercial_repost / unknown
+- 同源转载识别（SimHash 汉明距离 ≤ 3），避免将转载数量误判为独立交叉验证
+- 事实断言键（FactAssertionKey）：跨源比较前确保双方表达同一业务事实
+- 页面版本追踪，历史版本不被新版本覆盖
+
+### 展示等级与选择性输出
+
+- 三级分类（high / review / low）：基于抽取支持度 + 来源质量 + 交叉验证状态
+- 四种输出策略：strict / default / loose / audit
+
+### 6 个 MVP 观察信号（v4.1 §9.2，严格不输出信用评分）
+
+| 信号 | 说明 |
+|---|---|
+| 中标活跃度 | 近 90 天公开中标次数和金额趋势，不作正负定性 |
+| 公开中标集中度 | 当前覆盖数据中 Top 3 采购人及地区占比 |
+| 废标公告关联 | 企业在废标或流标公告中被观察到的次数，不直接归因 |
+| 明确投标否决 | 公告明确写明企业投标被否决，并记录原因 |
+| 信息冲突观察 | 相同事实断言在不同有效来源中出现矛盾 |
+| 高频共现提示（选做） | 企业与其他企业在同一标段被反复观察到，不用于判断围标 |
+
+> 严谨表述（v4.1 §9.3）：使用「公开公告中观察到的投标出现次数」，不得使用「企业实际投标次数」；高频共现必须附带说明「仅凭共现不能判断企业关联关系或围标行为」。
+
+### 合规采集（v4.1 §5）
+
+- **域名级频率限制**（DomainRateLimiter）：默认 8 秒间隔，按域名独立计数，失败时回滚 reservation
+- **robots.txt 合规检查**（RobotsChecker）：30 分钟域名级缓存，不可达时默认允许
+- **来源白名单**（SourceWhitelist）：维护允许采集的来源平台/域名清单，支持运行时下架/重新启用，集成到 scraper 前置检查
+- **数据删除**（DataDeletionService）：支持按来源 URL、来源平台、公告来源实例、页面快照、用户授权数据 5 种范围删除，记录审计日志
+- 失败回退：触发 403/封禁时停止访问，不进行规避
+
+### 凭证安全（v4.1 §13.1）
+
+- API Key 使用高熵随机值，服务端只保存基于服务端密钥的 **HMAC-SHA256 摘要**（secrets.compare_digest 防时序攻击）
+- 密码使用 **Argon2id** 哈希（防彩虹表/暴力破解）
+- Cookie 使用 **AES-GCM** 加密（nonce 唯一）
+- SSRF 防护：仅允许 HTTP/HTTPS，拦截内网/回环/链路本地/云元数据地址，重定向后重新检查
+- 路径安全：白名单存储目录，禁止路径穿越，文件名与真实存储键分离
+- 日志不得记录凭证
+
+### 质量评测（v4.1 §10）
+
+- 证据 recall / precision / IoU 三大指标
+- 项目级 Bootstrap 95% 置信区间
+- 四组消融实验（A/B/C/D）
+- v4.1 §10 新指标：null_false_positive_rate（金标 absent/not_applicable 字段零误报）
+
+### 12 个标准 API 端点（v4.1 §12）
+
+| 接口 | 方法 | 说明 |
+|---|---|---|
+| /api/projects/search | GET | 搜索采购项目 |
+| /api/projects/{project_id} | GET | 获取项目及公告生命周期 |
+| /api/notices/{notice_id} | GET | 获取公告详情 |
+| /api/notices/{notice_id}/sources | GET | 获取来源页面和谱系 |
+| /api/notices/{notice_id}/participants | GET | 获取公告参与方列表 |
+| /api/sources/{source_id}/versions | GET | 获取页面版本历史 |
+| /api/fields/{field_id} | GET | 获取字段和全部证据 |
+| /api/organizations/search | GET | 搜索组织实体 |
+| /api/organizations/{org_id} | GET | 获取组织实体公开活动画像 |
+| /api/extract/tasks | POST | 提交异步抽取任务 |
+| /api/extract/tasks/{task_id} | GET | 查询任务状态 |
+| /api/stats/quality | GET | 获取数据质量和评测统计 |
+
+抽取任务异步状态：queued / running / partially_succeeded / succeeded / failed
+
+### Web Demo（8 页）
+
+工作台 / 招标检索 / 公告列表 / 证据验证详情 / 组织画像 / 质量评测 / 版本历史 / 智能问答
+
+### 推送与去重
+
+- SMTP 邮件 + Webhook HMAC 签名，at-least-once 语义 + content_hash 幂等去重
+- Word 报告自动生成 + cron 定时推送
+
+---
+
+## 评测数据（v4.1 W3 真实数据）
+
+### 数据集
+
+| 项目 | 数值 |
+|---|---|
+| 数据库公告总数 | 107 篇 |
+| W3 评测集 | 100 篇（ccgp_w3）|
+| 实时采集 | 7 篇（ccgp）|
+| 公告类型覆盖 | tender 34 / award 35 / correction 33 / 其他 5 |
+| 金标字段总数（99 篇全量）| 594 |
+
+### 4 组消融实验（99 篇全量，commit caeacde）
+
+| 指标 | A 组（Direct LLM）| B 组（LLM+候选证据）| C 组（LLM+程序验证）| D 组（完整 BidAgent）|
+|---|---|---|---|---|
+| unjustified_rate | **100.00%** | 0.00%（失真）| **6.04%** | **0.00%** |
+| field_precision | 91.97% | 92.58% | 92.58% | 92.17% |
+| evidence_precision | N/A | N/A | 100.00% | 100.00% |
+
+### v4.1 §10 新指标 null_false_positive_rate（5 篇重跑，A/B/C/D 四组一致）
+
+| 组 | should_not_have_value_fields | null_false_positives | null_false_positive_rate |
+|---|---|---|---|
+| A/B/C/D | 6 | 0 | **0.0000** |
+
+### 测试
+
+- 1316 passed · 0 errors / 0 failures
+- 30 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
+
+---
+
+## MVP 边界（v4.1 §2）
+
+### MVP 必做（已实现）
+
+- 两个已冻结页面体系的官方来源适配器（ccgp + ggzy_national）
+- 招标公告、中标公告和更正公告
+- 六类核心结构化字段（项目编号、采购人名称、中标人名称、金额及金额类型、发布日期、投标截止日期）
+- 字段级多证据验证
+- 页面快照与版本管理
+- 同源转载识别
+- 三维质量评估（抽取支持度 / 来源质量 / 交叉验证状态）
+- 独立金标评测（含消融实验）
+- Web Demo + REST API
+- 基础组织实体公开活动画像
+
+### MVP 暂不实施
+
+- 企业信用评分 / 授信建议 / 中标概率预测 / 围标自动判定
+- 全品类 BOQ 异常检测
+- 分布式采集 / 图数据库 / 多租户系统
+- 商业平台账号池及验证码自动处理
+- PDF/OCR 深度解析
+
+> 历史代码中存在的 BOQ 异常检测与废标风险预警模块为早期实验性实现，v4.1 MVP 不包含这些能力，不作为对外功能宣传。
+
+---
 
 ## 安装与启动
 
@@ -103,6 +238,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 - API 文档 (Swagger UI): http://localhost:8000/docs
 - 健康检查: http://localhost:8000/health
+- Web Demo: http://localhost:8000/ui
 
 ### Docker 启动
 
@@ -118,93 +254,100 @@ docker-compose up -d
 pytest -v
 ```
 
-当前测试覆盖：
-- 六 Agent 协作框架（21 测试）
-- BOQ 异常检测引擎（25 测试）
-- 废标风险预警引擎（41 测试，含否定语境反面用例）
-- 核心模块（SimHash / 反幻觉 / 邮件推送 / 订阅 / 采集器 / 登录态）
-- 企业级特征（SSRF / 路径穿越 / LIKE 注入 / 幂等去重）
-- W3 证据验证(EvidenceLocator / FieldValidator / source_lineage / fact_assertion_key)
-- W3 展示等级(display_grade + output_strategies 四策略)
-- W3 数据质量评测(bootstrap_ci 置信区间 / 消融实验 A/B/C/D 四组)
-- W3 覆盖率补强(3 模块 100%:bootstrap_ci / display_grade / output_strategies)
+```bash
+# 覆盖率
+pytest --cov=backend --cov-report=term-missing
+```
 
-## 文档目录索引
+测试范围包含 v4.1 新增：test_rate_limiter / test_robots_checker / test_data_deletion / test_source_whitelist / test_repost_features / test_credentials / test_v41_api / test_v41_fields / test_demo_pages_smoke / test_real_demo_api 等。
 
-| 文档 | 位置 | 说明 |
-|---|---|---|
-| 设计文档 | `docs/superpowers/specs/2026-07-20-bidagent-goai-design.md` | 六 Agent 架构 + 金融方向定位 + 合规边界 |
-| 合规文档 | `_w2_report/compliance.md` | 数据来源 / 隐私保护 / 风险提示 / 行业边界 |
-| 部署文档 | `DEPLOY.md` | Docker 部署说明 |
-| 完整版对比报告 | `docs/完整版对比报告.md` | 完整版资产吸收清单 |
-| W3 评测报告 | `_w3_outputs/w3_03_evidence_report.json` | 90 篇证据评测结果(召回/精确/IoU) |
-| W3 display_grade 规则 | `_w3_outputs/display_grade_rule_frozen.md` | 展示等级规则冻结文档 |
-| 金标冻结 | `tests/fixtures/gold/gold_frozen_v1.json` | 90 篇金标标注冻结 |
+---
 
 ## 数据与合规边界
 
 ### 数据来源
 
-| 数据源 | 合规性 | 说明 |
+| 数据源 | 类型 | 说明 |
 |---|---|---|
-| ccgp.gov.cn | ✅ 公开数据 | 中国政府采购网 |
-| chinabidding.com.cn | ✅ 公开数据 | 中国招标投标网 |
-| ggzy.gov.cn | ✅ 公开数据 | 全国公共资源交易平台 |
-| vip.qianlima.com | ⚠️ 用户授权 | 用户提供个人账号登录，仅采集用户有权访问的数据，不绕过付费墙 |
+| ccgp.gov.cn | 官方公开 | 中国政府采购网（MVP 适配器）|
+| ggzy.gov.cn | 官方公开 | 全国公共资源交易平台（MVP 适配器）|
+
+采集行为：域名级 8 秒频率限制 + robots.txt 合规检查 + 来源白名单 + 403 不重试。不绕过登录墙、不抓取付费内容。
 
 ### 隐私保护
 
 - 不采集个人隐私数据（身份证/手机号/家庭住址等）
-- 供应商公开活动观察度基于公开招投标数据，不涉及个人数据，不输出信用评分（v4.1 §9.1）
-- 用户账号凭证经加密后通过 Playwright storage_state 存储于用户自有部署环境
+- 联系人电话/邮箱使用 SHA256 hex 存储
+- API Key 用 HMAC-SHA256 摘要，密码用 Argon2id，Cookie 用 AES-GCM
+- 不输出供应商信用评分（v4.1 §9.1），所有信号仅供人工尽调参考
 
 ### 风险提示
 
-- BOQ 异常检测（实验性）/废标风险预警/供应商公开活动观察度均为**决策辅助**，不构成金融建议
-- 报告中明确标注「AI 生成，仅供参考，决策请人工复核」
+- 报告输出明确标注「AI 生成，仅供参考，决策请人工复核」
 - 定位为数据服务商，不提供金融建议，不承担金融决策责任
+- 不输出信用评分，不判断围标，不提供授信建议
 
-详见 [docs/compliance.md](docs/compliance.md)。
+详见 [compliance.md](_w2_report/compliance.md)。
+
+---
+
+## 文档目录索引
+
+| 文档 | 位置 | 说明 |
+|---|---|---|
+| v4.1 总规划 | `docs/BidAgent_项目总体规划_v4.1_执行定稿版.md` | v4.1 执行定稿 |
+| GOAI 提交材料 | `GOAI_初赛提交材料_正式版.md` | 初赛作品简介 + 技术指标 |
+| 合规声明 | `_w2_report/compliance.md` | 数据来源 / 隐私保护 / AI 反幻觉 / 行业边界 |
+| 部署文档 | `DEPLOY.md` | Docker 部署说明 |
+| W3 评测报告 | `_w3_outputs/w3_ablation_smoke_v41_rerun_report.md` | v4.1 指标验证报告 |
+| 99 篇全量消融 | `_w3_outputs/w3_ablation_full_99.json` | 4 组 A/B/C/D |
+| Bootstrap CI | `_w3_outputs/w3_bootstrap_ci_full_99.json` | 99 篇置信区间 |
+| 金标冻结 | `tests/fixtures/gold/gold_frozen_v1.json` | 金标标注冻结 |
+
+---
 
 ## 当前已知限制
 
-1. **数据源覆盖有限**：当前 4 平台，S-4 后扩展至 30+
-2. **测试集 100 篇**：K3 已补抓至 100 篇(tender 33 + award 34 + correction 33)
-3. **cross_verified 默认 False**：交叉验证赋值需等 W4 多源合并阶段接入
-4. **Web Demo 为前端 Mock 数据**：后端 demo_api.py 已预留接入点,后续改为真实 API
-5. **risk_engine 基于关键词匹配**：存在一定误报率,已加否定语境检测,但仍需人工复核
-6. **法条引用准确性未核实**：risk_engine 中部分 law_ref 字段为空或未核实,答辩前需补充
+1. **金标数量 107 篇**：未达 v4.1 推荐 300～350 篇，复赛阶段补强
+2. **未划分开发集/校准集/测试集**：当前为统一金标集
+3. **temperature 记录口径**：记录 0.0，实际 0.1，不影响指标结论，后续修复
+4. **Demo 视频降级处理**：初赛阶段以代码仓库 + Web Demo 8 页作为等价可验证材料，视频待复赛补录
+5. **2 个官方来源适配器**：MVP 冻结范围 ccgp + ggzy_national，商业平台暂不接入
+
+---
 
 ## 技术栈
 
 | 层 | 技术 |
 |---|---|
-| 后端框架 | Python 3.13 + FastAPI |
-| Agent 框架 | 纯 Python 轻量级实现（不依赖 langgraph） |
+| 后端框架 | Python 3.11+ / FastAPI |
+| Agent 框架 | 纯 Python 轻量级实现（不依赖 langgraph）|
 | 抓取引擎 | Playwright (async API) + httpx AsyncClient |
-| 反检测 | patchright + stealth init_script |
-| LLM | DeepSeek V3 |
+| LLM | DeepSeek |
 | 任务调度 | APScheduler + croniter |
-| 去重算法 | jieba 分词 + 自实现 64 位 SimHash |
-| 反幻觉校验 | 金额/日期归一化 + 事实比对 + 溯源引用 |
+| 去重算法 | jieba 分词 + 64 位 SimHash |
 | 数据库 | SQLite (MVP) → PostgreSQL (生产) |
 | ORM | SQLAlchemy 2.0 async + aiosqlite |
 | 部署 | Docker 多阶段构建 + non-root 用户 + healthcheck |
 
 ## 工程规范
 
-继承自 BidAgent 企业级硬性规则：
-
 - 所有中间件用 async/await，不用 callback 风格
-- API key 用 SHA256 hash 存储，不用明文
+- API Key 用 HMAC-SHA256 摘要 + Argon2id 密码哈希 + AES-GCM Cookie 加密
 - 环境变量密钥用 `secrets.token_hex(32)` 生成 64 字符 hex
-- 单文件 ≤ 300 行
 - SSRF 三层防护 / LIKE 注入防护 / 邮件头注入防护 / 路径穿越防护
 - 异步函数用 `run_in_executor` 卸载同步 CPU/IO 任务
-- 结构化日志带 request_id 上下文
+- 结构化日志带 request_id 上下文，不记录凭证
 - 统一错误响应 `{code, data, msg}`
 - Docker 多阶段构建 + non-root 用户 + healthcheck
 
 ## 许可证
 
-**尚未确定**。代码、依赖和数据的授权边界待确认后再决定开源许可证。
+Apache License 2.0
+
+## 团队
+
+- 团队：标小智（徐浚钊、王祯明）
+- 所属：上海建桥大学 计算机科学与技术专业
+- 赛事：GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向
+- 仓库：https://github.com/tlyyxjz/BidAgent

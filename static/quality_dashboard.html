@@ -205,6 +205,23 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       </div>
     </div>
 
+    <!-- ===== 2.5 Ablation Metric Detail (v4.1) ===== -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head">
+        <h2><i class="ph ph-table"></i>四组消融实验指标明细<span class="desc">A/B/C/D · 字段精确率 / 无依据率 / 空值误报率</span></h2>
+      </div>
+      <table class="tbl" id="ablationMetricTable">
+        <thead>
+          <tr><th>指标</th><th>A 组（Direct LLM）</th><th>B 组（+候选证据）</th><th>C 组（+程序验证）</th><th>D 组（完整 BidAgent）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>字段精确率</td><td id="fp_a">—</td><td id="fp_b">—</td><td id="fp_c">—</td><td id="fp_d">—</td></tr>
+          <tr><td>无依据率</td><td id="ur_a">—</td><td id="ur_b">—</td><td id="ur_c">—</td><td id="ur_d">—</td></tr>
+          <tr><td>空值误报率 <i class="ph ph-info" title="空值误报率：金标为 absent/not_applicable 的字段中系统错误输出值的比例（越低越好）" style="color:var(--text-3);font-size:12px;cursor:help"></i></td><td id="nfpr_a">—</td><td id="nfpr_b">—</td><td id="nfpr_c">—</td><td id="nfpr_d">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- ===== 3. IoU + Error ===== -->
     <div class="grid2">
       <div class="card">
@@ -283,6 +300,9 @@ var DATA = {
     D: { fields_total:594, fields_with_value:447, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9217, total_tokens:348657, latency_ms_avg:7705.3, cost_cny:0.523,
          desc:"+分级过滤 (完整流水线)" }
   },
+  // v4.1 空值误报率（金标为 absent/not_applicable 的字段中系统错误输出值的比例，越低越好）
+  // 真实值来自 _w3_outputs/w3_ablation_smoke_v41_rerun.json（5篇x6字段，null_false_positive_rate=0.0）
+  null_fpr: { A: 0.0, B: 0.0, C: 0.0, D: 0.0 },
   strategies: {
     strict:  { kept_fields:420, field_precision:0.9376, gold_recall:0.8947, desc:"仅 HIGH 级" },
     default: { kept_fields:420, field_precision:0.9376, gold_recall:0.8947, desc:"HIGH + REVIEW(STRONG)" },
@@ -318,6 +338,49 @@ var DATA = {
 };
 
 var charts = {};
+
+/* ===== v4.1 真实数据动态加载 ===== */
+async function loadRealData(){
+  /* 1. 从 /api/stats/quality 获取实时 KPI */
+  try{
+    var r = await fetch("/api/stats/quality");
+    var d = await r.json();
+    if(d.code===200 && d.data){
+      var el=null;
+      if(el=document.getElementById("kpiTenders")) el.textContent=d.data.tender_count||"—";
+      if(el=document.getElementById("kpiFields")) el.textContent=d.data.field_count||"—";
+      if(el=document.getElementById("kpiEvidence")) el.textContent=d.data.evidence_count||"—";
+      if(el=document.getElementById("kpiVerifyRate")) el.textContent=((d.data.verification_rate||0)*100).toFixed(1)+"%";
+    }
+  }catch(e){ console.warn("load /api/stats/quality failed:",e); }
+
+  /* 2. 从 /static/data/ablation_v41.json 获取真实 null_fpr */
+  try{
+    var r2 = await fetch("/static/data/ablation_v41.json");
+    var d2 = await r2.json();
+    if(d2 && d2.summaries){
+      var groups=["A","B","C","D"];
+      groups.forEach(function(g){
+        var s=d2.summaries[g];
+        if(s && s.null_false_positive_rate!==undefined){
+          DATA.null_fpr[g]=s.null_false_positive_rate;
+        }
+      });
+      /* 更新 null_fpr 显示 */
+      var nfEl=document.getElementById("nullFprDisplay");
+      if(nfEl){
+        nfEl.textContent="A: "+DATA.null_fpr.A+" | B: "+DATA.null_fpr.B+" | C: "+DATA.null_fpr.C+" | D: "+DATA.null_fpr.D;
+      }
+      /* 重渲染消融表 */
+      if(typeof renderAblation==="function") renderAblation();
+    }
+  }catch(e){ console.warn("load ablation_v41.json failed:",e); }
+}
+
+/* 页面加载后自动拉取真实数据 */
+document.addEventListener("DOMContentLoaded",function(){
+  loadRealData();
+});
 var isDark = false;
 
 function theme() {
@@ -606,6 +669,20 @@ function initBootstrap() {
   });
 }
 
+/* ===== Ablation Metric Detail Table (v4.1) ===== */
+function _hc(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+function renderAblationMetricTable() {
+  var groups = ['A','B','C','D'];
+  groups.forEach(function(g) {
+    var ab = DATA.ablation[g];
+    var gl = g.toLowerCase();
+    _hc('fp_' + gl, (ab.field_precision * 100).toFixed(2) + '%');
+    _hc('ur_' + gl, (ab.unjustified_rate * 100).toFixed(2) + '%');
+    var nfpr = DATA.null_fpr ? DATA.null_fpr[g] : null;
+    _hc('nfpr_' + gl, (nfpr != null) ? (nfpr * 100).toFixed(2) + '%' : '—');
+  });
+}
+
 /* ===== Tables ===== */
 function renderCostTable() {
   var groups = ['A','B','C','D'];
@@ -655,15 +732,6 @@ function destroyAllCharts() {
   });
 }
 
-/* ===== Theme Toggle ===== */
-function toggleTheme() {
-  isDark = !isDark;
-  document.body.classList.toggle('dark', isDark);
-  document.getElementById('themeIcon').className = isDark ? 'ph ph-sun' : 'ph ph-moon';
-  destroyAllCharts();
-  initAllCharts();
-}
-
 /* ===== Resize ===== */
 window.addEventListener('resize', function() {
   Object.keys(charts).forEach(function(k) { if (charts[k]) charts[k].resize(); });
@@ -672,6 +740,7 @@ window.addEventListener('resize', function() {
 /* ===== Load ===== */
 window.addEventListener('DOMContentLoaded', function() {
   renderMetrics();
+  renderAblationMetricTable();
   renderCostTable();
   renderBootstrapTable();
   initAllCharts();

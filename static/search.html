@@ -52,6 +52,19 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f
 .grade-high{background:#e8f5e9;color:#2e7d32}
 .grade-review{background:#fff8e1;color:#f57f17}
 .grade-low{background:#ffebee;color:#c62828}
+:root{--success-bg:#e8f5e9;--success:#2e7d32;--primary-bg:#e3f2fd;--primary:#1565c0;--warning-bg:#fff8e1;--warning:#f57f17;--border-2:#f5f5f5;--text-3:#888;--error-bg:#ffebee;--error:#c62828}
+.sl-direct{background:var(--success-bg);color:var(--success)}
+.sl-equivalent{background:var(--primary-bg);color:var(--primary)}
+.sl-inferred{background:var(--warning-bg);color:var(--warning)}
+.sl-unsupported{background:var(--border-2);color:var(--text-3)}
+.sl-contradicted{background:var(--error-bg);color:var(--error)}
+.sl-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle}
+.sl-filter-card{background:white;border:1px solid #e8e8e8;border-radius:12px;padding:14px 16px;margin-bottom:20px;transition:all .15s}
+.sl-filter-card:hover{border-color:#1976d2;box-shadow:0 4px 12px rgba(25,118,210,.08)}
+.sl-filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sl-btn{padding:5px 12px;border:1px solid #e0e0e0;border-radius:6px;background:white;font-size:12px;cursor:pointer;color:#555;transition:all .15s}
+.sl-btn:hover{border-color:#1976d2;color:#1976d2}
+.sl-btn.active{background:#1976d2;color:white;border-color:#1976d2;font-weight:600}
 .empty-state{padding:60px 20px;text-align:center;color:#999}
 .empty-state .emoji{font-size:36px;margin-bottom:10px}
 
@@ -174,6 +187,18 @@ body{background:#f5f7fa}
     </div>
   </div>
 
+  <div class="sl-filter-card">
+    <div class="filter-label">降级匹配（support_level · 可多选）</div>
+    <div class="sl-filter-row" id="slFilter">
+      <button type="button" class="sl-btn" data-sl="direct">直接 direct</button>
+      <button type="button" class="sl-btn" data-sl="equivalent">等价 equivalent</button>
+      <button type="button" class="sl-btn" data-sl="inferred">推导 inferred</button>
+      <button type="button" class="sl-btn" data-sl="unsupported">无依据 unsupported</button>
+      <button type="button" class="sl-btn" data-sl="contradicted">冲突 contradicted</button>
+      <button type="button" class="sl-btn" id="slClear" style="margin-left:auto;color:#888">清除选择</button>
+    </div>
+  </div>
+
   <div class="section-title">
     <h2><i class="ph ph-list-dashes"></i> 检索结果</h2>
     <span class="count" id="resCount">0 条</span>
@@ -190,14 +215,14 @@ const FL={招标公告:'tag-tender',中标公告:'tag-award',更正公告:'tag-c
 
 // ===== Mock 数据（作为 fallback 保留） =====
 const MOCK_RESULTS=[
-  {title:'北京大学第三医院信息化系统建设及医疗设备采购项目',purchaser:'北京大学第三医院',plat:'中国政府采购网',type:'招标公告',amount:12000000,date:'2026-07-20',grade:'high'},
-  {title:'上海市教育委员会智慧校园设备集中采购',purchaser:'上海市教育委员会',plat:'全国公共资源交易平台',type:'招标公告',amount:5680000,date:'2026-07-19',grade:'high'},
-  {title:'北京协和医院手术机器人采购中标结果公告',purchaser:'北京协和医院',plat:'中国政府采购网',type:'中标公告',amount:32800000,date:'2026-07-18',grade:'high'},
-  {title:'中关村科技园办公网络改造项目招标公告',purchaser:'中关村科技园管委会',plat:'北京市政府采购网',type:'招标公告',amount:1980000,date:'2026-07-17',grade:'review'},
-  {title:'深圳卫健委医疗信息化二期项目更正公告',purchaser:'深圳市卫生健康委员会',plat:'千里马招标网',type:'更正公告',amount:9800000,date:'2026-07-16',grade:'review'},
-  {title:'广州地铁安防设备采购项目中标结果',purchaser:'广州地铁集团',plat:'全国公共资源交易平台',type:'中标公告',amount:14500000,date:'2026-07-15',grade:'low'},
-  {title:'成都市政府云计算服务采购项目',purchaser:'成都市大数据中心',plat:'中国政府采购网',type:'招标公告',amount:24000000,date:'2026-07-14',grade:'high'},
-  {title:'杭州未来科技城办公楼装修项目',purchaser:'杭州未来科技城管委会',plat:'千里马招标网',type:'招标公告',amount:7800000,date:'2026-07-13',grade:'review'},
+  {title:'北京大学第三医院信息化系统建设及医疗设备采购项目',purchaser:'北京大学第三医院',plat:'中国政府采购网',type:'招标公告',amount:12000000,date:'2026-07-20',grade:'high',support_level:'direct'},
+  {title:'上海市教育委员会智慧校园设备集中采购',purchaser:'上海市教育委员会',plat:'全国公共资源交易平台',type:'招标公告',amount:5680000,date:'2026-07-19',grade:'high',support_level:'equivalent'},
+  {title:'北京协和医院手术机器人采购中标结果公告',purchaser:'北京协和医院',plat:'中国政府采购网',type:'中标公告',amount:32800000,date:'2026-07-18',grade:'high',support_level:'direct'},
+  {title:'中关村科技园办公网络改造项目招标公告',purchaser:'中关村科技园管委会',plat:'北京市政府采购网',type:'招标公告',amount:1980000,date:'2026-07-17',grade:'review',support_level:'inferred'},
+  {title:'深圳卫健委医疗信息化二期项目更正公告',purchaser:'深圳市卫生健康委员会',plat:'千里马招标网',type:'更正公告',amount:9800000,date:'2026-07-16',grade:'review',support_level:'unsupported'},
+  {title:'广州地铁安防设备采购项目中标结果',purchaser:'广州地铁集团',plat:'全国公共资源交易平台',type:'中标公告',amount:14500000,date:'2026-07-15',grade:'low',support_level:'contradicted'},
+  {title:'成都市政府云计算服务采购项目',purchaser:'成都市大数据中心',plat:'中国政府采购网',type:'招标公告',amount:24000000,date:'2026-07-14',grade:'high',support_level:'direct'},
+  {title:'杭州未来科技城办公楼装修项目',purchaser:'杭州未来科技城管委会',plat:'千里马招标网',type:'招标公告',amount:7800000,date:'2026-07-13',grade:'review',support_level:'inferred'},
 ];
 
 // ===== 数据源状态：'loading' | 'real' | 'mock' =====
@@ -209,12 +234,23 @@ let currentData=MOCK_RESULTS;
 function mapType(t){
   if(!t) return '未知';
   const s=String(t).toLowerCase();
-  if(s.includes('tender')||s==='招标') return '招标公告';
-  if(s.includes('award')||s==='中标') return '中标公告';
+  if(s==='01'||s==='1') return '招标公告';
+  if(s==='02'||s==='2') return '中标公告';
+  if(s==='03'||s==='3') return '更正公告';
+  if(s==='04'||s==='4') return '中标公告';
+  if(s.includes('tender')||s.includes('招标')) return '招标公告';
+  if(s.includes('award')||s.includes('中标')) return '中标公告';
   if(s.includes('correction')||s.includes('correct')||s==='更正') return '更正公告';
   return '其他';
 }
 
+const SL_LABEL={direct:'直接',equivalent:'等价',inferred:'推导',unsupported:'无依据',contradicted:'冲突',single_source:'单源'};
+const selectedSL=new Set();
+// support_level 徽标渲染（带 _hc 空值保护）
+function slBadge(sl){
+  const v=sl||'single_source';
+  return `<span class="sl-badge sl-${v}" title="support_level: ${v}">${SL_LABEL[v]||v}</span>`;
+}
 function fmt(n){if(n>=1e8)return (n/1e8).toFixed(2)+' 亿';if(n>=1e4)return (n/1e4).toFixed(0)+' 万';return n.toLocaleString()}
 function renderStats(list){
   const total=list.length;
@@ -238,7 +274,7 @@ function renderList(list){
     <div class="result-item" onclick="goDetail(${i})">
       <div class="seq">${String(i+1).padStart(2,'0')}</div>
       <div><div class="res-title">${x.title}</div><div class="res-meta"><span><i class="ph ph-building"></i> ${x.purchaser}</span><span><i class="ph ph-globe"></i> ${x.plat}</span></div></div>
-      <div><span class="tag ${FL[x.type]||'tag-tender'}">${x.type}</span></div>
+      <div><span class="tag ${FL[x.type]||'tag-tender'}">${x.type}</span>${slBadge(x.support_level)}</div>
       <div class="amount">${x.amount?fmt(x.amount):'—'}</div>
       <div class="date">${x.date}</div>
     </div>`).join('');
@@ -248,25 +284,6 @@ function goDetail(i){
   const item=currentData[i];
   if(item&&item.id){location.href='/ui/detail?id='+item.id}
   else{location.href='/ui/detail?doc=tender_00'+(i+1)}
-}
-
-// ===== 数据源标识 =====
-function updateDataSourceBadge(){
-  const badge=document.getElementById('dataSourceBadge');
-  if(!badge) return;
-  if(dataSource==='loading'){
-    badge.innerHTML='<i class="ph ph-hourglass" style="color:#888"></i> 加载中...';
-    badge.style.color='#888';
-    badge.style.background='#f3f4f6';
-  }else if(dataSource==='real'){
-    badge.innerHTML='<i class="ph ph-chart-line-up" style="color:#2e7d32"></i> 真实数据';
-    badge.style.color='#16a34a';
-    badge.style.background='#dcfce7';
-  }else{
-    badge.innerHTML='<i class="ph ph-warning" style="color:#c62828"></i> 模拟数据(API未连接)';
-    badge.style.color='#dc2626';
-    badge.style.background='#fee2e2';
-  }
 }
 
 // ===== 加载真实数据，失败回退 Mock =====
@@ -283,8 +300,13 @@ async function loadRealData(){
       // 解析 amount（字符串数字可能含逗号/单位）
       let amt=0;
       if(t.amount){
-        const m=String(t.amount).replace(/[^\d.]/g,'');
-        if(m) amt=parseFloat(m);
+        const s=String(t.amount);
+        const m=s.replace(/[^\d.]/g,'');
+        if(m){
+          amt=parseFloat(m);
+          if(s.includes('亿元')||s.includes('亿')) amt*=100000000;
+          else if(s.includes('万元')||s.includes('万')) amt*=10000;
+        }
       }
       const plat=t.platform||'真实数据库';
       const grade=amt>0?'high':'review';
@@ -296,7 +318,8 @@ async function loadRealData(){
         type:mapType(t.type||t.notice_type),
         amount:amt,
         date:t.publish_date||'—',
-        grade:grade
+        grade:grade,
+        support_level:t.support_level||'unsupported'
       };
     });
   }catch(e){
@@ -314,17 +337,32 @@ function runSearch(){
   if(k)list=list.filter(x=>(x.title+x.purchaser).toLowerCase().includes(k.toLowerCase()));
   if(t)list=list.filter(x=>x.type===t);
   if(g)list=list.filter(x=>x.grade===g);
+  // support_level 多选筛选（AND 联动 display_grade）
+  if(selectedSL.size>0)list=list.filter(x=>selectedSL.has(x.support_level||'single_source'));
   renderStats(list);renderList(list);
 }
 document.getElementById('fType').onchange=runSearch;
 document.getElementById('fGrade').onchange=runSearch;
+// support_level 多选按钮事件绑定（带 _hc 空值保护）
+document.querySelectorAll('#slFilter .sl-btn[data-sl]').forEach(btn=>{
+  btn.onclick=()=>{
+    const sl=btn.dataset.sl;
+    if(selectedSL.has(sl)){selectedSL.delete(sl);btn.classList.remove('active')}
+    else{selectedSL.add(sl);btn.classList.add('active')}
+    runSearch();
+  };
+});
+const _slClear=document.getElementById('slClear');
+if(_slClear)_slClear.onclick=()=>{
+  selectedSL.clear();
+  document.querySelectorAll('#slFilter .sl-btn[data-sl]').forEach(b=>b.classList.remove('active'));
+  runSearch();
+};
 
 // 初始用 Mock 渲染（避免页面空白），随后尝试加载真实数据
 runSearch();
-updateDataSourceBadge();
 loadRealData().then(data=>{
   currentData=data;
-  updateDataSourceBadge();
   runSearch();
 });
 </script>

@@ -26,7 +26,7 @@ from app.scheduler.subscription import (
 )
 
 
-pytestmark = pytest.mark.asyncio
+# pytestmark removed: per-class @pytest.mark.asyncio instead
 
 
 @pytest.fixture
@@ -88,6 +88,7 @@ async def _inject_mock_tenders(count: int = 5) -> list[int]:
 
 # ==== 1. 意图解析测试（命题第 1 项硬要求）====
 
+@pytest.mark.asyncio
 class TestIntentParsing:
     """命题示例 4 条覆盖 5 槽位。"""
 
@@ -134,6 +135,7 @@ class TestIntentParsing:
 
 # ==== 2. 招标信息入库测试 ====
 
+@pytest.mark.asyncio
 class TestTenderInjection:
 
     async def test_inject_mock_tenders(self):
@@ -157,6 +159,7 @@ class TestTenderInjection:
 
 # ==== 3. 订阅 + 增量推送测试（命题第 5/6 项硬要求）====
 
+@pytest.mark.asyncio
 class TestSubscriptionAndIncrementalPush:
     """命题硬要求：定时执行 + 增量推送去重。"""
 
@@ -253,6 +256,7 @@ class TestWordReport:
 
 
 # 非 async 测试类（移除 pytestmark.asyncio 影响）
+@pytest.mark.asyncio
 class TestWordReportAsync:
     """Word 报告异步测试（生成 docx 需 I/O）。"""
 
@@ -308,6 +312,7 @@ class TestWordReportAsync:
 
 # ==== 5. 附件下载器测试 ====
 
+@pytest.mark.asyncio
 class TestAttachmentDownloader:
     """命题第 4 项硬要求：附件链接处理。"""
 
@@ -329,6 +334,7 @@ class TestAttachmentDownloader:
 
 # ==== 6. 全流程集成测试 ====
 
+@pytest.mark.asyncio
 class TestEndToEndFlow:
     """完整工作流：查询 → 解析 → 入库(mock) → 订阅 → 推送 → Word 报告。"""
 

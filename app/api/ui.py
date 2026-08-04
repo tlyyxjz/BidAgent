@@ -4,7 +4,7 @@ S-4 拆分：HTML 字符串已迁移到 app/templates/html/，本文件只保留
 
 保留的 Demo 页面（主链路 6 步 + 入口）：
 - /ui                    首页（重定向到 /ui/chat）
-- /ui/chat               聊天 Demo 页（6 Agent 协作 Demo，主入口）
+- /ui/chat               智能问答 Demo 页（v4.1 6 Agent 协同流水线，主入口）
 - /ui/search             W3-08 查询页（供应商/项目搜索入口）
 - /ui/notice-list        W3-08 公告列表页（按类型筛选）
 - /ui/quality-dashboard  W3-08 数据质量评测 Dashboard
@@ -21,7 +21,6 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 
-from app.templates.html import CHAT_HTML
 
 router = APIRouter(prefix="/ui", tags=["ui"])
 
@@ -45,8 +44,8 @@ async def ui_index() -> HTMLResponse:
 
 @router.get("/chat", response_class=HTMLResponse)
 async def ui_chat() -> HTMLResponse:
-    """聊天 Demo 页（W2-06 6 Agent 协作 Demo）。"""
-    return HTMLResponse(content=CHAT_HTML)
+    """聊天 Demo 页（v4.1 智能问答 · 6 Agent 协同流水线）。"""
+    return _serve_static_html("chat.html")
 
 
 # ========== W3-08 新增 Web Demo 页面（从 static/ 静态文件加载） ==========
