@@ -167,7 +167,7 @@ async def migrate_tender_to_four_layer(db: AsyncSession) -> dict:
 
     await db.commit()
     logger.info(
-        "迁移完成: total=%d migrated=%d skipped=%d",
+        "迁移完成: total={} migrated={} skipped={}",
         result["total"], result["migrated"], result["skipped"],
     )
     return result

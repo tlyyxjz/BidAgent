@@ -163,7 +163,8 @@ TenderProject（采购项目）
 ### 测试
 
 - 1882 passed · 0 errors / 0 failures
-- 30 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
+- 27 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
+- 测试覆盖率 90.23%（达到 pytest.ini 阈值 90%，1882 用例全量实测）
 
 ---
 

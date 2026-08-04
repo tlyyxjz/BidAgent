@@ -67,6 +67,11 @@ async def _drop_all_tables() -> None:
                 await conn.execute(text(f"DROP TABLE IF EXISTS [{table_name}]"))
         except Exception:
             pass
+    # 清空连接池，刷新 aiosqlite schema 缓存（避免跨文件共享库时 checkfirst 读到陈旧表信息）
+    try:
+        await engine.dispose()
+    except Exception:
+        pass
 
 @pytest.fixture(autouse=True)
 async def _reset_db_and_rate_limit(monkeypatch):

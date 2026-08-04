@@ -187,7 +187,7 @@
 
 - 1882 passed（独立复跑确认，commit caeacde）
 - 0 errors / 0 failures
-- 30 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
+- 27 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
 
 ---
 
