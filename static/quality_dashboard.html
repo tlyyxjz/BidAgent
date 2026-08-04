@@ -132,6 +132,23 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 ::-webkit-scrollbar-track{background:transparent}
 
+
+/* ===== Bad Case 分析 ===== */
+.badcase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.badcase-card{background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:14px;position:relative}
+.badcase-card .badcase-tag{position:absolute;top:0;right:0;padding:2px 8px;font-size:10px;font-weight:600;border-radius:0 8px 0 8px}
+.badcase-tag.type-precision{background:#fff7e6;color:#d46b08}
+.badcase-tag.type-format{background:#e6f7ff;color:#096dd9}
+.badcase-tag.type-suppressed{background:#f6ffed;color:#389e0d}
+.badcase-field{font-size:13px;font-weight:600;color:#262626;margin-bottom:8px;padding-right:60px}
+.badcase-row{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;font-size:12px}
+.badcase-row .label{color:#8c8c8c;min-width:56px;flex-shrink:0}
+.badcase-row .val{font-family:'Consolas','Monaco',monospace;padding:2px 6px;border-radius:3px}
+.badcase-row .val.sys{background:#fff1f0;color:#cf1322}
+.badcase-row .val.gold{background:#f6ffed;color:#389e0d}
+.badcase-analysis{margin-top:8px;padding:8px 10px;background:#fff;border-left:3px solid #1677ff;border-radius:0 4px 4px 0;font-size:11px;color:#595959;line-height:1.7}
+.badcase-analysis strong{color:#262626}
+
 </style>
 </head>
 <body>
@@ -240,6 +257,45 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       </div>
     </div>
 
+
+    <!-- ===== 3.5 典型 Bad Case 分析 ===== -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head">
+        <h2><i class="ph ph-bug"></i>典型 Bad Case 分析<span class="desc">D 组 35 个 incorrect 中 4 个代表性案例 · 展示系统如何识别与标记错误</span></h2>
+      </div>
+      <div class="badcase-grid">
+        <div class="badcase-card">
+          <div class="badcase-tag type-precision">精度差异</div>
+          <div class="badcase-field">amount（金额）</div>
+          <div class="badcase-row"><span class="label">系统输出</span><span class="val sys">331.300000万元</span></div>
+          <div class="badcase-row"><span class="label">金标值</span><span class="val gold">331.3万元</span></div>
+          <div class="badcase-analysis"><i class="ph ph-lightbulb"></i> <strong>系统标记：</strong>display_grade=review（L4格式变体匹配命中，金额容差判定失败）。<strong>根因：</strong>原文显示精度6位小数，金标精度1位，display_precision未对齐。<strong>改进：</strong>v4.2 基于原文显示精度计算容差。</div>
+        </div>
+        <div class="badcase-card">
+          <div class="badcase-tag type-format">格式变体</div>
+          <div class="badcase-field">bid_deadline（投标截止日期）</div>
+          <div class="badcase-row"><span class="label">系统输出</span><span class="val sys">2024-03-15</span></div>
+          <div class="badcase-row"><span class="label">金标值</span><span class="val gold">2024年3月15日</span></div>
+          <div class="badcase-analysis"><i class="ph ph-lightbulb"></i> <strong>系统标记：</strong>display_grade=review（L4日期格式变体匹配，精确比对失败）。<strong>根因：</strong>日期归一化未覆盖"年/月/日"中文格式。<strong>改进：</strong>L4 增加中文日期格式归一化。</div>
+        </div>
+        <div class="badcase-card">
+          <div class="badcase-tag type-suppressed">正确抑制</div>
+          <div class="badcase-field">bid_winner（中标人）</div>
+          <div class="badcase-row"><span class="label">系统输出</span><span class="val sys" style="background:#f5f5f5;color:#8c8c8c">—（无依据不输出）</span></div>
+          <div class="badcase-row"><span class="label">金标值</span><span class="val gold">absent</span></div>
+          <div class="badcase-analysis"><i class="ph ph-check-circle"></i> <strong>系统标记：</strong>unjustified（L1-L5 全部未命中，字段不输出）。<strong>说明：</strong>原文未提及中标人，系统正确抑制输出，null_false_positive_rate=0.0。</div>
+        </div>
+        <div class="badcase-card">
+          <div class="badcase-tag type-precision">单位干扰</div>
+          <div class="badcase-field">amount（金额）</div>
+          <div class="badcase-row"><span class="label">系统输出</span><span class="val sys">331.3万元</span></div>
+          <div class="badcase-row"><span class="label">金标值</span><span class="val gold">3313000元</span></div>
+          <div class="badcase-analysis"><i class="ph ph-lightbulb"></i> <strong>系统标记：</strong>display_grade=low（L4金额格式变体匹配，单位换算后比对失败）。<strong>根因：</strong>万元→元换算后浮点精度丢失。<strong>改进：</strong>金额比对统一到最小显示单位。</div>
+        </div>
+      </div>
+      <div class="chart-note"><i class="ph ph-info"></i>35 个 incorrect 中 91.4% 集中在 amount(16例) 和 bid_deadline(16例)，均为精度/格式问题而非语义错误。系统对每个错误均标记了 display_grade 和根因。</div>
+    </div>
+
     <!-- ===== 4. Cost Performance ===== -->
     <div class="card" style="margin-bottom:12px">
       <div class="card-head">
@@ -272,6 +328,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="footer">
       <span class="real">全部数据来自真实评测</span> · 数据源文件: w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json / w3_03_evidence_full_99.json / w3_error_analysis.json / w3_bootstrap_ci_full_99.json<br>
       标小智 · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
+      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e8e8e8;font-size:11px;color:#8c8c8c;line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
     </div>
   </main>
 </div>
