@@ -21,15 +21,37 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
+        "gold_status": "present",
         "raw_value": "",
-        "values": []
+        "values": [
+          {
+            "value": "",
+            "acceptable_evidence_spans": [
+              {
+                "start": 153,
+                "end": 188,
+                "text": "原公告的采购项目编号：\nNNZC2026-C2-240099-ZXXM"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
+        "gold_status": "present",
         "raw_value": "",
-        "values": []
+        "values": [
+          {
+            "value": "",
+            "acceptable_evidence_spans": [
+              {
+                "start": 583,
+                "end": 597,
+                "text": "名    称：\n马山县水利局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -68,8 +90,8 @@
       }
     ],
     "extra_fields": {},
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "第100篇补抓, GLM自动标注, 已修正purchaser_name/publish_date, 待K3复核 | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "v1-batch8-glm",
+    "fix_note": "第100篇补抓, GLM自动标注, 已修正purchaser_name/publish_date, 待K3复核"
   },
   {
     "document_id": "w3_award_consortium_001",
@@ -1000,18 +1022,52 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "N5100012026001272",
+            "acceptable_evidence_spans": [
+              {
+                "start": 409,
+                "end": 437,
+                "text": "原公告的采购项目编号：N5100012026001272"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "四川省骨科医院",
+            "acceptable_evidence_spans": [
+              {
+                "start": 102,
+                "end": 113,
+                "text": "采购单位四川省骨科医院"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "920,000.00",
+            "amount_type": "budget",
+            "acceptable_evidence_spans": [
+              {
+                "start": 835,
+                "end": 857,
+                "text": "采购包预算金额（元）: 920,000.00"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "publish_date",
@@ -1023,36 +1079,6 @@
               {
                 "start": 37,
                 "end": 48,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 37,
-                "end": 54,
-                "text": "2026年07月29日 20:01"
-              },
-              {
-                "start": 124,
-                "end": 135,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 124,
-                "end": 141,
-                "text": "2026年07月29日 20:01"
-              },
-              {
-                "start": 162,
-                "end": 173,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 741,
-                "end": 752,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 1286,
-                "end": 1297,
                 "text": "2026年07月29日"
               }
             ]
@@ -1099,8 +1125,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "K3 补抓7篇补全测试集 | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
   },
   {
     "document_id": "w3_correction_092",
@@ -1111,13 +1137,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "1408292026AGK00118",
+            "acceptable_evidence_spans": [
+              {
+                "start": 335,
+                "end": 364,
+                "text": "原公告的采购项目编号：1408292026AGK00118"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "平陆县公安局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 101,
+                "end": 111,
+                "text": "采购单位平陆县公安局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -1134,31 +1182,6 @@
               {
                 "start": 30,
                 "end": 41,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 30,
-                "end": 47,
-                "text": "2026年07月29日 22:04"
-              },
-              {
-                "start": 122,
-                "end": 133,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 122,
-                "end": 139,
-                "text": "2026年07月29日 22:04"
-              },
-              {
-                "start": 160,
-                "end": 171,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 505,
-                "end": 516,
                 "text": "2026年07月29日"
               }
             ]
@@ -1194,8 +1217,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "K3 补抓7篇补全测试集 | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed4-batch7",
+    "fix_note": "K3 补抓7篇补全测试集"
   },
   {
     "document_id": "w3_tender_001",
@@ -8328,13 +8351,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中传招标【2026】第028号/CFTC-BJ01-2606001",
+            "acceptable_evidence_spans": [
+              {
+                "start": 414,
+                "end": 458,
+                "text": "原公告的采购项目编号：中传招标【2026】第028号/CFTC-BJ01-2606001"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中国传媒大学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 1299,
+                "end": 1309,
+                "text": "名 称：中国传媒大学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -8352,31 +8397,6 @@
                 "start": 22,
                 "end": 33,
                 "text": "2026年07月28日"
-              },
-              {
-                "start": 22,
-                "end": 39,
-                "text": "2026年07月28日 20:29"
-              },
-              {
-                "start": 121,
-                "end": 132,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 121,
-                "end": 138,
-                "text": "2026年07月28日 20:29"
-              },
-              {
-                "start": 159,
-                "end": 170,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 1242,
-                "end": 1253,
-                "text": "2026年07月28日"
               }
             ]
           }
@@ -8392,12 +8412,12 @@
         "gold_status": "present",
         "values": [
           {
-            "raw_value": "2026年8月13日14点00分（北京时间）",
+            "raw_value": "开标时间：2026年08月03日14点00分（北京时间）",
             "acceptable_evidence_spans": [
               {
-                "start": 908,
-                "end": 935,
-                "text": "开标时间：2026年8月13日14点00分（北京时间）"
+                "start": 555,
+                "end": 583,
+                "text": "开标时间：2026年08月03日14点00分（北京时间）"
               }
             ]
           }
@@ -8422,8 +8442,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_032",
@@ -8434,13 +8454,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "FW-2026055-JZD",
+            "acceptable_evidence_spans": [
+              {
+                "start": 379,
+                "end": 404,
+                "text": "原公告的采购项目编号：FW-2026055-JZD"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中央财经大学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 776,
+                "end": 786,
+                "text": "名 称：中央财经大学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -8457,31 +8499,6 @@
               {
                 "start": 34,
                 "end": 45,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 34,
-                "end": 51,
-                "text": "2026年07月28日 19:49"
-              },
-              {
-                "start": 147,
-                "end": 158,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 147,
-                "end": 164,
-                "text": "2026年07月28日 19:49"
-              },
-              {
-                "start": 185,
-                "end": 196,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 720,
-                "end": 731,
                 "text": "2026年07月28日"
               }
             ]
@@ -8517,8 +8534,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_033",
@@ -8529,13 +8546,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "OITC-G260661839",
+            "acceptable_evidence_spans": [
+              {
+                "start": 521,
+                "end": 547,
+                "text": "原公告的采购项目编号：OITC-G260661839"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中国科学院北京基因组研究所（国家生物信息中心）",
+            "acceptable_evidence_spans": [
+              {
+                "start": 740,
+                "end": 767,
+                "text": "名 称：中国科学院北京基因组研究所（国家生物信息中心）"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -8552,31 +8591,6 @@
               {
                 "start": 45,
                 "end": 56,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 45,
-                "end": 62,
-                "text": "2026年07月28日 19:10"
-              },
-              {
-                "start": 214,
-                "end": 225,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 214,
-                "end": 231,
-                "text": "2026年07月28日 19:10"
-              },
-              {
-                "start": 252,
-                "end": 263,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 684,
-                "end": 695,
                 "text": "2026年07月28日"
               }
             ]
@@ -8612,8 +8626,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_034",
@@ -8624,13 +8638,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "GZGK26D752C0752Z",
+            "acceptable_evidence_spans": [
+              {
+                "start": 390,
+                "end": 417,
+                "text": "原公告的采购项目编号：GZGK26D752C0752Z"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "自然资源部珠海海洋中心",
+            "acceptable_evidence_spans": [
+              {
+                "start": 607,
+                "end": 622,
+                "text": "名 称：自然资源部珠海海洋中心"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -8647,31 +8683,6 @@
               {
                 "start": 31,
                 "end": 42,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 31,
-                "end": 48,
-                "text": "2026年07月28日 19:05"
-              },
-              {
-                "start": 142,
-                "end": 153,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 142,
-                "end": 159,
-                "text": "2026年07月28日 19:05"
-              },
-              {
-                "start": 180,
-                "end": 191,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 551,
-                "end": 562,
                 "text": "2026年07月28日"
               }
             ]
@@ -8707,8 +8718,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_035",
@@ -8719,13 +8730,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "JXTC2026150075",
+            "acceptable_evidence_spans": [
+              {
+                "start": 412,
+                "end": 437,
+                "text": "原公告的采购项目编号：JXTC2026150075"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中国人民银行抚州市分行",
+            "acceptable_evidence_spans": [
+              {
+                "start": 632,
+                "end": 647,
+                "text": "名 称：中国人民银行抚州市分行"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -8742,31 +8775,6 @@
               {
                 "start": 43,
                 "end": 54,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 43,
-                "end": 60,
-                "text": "2026年07月28日 18:45"
-              },
-              {
-                "start": 177,
-                "end": 188,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 177,
-                "end": 194,
-                "text": "2026年07月28日 18:45"
-              },
-              {
-                "start": 215,
-                "end": 226,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 576,
-                "end": 587,
                 "text": "2026年07月28日"
               }
             ]
@@ -8802,8 +8810,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_036",
@@ -8814,13 +8822,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "JJSWTJCG-2026-07",
+            "acceptable_evidence_spans": [
+              {
+                "start": 499,
+                "end": 526,
+                "text": "原公告的采购项目编号：JJSWTJCG-2026-07"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "国家税务总局九江经济技术开发区税务局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 1773,
+                "end": 1795,
+                "text": "名 称：国家税务总局九江经济技术开发区税务局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -8837,31 +8867,6 @@
               {
                 "start": 48,
                 "end": 59,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 48,
-                "end": 65,
-                "text": "2026年07月28日 18:38"
-              },
-              {
-                "start": 195,
-                "end": 206,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 195,
-                "end": 212,
-                "text": "2026年07月28日 18:38"
-              },
-              {
-                "start": 233,
-                "end": 244,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 1679,
-                "end": 1690,
                 "text": "2026年07月28日"
               }
             ]
@@ -8897,8 +8902,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_037",
@@ -8909,13 +8914,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "2026CGZXGKBX0041",
+            "acceptable_evidence_spans": [
+              {
+                "start": 381,
+                "end": 408,
+                "text": "原公告的采购项目编号：2026CGZXGKBX0041"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "华侨大学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 758,
+                "end": 766,
+                "text": "名 称：华侨大学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -8932,31 +8959,6 @@
               {
                 "start": 36,
                 "end": 47,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 36,
-                "end": 53,
-                "text": "2026年07月28日 18:20"
-              },
-              {
-                "start": 140,
-                "end": 151,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 140,
-                "end": 157,
-                "text": "2026年07月28日 18:20"
-              },
-              {
-                "start": 178,
-                "end": 189,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 562,
-                "end": 573,
                 "text": "2026年07月28日"
               }
             ]
@@ -8992,8 +8994,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_038",
@@ -9004,13 +9006,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "SWJTUJ-FWCG-2026-0003",
+            "acceptable_evidence_spans": [
+              {
+                "start": 445,
+                "end": 477,
+                "text": "原公告的采购项目编号：SWJTUJ-FWCG-2026-0003"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "西南交通大学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 841,
+                "end": 851,
+                "text": "名 称：西南交通大学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9027,41 +9051,6 @@
               {
                 "start": 47,
                 "end": 58,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 47,
-                "end": 64,
-                "text": "2026年07月28日 18:19"
-              },
-              {
-                "start": 184,
-                "end": 195,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 184,
-                "end": 201,
-                "text": "2026年07月28日 18:19"
-              },
-              {
-                "start": 207,
-                "end": 218,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 222,
-                "end": 233,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 530,
-                "end": 541,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 672,
-                "end": 683,
                 "text": "2026年07月28日"
               }
             ]
@@ -9097,8 +9086,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_039",
@@ -9109,13 +9098,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "ZZ12603919",
+            "acceptable_evidence_spans": [
+              {
+                "start": 382,
+                "end": 403,
+                "text": "原公告的采购项目编号：ZZ12603919"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "黄埔海关技术中心",
+            "acceptable_evidence_spans": [
+              {
+                "start": 772,
+                "end": 784,
+                "text": "名 称：黄埔海关技术中心"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9132,31 +9143,6 @@
               {
                 "start": 37,
                 "end": 48,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 37,
-                "end": 54,
-                "text": "2026年07月28日 18:11"
-              },
-              {
-                "start": 146,
-                "end": 157,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 146,
-                "end": 163,
-                "text": "2026年07月28日 18:11"
-              },
-              {
-                "start": 184,
-                "end": 195,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 716,
-                "end": 727,
                 "text": "2026年07月28日"
               }
             ]
@@ -9192,8 +9178,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_040",
@@ -9204,13 +9190,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "HZ20260202-0167",
+            "acceptable_evidence_spans": [
+              {
+                "start": 451,
+                "end": 477,
+                "text": "原公告的采购项目编号：HZ20260202-0167"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中南大学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 857,
+                "end": 865,
+                "text": "名 称：中南大学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9227,31 +9235,6 @@
               {
                 "start": 47,
                 "end": 58,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 47,
-                "end": 64,
-                "text": "2026年07月28日 17:58"
-              },
-              {
-                "start": 175,
-                "end": 186,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 175,
-                "end": 192,
-                "text": "2026年07月28日 17:58"
-              },
-              {
-                "start": 213,
-                "end": 224,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 641,
-                "end": 652,
                 "text": "2026年07月28日"
               }
             ]
@@ -9287,8 +9270,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_041",
@@ -9304,8 +9287,19 @@
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "德阳市消防救援支队",
+            "acceptable_evidence_spans": [
+              {
+                "start": 607,
+                "end": 620,
+                "text": "名 称：德阳市消防救援支队"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9322,31 +9316,6 @@
               {
                 "start": 39,
                 "end": 50,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 39,
-                "end": 56,
-                "text": "2026年07月28日 17:55"
-              },
-              {
-                "start": 165,
-                "end": 176,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 165,
-                "end": 182,
-                "text": "2026年07月28日 17:55"
-              },
-              {
-                "start": 203,
-                "end": 214,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 553,
-                "end": 564,
                 "text": "2026年07月28日"
               }
             ]
@@ -9382,8 +9351,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_042",
@@ -9394,13 +9363,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "0724-2631S1552539",
+            "acceptable_evidence_spans": [
+              {
+                "start": 503,
+                "end": 531,
+                "text": "原公告的采购项目编号：0724-2631S1552539"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中国民用航空中南地区空中交通管理局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 1096,
+                "end": 1117,
+                "text": "名 称：中国民用航空中南地区空中交通管理局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9417,41 +9408,6 @@
               {
                 "start": 50,
                 "end": 61,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 50,
-                "end": 67,
-                "text": "2026年07月28日 17:50"
-              },
-              {
-                "start": 202,
-                "end": 213,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 202,
-                "end": 219,
-                "text": "2026年07月28日 17:50"
-              },
-              {
-                "start": 225,
-                "end": 236,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 240,
-                "end": 251,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 598,
-                "end": 609,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 1040,
-                "end": 1051,
                 "text": "2026年07月28日"
               }
             ]
@@ -9487,8 +9443,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_043",
@@ -9499,13 +9455,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "ZF2026-17-0722",
+            "acceptable_evidence_spans": [
+              {
+                "start": 467,
+                "end": 492,
+                "text": "原公告的采购项目编号：ZF2026-17-0722"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "中国科学技术大学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 856,
+                "end": 868,
+                "text": "名 称：中国科学技术大学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9522,31 +9500,6 @@
               {
                 "start": 42,
                 "end": 53,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 42,
-                "end": 59,
-                "text": "2026年07月28日 17:20"
-              },
-              {
-                "start": 176,
-                "end": 187,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 176,
-                "end": 193,
-                "text": "2026年07月28日 17:20"
-              },
-              {
-                "start": 214,
-                "end": 225,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 800,
-                "end": 811,
                 "text": "2026年07月28日"
               }
             ]
@@ -9582,8 +9535,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_044",
@@ -9594,13 +9547,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "BUAAZB20260079",
+            "acceptable_evidence_spans": [
+              {
+                "start": 408,
+                "end": 433,
+                "text": "原公告的采购项目编号：BUAAZB20260079"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "北京航空航天大学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 1140,
+                "end": 1152,
+                "text": "名 称：北京航空航天大学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9617,31 +9592,6 @@
               {
                 "start": 37,
                 "end": 48,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 37,
-                "end": 54,
-                "text": "2026年07月28日 17:17"
-              },
-              {
-                "start": 158,
-                "end": 169,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 158,
-                "end": 175,
-                "text": "2026年07月28日 17:17"
-              },
-              {
-                "start": 196,
-                "end": 207,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 1024,
-                "end": 1035,
                 "text": "2026年07月28日"
               }
             ]
@@ -9688,8 +9638,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_045",
@@ -9700,13 +9650,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "RJC-H26012",
+            "acceptable_evidence_spans": [
+              {
+                "start": 382,
+                "end": 403,
+                "text": "原公告的采购项目编号：RJC-H26012"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "全国人大机关服务中心北戴河休养院",
+            "acceptable_evidence_spans": [
+              {
+                "start": 682,
+                "end": 702,
+                "text": "名 称：全国人大机关服务中心北戴河休养院"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9723,31 +9695,6 @@
               {
                 "start": 37,
                 "end": 48,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 37,
-                "end": 54,
-                "text": "2026年07月28日 17:07"
-              },
-              {
-                "start": 165,
-                "end": 176,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 165,
-                "end": 182,
-                "text": "2026年07月28日 17:07"
-              },
-              {
-                "start": 203,
-                "end": 214,
-                "text": "2026年07月28日"
-              },
-              {
-                "start": 625,
-                "end": 636,
                 "text": "2026年07月28日"
               }
             ]
@@ -9783,8 +9730,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_076",
@@ -9795,13 +9742,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "HXCT-ZC-F-26(018)",
+            "acceptable_evidence_spans": [
+              {
+                "start": 329,
+                "end": 357,
+                "text": "原公告的采购项目编号：HXCT-ZC-F-26(018)"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "陕西省丹凤中学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 616,
+                "end": 626,
+                "text": "名称：陕西省丹凤中学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9818,36 +9787,6 @@
               {
                 "start": 30,
                 "end": 41,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 30,
-                "end": 47,
-                "text": "2026年07月29日 09:05"
-              },
-              {
-                "start": 109,
-                "end": 120,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 109,
-                "end": 126,
-                "text": "2026年07月29日 09:05"
-              },
-              {
-                "start": 147,
-                "end": 158,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 551,
-                "end": 562,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 794,
-                "end": 805,
                 "text": "2026年07月29日"
               }
             ]
@@ -9883,8 +9822,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_077",
@@ -9895,13 +9834,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "BZQC2026CG057 号",
+            "acceptable_evidence_spans": [
+              {
+                "start": 330,
+                "end": 356,
+                "text": "原公告的采购项目编号：BZQC2026CG057 号"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "亳州市丹华小学",
+            "acceptable_evidence_spans": [
+              {
+                "start": 365,
+                "end": 375,
+                "text": "名称：亳州市丹华小学"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -9919,21 +9880,6 @@
                 "start": 27,
                 "end": 38,
                 "text": "2026年07月29日"
-              },
-              {
-                "start": 27,
-                "end": 44,
-                "text": "2026年07月29日 09:00"
-              },
-              {
-                "start": 117,
-                "end": 128,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 117,
-                "end": 134,
-                "text": "2026年07月29日 09:00"
               }
             ]
           }
@@ -9968,8 +9914,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_078",
@@ -9980,13 +9926,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "WHQS-GCD-2026-108",
+            "acceptable_evidence_spans": [
+              {
+                "start": 506,
+                "end": 534,
+                "text": "原公告的采购项目编号：WHQS-GCD-2026-108"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "武汉经济技术开发区（汉南区）教育局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 108,
+                "end": 129,
+                "text": "采购单位武汉经济技术开发区（汉南区）教育局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10003,26 +9971,6 @@
               {
                 "start": 37,
                 "end": 48,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 37,
-                "end": 54,
-                "text": "2026年07月29日 08:56"
-              },
-              {
-                "start": 151,
-                "end": 162,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 151,
-                "end": 168,
-                "text": "2026年07月29日 08:56"
-              },
-              {
-                "start": 189,
-                "end": 200,
                 "text": "2026年07月29日"
               }
             ]
@@ -10058,8 +10006,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_079",
@@ -10070,13 +10018,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "WHQS-GCD-2026-102",
+            "acceptable_evidence_spans": [
+              {
+                "start": 509,
+                "end": 537,
+                "text": "原公告的采购项目编号：WHQS-GCD-2026-102"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "武汉经济技术开发区（汉南区）教育局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 110,
+                "end": 131,
+                "text": "采购单位武汉经济技术开发区（汉南区）教育局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10093,26 +10063,6 @@
               {
                 "start": 38,
                 "end": 49,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 38,
-                "end": 55,
-                "text": "2026年07月29日 08:56"
-              },
-              {
-                "start": 153,
-                "end": 164,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 153,
-                "end": 170,
-                "text": "2026年07月29日 08:56"
-              },
-              {
-                "start": 191,
-                "end": 202,
                 "text": "2026年07月29日"
               }
             ]
@@ -10148,8 +10098,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_080",
@@ -10160,13 +10110,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "[230001]SC[GK]20260196",
+            "acceptable_evidence_spans": [
+              {
+                "start": 352,
+                "end": 385,
+                "text": "原公告的采购项目编号：[230001]SC[GK]20260196"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "黑龙江中医药大学附属第一医院",
+            "acceptable_evidence_spans": [
+              {
+                "start": 559,
+                "end": 576,
+                "text": "名称：黑龙江中医药大学附属第一医院"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10183,36 +10155,6 @@
               {
                 "start": 35,
                 "end": 46,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 35,
-                "end": 52,
-                "text": "2026年07月29日 08:54"
-              },
-              {
-                "start": 120,
-                "end": 131,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 120,
-                "end": 137,
-                "text": "2026年07月29日 08:54"
-              },
-              {
-                "start": 158,
-                "end": 169,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 494,
-                "end": 505,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 747,
-                "end": 758,
                 "text": "2026年07月29日"
               }
             ]
@@ -10248,8 +10190,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_081",
@@ -10260,25 +10202,48 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "JXDM-2026103",
+            "acceptable_evidence_spans": [
+              {
+                "start": 417,
+                "end": 440,
+                "text": "原公告的采购项目编号：JXDM-2026103"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "分宜县水利局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 925,
+                "end": 934,
+                "text": "名称：分宜县水利局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
         "gold_status": "present",
         "values": [
           {
-            "raw_value": "780000.00",
+            "raw_value": "737654.00",
+            "amount_type": "award",
             "acceptable_evidence_spans": [
               {
-                "start": 786,
-                "end": 811,
-                "text": "中标（成交）金额（元）\\（%）：780000.00"
+                "start": 496,
+                "end": 521,
+                "text": "中标（成交）金额（元）\\（%）：737654.00"
               }
             ]
           }
@@ -10295,21 +10260,6 @@
                 "start": 84,
                 "end": 95,
                 "text": "2026年07月29日"
-              },
-              {
-                "start": 84,
-                "end": 101,
-                "text": "2026年07月29日 08:50"
-              },
-              {
-                "start": 189,
-                "end": 200,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 189,
-                "end": 206,
-                "text": "2026年07月29日 08:50"
               }
             ]
           }
@@ -10355,8 +10305,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_082",
@@ -10367,13 +10317,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "JM-2026-06-04616-CGXM2026220199004175",
+            "acceptable_evidence_spans": [
+              {
+                "start": 362,
+                "end": 410,
+                "text": "原公告的采购项目编号：JM-2026-06-04616-CGXM2026220199004175"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "长春市中心血站",
+            "acceptable_evidence_spans": [
+              {
+                "start": 117,
+                "end": 128,
+                "text": "采购单位长春市中心血站"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10390,31 +10362,6 @@
               {
                 "start": 47,
                 "end": 58,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 47,
-                "end": 64,
-                "text": "2026年07月29日 08:49"
-              },
-              {
-                "start": 139,
-                "end": 150,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 139,
-                "end": 156,
-                "text": "2026年07月29日 08:49"
-              },
-              {
-                "start": 177,
-                "end": 188,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 537,
-                "end": 548,
                 "text": "2026年07月29日"
               }
             ]
@@ -10450,8 +10397,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_083",
@@ -10462,13 +10409,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "JM-2026-06-04623-CGXM2026220199004171",
+            "acceptable_evidence_spans": [
+              {
+                "start": 360,
+                "end": 408,
+                "text": "原公告的采购项目编号：JM-2026-06-04623-CGXM2026220199004171"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "长春市中心血站",
+            "acceptable_evidence_spans": [
+              {
+                "start": 115,
+                "end": 126,
+                "text": "采购单位长春市中心血站"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10520,31 +10489,6 @@
                 "start": 46,
                 "end": 57,
                 "text": "2026年07月29日"
-              },
-              {
-                "start": 46,
-                "end": 63,
-                "text": "2026年07月29日 08:49"
-              },
-              {
-                "start": 137,
-                "end": 148,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 137,
-                "end": 154,
-                "text": "2026年07月29日 08:49"
-              },
-              {
-                "start": 175,
-                "end": 186,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 645,
-                "end": 656,
-                "text": "2026年07月29日"
               }
             ]
           }
@@ -10579,8 +10523,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_084",
@@ -10591,13 +10535,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "采购计划-[2026]-15496号-13",
+            "acceptable_evidence_spans": [
+              {
+                "start": 322,
+                "end": 354,
+                "text": "原公告的采购项目编号：采购计划-[2026]-15496号-13"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "白山市江源区人民法院",
+            "acceptable_evidence_spans": [
+              {
+                "start": 108,
+                "end": 122,
+                "text": "采购单位白山市江源区人民法院"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10615,21 +10581,6 @@
                 "start": 41,
                 "end": 52,
                 "text": "2026年07月29日"
-              },
-              {
-                "start": 41,
-                "end": 58,
-                "text": "2026年07月29日 08:42"
-              },
-              {
-                "start": 133,
-                "end": 144,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 133,
-                "end": 150,
-                "text": "2026年07月29日 08:42"
               }
             ]
           }
@@ -10664,8 +10615,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_085",
@@ -10676,13 +10627,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "1409282026BCS00041",
+            "acceptable_evidence_spans": [
+              {
+                "start": 331,
+                "end": 360,
+                "text": "原公告的采购项目编号：1409282026BCS00041"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "五寨县东秀庄乡人民政府",
+            "acceptable_evidence_spans": [
+              {
+                "start": 94,
+                "end": 109,
+                "text": "采购单位五寨县东秀庄乡人民政府"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10699,31 +10672,6 @@
               {
                 "start": 35,
                 "end": 46,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 35,
-                "end": 52,
-                "text": "2026年07月29日 08:39"
-              },
-              {
-                "start": 120,
-                "end": 131,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 120,
-                "end": 137,
-                "text": "2026年07月29日 08:39"
-              },
-              {
-                "start": 158,
-                "end": 169,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 501,
-                "end": 512,
                 "text": "2026年07月29日"
               }
             ]
@@ -10759,8 +10707,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_086",
@@ -10771,13 +10719,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "ZYTC-ZB-20260704",
+            "acceptable_evidence_spans": [
+              {
+                "start": 352,
+                "end": 379,
+                "text": "原公告的采购项目编号：ZYTC-ZB-20260704"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "岚皋县文化和旅游广电局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 680,
+                "end": 694,
+                "text": "名称：岚皋县文化和旅游广电局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10794,36 +10764,6 @@
               {
                 "start": 37,
                 "end": 48,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 37,
-                "end": 54,
-                "text": "2026年07月29日 08:28"
-              },
-              {
-                "start": 134,
-                "end": 145,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 134,
-                "end": 151,
-                "text": "2026年07月29日 08:28"
-              },
-              {
-                "start": 172,
-                "end": 183,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 615,
-                "end": 626,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 858,
-                "end": 869,
                 "text": "2026年07月29日"
               }
             ]
@@ -10859,8 +10799,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_087",
@@ -10871,13 +10811,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "N5101842026000142",
+            "acceptable_evidence_spans": [
+              {
+                "start": 351,
+                "end": 379,
+                "text": "原公告的采购项目编号：N5101842026000142"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "崇州市道明镇人民政府",
+            "acceptable_evidence_spans": [
+              {
+                "start": 613,
+                "end": 626,
+                "text": "名称：崇州市道明镇人民政府"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10894,36 +10856,6 @@
               {
                 "start": 44,
                 "end": 55,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 44,
-                "end": 61,
-                "text": "2026年07月29日 08:16"
-              },
-              {
-                "start": 137,
-                "end": 148,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 137,
-                "end": 154,
-                "text": "2026年07月29日 08:16"
-              },
-              {
-                "start": 175,
-                "end": 186,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 500,
-                "end": 511,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 788,
-                "end": 799,
                 "text": "2026年07月29日"
               }
             ]
@@ -10959,8 +10891,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_088",
@@ -10971,13 +10903,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "310117000260622119687-17364389",
+            "acceptable_evidence_spans": [
+              {
+                "start": 313,
+                "end": 354,
+                "text": "原公告的采购项目编号：310117000260622119687-17364389"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "松江区教育局（本部）",
+            "acceptable_evidence_spans": [
+              {
+                "start": 519,
+                "end": 533,
+                "text": "名 称：松江区教育局（本部）"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -10995,21 +10949,6 @@
                 "start": 23,
                 "end": 34,
                 "text": "2026年07月29日"
-              },
-              {
-                "start": 23,
-                "end": 40,
-                "text": "2026年07月29日 08:14"
-              },
-              {
-                "start": 107,
-                "end": 118,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 107,
-                "end": 124,
-                "text": "2026年07月29日 08:14"
               }
             ]
           }
@@ -11044,8 +10983,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_089",
@@ -11056,13 +10995,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "1402992026AGK00293",
+            "acceptable_evidence_spans": [
+              {
+                "start": 348,
+                "end": 377,
+                "text": "原公告的采购项目编号：1402992026AGK00293"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "大同市第二人民医院",
+            "acceptable_evidence_spans": [
+              {
+                "start": 103,
+                "end": 116,
+                "text": "采购单位大同市第二人民医院"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -11079,31 +11040,6 @@
               {
                 "start": 38,
                 "end": 49,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 38,
-                "end": 55,
-                "text": "2026年07月29日 07:58"
-              },
-              {
-                "start": 127,
-                "end": 138,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 127,
-                "end": 144,
-                "text": "2026年07月29日 07:58"
-              },
-              {
-                "start": 165,
-                "end": 176,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 599,
-                "end": 610,
                 "text": "2026年07月29日"
               }
             ]
@@ -11139,8 +11075,8 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   },
   {
     "document_id": "w3_correction_090",
@@ -11151,13 +11087,35 @@
     "fields": [
       {
         "field_name": "project_identifier",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "[230901]JQZB[CS]20260002",
+            "acceptable_evidence_spans": [
+              {
+                "start": 356,
+                "end": 391,
+                "text": "原公告的采购项目编号：[230901]JQZB[CS]20260002"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "purchaser_name",
-        "gold_status": "absent",
-        "values": []
+        "gold_status": "present",
+        "values": [
+          {
+            "raw_value": "七台河市审计局",
+            "acceptable_evidence_spans": [
+              {
+                "start": 690,
+                "end": 700,
+                "text": "名称：七台河市审计局"
+              }
+            ]
+          }
+        ]
       },
       {
         "field_name": "amount",
@@ -11174,36 +11132,6 @@
               {
                 "start": 38,
                 "end": 49,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 38,
-                "end": 55,
-                "text": "2026年07月29日 07:10"
-              },
-              {
-                "start": 126,
-                "end": 137,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 126,
-                "end": 143,
-                "text": "2026年07月29日 07:10"
-              },
-              {
-                "start": 164,
-                "end": 175,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 625,
-                "end": 636,
-                "text": "2026年07月29日"
-              },
-              {
-                "start": 883,
-                "end": 894,
                 "text": "2026年07月29日"
               }
             ]
@@ -11239,7 +11167,7 @@
         ]
       }
     ],
-    "annotation_version": "k3-w5-correction-rule-v1",
-    "fix_note": "补bid_deadline, project_name降为extra_fields | W5口径对齐: 按抽取prompt更正公告规则重标——未被本次更正更新的字段标absent（原标注将'原公告的…'引用字段标为present，与prompt规则冲突）"
+    "annotation_version": "k3-w3-01-v1-fixed",
+    "fix_note": "补bid_deadline, project_name降为extra_fields"
   }
 ]
