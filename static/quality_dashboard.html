@@ -195,7 +195,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="page-head">
       <div>
         <h1><i class="ph-bold ph-chart-line-up"></i>W3 数据质量评测结果</h1>
-        <div class="sub">冻结样本集 107篇 · 594 字段 · deepseek-v4-flash · 证据验证 + 来源谱系 + 展示等级</div>
+        <div class="sub">金标 v4 合集 598 篇 · 3,564 字段 · deepseek-v4-flash · 证据验证 + 来源谱系 + 展示等级 · 2026-08-06 全量复测</div>
       </div>
       <div class="right-info">
         <div class="h-badge info"><i class="ph ph-download-simple"></i>W3 冻结集</div>
@@ -328,7 +328,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 
     <!-- ===== Footer ===== -->
     <div class="footer">
-      <span class="real">全部数据来自真实评测</span> · 数据源文件: w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json / w3_03_evidence_full_99.json / w3_error_analysis.json / w3_bootstrap_ci_full_99.json<br>
+      <span class="real">全部数据来自真实评测</span> · 数据源文件: gold598_retest.json (598篇全量复测 2026-08-06) / w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json / w3_03_evidence_full_99.json / w3_error_analysis.json / w3_bootstrap_ci_full_99.json (99篇深度抽样)<br>
       标小智 · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
       <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-size:11px;color:var(--text-3);line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
     </div>
@@ -341,7 +341,8 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
  * 真实数据 - 从 _w3_outputs/ JSON 文件提取
  * ================================================================ */
 var DATA = {
-  meta: { docs: 99, fields_total: 594, model: "deepseek-v4-flash", price_per_m: 1.5 },
+  meta: { docs: 598, fields_total: 3564, fields_sample: 594, model: "deepseek-v4-flash", price_per_m: 1.5 },
+  // IoU 证据定位指标来自 99 篇深度抽样（w3_03_evidence_full_99.json）
   evidence: {
     docs_count: 99, fields_present: 437, fields_found: 297,
     evidences_pred: 590, evidences_matched: 321,
@@ -349,19 +350,21 @@ var DATA = {
     iou_avg: 0.5339, iou_avg_matched: 0.7126,
     iou_p50: 0.7097, iou_p95: 1.0
   },
+  // A/B/C/D 消融：598 篇金标 v4 全量复测（gold598_retest.json, 2026-08-06, invalid=0）
   ablation: {
-    A: { fields_total:594, fields_with_value:447, fields_unjustified:447, unjustified_rate:1.0, field_precision:0.9197, total_tokens:278882, latency_ms_avg:5658.2, cost_cny:0.4183,
+    A: { fields_total:3564, fields_with_value:2501, fields_unjustified:2501, unjustified_rate:1.0, field_precision:0.8721, total_tokens:2606133, latency_ms_avg:21094.2, cost_cny:3.9092,
          desc:"纯LLM抽取, 无证据验证" },
-    B: { fields_total:594, fields_with_value:446, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9258, total_tokens:353503, latency_ms_avg:8140.2, cost_cny:0.5303,
+    B: { fields_total:3570, fields_with_value:2126, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9546, total_tokens:3501149, latency_ms_avg:23993.8, cost_cny:5.2517,
          desc:"+证据定位, 未验证" },
-    C: { fields_total:594, fields_with_value:447, fields_unjustified:27, unjustified_rate:0.0604, field_precision:0.9258, total_tokens:348657, latency_ms_avg:7705.3, cost_cny:0.523,
+    C: { fields_total:3534, fields_with_value:2094, fields_unjustified:81, unjustified_rate:0.0389, field_precision:0.9532, total_tokens:3384561, latency_ms_avg:23626.8, cost_cny:5.0768,
          desc:"+证据验证" },
-    D: { fields_total:594, fields_with_value:447, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9217, total_tokens:348657, latency_ms_avg:7705.3, cost_cny:0.523,
+    D: { fields_total:3534, fields_with_value:2094, fields_unjustified:0, unjustified_rate:0.0, field_precision:0.9644, total_tokens:3384561, latency_ms_avg:23626.8, cost_cny:5.0768,
          desc:"+分级过滤 (完整流水线)" }
   },
   // v4.1 空值误报率（金标为 absent/not_applicable 的字段中系统错误输出值的比例，越低越好）
-  // 真实值来自 _w3_outputs/w3_ablation_smoke_v41_rerun.json（5篇x6字段，null_false_positive_rate=0.0）
-  null_fpr: { A: 0.0, B: 0.0, C: 0.0, D: 0.0 },
+  // 真实值来自 _w3_outputs/gold598_retest.json（598 篇全量复测，2026-08-06）
+  null_fpr: { A: 0.2448, B: 0.0223, C: 0.0215, D: 0.0215 },
+  // 分级过滤策略：99 篇深度抽样（w3_strategy_workpoints.json）
   strategies: {
     strict:  { kept_fields:420, field_precision:0.9376, gold_recall:0.8947, desc:"仅 HIGH 级" },
     default: { kept_fields:420, field_precision:0.9376, gold_recall:0.8947, desc:"HIGH + REVIEW(STRONG)" },
@@ -460,13 +463,13 @@ function renderMetrics() {
   var e = DATA.evidence, d = DATA.ablation.D;
   var cards = [
     { icon:'ph-target', cls:'blue', label:'证据召回率', val:pct(e.recall), unit:'%',
-      sub:e.fields_found + '/' + e.fields_present + ' 字段命中', trend:'IoU Recall', tc:'info' },
+      sub:e.fields_found + '/' + e.fields_present + ' 字段命中', trend:'IoU Recall · 99篇抽样', tc:'info' },
     { icon:'ph-crosshair', cls:'orange', label:'证据精确率', val:pct(e.precision), unit:'%',
-      sub:e.evidences_matched + '/' + e.evidences_pred + ' 证据匹配', trend:'IoU Precision', tc:'warn' },
+      sub:e.evidences_matched + '/' + e.evidences_pred + ' 证据匹配', trend:'IoU Precision · 99篇抽样', tc:'warn' },
     { icon:'ph-pencil-line', cls:'green', label:'边界 IoU', val:pct(e.iou_avg_matched), unit:'%',
-      sub:'P50=' + e.iou_p50 + ' | P95=' + e.iou_p95, trend:'matched avg', tc:'ok' },
+      sub:'P50=' + e.iou_p50 + ' | P95=' + e.iou_p95, trend:'matched avg · 99篇抽样', tc:'ok' },
     { icon:'ph-check-circle', cls:'blue', label:'字段精确率', val:pct(d.field_precision), unit:'%',
-      sub:'D 组 (完整流水线)', trend:'field_precision', tc:'ok' },
+      sub:'D 组 (完整流水线) · 598篇全量', trend:'field_precision', tc:'ok' },
     { icon:'ph-shield-check', cls:'green', label:'无依据率', val:pct(d.unjustified_rate,0), unit:'%',
       sub:'D 组 | A 组为 ' + pct(DATA.ablation.A.unjustified_rate,0) + '%', trend:'A->D: 100%->0%', tc:'ok' }
   ];
@@ -539,7 +542,7 @@ function initStrategy() {
         return '<b>' + p.seriesName + '</b> (' + s.desc + ')<br/>' +
           '字段精确率: ' + (s.field_precision*100).toFixed(2) + '%<br/>' +
           '金标召回率: ' + (s.gold_recall*100).toFixed(2) + '%<br/>' +
-          '保留字段数: ' + s.kept_fields + ' / ' + DATA.meta.fields_total;
+          '保留字段数: ' + s.kept_fields + ' / ' + DATA.meta.fields_sample + ' (99篇抽样)';
       }
     },
     legend: { show:false },
