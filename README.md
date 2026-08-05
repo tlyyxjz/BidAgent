@@ -163,6 +163,18 @@ TenderProject（采购项目）
 
 仅剩 1 个空值误报（w3_correction_043），经核对为金标标注矛盾。
 
+### 金标 v4 合集 598 篇全量复测（2026-08-06 实测，`scripts/eval_gold598_retest.py`）
+
+| 指标 | A 组（Direct LLM）| B 组（LLM+候选证据）| C 组（LLM+程序验证）| D 组（完整 BidAgent）|
+|---|---|---|---|---|
+| field_precision | 87.21% | 95.46% | 95.32% | **96.44%** |
+| unjustified_rate | **100.00%** | 0.00% | 3.89% | **0.00%** |
+| evidence_precision | N/A | N/A | 100.00% | **100.00%** |
+| null_false_positive_rate | 24.48% | 2.23% | 2.15% | **2.15%** |
+| multi_value_f1_avg | 0.7729 | 0.8466 | 0.8505 | **0.8505** |
+
+口径说明：598 篇全覆盖（fields_total=3588），与 99 篇消融同一套 run_group/summarize 口径；D 组选择性输出拒绝低置信字段后 fields_evaluable=2133（不确定的不输出）。按来源分组 D 组精确率：w3 98.13% / w4 97.50% / w5 96.03% / frozen93 80.22%（早期冻结标注 22 篇，值匹配口径更严）。产物：`_w3_outputs/gold598_retest.json`，断点 checkpoint 去重后 598 唯一（双进程并发写入已用 `scripts/finalize_gold598_retest.py` 归一）。
+
 ### 测试
 
 - 1942 passed · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
@@ -353,7 +365,7 @@ pytest --cov=app --cov-report=term-missing
 
 ## 当前已知限制
 
-1. **金标数量 598 篇**（2026-08 补标收官，合集 `tests/fixtures/gold/gold_dataset_v4.json`），已超 v4.1 推荐 300～350 篇；全量 598 篇指标复测进行中
+1. **金标数量 598 篇**（2026-08 补标收官，合集 `tests/fixtures/gold/gold_dataset_v4.json`），已超 v4.1 推荐 300～350 篇；全量 598 篇复测已完成（2026-08-06）：D 组 field_precision 96.44%、unjustified_rate 0.00%、evidence_precision 100%、null_false_positive_rate 2.15%（详见上文复测小节）
 2. **未划分开发集/校准集/测试集**：当前为统一金标集
 3. **temperature 记录口径**：记录 0.0，实际 0.1，不影响指标结论，后续修复
 4. **Demo 视频降级处理**：初赛阶段以代码仓库 + Web Demo 8 页作为等价可验证材料，视频待复赛补录
