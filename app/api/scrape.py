@@ -122,13 +122,13 @@ async def scrape(
         logger.warning("scrape failed url=%s err=%s", payload.url, exc)
         return JSONResponse(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            content={"code": 502, "data": None, "msg": f"抓取失败: {exc}"},
+            content={"code": 502, "data": None, "msg": "抓取失败"},
         )
     except Exception as exc:  # noqa: BLE001
-        logger.exception("scrape unexpected error url=%s", payload.url)
+        logger.exception("scrape unexpected error url=%s err=%s", payload.url, exc)
         return JSONResponse(
             status_code=500,
-            content={"code": 500, "data": None, "msg": f"服务器内部错误: {exc}"},
+            content={"code": 500, "data": None, "msg": "服务器内部错误"},
         )
 
 
@@ -140,8 +140,10 @@ async def scrape_batch(
     """POST /api/scrape/batch - 批量抓取，入队后立即返回 job_id 列表供轮询。"""
     user, _api_key_obj, raw_api_key = auth
 
-    # batch 只算 1 次速率限制
-    await check_and_increment_rate_limit(raw_api_key, user.plan)
+    # batch 按实际 URL 数量计速率限制
+    await check_and_increment_rate_limit(
+        raw_api_key, user.plan, count=len(payload.items)
+    )
 
     job_ids: list[str] = []
     errors: list[dict[str, Any]] = []
@@ -153,7 +155,7 @@ async def scrape_batch(
             )
             job_ids.append(job_id)
         except Exception as exc:  # noqa: BLE001
-            logger.exception("batch enqueue failed url=%s", item.url)
+            logger.exception("batch enqueue failed url=%s err=%s", item.url, exc)
             errors.append({"index": idx, "url": item.url, "error": str(exc)})
 
     return JSONResponse(

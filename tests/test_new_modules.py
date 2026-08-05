@@ -31,9 +31,6 @@ from app.processors.simhash import (
 )
 
 
-pytestmark = pytest.mark.asyncio
-
-
 # ==== SimHash 测试（命题第 3 项硬要求）====
 
 class TestSimHash:

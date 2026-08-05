@@ -3,7 +3,7 @@
 工程规范：
 - 免费用户 5 次/天（按 API key hash 限制）。
 - 付费用户不限制。
-- Redis 不可用时 fallback 到内存计数。
+- Redis 不可用时 fallback 到内存计数（开发环境）。
 - 速率限制 key 用 SHA256(api_key) 避免明文落 Redis。
 """
 
@@ -85,23 +85,34 @@ def _get_redis_client() -> Any:
         return None
 
 
-def _increment_daily_count(key: str, day: str) -> int:
+def _increment_daily_count(key: str, day: str, count: int = 1) -> int:
     """增加今日计数，返回当前计数。
 
     优先用 Redis；不可用则 fallback 到内存计数器。
+
+    Args:
+        key: 速率限制 key（SHA256 hash）。
+        day: 日期字符串（YYYY-MM-DD）。
+        count: 增加的次数（batch 接口按实际 URL 数量计数）。
     """
+    if count < 1:
+        count = 1
+
     redis_key = f"scrapeflow:daily:{day}:{key}"
     client = _get_redis_client()
     if client is not None:
         try:
-            count = client.incr(redis_key)
-            if count == 1:
+            new_count = client.incrby(redis_key, count)
+            if new_count == count:
                 client.expire(redis_key, 86400 * 2)
-            return int(count)
+            return int(new_count)
         except Exception as exc:  # noqa: BLE001
             logger.debug("Redis incr 失败，使用内存计数器: %s", exc)
 
-    # 内存 fallback
+    # 内存 fallback（BE-H9：开发环境可用，生产环境应配置 Redis）
+    logger.warning(
+        "Redis unavailable, using in-memory rate limiting (not suitable for production)"
+    )
     # 先清理旧 day，再增加 today；清理后若 bucket 为空则从 _memory_counts 移除
     bucket = _memory_counts.get(key)
     if bucket is not None:
@@ -117,11 +128,13 @@ def _increment_daily_count(key: str, day: str) -> int:
         bucket = {}
         _memory_counts[key] = bucket
 
-    bucket[day] = bucket.get(day, 0) + 1
+    bucket[day] = bucket.get(day, 0) + count
     return bucket[day]
 
 
-async def check_and_increment_rate_limit(api_key: str, plan: str) -> None:
+async def check_and_increment_rate_limit(
+    api_key: str, plan: str, count: int = 1
+) -> None:
     """检查并增加今日请求计数。
 
     免费套餐超过 FREE_TIER_DAILY_LIMIT 抛出 HTTPException(429)。
@@ -130,23 +143,38 @@ async def check_and_increment_rate_limit(api_key: str, plan: str) -> None:
     Args:
         api_key: 明文 API key（内部 hash 后用作 key）。
         plan: 用户套餐 free/starter/pro。
+        count: 本次请求消耗的计数（batch 接口按 URL 数量计）。
 
     Raises:
         HTTPException: 429 当超出免费套餐每日限额。
+        HTTPException: 503 当 RATE_LIMIT_REQUIRE_REDIS=true 且 Redis 不可用。
     """
     limit = get_user_daily_limit(plan)
     if limit < 0:
         return  # 付费无限
 
+    # BE-H9: 生产环境可配置强制要求 Redis（仅对需要限流的免费用户生效）
+    if settings.RATE_LIMIT_REQUIRE_REDIS:
+        client = _get_redis_client()
+        if client is None:
+            logger.warning(
+                "RATE_LIMIT_REQUIRE_REDIS=true but Redis unavailable, "
+                "rejecting request (fail-closed)"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Rate limiting service unavailable. Please retry later.",
+            )
+
     key = "key:" + sha256(api_key.encode("utf-8")).hexdigest()
     day = time.strftime("%Y-%m-%d", time.gmtime())
 
-    count = _increment_daily_count(key, day)
+    new_count = _increment_daily_count(key, day, count)
 
-    if count > limit:
+    if new_count > limit:
         logger.warning(
             "rate limit exceeded key=%s plan=%s count=%d limit=%d",
-            key, plan, count, limit,
+            key, plan, new_count, limit,
         )
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,

@@ -38,6 +38,7 @@ services:
       ANTI_DETECT_SESSION_DIR: ${ANTI_DETECT_SESSION_DIR:-data/sessions}
       BROWSER_POOL_SIZE: ${BROWSER_POOL_SIZE:-2}
       BROWSER_POOL_TIMEOUT: ${BROWSER_POOL_TIMEOUT:-30}
+      # MVP: 千里马暂不接入，配置保留为代码留口
       QIANLIMA_LOGIN_URL: ${QIANLIMA_LOGIN_URL:-https://www.qianlima.com/login}
     depends_on:
       redis:
@@ -79,6 +80,7 @@ services:
       ANTI_DETECT_SESSION_DIR: ${ANTI_DETECT_SESSION_DIR:-data/sessions}
       BROWSER_POOL_SIZE: ${BROWSER_POOL_SIZE:-2}
       BROWSER_POOL_TIMEOUT: ${BROWSER_POOL_TIMEOUT:-30}
+      # MVP: 千里马暂不接入，配置保留为代码留口
       QIANLIMA_LOGIN_URL: ${QIANLIMA_LOGIN_URL:-https://www.qianlima.com/login}
     depends_on:
       redis:

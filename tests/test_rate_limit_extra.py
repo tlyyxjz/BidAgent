@@ -230,16 +230,16 @@ class TestIncrementDailyCountRedis:
 
     def test_redis_incr_success(self) -> None:
         mock_client = MagicMock()
-        mock_client.incr.return_value = 1
+        mock_client.incrby.return_value = 1
         rate_limit_mod._redis_client_cache = mock_client
 
         count = _increment_daily_count("key1", "2026-01-01")
         assert count == 1
-        mock_client.incr.assert_called_once_with("scrapeflow:daily:2026-01-01:key1")
+        mock_client.incrby.assert_called_once_with("scrapeflow:daily:2026-01-01:key1", 1)
 
     def test_redis_incr_sets_expire_on_first(self) -> None:
         mock_client = MagicMock()
-        mock_client.incr.return_value = 1
+        mock_client.incrby.return_value = 1
         rate_limit_mod._redis_client_cache = mock_client
 
         _increment_daily_count("key1", "2026-01-01")
@@ -249,7 +249,7 @@ class TestIncrementDailyCountRedis:
 
     def test_redis_incr_no_expire_on_subsequent(self) -> None:
         mock_client = MagicMock()
-        mock_client.incr.return_value = 2
+        mock_client.incrby.return_value = 2
         rate_limit_mod._redis_client_cache = mock_client
 
         _increment_daily_count("key1", "2026-01-01")
@@ -257,7 +257,7 @@ class TestIncrementDailyCountRedis:
 
     def test_redis_failure_falls_back_to_memory(self) -> None:
         mock_client = MagicMock()
-        mock_client.incr.side_effect = ConnectionError("redis down")
+        mock_client.incrby.side_effect = ConnectionError("redis down")
         rate_limit_mod._redis_client_cache = mock_client
 
         count = _increment_daily_count("key1", "2026-01-01")

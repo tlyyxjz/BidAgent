@@ -102,7 +102,7 @@ class TestScrapeEndpoint:
         client: AsyncClient,
         free_user_and_key: tuple[int, str],
     ) -> None:
-        """抓取失败 → 502 + 统一错误格式。"""
+        """抓取失败 → 502 + 统一错误格式（不泄露异常详情）。"""
         from app.core.scraper import ScrapeError
 
         _uid, raw_key = free_user_and_key
@@ -117,7 +117,9 @@ class TestScrapeEndpoint:
         body = resp.json()
         assert body["code"] == 502
         assert body["data"] is None
-        assert "boom" in body["msg"]
+        assert body["msg"] == "抓取失败"
+        # BE-H1: 异常详情不应泄露给客户端
+        assert "boom" not in body["msg"]
 
 
 class TestRateLimit:

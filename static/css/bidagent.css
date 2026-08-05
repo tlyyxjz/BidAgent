@@ -1,0 +1,269 @@
+/* ================================================================
+   标小智 BidAgent · 墨档 Ink Archive 设计层
+   暖纸 / 墨色 / 黛蓝 / 朱砂印章 —— 编辑刊物质感
+   本文件在各页面内联 <style> 之后加载，通过 token 重定义
+   与精细化覆盖完成视觉升级，不改动任何页面逻辑。
+   ================================================================ */
+
+/* ---------- 1. 设计令牌 ---------- */
+:root{
+  /* 主交互色：黛蓝 */
+  --primary:#2E4B7A; --primary-hover:#3D5C8F; --primary-deep:#243C62;
+  --primary-bg:#EAEEF5; --primary-rgb:46,75,122;
+  /* 品牌朱砂（印章红）：仅用于品牌标识与当前态点缀 */
+  --seal:#B23E28; --seal-soft:#C4593F; --seal-rgb:178,62,40;
+  /* 语义色：松绿 / 藤黄 / 赭红 / 紫檀 */
+  --success:#3F7355; --success-bg:#EBF1EC;
+  --warning:#93701B; --warning-bg:#F8F1DE;
+  --error:#A63B2B;  --error-bg:#F7E9E3;
+  --purple:#6E5587; --purple-bg:#F0ECF5;
+  /* 纸墨中性色 */
+  --bg:#F5F3EC; --card-bg:#FCFBF7;
+  --text:#23211B; --text-2:#5D584C; --text-3:#948E80;
+  --border:#E2DED1; --border-2:#ECE8DB;
+  /* 侧栏：温润墨黑（非藏青） */
+  --sidebar-bg:#1B1914; --sidebar-text:rgba(243,240,231,.6); --sidebar-active:var(--seal);
+  --sidebar-width:208px; --header-h:52px;
+  /* 暖调投影 */
+  --shadow:0 1px 2px rgba(35,33,27,.05),0 2px 10px -2px rgba(35,33,27,.05);
+  --shadow-lift:0 2px 4px rgba(35,33,27,.06),0 10px 28px -8px rgba(35,33,27,.12);
+  /* 字体 */
+  --font-sans:-apple-system,"Segoe UI","Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+  --font-serif:Georgia,"Times New Roman","Songti SC","STSong","Noto Serif SC","STZhongsong","SimSun",serif;
+  /* 圆角：收敛为编辑感的小圆角 */
+  --r-sm:4px; --r-md:6px; --r-lg:10px;
+}
+
+/* 暗色主题（质量评测页 body.dark 开关沿用） */
+body.dark{
+  --primary:#93ABCF; --primary-hover:#A9BFD9; --primary-deep:#7E97BC;
+  --primary-bg:#26303F; --primary-rgb:147,171,207;
+  --seal:#CD6A4E; --seal-soft:#C4593F; --seal-rgb:205,106,78;
+  --success:#82A990; --success-bg:#202A22;
+  --warning:#C4A35A; --warning-bg:#2B2515;
+  --error:#C96F5B;  --error-bg:#2C1B14;
+  --purple:#A894C2; --purple-bg:#282133;
+  --bg:#14120E; --card-bg:#1C1A15;
+  --text:#E9E5D9; --text-2:#A39D8E; --text-3:#6F695C;
+  --border:#302C23; --border-2:#272419;
+  --sidebar-bg:#100F0C; --sidebar-text:rgba(233,229,217,.55);
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 2px 10px -2px rgba(0,0,0,.3);
+  --shadow-lift:0 2px 4px rgba(0,0,0,.4),0 10px 28px -8px rgba(0,0,0,.5);
+}
+
+/* ---------- 2. 基底 ---------- */
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-sans);
+  background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+::selection{background:rgba(var(--seal-rgb),.18)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:2px}
+
+/* 纸面颗粒：极轻微的档案纸纹理，破除数码平涂感 */
+body::after{
+  content:""; position:fixed; inset:0; z-index:2000; pointer-events:none; opacity:.028;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 滚动条：细而暖 */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#CFC9B8;border:3px solid var(--bg);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:#B8B19F}
+::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb,.sidebar-nav::-webkit-scrollbar-thumb{background:#3A362C;border-color:var(--sidebar-bg)}
+
+a{color:var(--primary)}
+a:hover{color:var(--primary-deep)}
+
+/* ---------- 3. 侧栏：墨黑 + 朱砂印章 ---------- */
+.sidebar{
+  background:var(--sidebar-bg);
+  border-right:1px solid rgba(243,240,231,.06);
+}
+.sidebar-logo{height:60px;border-bottom:1px solid rgba(243,240,231,.08)}
+.sidebar-logo .logo-icon{
+  width:30px;height:30px;border-radius:7px;
+  background:var(--seal); color:#F7F1E6;
+  font-family:var(--font-serif); font-size:16px; font-weight:700;
+  box-shadow:inset 0 0 0 1px rgba(247,241,230,.25),0 1px 3px rgba(0,0,0,.35);
+  position:relative; top:1px; /* 印章轻微压角感 */
+}
+.sidebar-logo .logo-text{
+  font-family:var(--font-serif); font-size:17px; font-weight:700;
+  letter-spacing:2px; color:#F3F0E7;
+}
+.nav-section-label{
+  font-size:10px; letter-spacing:2.5px; color:rgba(243,240,231,.32);
+  padding:16px 20px 6px; text-transform:uppercase;
+}
+.sidebar .nav-item{
+  border-left:none; margin:1px 10px; padding:8px 12px; border-radius:var(--r-md);
+  position:relative; transition:background .18s ease,color .18s ease;
+}
+.sidebar .nav-item:hover{background:rgba(243,240,231,.07);color:#F3F0E7}
+.sidebar .nav-item.active{
+  background:rgba(243,240,231,.09); color:#F7F4EB; border-left:none; font-weight:500;
+}
+.sidebar .nav-item.active::before{
+  content:""; position:absolute; left:-10px; top:9px; bottom:9px; width:3px;
+  border-radius:0 2px 2px 0; background:var(--seal);
+}
+.sidebar .nav-item.active i{color:var(--seal-soft)}
+.sidebar .nav-item .nav-badge{
+  background:rgba(var(--seal-rgb),.22); color:#E8B39F; border:1px solid rgba(var(--seal-rgb),.4);
+  border-radius:4px; font-weight:600; letter-spacing:.5px;
+}
+.sidebar-footer{border-top:1px solid rgba(243,240,231,.08);color:rgba(243,240,231,.32)}
+.sidebar-footer .comp-tag{color:var(--seal-soft);font-family:var(--font-serif);letter-spacing:1px}
+
+/* ---------- 4. 顶栏与页头 ---------- */
+.top-header{
+  background:var(--card-bg); border-bottom:1px solid var(--border);
+  box-shadow:none;
+}
+.header-title{font-size:14px;letter-spacing:.2px}
+.header-title i{color:var(--seal)}
+.h-badge{
+  border-radius:var(--r-sm); font-weight:500; letter-spacing:.2px;
+  border:1px solid transparent;
+}
+.h-badge.comp{background:var(--primary-bg);color:var(--primary);border-color:rgba(var(--primary-rgb),.18)}
+.h-badge.data{background:var(--success-bg);color:var(--success);border-color:rgba(63,115,85,.18)}
+.h-badge.vers{background:transparent;color:var(--text-3);border-color:var(--border)}
+
+/* 全局搜索框 */
+.global-search{
+  background-color:var(--bg); border-color:var(--border); border-radius:var(--r-md);
+  transition:border-color .18s,box-shadow .18s,background-color .18s;
+}
+.global-search:focus{
+  border-color:var(--primary); background-color:var(--card-bg);
+  box-shadow:0 0 0 3px rgba(var(--primary-rgb),.14);
+}
+
+/* 面包屑与页头 */
+.breadcrumb{color:var(--text-3)}
+.breadcrumb a{color:var(--primary)}
+.page-head h1, .page-header h1, h1{
+  font-family:var(--font-serif); font-weight:700; letter-spacing:.5px;
+}
+.page-head h1 i, .page-header h1 i{color:var(--seal)}
+.section-title{font-family:var(--font-serif);font-size:15px;letter-spacing:.5px}
+.section-title i{color:var(--seal)}
+
+/* ---------- 5. 卡片与面板：发线边框 + 暖影 ---------- */
+.kpi-card,.stat-card,.m-card,.col-card,.cap-card,.panel,.card,
+.pipeline-card,.filter-card,.sl-filter-card,.compat-card,.source-card,
+.vh-card,.vt-card,.vc-panel,.slots-card,.report-card,.sum-card{
+  border-color:var(--border); box-shadow:var(--shadow);
+}
+.kpi-card,.m-card,.stat-card,.cap-card,.sum-card{transition:border-color .18s,box-shadow .18s,transform .18s}
+.kpi-card:hover,.m-card:hover,.stat-card:hover,.cap-card:hover,.sum-card:hover{
+  border-color:rgba(var(--primary-rgb),.4); box-shadow:var(--shadow-lift);
+}
+.cap-card:hover{transform:translateY(-2px)}
+
+/* KPI 数字：等宽数字 + 收紧字距 */
+.kpi-value,.stat-value,.m-value,.score-value,.count,.num{
+  font-variant-numeric:tabular-nums; letter-spacing:-.5px;
+}
+
+/* 图标容器圆角收敛 */
+.kpi-icon,.cap-icon,.recent-icon{border-radius:var(--r-md)}
+
+/* ---------- 6. 标签与徽章：方一点，克制一点 ---------- */
+.tag,.plat-tag,.badge,.org-tag,.platform-tag,.src-tag,.amt-tag{
+  border-radius:var(--r-sm); letter-spacing:.2px;
+}
+.cv-badge,.sl-badge,.dg-badge,.ct-badge,.pr-badge,.sq-badge,.nm-tag{
+  border-radius:var(--r-sm);
+}
+
+/* ---------- 7. 表单控件 ---------- */
+input,select,textarea{
+  font-family:var(--font-sans);
+  transition:border-color .18s,box-shadow .18s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--primary); outline:none;
+  box-shadow:0 0 0 3px rgba(var(--primary-rgb),.14);
+}
+button{cursor:pointer;font-family:var(--font-sans);transition:all .18s ease}
+button:active{transform:scale(.97)}
+
+/* ---------- 8. 表格 ---------- */
+.tbl th,.compat-table th,.vc-diff-table th{
+  font-size:11px; letter-spacing:1px; color:var(--text-3); font-weight:600;
+  border-bottom:1px solid var(--border);
+}
+.tbl td,.compat-table td,.vc-diff-table td{border-bottom:1px solid var(--border-2)}
+.tbl tbody tr{transition:background .15s}
+.tbl tbody tr:hover{background:rgba(var(--primary-rgb),.04)}
+
+/* ---------- 9. 交互细节 ---------- */
+.pipe-circle{transition:all .2s ease}
+.recent-item,.quick-btn,.result-item,.purchaser-item,.waste-item{transition:all .18s ease}
+.nav-item i,.header-title i{transition:color .18s}
+
+/* 聊天气泡微调 */
+.bubble{border-radius:var(--r-lg)}
+
+/* 分页器 */
+.pg{border-radius:var(--r-sm)}
+
+/* ---------- 10. 暗色模式下的颗粒弱化 ---------- */
+body.dark::after{opacity:.05}
+
+/* ---------- 12. 品牌印章延伸 ---------- */
+.org-avatar,.brand-logo{background:linear-gradient(135deg,var(--seal),#8C2E1C)}
+.logo-icon{text-shadow:0 1px 1px rgba(0,0,0,.2)}
+
+/* ---------- 14. 搜索页 hero：墨色题头 + 朱砂钤印 ---------- */
+.hero{
+  /* 在 hero 内局部重定义，供内联 var(--primary) 引用（图标在深底上提亮） */
+  --primary:#9DB2D2; --primary-bg:rgba(243,240,231,.1); --primary-rgb:157,178,210;
+  background:linear-gradient(160deg,#2A2620 0%,#1C1913 78%);
+  border:1px solid rgba(243,240,231,.08);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-lift);
+  position:relative; overflow:hidden;
+}
+.hero::after{
+  content:"标"; position:absolute; right:28px; top:24px;
+  width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+  background:var(--seal); color:#F7F1E6;
+  font-family:var(--font-serif); font-size:20px; font-weight:700;
+  border-radius:8px;
+  box-shadow:inset 0 0 0 1px rgba(247,241,230,.3),0 2px 6px rgba(0,0,0,.3);
+}
+.hero h1{color:#F3F0E7}
+.hero p{color:rgba(243,240,231,.72);opacity:1}
+.hero .search-box{
+  border:1px solid rgba(243,240,231,.06); border-radius:var(--r-lg);
+  box-shadow:0 8px 24px -8px rgba(0,0,0,.45); padding:14px 16px;
+}
+.hero .search-btn{background:var(--seal);border-radius:var(--r-md);padding:11px 26px}
+.hero .search-btn:hover{background:var(--seal-soft);transform:translateY(-1px)}
+
+/* ---------- 13. 响应式补全（原页面缺失） ---------- */
+@media (max-width:1180px){
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .cap-grid{grid-template-columns:repeat(2,1fr)}
+  .metric-row{grid-template-columns:repeat(3,1fr)}
+  .two-col{grid-template-columns:1fr}
+  .rf-grid{grid-template-columns:repeat(2,1fr)}
+  .global-search{width:200px}
+}
+@media (max-width:860px){
+  .kpi-row,.cap-grid,.metric-row,.stats-grid,.rf-grid{grid-template-columns:1fr}
+  .global-search{display:none}
+  .page-head{flex-direction:column;align-items:flex-start;gap:10px}
+}
+
+/* ---------- 11. 降低动态偏好 ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}
+  html{scroll-behavior:auto}
+}

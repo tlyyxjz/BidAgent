@@ -47,7 +47,7 @@ COPY --from=builder /install /usr/local
 # 复制应用代码
 COPY app/ ./app/
 COPY scripts/ ./scripts/
-COPY qianlima-dom.json ./qianlima-dom.json
+COPY qianlima-dom.json* ./qianlima-dom.json
 
 # 创建数据目录并设置权限（data/ 包含 sessions/cookies/reports/attachments）
 RUN mkdir -p /app/data/sessions /app/data/cookies /app/data/reports /app/data/attachments \

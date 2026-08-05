@@ -2,34 +2,34 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1366, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>数据质量评测 · 标小智</title>
-<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css">
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css?v=2">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --primary:#1677ff;--primary-bg:#e6f4ff;
-  --success:#52c41a;--success-bg:#f6ffed;
-  --warning:#faad14;--warning-bg:#fffbe6;
-  --error:#ff4d4f;--error-bg:#fff2f0;
-  --purple:#722ed1;--purple-bg:#f9f0ff;
-  --bg:#f5f7fa;--card-bg:#ffffff;
-  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
-  --border:#e8e8e8;--border-2:#f0f0f0;
-  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
+  --primary:var(--primary);--primary-bg:var(--primary-bg);
+  --success:var(--success);--success-bg:var(--success-bg);
+  --warning:var(--warning);--warning-bg:var(--warning-bg);
+  --error:var(--error);--error-bg:var(--error-bg);
+  --purple:var(--purple);--purple-bg:var(--purple-bg);
+  --bg:var(--bg);--card-bg:#ffffff;
+  --text:var(--text);--text-2:var(--text-2);--text-3:var(--text-3);
+  --border:var(--border);--border-2:var(--border-2);
+  --sidebar-bg:var(--sidebar-bg);--sidebar-text:#ffffffb3;--sidebar-active:var(--primary);
   --sidebar-width:208px;--header-h:52px;
-  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
+  --shadow:0 1px 2px rgba(35,33,27,.05),0 1px 6px -1px rgba(35,33,27,.04);
 }
 body.dark{
-  --bg:#0d1117;--card-bg:#161b22;
-  --text:#e6edf3;--text-2:#adbac7;--text-3:#768390;
-  --border:#30363d;--border-2:#21262d;
-  --sidebar-bg:#010409;--sidebar-text:#8b949e;
-  --primary-bg:#0c1d33;--success-bg:#0d1f0d;--warning-bg:#1f1a0a;--error-bg:#1f0a0a;--purple-bg:#1a0d2e;
+  --bg:#14120E;--card-bg:#1C1A15;
+  --text:#E9E5D9;--text-2:#A39D8E;--text-3:#6F695C;
+  --border:#302C23;--border-2:#272419;
+  --sidebar-bg:#100F0C;--sidebar-text:#A39D8E;
+  --primary-bg:#26303F;--success-bg:#202A22;--warning-bg:#2B2515;--error-bg:#2C1B14;--purple-bg:#282133;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 1px 6px -1px rgba(0,0,0,.2);
 }
 html,body{height:100%}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:100%}
 
 /* ===== Sidebar ===== */
 .sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
@@ -40,7 +40,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item.active{color:#fff;background:rgba(var(--primary-rgb),.15);border-left-color:var(--sidebar-active)}
 .nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
 .nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
 .sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
@@ -135,21 +135,23 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 
 /* ===== Bad Case 分析 ===== */
 .badcase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
-.badcase-card{background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:14px;position:relative}
+.badcase-card{background:#F8F6F0;border:1px solid var(--border);border-radius:8px;padding:14px;position:relative}
 .badcase-card .badcase-tag{position:absolute;top:0;right:0;padding:2px 8px;font-size:10px;font-weight:600;border-radius:0 8px 0 8px}
-.badcase-tag.type-precision{background:#fff7e6;color:#d46b08}
-.badcase-tag.type-format{background:#e6f7ff;color:#096dd9}
-.badcase-tag.type-suppressed{background:#f6ffed;color:#389e0d}
-.badcase-field{font-size:13px;font-weight:600;color:#262626;margin-bottom:8px;padding-right:60px}
+.badcase-tag.type-precision{background:#fff7e6;color:#8A5A10}
+.badcase-tag.type-format{background:var(--primary-bg);color:var(--primary-deep)}
+.badcase-tag.type-suppressed{background:var(--success-bg);color:#356149}
+.badcase-field{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;padding-right:60px}
 .badcase-row{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;font-size:12px}
-.badcase-row .label{color:#8c8c8c;min-width:56px;flex-shrink:0}
+.badcase-row .label{color:var(--text-3);min-width:56px;flex-shrink:0}
 .badcase-row .val{font-family:'Consolas','Monaco',monospace;padding:2px 6px;border-radius:3px}
-.badcase-row .val.sys{background:#fff1f0;color:#cf1322}
-.badcase-row .val.gold{background:#f6ffed;color:#389e0d}
-.badcase-analysis{margin-top:8px;padding:8px 10px;background:#fff;border-left:3px solid #1677ff;border-radius:0 4px 4px 0;font-size:11px;color:#595959;line-height:1.7}
-.badcase-analysis strong{color:#262626}
+.badcase-row .val.sys{background:var(--error-bg);color:var(--error)}
+.badcase-row .val.gold{background:var(--success-bg);color:#356149}
+.badcase-analysis{margin-top:8px;padding:8px 10px;background:var(--card-bg);border:1px solid #DDE4F0;border-radius:4px;font-size:11px;color:var(--text-2);line-height:1.7}
+.badcase-analysis strong{color:var(--text)}
 
 </style>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="stylesheet" href="/static/css/bidagent.css?v=3">
 </head>
 <body>
 <!-- ===== Sidebar ===== -->
@@ -196,7 +198,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
         <div class="sub">冻结样本集 107篇 · 594 字段 · deepseek-v4-flash · 证据验证 + 来源谱系 + 展示等级</div>
       </div>
       <div class="right-info">
-        <div class="h-badge info"><i class="ph ph-floppy-disk"></i>W3 冻结集</div>
+        <div class="h-badge info"><i class="ph ph-download-simple"></i>W3 冻结集</div>
         <div class="h-badge vers"><i class="ph ph-hash"></i>full_99</div>
       </div>
     </div>
@@ -225,7 +227,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <!-- ===== 2.5 Ablation Metric Detail (v4.1) ===== -->
     <div class="card" style="margin-bottom:12px">
       <div class="card-head">
-        <h2><i class="ph ph-table"></i>四组消融实验指标明细<span class="desc">A/B/C/D · 字段精确率 / 无依据率 / 空值误报率</span></h2>
+        <h2><i class="ph ph-list-dashes"></i>四组消融实验指标明细<span class="desc">A/B/C/D · 字段精确率 / 无依据率 / 空值误报率</span></h2>
       </div>
       <table class="tbl" id="ablationMetricTable">
         <thead>
@@ -243,7 +245,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="grid2">
       <div class="card">
         <div class="card-head">
-          <h2><i class="ph ph-chart-histogram"></i>真实 IoU 分布<span class="desc">321 个匹配证据 (IoU >= 0.5)</span></h2>
+          <h2><i class="ph ph-chart-bar"></i>真实 IoU 分布<span class="desc">321 个匹配证据 (IoU >= 0.5)</span></h2>
         </div>
         <div id="chart-iou" class="chart-box"></div>
         <div class="chart-note"><i class="ph ph-info"></i>完美(>=0.99): 163 个 (50.8%) | 良好(0.7-0.99): 59 个 (18.4%) | 一般(0.5-0.7): 99 个 (30.8%)</div>
@@ -261,7 +263,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <!-- ===== 3.5 典型 Bad Case 分析 ===== -->
     <div class="card" style="margin-bottom:12px">
       <div class="card-head">
-        <h2><i class="ph ph-bug"></i>典型 Bad Case 分析<span class="desc">D 组 35 个 incorrect 中 4 个代表性案例 · 展示系统如何识别与标记错误</span></h2>
+        <h2><i class="ph ph-warning"></i>典型 Bad Case 分析<span class="desc">D 组 35 个 incorrect 中 4 个代表性案例 · 展示系统如何识别与标记错误</span></h2>
       </div>
       <div class="badcase-grid">
         <div class="badcase-card">
@@ -269,19 +271,19 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
           <div class="badcase-field">amount（金额）</div>
           <div class="badcase-row"><span class="label">系统输出</span><span class="val sys">331.300000万元</span></div>
           <div class="badcase-row"><span class="label">金标值</span><span class="val gold">331.3万元</span></div>
-          <div class="badcase-analysis"><i class="ph ph-lightbulb"></i> <strong>系统标记：</strong>display_grade=review（L4格式变体匹配命中，金额容差判定失败）。<strong>根因：</strong>原文显示精度6位小数，金标精度1位，display_precision未对齐。<strong>改进：</strong>v4.2 基于原文显示精度计算容差。</div>
+          <div class="badcase-analysis"><i class="ph ph-sparkle"></i> <strong>系统标记：</strong>display_grade=review（L4格式变体匹配命中，金额容差判定失败）。<strong>根因：</strong>原文显示精度6位小数，金标精度1位，display_precision未对齐。<strong>改进：</strong>v4.2 基于原文显示精度计算容差。</div>
         </div>
         <div class="badcase-card">
           <div class="badcase-tag type-format">格式变体</div>
           <div class="badcase-field">bid_deadline（投标截止日期）</div>
           <div class="badcase-row"><span class="label">系统输出</span><span class="val sys">2024-03-15</span></div>
           <div class="badcase-row"><span class="label">金标值</span><span class="val gold">2024年3月15日</span></div>
-          <div class="badcase-analysis"><i class="ph ph-lightbulb"></i> <strong>系统标记：</strong>display_grade=review（L4日期格式变体匹配，精确比对失败）。<strong>根因：</strong>日期归一化未覆盖"年/月/日"中文格式。<strong>改进：</strong>L4 增加中文日期格式归一化。</div>
+          <div class="badcase-analysis"><i class="ph ph-sparkle"></i> <strong>系统标记：</strong>display_grade=review（L4日期格式变体匹配，精确比对失败）。<strong>根因：</strong>日期归一化未覆盖"年/月/日"中文格式。<strong>改进：</strong>L4 增加中文日期格式归一化。</div>
         </div>
         <div class="badcase-card">
           <div class="badcase-tag type-suppressed">正确抑制</div>
           <div class="badcase-field">bid_winner（中标人）</div>
-          <div class="badcase-row"><span class="label">系统输出</span><span class="val sys" style="background:#f5f5f5;color:#8c8c8c">—（无依据不输出）</span></div>
+          <div class="badcase-row"><span class="label">系统输出</span><span class="val sys" style="background:#F2EFE6;color:var(--text-3)">—（无依据不输出）</span></div>
           <div class="badcase-row"><span class="label">金标值</span><span class="val gold">absent</span></div>
           <div class="badcase-analysis"><i class="ph ph-check-circle"></i> <strong>系统标记：</strong>unjustified（L1-L5 全部未命中，字段不输出）。<strong>说明：</strong>原文未提及中标人，系统正确抑制输出，null_false_positive_rate=0.0。</div>
         </div>
@@ -290,7 +292,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
           <div class="badcase-field">amount（金额）</div>
           <div class="badcase-row"><span class="label">系统输出</span><span class="val sys">331.3万元</span></div>
           <div class="badcase-row"><span class="label">金标值</span><span class="val gold">3313000元</span></div>
-          <div class="badcase-analysis"><i class="ph ph-lightbulb"></i> <strong>系统标记：</strong>display_grade=low（L4金额格式变体匹配，单位换算后比对失败）。<strong>根因：</strong>万元→元换算后浮点精度丢失。<strong>改进：</strong>金额比对统一到最小显示单位。</div>
+          <div class="badcase-analysis"><i class="ph ph-sparkle"></i> <strong>系统标记：</strong>display_grade=low（L4金额格式变体匹配，单位换算后比对失败）。<strong>根因：</strong>万元→元换算后浮点精度丢失。<strong>改进：</strong>金额比对统一到最小显示单位。</div>
         </div>
       </div>
       <div class="chart-note"><i class="ph ph-info"></i>35 个 incorrect 中 91.4% 集中在 amount(16例) 和 bid_deadline(16例)，均为精度/格式问题而非语义错误。系统对每个错误均标记了 display_grade 和根因。</div>
@@ -299,7 +301,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <!-- ===== 4. Cost Performance ===== -->
     <div class="card" style="margin-bottom:12px">
       <div class="card-head">
-        <h2><i class="ph ph-currency-cny"></i>成本性能对比<span class="desc">A/B/C/D 四组 · tokens / 延迟 / 成本 / 无依据率</span></h2>
+        <h2><i class="ph ph-money"></i>成本性能对比<span class="desc">A/B/C/D 四组 · tokens / 延迟 / 成本 / 无依据率</span></h2>
       </div>
       <div class="cost-row">
         <table class="tbl" id="costTable"></table>
@@ -328,7 +330,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="footer">
       <span class="real">全部数据来自真实评测</span> · 数据源文件: w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json / w3_03_evidence_full_99.json / w3_error_analysis.json / w3_bootstrap_ci_full_99.json<br>
       标小智 · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
-      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e8e8e8;font-size:11px;color:#8c8c8c;line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
+      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-size:11px;color:var(--text-3);line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
     </div>
   </main>
 </div>
@@ -400,7 +402,10 @@ var charts = {};
 async function loadRealData(){
   /* 1. 从 /api/stats/quality 获取实时 KPI */
   try{
-    var r = await fetch("/api/stats/quality");
+    var r = await fetch("/api/stats/quality", { signal: AbortSignal.timeout(15000) });
+    if(r.status===401){alert('请先登录');throw new Error('未登录');}
+    if(r.status===403){alert('无权限访问');throw new Error('无权限');}
+    if(r.status===429){alert('请求过于频繁，请稍后再试');throw new Error('请求频繁');}
     var d = await r.json();
     if(d.code===200 && d.data){
       var el=null;
@@ -413,7 +418,10 @@ async function loadRealData(){
 
   /* 2. 从 /static/data/ablation_v41.json 获取真实 null_fpr */
   try{
-    var r2 = await fetch("/static/data/ablation_v41.json");
+    var r2 = await fetch("/static/data/ablation_v41.json", { signal: AbortSignal.timeout(15000) });
+    if(r2.status===401){alert('请先登录');throw new Error('未登录');}
+    if(r2.status===403){alert('无权限访问');throw new Error('无权限');}
+    if(r2.status===429){alert('请求过于频繁，请稍后再试');throw new Error('请求频繁');}
     var d2 = await r2.json();
     if(d2 && d2.summaries){
       var groups=["A","B","C","D"];
@@ -442,8 +450,8 @@ var isDark = false;
 
 function theme() {
   return isDark
-    ? { t:'#adbac7', al:'#768390', gl:'#21262d', bg:'#161b22', bt:'#e6edf3' }
-    : { t:'#595959', al:'#8c8c8c', gl:'#f0f0f0', bg:'#ffffff', bt:'#1a1a2e' };
+    ? { t:'#A39D8E', al:'#6F695C', gl:'#272419', bg:'#1C1A15', bt:'#E9E5D9' }
+    : { t:'#5D584C', al:'#948E80', gl:'#ECE8DB', bg:'#ffffff', bt:'#23211B' };
 }
 function pct(v, d) { d = (d==null)?2:d; return (v*100).toFixed(d); }
 
@@ -455,9 +463,9 @@ function renderMetrics() {
       sub:e.fields_found + '/' + e.fields_present + ' 字段命中', trend:'IoU Recall', tc:'info' },
     { icon:'ph-crosshair', cls:'orange', label:'证据精确率', val:pct(e.precision), unit:'%',
       sub:e.evidences_matched + '/' + e.evidences_pred + ' 证据匹配', trend:'IoU Precision', tc:'warn' },
-    { icon:'ph-ruler', cls:'green', label:'边界 IoU', val:pct(e.iou_avg_matched), unit:'%',
+    { icon:'ph-pencil-line', cls:'green', label:'边界 IoU', val:pct(e.iou_avg_matched), unit:'%',
       sub:'P50=' + e.iou_p50 + ' | P95=' + e.iou_p95, trend:'matched avg', tc:'ok' },
-    { icon:'ph-check-square', cls:'blue', label:'字段精确率', val:pct(d.field_precision), unit:'%',
+    { icon:'ph-check-circle', cls:'blue', label:'字段精确率', val:pct(d.field_precision), unit:'%',
       sub:'D 组 (完整流水线)', trend:'field_precision', tc:'ok' },
     { icon:'ph-shield-check', cls:'green', label:'无依据率', val:pct(d.unjustified_rate,0), unit:'%',
       sub:'D 组 | A 组为 ' + pct(DATA.ablation.A.unjustified_rate,0) + '%', trend:'A->D: 100%->0%', tc:'ok' }
@@ -498,9 +506,9 @@ function initAblation() {
       { type:'value', name:'无依据率 %', nameTextStyle:{color:th.al,fontSize:10}, min:0, max:100, axisLabel:{color:th.al,fontSize:10,formatter:'{value}%'}, splitLine:{show:false}, axisLine:{show:false}, axisTick:{show:false} }
     ],
     series: [
-      { name:'字段精确率', type:'bar', barWidth:28, data:fp, itemStyle:{color:'#1677ff',borderRadius:[3,3,0,0]},
+      { name:'字段精确率', type:'bar', barWidth:28, data:fp, itemStyle:{color:'#2E4B7A',borderRadius:[3,3,0,0]},
         label:{show:true,position:'top',color:th.t,fontSize:10,formatter:'{c}%'} },
-      { name:'无依据率', type:'bar', barWidth:28, yAxisIndex:1, data:ur, itemStyle:{color:'#ff4d4f',borderRadius:[3,3,0,0]},
+      { name:'无依据率', type:'bar', barWidth:28, yAxisIndex:1, data:ur, itemStyle:{color:'#A63B2B',borderRadius:[3,3,0,0]},
         label:{show:true,position:'top',color:th.t,fontSize:10,formatter:'{c}%'} }
     ]
   });
@@ -512,7 +520,7 @@ function initStrategy() {
   var c = echarts.init(el);
   charts.strategy = c;
   var th = theme();
-  var colors = { strict:'#1677ff', default:'#13c2c2', loose:'#52c41a', audit:'#faad14' };
+  var colors = { strict:'#2E4B7A', default:'#4B7A6D', loose:'#3F7355', audit:'#93701B' };
   var symbols = { strict:'circle', default:'diamond', loose:'triangle', audit:'roundRect' };
   var series = Object.keys(DATA.strategies).map(function(name) {
     var s = DATA.strategies[name];
@@ -554,9 +562,9 @@ function initIoU() {
   var ranges = bk.map(function(b){ return b.range; });
   var counts = bk.map(function(b){ return b.count; });
   var colors = bk.map(function(b){
-    if (b.grade==='perfect') return '#52c41a';
-    if (b.grade==='good') return '#1677ff';
-    return '#faad14';
+    if (b.grade==='perfect') return '#3F7355';
+    if (b.grade==='good') return '#2E4B7A';
+    return '#93701B';
   });
   c.setOption({
     tooltip: { trigger:'axis', axisPointer:{type:'shadow'},
@@ -602,7 +610,7 @@ function initError() {
     yAxis: { type:'category', data:names,
       axisLabel:{color:th.t,fontSize:11}, axisLine:{lineStyle:{color:th.gl}}, axisTick:{show:false} },
     series: [{
-      type:'bar', barWidth:18, data: counts.map(function(v){ return { value:v, itemStyle:{ color: v>=16?'#ff4d4f':(v>=2?'#faad14':'#1677ff'), borderRadius:[0,3,3,0] } }; }),
+      type:'bar', barWidth:18, data: counts.map(function(v){ return { value:v, itemStyle:{ color: v>=16?'#A63B2B':(v>=2?'#93701B':'#2E4B7A'), borderRadius:[0,3,3,0] } }; }),
       label: { show:true, position:'right', color:th.t, fontSize:11, formatter:'{c}' }
     }]
   });
@@ -636,8 +644,8 @@ function initCost() {
       { type:'value', name:'ms', nameTextStyle:{color:th.al,fontSize:9}, axisLabel:{color:th.al,fontSize:9}, splitLine:{show:false}, axisLine:{show:false}, axisTick:{show:false} }
     ],
     series: [
-      { name:'Tokens', type:'bar', barWidth:22, data:tokens, itemStyle:{color:'#1677ff',borderRadius:[3,3,0,0]} },
-      { name:'延迟(ms)', type:'line', yAxisIndex:1, data:latency, itemStyle:{color:'#722ed1'}, lineStyle:{color:'#722ed1',width:2}, symbol:'circle', symbolSize:7, label:{show:true,color:th.t,fontSize:9,formatter:function(p){return p.value;}} }
+      { name:'Tokens', type:'bar', barWidth:22, data:tokens, itemStyle:{color:'#2E4B7A',borderRadius:[3,3,0,0]} },
+      { name:'延迟(ms)', type:'line', yAxisIndex:1, data:latency, itemStyle:{color:'#6E5587'}, lineStyle:{color:'#6E5587',width:2}, symbol:'circle', symbolSize:7, label:{show:true,color:th.t,fontSize:9,formatter:function(p){return p.value;}} }
     ]
   });
 }
@@ -651,7 +659,7 @@ function initBootstrap() {
   var bs = DATA.bootstrap_ci;
   var metrics = ['recall','precision','iou_avg'];
   var mNames = { recall:'Recall', precision:'Precision', iou_avg:'IoU Avg' };
-  var colors = { recall:'#52c41a', precision:'#1677ff', iou_avg:'#722ed1' };
+  var colors = { recall:'#3F7355', precision:'#2E4B7A', iou_avg:'#6E5587' };
   var pointData = metrics.map(function(m, i){
     return {
       value: +(bs[m].p*100).toFixed(2),

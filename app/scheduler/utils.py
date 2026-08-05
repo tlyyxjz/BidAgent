@@ -20,7 +20,7 @@ def utc_now() -> datetime:
 
 
 def escape_like(value: str) -> str:
-    """转义 LIKE 查询的通配符（M-7 修复）。
+    r"""转义 LIKE 查询的通配符（M-7 修复）。
 
     Args:
         value: 待转义字符串

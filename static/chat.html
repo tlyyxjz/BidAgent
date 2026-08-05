@@ -2,26 +2,26 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1366, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>智能问答 · 标小智</title>
-<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css">
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css?v=2">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --primary:#1677ff;--primary-bg:#e6f4ff;--primary-hover:#4096ff;
-  --success:#52c41a;--success-bg:#f6ffed;
-  --warning:#faad14;--warning-bg:#fffbe6;
-  --error:#ff4d4f;--error-bg:#fff2f0;
-  --purple:#722ed1;--purple-bg:#f9f0ff;
-  --bg:#f5f7fa;--card-bg:#ffffff;
-  --text:#1a1a2e;--text-2:#595959;--text-3:#8c8c8c;
-  --border:#e8e8e8;--border-2:#f0f0f0;
-  --sidebar-bg:#001529;--sidebar-text:#ffffffb3;--sidebar-active:#1677ff;
+  --primary:var(--primary);--primary-bg:var(--primary-bg);--primary-hover:var(--primary-hover);
+  --success:var(--success);--success-bg:var(--success-bg);
+  --warning:var(--warning);--warning-bg:var(--warning-bg);
+  --error:var(--error);--error-bg:var(--error-bg);
+  --purple:var(--purple);--purple-bg:var(--purple-bg);
+  --bg:var(--bg);--card-bg:#ffffff;
+  --text:var(--text);--text-2:var(--text-2);--text-3:var(--text-3);
+  --border:var(--border);--border-2:var(--border-2);
+  --sidebar-bg:var(--sidebar-bg);--sidebar-text:#ffffffb3;--sidebar-active:var(--primary);
   --sidebar-width:208px;--header-h:52px;
-  --shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02);
+  --shadow:0 1px 2px rgba(35,33,27,.05),0 1px 6px -1px rgba(35,33,27,.04);
 }
 html,body{height:100%}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:1180px}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5715;min-width:100%}
 
 /* ===== Sidebar ===== */
 .sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
@@ -32,7 +32,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--sidebar-text);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:var(--sidebar-active)}
+.nav-item.active{color:#fff;background:rgba(var(--primary-rgb),.15);border-left-color:var(--sidebar-active)}
 .nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
 .nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
 .sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
@@ -62,14 +62,14 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .pipeline-head h2 i{color:var(--primary);font-size:15px}
 .pipeline-head .desc{font-size:11px;color:var(--text-3)}
 .pipeline-flow{display:flex;align-items:flex-start;justify-content:space-between;gap:0;position:relative}
-.pipeline-flow::before{content:"";position:absolute;top:18px;left:50px;right:50px;height:2px;background:linear-gradient(to right,#e0e0e0 0%,#1677ff 50%,#e0e0e0 100%);z-index:0}
+.pipeline-flow::before{content:"";position:absolute;top:18px;left:50px;right:50px;height:2px;background:linear-gradient(to right,#D8D3C4 0%,var(--primary) 50%,#D8D3C4 100%);z-index:0}
 .pipe-step{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;position:relative;z-index:1;text-align:center;min-width:0}
-.pipe-circle{width:36px;height:36px;border-radius:50%;background:#fff;border:2px solid #e0e0e0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#999;transition:all .2s}
-.pipe-step.pending .pipe-circle{border-color:#e0e0e0;color:#bfbfbf}
-.pipe-step.running .pipe-circle{border-color:var(--primary);color:var(--primary);box-shadow:0 0 0 4px rgba(22,119,255,.12);animation:pulse 1.4s infinite}
+.pipe-circle{width:36px;height:36px;border-radius:50%;background:var(--card-bg);border:2px solid #D8D3C4;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-3);transition:all .2s}
+.pipe-step.pending .pipe-circle{border-color:#D8D3C4;color:#C9C3B4}
+.pipe-step.running .pipe-circle{border-color:var(--primary);color:var(--primary);box-shadow:0 0 0 4px rgba(var(--primary-rgb),.12);animation:pulse 1.4s infinite}
 .pipe-step.done .pipe-circle{border-color:var(--success);color:var(--success);background:var(--success-bg)}
 .pipe-step.error .pipe-circle{border-color:var(--error);color:var(--error);background:var(--error-bg)}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(22,119,255,.12)}50%{box-shadow:0 0 0 7px rgba(22,119,255,.06)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(var(--primary-rgb),.12)}50%{box-shadow:0 0 0 7px rgba(var(--primary-rgb),.06)}}
 .pipe-label{font-size:12px;font-weight:500;color:var(--text-2);white-space:nowrap}
 .pipe-step.running .pipe-label{color:var(--primary);font-weight:600}
 .pipe-step.done .pipe-label{color:var(--success);font-weight:600}
@@ -81,14 +81,14 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 /* ===== 双栏布局：聊天 + Agent 详情 ===== */
 .chat-layout{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px;min-height:0}
 .panel{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.panel-head{padding:10px 14px;border-bottom:1px solid var(--border-2);display:flex;align-items:center;justify-content:space-between;background:#fafbfc}
+.panel-head{padding:10px 14px;border-bottom:1px solid var(--border-2);display:flex;align-items:center;justify-content:space-between;background:#F9F7F1}
 .panel-head h2{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
 .panel-head h2 i{color:var(--primary);font-size:15px}
 .panel-head .desc{font-size:11px;color:var(--text-3)}
 .panel-body{flex:1;min-height:0;overflow-y:auto}
 
 /* ===== 聊天区 ===== */
-.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;background:#fafbfc}
+.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;background:#F9F7F1}
 .message{max-width:88%;display:flex;gap:8px}
 .message.user{align-self:flex-end;flex-direction:row-reverse}
 .avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
@@ -96,10 +96,10 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .message.bot .avatar{background:var(--primary-bg);color:var(--primary)}
 .bubble{padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;word-break:break-word}
 .message.user .bubble{background:var(--primary);color:#fff;border-top-right-radius:3px}
-.message.bot .bubble{background:#fff;color:var(--text);border:1px solid var(--border-2);border-top-left-radius:3px;box-shadow:var(--shadow)}
+.message.bot .bubble{background:var(--card-bg);color:var(--text);border:1px solid var(--border-2);border-top-left-radius:3px;box-shadow:var(--shadow)}
 .bubble b{color:var(--primary)}
 .message.bot .bubble b{color:var(--primary)}
-.slots-card{background:var(--primary-bg);border:1px solid #b3d8ff;border-radius:6px;padding:10px;margin-top:8px}
+.slots-card{background:var(--primary-bg);border:1px solid #C9D6E8;border-radius:6px;padding:10px;margin-top:8px}
 .slots-title{font-size:11px;color:var(--text-2);margin-bottom:6px;font-weight:600;display:flex;align-items:center;gap:4px}
 .slots-title i{color:var(--primary)}
 .slots-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
@@ -107,35 +107,36 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .slot-label{font-size:10px;color:var(--text-3)}
 .slot-value{font-size:12px;color:var(--text);font-weight:500}
 .slot-empty{color:#bbb;font-style:italic}
-.report-card{background:var(--success-bg);border:1px solid #b7eb8f;border-radius:6px;padding:10px;margin-top:8px;display:flex;align-items:center;gap:10px}
+.report-card{background:var(--success-bg);border:1px solid #DCE8DA;border-radius:6px;padding:10px;margin-top:8px;display:flex;align-items:center;gap:10px}
 .report-icon{font-size:24px;color:var(--success)}
 .report-info{flex:1;min-width:0}
 .report-name{font-size:13px;font-weight:600;color:var(--success);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .report-size{font-size:11px;color:var(--text-2);margin-top:2px}
 .report-btn{padding:6px 14px;background:var(--success);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-block;flex-shrink:0;font-family:inherit}
-.report-btn:hover{background:#389e3d}
+.report-btn:hover{background:#356149}
 .typing-dots{display:inline-flex;gap:4px;align-items:center}
-.typing-dots span{width:6px;height:6px;background:var(--text-3);border-radius:50%;animation:bounce 1.4s infinite both}
+.typing-dots span{width:6px;height:6px;background:var(--text-3);border-radius:50%;animation:typing-pulse 1.4s ease-in-out infinite both}
 .typing-dots span:nth-child(2){animation-delay:.2s}
 .typing-dots span:nth-child(3){animation-delay:.4s}
-@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}
-.chat-input-area{padding:10px 14px;border-top:1px solid var(--border-2);background:#fff}
+@keyframes typing-pulse{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion: reduce){.typing-dots span{animation:none;opacity:.7}}
+.chat-input-area{padding:10px 14px;border-top:1px solid var(--border-2);background:var(--card-bg)}
 .input-row{display:flex;gap:8px}
 .input-row input{flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;outline:none;transition:all .15s;font-family:inherit}
-.input-row input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+.input-row input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(var(--primary-rgb),.1)}
 .input-row button{padding:9px 18px;background:var(--primary);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;transition:background .15s}
 .input-row button:hover{background:var(--primary-hover)}
-.input-row button:disabled{background:#bdbdbd;cursor:not-allowed}
+.input-row button:disabled{background:#B8B2A4;cursor:not-allowed}
 .input-hint{font-size:11px;color:var(--text-3);margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .input-hint .hint-label{color:var(--text-2);font-weight:500}
 .input-hint .chip{padding:2px 8px;background:var(--primary-bg);color:var(--primary);border-radius:10px;cursor:pointer;border:1px solid transparent;transition:all .15s;font-size:11px}
 .input-hint .chip:hover{background:var(--primary);color:#fff}
 
 /* ===== 右侧 Agent 详情面板 ===== */
-.detail-tabs{display:flex;gap:0;border-bottom:1px solid var(--border-2);background:#fafbfc;flex-shrink:0;overflow-x:auto}
+.detail-tabs{display:flex;gap:0;border-bottom:1px solid var(--border-2);background:#F9F7F1;flex-shrink:0;overflow-x:auto}
 .detail-tab{padding:8px 12px;font-size:12px;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:4px}
 .detail-tab:hover{color:var(--primary)}
-.detail-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600;background:#fff}
+.detail-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600;background:var(--card-bg)}
 .detail-tab .dot{width:6px;height:6px;border-radius:50%;background:var(--text-3);flex-shrink:0}
 .detail-tab.running .dot{background:var(--primary);animation:pulse 1.4s infinite}
 .detail-tab.done .dot{background:var(--success)}
@@ -160,7 +161,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .section-title i{color:var(--primary);font-size:14px}
 .section-title .tag{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600}
 .section-title .tag.v41{background:var(--purple-bg);color:var(--purple)}
-.fak-block{background:#fff;border:1px solid var(--border-2);border-radius:6px;padding:10px}
+.fak-block{background:var(--card-bg);border:1px solid var(--border-2);border-radius:6px;padding:10px}
 .fak-key{font-family:Consolas,"SF Mono",monospace;font-size:12px;color:var(--text);background:var(--bg);padding:6px 8px;border-radius:4px;border:1px solid var(--border-2);word-break:break-all}
 .fak-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--border-2)}
 .fak-row:last-child{border-bottom:none}
@@ -178,20 +179,20 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 
 /* cross_verify_status 6 态 */
 .cvs-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.cvs-item{background:#fff;border:1px solid var(--border-2);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:11px}
+.cvs-item{background:var(--card-bg);border:1px solid var(--border-2);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:11px}
 .cvs-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .cvs-item.independent .cvs-dot{background:var(--success)}
 .cvs-item.consistent_unknown .cvs-dot{background:var(--text-3)}
-.cvs-item.same_origin .cvs-dot{background:#13c2c2}
+.cvs-item.same_origin .cvs-dot{background:#4B7A6D}
 .cvs-item.version_difference .cvs-dot{background:var(--warning)}
 .cvs-item.conflict .cvs-dot{background:var(--error)}
-.cvs-item.single_source .cvs-dot{background:#722ed1}
+.cvs-item.single_source .cvs-dot{background:var(--purple)}
 .cvs-name{color:var(--text-2);font-weight:500}
 .cvs-count{margin-left:auto;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
 
 /* 6 维观察信号 */
 .obs-list{display:flex;flex-direction:column;gap:6px}
-.obs-item{background:#fff;border:1px solid var(--border-2);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px}
+.obs-item{background:var(--card-bg);border:1px solid var(--border-2);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px}
 .obs-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--primary-bg);color:var(--primary)}
 .obs-icon.warn{background:var(--warning-bg);color:var(--warning)}
 .obs-icon.err{background:var(--error-bg);color:var(--error)}
@@ -202,7 +203,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .obs-level.low{background:var(--success-bg);color:var(--success)}
 .obs-level.mid{background:var(--warning-bg);color:var(--warning)}
 .obs-level.high{background:var(--error-bg);color:var(--error)}
-.obs-disclaimer{background:var(--warning-bg);border:1px solid #ffe58f;border-radius:6px;padding:8px 10px;font-size:11px;color:#ad6800;line-height:1.6;display:flex;align-items:flex-start;gap:6px}
+.obs-disclaimer{background:var(--warning-bg);border:1px solid #F0E3BC;border-radius:6px;padding:8px 10px;font-size:11px;color:#7C5E14;line-height:1.6;display:flex;align-items:flex-start;gap:6px}
 .obs-disclaimer i{color:var(--warning);font-size:13px;margin-top:1px;flex-shrink:0}
 
 /* 四层实体追溯 */
@@ -210,7 +211,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .trace-layer{display:flex;align-items:stretch;gap:0;position:relative}
 .trace-layer + .trace-layer::before{content:"";position:absolute;left:14px;top:-4px;width:2px;height:8px;background:var(--border)}
 .trace-node{width:30px;height:30px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:2px solid var(--primary)}
-.trace-body{flex:1;margin-left:10px;padding:6px 10px;background:#fff;border:1px solid var(--border-2);border-radius:6px;min-width:0}
+.trace-body{flex:1;margin-left:10px;padding:6px 10px;background:var(--card-bg);border:1px solid var(--border-2);border-radius:6px;min-width:0}
 .trace-name{font-size:12px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:6px}
 .trace-name .layer-tag{font-size:10px;padding:1px 5px;border-radius:3px;background:var(--primary-bg);color:var(--primary);font-weight:600}
 .trace-id{font-size:11px;color:var(--text-3);margin-top:2px;font-family:Consolas,monospace;word-break:break-all}
@@ -225,6 +226,8 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 ::-webkit-scrollbar-track{background:transparent}
 </style>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="stylesheet" href="/static/css/bidagent.css?v=3">
 </head>
 <body>
 <!-- ===== Sidebar ===== -->
@@ -273,7 +276,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       </div>
       <div class="pipeline-flow" id="pipelineFlow">
         <div class="pipe-step pending" data-agent="intent" data-idx="0">
-          <div class="pipe-circle"><i class="ph-bold ph-brain"></i></div>
+          <div class="pipe-circle"><i class="ph-bold ph-sparkle"></i></div>
           <div class="pipe-label">① 意图解析</div>
           <div class="pipe-sub" id="pipeSub0">等待中</div>
         </div>
@@ -283,7 +286,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
           <div class="pipe-sub" id="pipeSub1">等待中</div>
         </div>
         <div class="pipe-step pending" data-agent="processing" data-idx="2">
-          <div class="pipe-circle"><i class="ph-bold ph-gear-six"></i></div>
+          <div class="pipe-circle"><i class="ph-bold ph-sliders"></i></div>
           <div class="pipe-label">③ 数据加工</div>
           <div class="pipe-sub" id="pipeSub2">等待中</div>
         </div>
@@ -352,7 +355,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
           <!-- Tab: 意图解析 -->
           <div class="detail-section active" id="section-intent">
             <div class="detail-empty">
-              <i class="ph-bold ph-brain"></i>
+              <i class="ph-bold ph-sparkle"></i>
               等待用户输入查询需求<br>
               <span style="font-size:11px;color:var(--text-3)">意图解析 Agent 将抽取 5 槽位参数：关键词 / 地区 / 时间范围 / 行业 / 公告类型</span>
             </div>
@@ -388,7 +391,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="footer">
       <span class="real">● 真实数据</span> · 6 Agent 协同 pipeline · v4.1 事实断言键校验 + cross_verify_status + 6 维观察信号 + 四层实体追溯 ·
       <span class="src">标小智 v4.1</span> · GOAI 2026 初赛
-      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e8e8e8;font-size:11px;color:#8c8c8c;line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
+      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-size:11px;color:var(--text-3);line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
     </div>
   </main>
 </div>
@@ -415,9 +418,9 @@ function shortId(id){
 
 // ===== 6 Agent 定义（v4.1 §3）=====
 const AGENTS = [
-  {id:'intent',     name:'意图解析 Agent', icon:'ph-brain',              stage:'intent',     label:'① 意图解析'},
+  {id:'intent',     name:'意图解析 Agent', icon:'ph-sparkle',              stage:'intent',     label:'① 意图解析'},
   {id:'collecting', name:'采集执行 Agent', icon:'ph-globe',              stage:'collecting', label:'② 采集执行'},
-  {id:'processing', name:'数据加工 Agent', icon:'ph-gear-six',           stage:'processing', label:'③ 数据加工'},
+  {id:'processing', name:'数据加工 Agent', icon:'ph-sliders',           stage:'processing', label:'③ 数据加工'},
   {id:'quality',    name:'质量保障 Agent', icon:'ph-shield-check',       stage:'quality',    label:'④ 质量保障'},
   {id:'finance',    name:'金融分析 Agent', icon:'ph-chart-line-up',      stage:'finance',    label:'⑤ 金融分析'},
   {id:'delivery',   name:'报告交付 Agent', icon:'ph-paper-plane-tilt',   stage:'done',       label:'⑥ 报告交付'},
@@ -545,7 +548,7 @@ function addMsg(role, content){
   if (!c) return null;
   const m = document.createElement('div');
   m.className = 'message ' + role;
-  m.innerHTML = '<div class="avatar">'+(role==='user'?'我':'AI')+'</div><div class="bubble">'+content+'</div>';
+  m.innerHTML = '<div class="avatar">'+(role==='user'?'我':'AI')+'</div><div class="bubble">'+(role==='user'?esc(content):content)+'</div>';
   c.appendChild(m);
   c.scrollTop = c.scrollHeight;
   return m;
@@ -586,7 +589,7 @@ function parseSlots(text){
 function renderSlots(s){
   return '<div class="slots-card"><div class="slots-title"><i class="ph-bold ph-sliders"></i>5 槽位解析结果（意图解析 Agent）</div>'+
     '<div class="slots-grid">'+
-      '<div class="slot-item"><span class="slot-label">关键词</span><span class="slot-value">'+(s.keyword||'<span class="slot-empty">未指定</span>')+'</span></div>'+
+      '<div class="slot-item"><span class="slot-label">关键词</span><span class="slot-value">'+(s.keyword?esc(s.keyword):'<span class="slot-empty">未指定</span>')+'</span></div>'+
       '<div class="slot-item"><span class="slot-label">地区</span><span class="slot-value">'+(s.region||'<span class="slot-empty">未指定</span>')+'</span></div>'+
       '<div class="slot-item"><span class="slot-label">时间范围</span><span class="slot-value">'+(s.time_range||'<span class="slot-empty">未指定</span>')+'</span></div>'+
       '<div class="slot-item"><span class="slot-label">行业</span><span class="slot-value">'+(s.industry||'<span class="slot-empty">未指定</span>')+'</span></div>'+
@@ -600,7 +603,7 @@ function renderIntentDetail(slots){
   const sec = _hc('section-intent');
   if (!sec) return;
   sec.innerHTML =
-    '<div class="section-title"><i class="ph-bold ph-brain"></i>意图解析 Agent 输出<span class="tag v41">v4.1</span></div>'+
+    '<div class="section-title"><i class="ph-bold ph-sparkle"></i>意图解析 Agent 输出<span class="tag v41">v4.1</span></div>'+
     '<div class="agent-out">'+
       (slots ? [
         '<div class="agent-out-row"><span class="k">关键词</span><span class="v">'+esc(slots.keyword)+'</span></div>',
@@ -653,7 +656,7 @@ function renderQualityDetail(qData){
       '<div class="fak-row"><span class="k">冲突字段数</span><span class="v '+(conflictFields.length>0?'ng':'ok')+'">'+conflictFields.length+'</span></div>'+
       '<div class="fak-fields">'+fieldsHtml+'</div>'+
     '</div>'+
-    '<div class="section-title" style="margin-top:6px"><i class="ph-bold ph-git-fork"></i>cross_verify_status 6 态分布<span class="tag v41">v4.1</span></div>'+
+    '<div class="section-title" style="margin-top:6px"><i class="ph-bold ph-git-branch"></i>cross_verify_status 6 态分布<span class="tag v41">v4.1</span></div>'+
     '<div class="cvs-grid">'+cvsHtml+'</div>';
 }
 
@@ -663,10 +666,10 @@ function renderFinanceDetail(fData){
   if (!sec) return;
   // 6 维观察信号：中标活跃度 / 公开中标集中度 / 废标公告关联 / 明确投标否决 / 信息冲突观察 / 高频共现提示
   const obs = (fData && Array.isArray(fData.signals)) ? fData.signals : [
-    {key:'activity',     name:'中标活跃度',       val:'近 12 月 7 次',          level:'low',  icon:'ph-trend-up',     cls:''},
+    {key:'activity',     name:'中标活跃度',       val:'近 12 月 7 次',          level:'low',  icon:'ph-chart-line-up',     cls:''},
     {key:'concentration',name:'公开中标集中度',   val:'前 3 业主占 71%',        level:'mid',  icon:'ph-chart-pie',    cls:'warn'},
-    {key:'rejection',    name:'废标公告关联',     val:'关联 1 条废标公告',      level:'mid',  icon:'ph-file-x',       cls:'warn'},
-    {key:'disqualify',   name:'明确投标否决',     val:'未观察到明确否决条款',   level:'low',  icon:'ph-prohibit',     cls:''},
+    {key:'rejection',    name:'废标公告关联',     val:'关联 1 条废标公告',      level:'mid',  icon:'ph-x-circle',       cls:'warn'},
+    {key:'disqualify',   name:'明确投标否决',     val:'未观察到明确否决条款',   level:'low',  icon:'ph-x-circle',     cls:''},
     {key:'conflict',     name:'信息冲突观察',     val:'0 项字段冲突',           level:'low',  icon:'ph-warning-circle',cls:''},
     {key:'cooccurrence', name:'高频共现提示',     val:'与 2 家供应商高频共现',  level:'high', icon:'ph-users-three',  cls:'err'},
   ];
@@ -694,7 +697,7 @@ function renderDeliveryDetail(dData){
   if (!sec) return;
   // 四层：Project > Notice > Source > Version > Field
   const layers = (dData && Array.isArray(dData.layers)) ? dData.layers : [
-    {layer:'Project', name:'项目实体', id:(dData&&dData.project_id)||'proj_'+shortId(_pipelineSid||'demo0001'), icon:'ph-folders'},
+    {layer:'Project', name:'项目实体', id:(dData&&dData.project_id)||'proj_'+shortId(_pipelineSid||'demo0001'), icon:'ph-folder-open'},
     {layer:'Notice',  name:'公告实体', id:(dData&&dData.notice_id)||'notice_w3_001', icon:'ph-file-text'},
     {layer:'Source',  name:'来源实体', id:(dData&&dData.source_id)||'src_ccgp_20260801', icon:'ph-globe'},
     {layer:'Version', name:'版本实体', id:(dData&&dData.version_id)||'v_'+shortId(_pipelineSid||'ver0001')+'_v1', icon:'ph-git-branch'},
@@ -727,7 +730,10 @@ async function runReal(){
     await new Promise(r => setTimeout(r, 1000));
     if (!_pipelineSid) break;
     try {
-      const r = await fetch('/api/demo/pipeline/status?sid=' + encodeURIComponent(_pipelineSid));
+      const r = await fetch('/api/demo/pipeline/status?sid=' + encodeURIComponent(_pipelineSid), { signal: AbortSignal.timeout(30000) });
+      if (r.status === 401) { alert('请先登录'); break; }
+      if (r.status === 403) { alert('无权限访问'); break; }
+      if (r.status === 429) { alert('请求过于频繁，请稍后再试'); break; }
       if (!r.ok) continue;
       const d = await r.json();
       if (!d || d.code !== 200 || !d.data) continue;
@@ -783,7 +789,7 @@ async function sendMsg(){
   if (!text) return;
   running = true;
   btn.disabled = true;
-  addMsg('user', esc(text));
+  addMsg('user', text);
   input.value = '';
   const botMsg = addMsg('bot', '<div class="typing-dots"><span></span><span></span><span></span></div>');
   await new Promise(r => setTimeout(r, 500));
@@ -807,7 +813,10 @@ async function sendMsg(){
   }
 
   try {
-    const sr = await fetch('/api/demo/pipeline/start?query=' + encodeURIComponent(text), {method:'POST'});
+    const sr = await fetch('/api/demo/pipeline/start?query=' + encodeURIComponent(text), {method:'POST', signal: AbortSignal.timeout(15000)});
+    if(sr.status===401){alert('请先登录');throw new Error('未登录');}
+    if(sr.status===403){alert('无权限访问');throw new Error('无权限');}
+    if(sr.status===429){alert('请求过于频繁，请稍后再试');throw new Error('请求频繁');}
     const sd = await sr.json();
     if (sd.code === 200 && sd.data && sd.data.session_id){
       _pipelineSid = sd.data.session_id;

@@ -138,9 +138,14 @@ async def verify_api_key(
             detail="User is inactive or deleted",
         )
 
-    # 更新 last_used_at（不阻塞请求）
-    api_key_obj.last_used_at = utc_now()
-    await db.commit()
+    # 异步更新 last_used_at，不阻塞认证流程
+    # 注意：只设置属性不 flush，避免在 SQLite 中获取写锁导致后续路由
+    # 使用独立会话时出现 database is locked。若路由复用同一 session 并
+    # commit，则 last_used_at 更新会被顺带提交；否则回滚丢弃（可接受）。
+    try:
+        api_key_obj.last_used_at = utc_now()
+    except Exception:
+        pass  # last_used_at 更新失败不应影响认证
 
     return user, api_key_obj, raw_api_key
 

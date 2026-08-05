@@ -2,101 +2,103 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1366, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>标讯检索 · 标小智</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:#f5f7fa;color:#333;min-height:100vh}
+body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 .page-main{flex:1;padding:24px 28px 40px}
-.hero{background:linear-gradient(135deg,#1976d2 0%,#4527a0 100%);border-radius:14px;padding:28px 32px;color:white;margin-bottom:20px;box-shadow:0 6px 20px rgba(25,118,210,.15)}
+.hero{background:linear-gradient(135deg,var(--primary) 0%,#554475 100%);border-radius:14px;padding:28px 32px;color:white;margin-bottom:20px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
 .hero h1{font-size:22px;margin-bottom:8px;letter-spacing:.3px}
 .hero p{opacity:.9;font-size:14px;line-height:1.7;max-width:720px}
-.search-box{background:white;border-radius:14px;padding:18px;margin-top:28px;display:flex;gap:12px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.08)}
-.search-icon{width:40px;height:40px;border-radius:10px;background:#e3f2fd;color:#1976d2;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.search-input{flex:1;border:none;outline:none;font-size:15px;padding:10px 4px;color:#1a1a2e;background:transparent}
-.search-input::placeholder{color:#b0b8c4}
-.search-btn{background:#1976d2;color:white;border:none;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
-.search-btn:hover{background:#1565c0;transform:translateY(-1px)}
+.search-box{background:var(--card-bg);border-radius:14px;padding:18px;margin-top:28px;display:flex;gap:12px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.search-icon{width:40px;height:40px;border-radius:10px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.search-input{flex:1;border:none;outline:none;font-size:15px;padding:10px 4px;color:var(--text);background:transparent}
+.search-input::placeholder{color:var(--text-3)}
+.search-btn{background:var(--primary);color:white;border:none;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.search-btn:hover{background:var(--primary);transform:translateY(-1px)}
 .filters-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
-.filter-card{background:white;border:1px solid #e8e8e8;border-radius:12px;padding:14px 16px;transition:all .15s}
-.filter-card:hover{border-color:#1976d2;box-shadow:0 4px 12px rgba(25,118,210,.08)}
-.filter-label{font-size:11px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.filter-value{font-size:14px;font-weight:600;color:#1a1a2e;display:flex;justify-content:space-between;align-items:center}
-.filter-select{width:100%;border:1px solid #e8e8e8;border-radius:8px;padding:8px 10px;font-size:13px;background:white;color:#1a1a2e;outline:none;cursor:pointer}
-.filter-select:focus{border-color:#1976d2}
+.filter-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:all .15s}
+.filter-card:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.filter-label{font-size:11px;color:var(--text-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.filter-value{font-size:14px;font-weight:600;color:var(--text);display:flex;justify-content:space-between;align-items:center}
+.filter-select{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--card-bg);color:var(--text);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--primary)}
 .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.section-title h2{font-size:16px;color:#1a1a2e}
-.section-title .count{font-size:12px;color:#888;background:#eef0f8;padding:4px 10px;border-radius:10px}
+.section-title h2{font-size:16px;color:var(--text)}
+.section-title .count{font-size:12px;color:var(--text-3);background:#ECE9E0;padding:4px 10px;border-radius:10px}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
-.stat-card{background:white;border:1px solid #eef0f5;border-radius:12px;padding:18px 20px}
-.stat-card h3{font-size:12px;color:#888;font-weight:500;margin-bottom:8px}
-.stat-card .num{font-size:24px;font-weight:700;color:#1a1a2e;letter-spacing:-.5px}
-.stat-card .num .unit{font-size:13px;font-weight:500;color:#888;margin-left:4px}
-.stat-card .trend{font-size:12px;color:#2e7d32;margin-top:4px}
-.stat-card .trend.down{color:#c62828}
-.result-list{background:white;border:1px solid #e8e8e8;border-radius:12px;overflow:hidden}
-.result-header{padding:12px 16px;border-bottom:1px solid #f0f0f0;display:grid;grid-template-columns:40px 1fr 80px 110px 90px;gap:12px;font-size:11px;color:#888;font-weight:600;background:#fafbfc}
-.result-item{padding:12px 16px;border-bottom:1px solid #f5f5f5;display:grid;grid-template-columns:40px 1fr 80px 110px 90px;gap:12px;align-items:center;transition:background .15s;cursor:pointer}
+.stat-card{background:var(--card-bg);border:1px solid #ECE9E0;border-radius:12px;padding:18px 20px}
+.stat-card h3{font-size:12px;color:var(--text-3);font-weight:500;margin-bottom:8px}
+.stat-card .num{font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.5px}
+.stat-card .num .unit{font-size:13px;font-weight:500;color:var(--text-3);margin-left:4px}
+.stat-card .trend{font-size:12px;color:var(--success);margin-top:4px}
+.stat-card .trend.down{color:var(--error)}
+.result-list{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.result-header{padding:12px 16px;border-bottom:1px solid var(--border-2);display:grid;grid-template-columns:40px 1fr 80px 110px 90px;gap:12px;font-size:11px;color:var(--text-3);font-weight:600;background:#F9F7F1}
+.result-item{padding:12px 16px;border-bottom:1px solid #F2EFE6;display:grid;grid-template-columns:40px 1fr 80px 110px 90px;gap:12px;align-items:center;transition:background .15s;cursor:pointer}
 .result-item:last-child{border-bottom:none}
-.result-item:hover{background:#f8f9ff}
-.seq{font-size:12px;color:#999;font-family:monospace;font-weight:600}
-.res-title{font-size:14px;font-weight:600;color:#1a1a2e;line-height:1.5;margin-bottom:4px}
-.res-meta{font-size:12px;color:#888;display:flex;gap:12px}
+.result-item:hover{background:#F0EEE6}
+.seq{font-size:12px;color:var(--text-3);font-family:monospace;font-weight:600}
+.res-title{font-size:14px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:4px}
+.res-meta{font-size:12px;color:var(--text-3);display:flex;gap:12px}
 .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
-.tag-tender{background:#e3f2fd;color:#1565c0}
-.tag-award{background:#e8f5e9;color:#2e7d32}
-.tag-correction{background:#fff8e1;color:#f57f17}
-.amount{font-size:14px;font-weight:700;color:#1976d2;text-align:right}
-.date{font-size:12px;color:#888;text-align:right}
+.tag-tender{background:var(--primary-bg);color:var(--primary)}
+.tag-award{background:var(--success-bg);color:var(--success)}
+.tag-correction{background:var(--warning-bg);color:var(--warning)}
+.amount{font-size:14px;font-weight:700;color:var(--primary);text-align:right}
+.date{font-size:12px;color:var(--text-3);text-align:right}
 .grade{text-align:center;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;display:inline-block;margin:0 auto}
-.grade-high{background:#e8f5e9;color:#2e7d32}
-.grade-review{background:#fff8e1;color:#f57f17}
-.grade-low{background:#ffebee;color:#c62828}
-:root{--success-bg:#e8f5e9;--success:#2e7d32;--primary-bg:#e3f2fd;--primary:#1565c0;--warning-bg:#fff8e1;--warning:#f57f17;--border-2:#f5f5f5;--text-3:#888;--error-bg:#ffebee;--error:#c62828}
+.grade-high{background:var(--success-bg);color:var(--success)}
+.grade-review{background:var(--warning-bg);color:var(--warning)}
+.grade-low{background:var(--error-bg);color:var(--error)}
+:root{--success-bg:var(--success-bg);--success:var(--success);--primary-bg:var(--primary-bg);--primary:var(--primary);--warning-bg:var(--warning-bg);--warning:var(--warning);--border-2:#F2EFE6;--text-3:var(--text-3);--error-bg:var(--error-bg);--error:var(--error)}
 .sl-direct{background:var(--success-bg);color:var(--success)}
 .sl-equivalent{background:var(--primary-bg);color:var(--primary)}
 .sl-inferred{background:var(--warning-bg);color:var(--warning)}
 .sl-unsupported{background:var(--border-2);color:var(--text-3)}
 .sl-contradicted{background:var(--error-bg);color:var(--error)}
 .sl-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle}
-.sl-filter-card{background:white;border:1px solid #e8e8e8;border-radius:12px;padding:14px 16px;margin-bottom:20px;transition:all .15s}
-.sl-filter-card:hover{border-color:#1976d2;box-shadow:0 4px 12px rgba(25,118,210,.08)}
+.sl-filter-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:20px;transition:all .15s}
+.sl-filter-card:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(0,0,0,.06)}
 .sl-filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.sl-btn{padding:5px 12px;border:1px solid #e0e0e0;border-radius:6px;background:white;font-size:12px;cursor:pointer;color:#555;transition:all .15s}
-.sl-btn:hover{border-color:#1976d2;color:#1976d2}
-.sl-btn.active{background:#1976d2;color:white;border-color:#1976d2;font-weight:600}
-.empty-state{padding:60px 20px;text-align:center;color:#999}
+.sl-btn{padding:5px 12px;border:1px solid #D8D3C4;border-radius:6px;background:var(--card-bg);font-size:12px;cursor:pointer;color:var(--text-2);transition:all .15s}
+.sl-btn:hover{border-color:var(--primary);color:var(--primary)}
+.sl-btn.active{background:var(--primary);color:white;border-color:var(--primary);font-weight:600}
+.empty-state{padding:60px 20px;text-align:center;color:var(--text-3)}
 .empty-state .emoji{font-size:36px;margin-bottom:10px}
 
 /* ===== Unified Sidebar ===== */
-.sidebar{position:fixed;left:0;top:0;width:208px;height:100vh;background:#001529;display:flex;flex-direction:column;z-index:100}
+.sidebar{position:fixed;left:0;top:0;width:208px;height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100}
 .sidebar-logo{height:52px;display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)}
-.sidebar-logo .logo-icon{width:28px;height:28px;background:#1677ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
+.sidebar-logo .logo-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0}
 .sidebar-logo .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
 .sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
 .nav-section-label{padding:12px 20px 6px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.7);font-size:13px;text-decoration:none;transition:all .15s;border-left:3px solid transparent;cursor:pointer}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-item.active{color:#fff;background:rgba(22,119,255,.15);border-left-color:#1677ff}
+.nav-item.active{color:#fff;background:rgba(var(--primary-rgb),.15);border-left-color:var(--primary)}
 .nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
-.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:#1677ff;color:#fff;font-weight:600}
+.nav-item .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--primary);color:#fff;font-weight:600}
 .sidebar-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
-.sidebar-footer .comp-tag{color:#1677ff;font-weight:600}
+.sidebar-footer .comp-tag{color:var(--primary);font-weight:600}
 /* ===== Unified Main Wrap ===== */
 .main-wrap{margin-left:208px;min-height:100vh;display:flex;flex-direction:column}
-.top-header{height:52px;background:#fff;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02)}
+.top-header{height:52px;background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:0 1px 2px rgba(35,33,27,.05),0 1px 6px -1px rgba(35,33,27,.04)}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-title{font-size:15px;font-weight:600;color:#1a1a2e}
-.header-title i{color:#1677ff;margin-right:6px}
+.header-title{font-size:15px;font-weight:600;color:var(--text)}
+.header-title i{color:var(--primary);margin-right:6px}
 .header-right{display:flex;align-items:center;gap:10px}
 .h-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600}
-.h-badge.comp{background:#e6f4ff;color:#1677ff}
-.h-badge.data{background:#f6ffed;color:#52c41a}
-.h-badge.vers{background:#f5f7fa;color:#595959;border:1px solid #e8e8e8}
-body{background:#f5f7fa}
+.h-badge.comp{background:var(--primary-bg);color:var(--primary)}
+.h-badge.data{background:var(--success-bg);color:var(--success)}
+.h-badge.vers{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
+body{background:var(--bg)}
 
 </style>
-<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css" />
+<link rel="stylesheet" href="/static/vendor/phosphor/phosphor-icons.min.css?v=2" />
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="stylesheet" href="/static/css/bidagent.css?v=3">
 </head>
 <body>
 <!-- ===== Sidebar ===== -->
@@ -136,10 +138,10 @@ body{background:#f5f7fa}
   </header>
 <main class="page-main">
   <section class="hero">
-    <h1><i class="ph ph-magnifying-glass" style="color:#1976d2"></i> 跨平台招投标智能检索</h1>
+    <h1><i class="ph ph-magnifying-glass" style="color:var(--primary)"></i> 跨平台招投标智能检索</h1>
     <p>一句话输入需求，标小智 六 Agent 协同闭环：意图解析 → 跨 4 平台采集 → 去重合并 → 逐字段证据校验 → 供应商画像 → Word 报告。每个数字都能点回公告原文。</p>
     <div class="search-box">
-      <div class="search-icon"><i class="ph ph-magnifying-glass" style="color:#1976d2"></i></div>
+      <div class="search-icon"><i class="ph ph-magnifying-glass" style="color:var(--primary)"></i></div>
       <input class="search-input" id="searchInput" placeholder="例如：上海最近7天的IT采购项目，预算100万以上" />
       <button class="search-btn" onclick="runSearch()">开始检索</button>
     </div>
@@ -195,7 +197,7 @@ body{background:#f5f7fa}
       <button type="button" class="sl-btn" data-sl="inferred">推导 inferred</button>
       <button type="button" class="sl-btn" data-sl="unsupported">无依据 unsupported</button>
       <button type="button" class="sl-btn" data-sl="contradicted">冲突 contradicted</button>
-      <button type="button" class="sl-btn" id="slClear" style="margin-left:auto;color:#888">清除选择</button>
+      <button type="button" class="sl-btn" id="slClear" style="margin-left:auto;color:var(--text-3)">清除选择</button>
     </div>
   </div>
 
@@ -209,9 +211,10 @@ body{background:#f5f7fa}
     </div>
     <div id="resultList"></div>
   </div>
-<div class="footer" style="margin-top:12px;padding:8px 14px;background:#fff;border-top:1px solid #e8e8e8;font-size:11px;color:#8c8c8c;line-height:1.6;text-align:center"><span style="color:#52c41a;font-weight:600">● 真实数据</span> · 标小智 v4.1 · GOAI 2026 初赛<div style="margin-top:4px"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div></div>
+<div class="footer" style="margin-top:12px;padding:8px 14px;background:var(--card-bg);border-top:1px solid var(--border);font-size:11px;color:var(--text-3);line-height:1.6;text-align:center"><span style="color:var(--success);font-weight:600">● 真实数据</span> · 标小智 v4.1 · GOAI 2026 初赛<div style="margin-top:4px"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div></div>
 </main>
 <script>
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 const FL={招标公告:'tag-tender',中标公告:'tag-award',更正公告:'tag-correction'};
 
 // ===== Mock 数据（作为 fallback 保留） =====
@@ -250,7 +253,7 @@ const selectedSL=new Set();
 // support_level 徽标渲染（带 _hc 空值保护）
 function slBadge(sl){
   const v=sl||'single_source';
-  return `<span class="sl-badge sl-${v}" title="support_level: ${v}">${SL_LABEL[v]||v}</span>`;
+  return `<span class="sl-badge sl-${esc(v)}" title="support_level: ${esc(v)}">${esc(SL_LABEL[v]||v)}</span>`;
 }
 function fmt(n){if(n>=1e8)return (n/1e8).toFixed(2)+' 亿';if(n>=1e4)return (n/1e4).toFixed(0)+' 万';return n.toLocaleString()}
 function renderStats(list){
@@ -265,19 +268,19 @@ function renderStats(list){
     {h:'来源平台',n:plats,u:'个',t:'跨平台去重合并',d:false},
   ];
   document.getElementById('statsGrid').innerHTML=cards.map(c=>`
-    <div class="stat-card"><h3>${c.h}</h3><div class="num">${c.n}<span class="unit">${c.u}</span></div>
-      ${c.t?`<div class="trend ${c.d?'down':''}">${c.t}</div>`:''}</div>`).join('');
+    <div class="stat-card"><h3>${esc(c.h)}</h3><div class="num">${esc(c.n)}<span class="unit">${esc(c.u)}</span></div>
+      ${c.t?`<div class="trend ${c.d?'down':''}">${esc(c.t)}</div>`:''}</div>`).join('');
 }
 function renderList(list){
-  if(!list.length){document.getElementById('resultList').innerHTML=`<div class="empty-state"><div class="emoji"><i class="ph ph-magnifying-glass" style="color:#999"></i></div><div>未找到匹配项</div></div>`;return}
+  if(!list.length){document.getElementById('resultList').innerHTML=`<div class="empty-state"><div class="emoji"><i class="ph ph-magnifying-glass" style="color:#948E80"></i></div><div>未找到匹配项</div></div>`;return}
   document.getElementById('resCount').textContent=list.length+' 条';
   document.getElementById('resultList').innerHTML=list.map((x,i)=>`
     <div class="result-item" onclick="goDetail(${i})">
       <div class="seq">${String(i+1).padStart(2,'0')}</div>
-      <div><div class="res-title">${x.title}</div><div class="res-meta"><span><i class="ph ph-building"></i> ${x.purchaser}</span><span><i class="ph ph-globe"></i> ${x.plat}</span></div></div>
-      <div><span class="tag ${FL[x.type]||'tag-tender'}">${x.type}</span>${slBadge(x.support_level)}</div>
+      <div><div class="res-title">${esc(x.title)}</div><div class="res-meta"><span><i class="ph ph-bank"></i> ${esc(x.purchaser)}</span><span><i class="ph ph-globe"></i> ${esc(x.plat)}</span></div></div>
+      <div><span class="tag ${FL[x.type]||'tag-tender'}">${esc(x.type)}</span>${slBadge(x.support_level)}</div>
       <div class="amount">${x.amount?fmt(x.amount):'—'}</div>
-      <div class="date">${x.date}</div>
+      <div class="date">${esc(x.date)}</div>
     </div>`).join('');
 }
 function goDetail(i){
@@ -290,7 +293,10 @@ function goDetail(i){
 // ===== 加载真实数据，失败回退 Mock =====
 async function loadRealData(){
   try{
-    const resp=await fetch('/api/real/tenders');
+    const resp=await fetch('/api/real/tenders', { signal: AbortSignal.timeout(15000) });
+    if(resp.status===401){alert('请先登录');throw new Error('未登录');}
+    if(resp.status===403){alert('无权限访问');throw new Error('无权限');}
+    if(resp.status===429){alert('请求过于频繁，请稍后再试');throw new Error('请求频繁');}
     if(!resp.ok) throw new Error('HTTP '+resp.status);
     const data=await resp.json();
     if(data.code && data.code!==200) throw new Error(data.msg||'API错误');
@@ -365,7 +371,7 @@ runSearch();
 loadRealData().then(data=>{
   currentData=data;
   runSearch();
-});
+}).catch(function(e){console.error('璇锋眰澶辫触:',e);});
 </script>
 </div>
 

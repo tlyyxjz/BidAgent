@@ -3,7 +3,7 @@
 > 面向供应链金融贷前尽调的可验证招投标数据引擎 · GOAI 2026。将不可核验的 LLM 输出转化为可复核、可追踪的数据资产——LLM 只生成候选，确定性程序负责验证。
 
 **当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
-**测试**：1882 passed · **评测数据**：107 篇真实公告 · **分支**：feature/glm-w4-k3-data
+**测试**：1937 passed · 0 warnings · **评测数据**：107 篇真实公告 · **分支**：feature/glm-w4-k3-data
 
 ---
 
@@ -99,9 +99,9 @@ TenderProject（采购项目）
 
 ### 质量评测（v4.1 §10）
 
-- 证据 recall / precision / IoU 三大指标
+- 证据 recall / precision / IoU 三大指标（span 级口径：衡量证据文本边界与金标的重合度）
 - 项目级 Bootstrap 95% 置信区间
-- 四组消融实验（A/B/C/D）
+- 四组消融实验（A/B/C/D），其中 evidence_precision 为字段级口径（输出字段的证据可在原文定位），与 span 级指标不同维度，不可直接比较
 - v4.1 §10 新指标：null_false_positive_rate（金标 absent/not_applicable 字段零误报）
 
 ### 12 个标准 API 端点（v4.1 §12）
@@ -146,25 +146,27 @@ TenderProject（采购项目）
 | 公告类型覆盖 | tender 34 / award 35 / correction 33 / 其他 5 |
 | 金标字段总数（99 篇全量）| 594 |
 
-### 4 组消融实验（99 篇全量，commit caeacde）
+### 4 组消融实验（99 篇全量，final5 实测，详见 `_w3_outputs/端到端评测报告.md`）
 
 | 指标 | A 组（Direct LLM）| B 组（LLM+候选证据）| C 组（LLM+程序验证）| D 组（完整 BidAgent）|
 |---|---|---|---|---|
-| unjustified_rate | **100.00%** | 0.00%（失真）| **6.04%** | **0.00%** |
-| field_precision | 91.97% | 92.58% | 92.58% | 92.17% |
+| unjustified_rate | **100.00%** | 0.00%（失真）| **3.01%** | **0.00%** |
+| field_precision | 96.17% | 87.76% | 87.59% | **98.08%** |
 | evidence_precision | N/A | N/A | 100.00% | 100.00% |
 
-### v4.1 §10 新指标 null_false_positive_rate（5 篇重跑，A/B/C/D 四组一致）
+### v4.1 §10 新指标 null_false_positive_rate（99 篇全量，final5 实测）
 
-| 组 | should_not_have_value_fields | null_false_positives | null_false_positive_rate |
+| 指标 | A 组 | B/C/D 组 | 目标 |
 |---|---|---|---|
-| A/B/C/D | 6 | 0 | **0.0000** |
+| null_false_positive_rate | 4.37% | **0.63%** | <5%（达标）|
+
+仅剩 1 个空值误报（w3_correction_043），经核对为金标标注矛盾。
 
 ### 测试
 
-- 1882 passed · 0 errors / 0 failures
-- 27 warnings（预存的 asyncio mark 装饰同步函数告警，与功能无关）
-- 测试覆盖率 90.23%（达到 pytest.ini 阈值 90%，1882 用例全量实测）
+- 1937 passed · 0 errors / 0 failures
+- 0 warnings（已清理 asyncio mark 误标与 datetime.utcnow() 弃用告警）
+- 测试覆盖率 90.82%（达到 pyproject.toml 阈值 90%，1937 用例全量实测）
 
 ---
 
@@ -251,10 +253,10 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 grep -r "openai\|anthropic\|chat.completion\|AsyncOpenAI" app/processors/
 
 # 2. 双坐标映射实现
-grep -n "OffsetMapping\|to_normalized\|to_raw" app/processors/evidence_locator.py
+grep -rn "OffsetMapping\|to_normalized\|to_raw" app/processors/evidence_locator/
 
 # 3. 5 级降级匹配
-grep -n "_match_exact\|_match_stripped\|_match_no_punct\|_match_substring" app/processors/evidence_locator.py
+grep -rn "_match_exact\|_match_stripped\|_match_no_punct\|_match_substring" app/processors/evidence_locator/
 
 # 4. 403 即停不重试
 grep -n "HttpForbiddenError\|403\|raise" app/core/scraper.py
@@ -296,7 +298,7 @@ pytest -v
 
 ```bash
 # 覆盖率
-pytest --cov=backend --cov-report=term-missing
+pytest --cov=app --cov-report=term-missing
 ```
 
 测试范围包含 v4.1 新增：test_rate_limiter / test_robots_checker / test_data_deletion / test_source_whitelist / test_repost_features / test_credentials / test_v41_api / test_v41_fields / test_demo_pages_smoke / test_real_demo_api 等。
@@ -348,7 +350,7 @@ pytest --cov=backend --cov-report=term-missing
 
 ## 当前已知限制
 
-1. **金标数量 107 篇**：未达 v4.1 推荐 300～350 篇，复赛阶段补强
+1. **金标数量 107 篇**：未达 v4.1 推荐 300～350 篇，补标进行中（目标 300 篇以上）
 2. **未划分开发集/校准集/测试集**：当前为统一金标集
 3. **temperature 记录口径**：记录 0.0，实际 0.1，不影响指标结论，后续修复
 4. **Demo 视频降级处理**：初赛阶段以代码仓库 + Web Demo 8 页作为等价可验证材料，视频待复赛补录
@@ -380,6 +382,7 @@ pytest --cov=backend --cov-report=term-missing
 - 结构化日志带 request_id 上下文，不记录凭证
 - 统一错误响应 `{code, data, msg}`
 - Docker 多阶段构建 + non-root 用户 + healthcheck
+- GitHub Actions CI：pytest 全量 + 覆盖率 90% 阈值 + pip-audit 依赖漏洞扫描（.github/workflows/ci.yml）
 
 ## 许可证
 

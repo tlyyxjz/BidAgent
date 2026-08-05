@@ -22,267 +22,36 @@ import argparse
 import asyncio
 import json
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from pathlib import Path
-from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-WORK_DIR = Path(r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent\work-mode-projects\6a57291a0778ce48bfe693d2")
-RAW_DIR = WORK_DIR / "_w2_raw"
-ANNOT_DIR = WORK_DIR / "_w2_annotations"
+# app 符号必须在 eval_evidence_metrics 之前导入：eval_evidence_metrics 通过
+# scripts.eval_evidence 模块属性引用 call_extraction_llm，以支持测试 patch
+from app.llm.extractor import call_extraction_llm, compute_prompt_hash  # noqa: F401
 
-from app.llm.extractor import call_extraction_llm, compute_prompt_hash
-from app.processors.evidence_locator import EvidenceLocator
-
-
-DEFAULT_DOCS = [
-    "tender_06", "tender_07",
-    "award_05", "award_06",
-    "correction_04", "correction_05",
-    "multi_lot_02",
-]
-
-IOU_THRESHOLD = 0.5  # Sol: 稍长上下文仍视为有效证据
-
-
-@dataclass
-class GoldEvidenceSpan:
-    start: int
-    end: int
-    text: str
-    role: str
-
-
-@dataclass
-class GoldField:
-    field_name: str
-    gold_status: str
-    evidences: list  # [GoldEvidenceSpan]
-
-
-@dataclass
-class GoldDoc:
-    document_id: str
-    file: str
-    fields: list  # [GoldField]
-
-
-@dataclass
-class FieldMetric:
-    doc_id: str
-    field_name: str
-    gold_status: str
-    gold_evidence_count: int
-    pred_evidence_count: int
-    matched_evidence_count: int  # 与金标匹配的预测证据数
-    best_iou: float  # 最佳 IoU (0.0 if no match)
-    found: bool  # 系统是否找到至少 1 个匹配证据
-    iou_passed: bool  # best_iou >= IOU_THRESHOLD
-
-
-@dataclass
-class DocMetric:
-    doc_id: str
-    fields_total: int
-    fields_present: int  # gold_status == present/multi_value
-    fields_found: int  # 系统找到证据的字段数
-    evidences_pred: int
-    evidences_located: int  # P3: 被 locator 定位到原文的证据数
-    evidences_matched: int
-    iou_list: list  # P3: 所有被定位证据的 IoU (含 IoU<0.5，未定位不算)
-    iou_list_matched: list  # P3: 仅 matched=True (IoU>=阈值) 的 IoU，用于对比
-    recall: float  # fields_found / fields_present
-    precision: float  # 证据级精确率: evidences_matched / evidences_pred
-    iou_avg: float  # P3: sum(iou_list_matched) / evidences_pred (未定位/未匹配算0，反映整体质量)
-    iou_avg_matched: float  # P3: mean(iou_list_matched) 仅匹配证据的平均 (原口径，用于对比)
-
-
-@dataclass
-class OverallMetric:
-    docs_count: int
-    fields_total: int
-    fields_present: int
-    fields_found: int
-    evidences_pred: int
-    evidences_located: int  # P3: 被 locator 定位到原文的证据数
-    evidences_matched: int
-    recall: float  # 证据检出率: fields_found / fields_present
-    precision: float  # 证据级精确率: evidences_matched / evidences_pred (与 W2-08 字段级口径不同)
-    iou_avg: float  # P3: sum(all_ious_matched) / evidences_pred (未定位/未匹配算0)
-    iou_avg_matched: float  # P3: 仅 matched 证据的平均 IoU (原口径，用于对比)
-    iou_p50: float
-    iou_p95: float
-    model_id: str
-    prompt_hash: str
-    total_tokens: int
-    invalid_docs: list  # P0-2: LLM 失败的 doc_id 列表 (向前兼容: 新增字段)
-
-
-def load_gold_doc(doc_prefix: str) -> Optional[GoldDoc]:
-    matches = list(ANNOT_DIR.glob(f"annotation_{doc_prefix}*.json"))
-    if not matches:
-        return None
-    with open(matches[0], encoding="utf-8") as f:
-        data = json.load(f)
-    fields = []
-    for f in data["fields"]:
-        evidences = []
-        for v in f.get("values", []):
-            for span in v.get("acceptable_evidence_spans", []):
-                evidences.append(GoldEvidenceSpan(
-                    start=span["start"], end=span["end"],
-                    text=span["text"], role=span.get("role", "primary"),
-                ))
-        fields.append(GoldField(
-            field_name=f["field_name"],
-            gold_status=f["gold_status"],
-            evidences=evidences,
-        ))
-    return GoldDoc(document_id=data["document_id"], file=matches[0].name, fields=fields)
-
-
-def load_raw_text(doc_prefix: str) -> Optional[str]:
-    p = RAW_DIR / f"{doc_prefix}.txt"
-    if not p.exists():
-        return None
-    return p.read_text(encoding="utf-8")
-
-
-def compute_iou(a_start: int, a_end: int, b_start: int, b_end: int) -> float:
-    """计算两个区间的 IoU。"""
-    inter_start = max(a_start, b_start)
-    inter_end = min(a_end, b_end)
-    inter = max(0, inter_end - inter_start)
-    if inter == 0:
-        return 0.0
-    union = max(a_end, b_end) - min(a_start, b_start)
-    if union <= 0:
-        return 0.0
-    return inter / union
-
-
-def match_evidence(
-    pred_start: int, pred_end: int,
-    gold_spans: list[GoldEvidenceSpan],
-) -> tuple[bool, float]:
-    """系统证据与金标 spans 匹配，返回 (是否匹配, 最佳 IoU)。"""
-    best_iou = 0.0
-    matched = False
-    for g in gold_spans:
-        iou = compute_iou(pred_start, pred_end, g.start, g.end)
-        if iou > best_iou:
-            best_iou = iou
-        if iou >= IOU_THRESHOLD:
-            matched = True
-    return matched, best_iou
-
-
-async def evaluate_doc(gd: GoldDoc, raw_text: str) -> tuple[Optional[DocMetric], dict]:
-    """评测单篇。
-
-    P0-2 修复: 检测 LLM 失败 (result.error / total_tokens==0 / fields 为空)，
-    标记 meta["invalid"]=True 并返回 None，main() 据此跳过该 doc 不计入指标。
-    对齐 eval_ablation.py 的 P0-1 修复做法。
-    """
-    # 调 LLM 抽取
-    result = await call_extraction_llm(raw_text)
-    is_invalid = bool(result.error) or result.total_tokens == 0 or len(result.fields) == 0
-    meta = {
-        "model_id": result.model_id,
-        "prompt_hash": result.prompt_hash,
-        "total_tokens": result.total_tokens,
-        "latency_ms": result.latency_ms,
-        "error": result.error,
-        "invalid": is_invalid,
-    }
-    if is_invalid:
-        return None, meta
-
-    locator = EvidenceLocator(raw_text)
-    pred_by_name = {f.field_name: f for f in result.fields}
-
-    field_metrics: list[FieldMetric] = []
-    evidences_pred = 0
-    evidences_located = 0  # P3: 被 locator 定位到原文的证据数
-    evidences_matched = 0
-    iou_list = []  # P3: 所有被定位证据的 IoU (含 IoU<0.5)
-    iou_list_matched = []  # P3: 仅 matched=True 的 IoU
-
-    for gf in gd.fields:
-        gold_ev_count = len(gf.evidences)
-        is_present = gf.gold_status in ("present", "multi_value")
-
-        pred = pred_by_name.get(gf.field_name)
-        pred_ev_count = len(pred.candidate_evidences) if pred else 0
-        evidences_pred += pred_ev_count
-
-        matched_count = 0
-        best_iou = 0.0
-        if pred and pred_ev_count > 0 and gold_ev_count > 0:
-            for ce in pred.candidate_evidences:
-                loc = locator.locate(ce.evidence_text, search_from=0)
-                if loc.found and loc.location is not None:
-                    evidences_located += 1  # P3: 定位成功
-                    matched, iou = match_evidence(
-                        loc.location.start, loc.location.end,
-                        gf.evidences,
-                    )
-                    if iou > best_iou:
-                        best_iou = iou
-                    # P3: 所有被定位的证据都计入 iou_list (含 IoU<0.5)
-                    iou_list.append(iou)
-                    if matched:
-                        matched_count += 1
-                        iou_list_matched.append(iou)
-            evidences_matched += matched_count
-
-        found = matched_count > 0
-        field_metrics.append(FieldMetric(
-            doc_id=gd.document_id,
-            field_name=gf.field_name,
-            gold_status=gf.gold_status,
-            gold_evidence_count=gold_ev_count,
-            pred_evidence_count=pred_ev_count,
-            matched_evidence_count=matched_count,
-            best_iou=round(best_iou, 4),
-            found=found,
-            iou_passed=best_iou >= IOU_THRESHOLD,
-        ))
-
-    fields_present = sum(1 for fm in field_metrics if fm.gold_status in ("present", "multi_value"))
-    fields_found = sum(1 for fm in field_metrics if fm.found)
-
-    # P1-18: iou_avg 用 iou_list_matched 求和 (未匹配算0) / evidences_pred 做分母 (未定位算0)
-    # iou_avg_matched 用 iou_list_matched 做分母 (原口径，仅匹配证据)
-    iou_avg_overall = round(sum(iou_list_matched) / max(evidences_pred, 1), 4) if evidences_pred else 0.0
-    iou_avg_matched = round(sum(iou_list_matched) / max(len(iou_list_matched), 1), 4) if iou_list_matched else 0.0
-
-    return DocMetric(
-        doc_id=gd.document_id,
-        fields_total=len(field_metrics),
-        fields_present=fields_present,
-        fields_found=fields_found,
-        evidences_pred=evidences_pred,
-        evidences_located=evidences_located,
-        evidences_matched=evidences_matched,
-        iou_list=[round(x, 4) for x in iou_list],
-        iou_list_matched=[round(x, 4) for x in iou_list_matched],
-        recall=round(fields_found / max(fields_present, 1), 4),
-        precision=round(evidences_matched / max(evidences_pred, 1), 4),
-        iou_avg=iou_avg_overall,
-        iou_avg_matched=iou_avg_matched,
-    ), meta
-
-
-def percentile(sorted_list: list, p: float) -> float:
-    if not sorted_list:
-        return 0.0
-    idx = int(len(sorted_list) * p)
-    if idx >= len(sorted_list):
-        idx = len(sorted_list) - 1
-    return sorted_list[idx]
+# Re-export 公共符号以保持向后兼容 (tests 通过 scripts.eval_evidence 导入)
+from scripts.eval_evidence_types import (  # noqa: F401
+    DEFAULT_DOCS,
+    IOU_THRESHOLD,
+    GoldEvidenceSpan,
+    GoldField,
+    GoldDoc,
+    FieldMetric,
+    DocMetric,
+    OverallMetric,
+)
+from scripts.eval_evidence_metrics import (  # noqa: F401
+    WORK_DIR,
+    load_gold_doc,
+    load_raw_text,
+    compute_iou,
+    match_evidence,
+    evaluate_doc,
+    percentile,
+)
 
 
 async def main():

@@ -83,6 +83,11 @@ class Settings(BaseSettings):
     QIANLIMA_PASSWORD: str = ""
     QIANLIMA_LOGIN_URL: str = "https://vip.qianlima.com/login.html"
 
+    # ==== 速率限制后端要求（BE-H9）====
+    # False（默认）：Redis 不可用时 fallback 到内存计数器（适合开发环境）。
+    # True：Redis 不可用时拒绝请求（fail-closed，生产环境推荐）。
+    RATE_LIMIT_REQUIRE_REDIS: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -25,7 +25,7 @@ python -c "import secrets; print(secrets.token_urlsafe(24))"
 ```env
 SECRET_KEY=<上面生成的 64 字符 hex>
 ADMIN_SECRET=<上面生成的 admin 密钥>
-DATABASE_URL=sqlite+aiosqlite:///./data/scrapeflow.db
+DATABASE_URL=sqlite+aiosqlite:///./data/bidagent.db
 REDIS_URL=redis://redis:6379/0
 PROXY_LIST=                          # Pro 套餐才需要
 FREE_TIER_DAILY_LIMIT=5
@@ -45,7 +45,7 @@ docker compose up -d --build
 
 | 服务 | 说明 |
 |---|---|
-| `scrapeflow` | FastAPI 应用，端口 8000 |
+| `biaoxiaozhi` | FastAPI 应用，端口 8000 |
 | `redis` | Redis 7，队列 + 速率限制计数 |
 | `worker` | RQ worker，执行异步抓取任务 |
 
@@ -53,7 +53,7 @@ docker compose up -d --build
 
 ```bash
 docker compose ps
-docker compose logs -f scrapeflow
+docker compose logs -f biaoxiaozhi
 ```
 
 ### 1.3 验证部署
@@ -63,7 +63,7 @@ curl http://localhost:8000/health
 # {"status":"ok"}
 
 curl http://localhost:8000/
-# {"name":"BidAgent API","version":"0.1.0","docs":"/docs","health":"/health"}
+# {"name":"标小智 API","version":"4.1","docs":"/docs","health":"/health"}
 ```
 
 ### 1.4 创建用户并开始使用
@@ -106,12 +106,12 @@ iwr https://fly.io/install.ps1 -useb | iex
 ### 2.2 创建应用
 
 ```bash
-cd scrapeflow
+cd BidAgent
 fly launch --no-deploy
 ```
 
 回答交互问题：
-- App name: `scrapeflow-api`（或自定义）
+- App name: `biaoxiaozhi-api`（或自定义）
 - Select region: 选择离用户最近的
 - Would you like to set up a Postgresql database? **Yes**（生产用 PostgreSQL）
 - Would you like to set up a Redis database? **Yes**（用 Upstash Redis）
@@ -154,7 +154,7 @@ primary_region = "nrt"  # 改成你的区域
 ```bash
 fly secrets set SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
 fly secrets set ADMIN_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(24))")
-fly secrets set DATABASE_URL="postgresql+asyncpg://user:pass@your-pg-host:5432/scrapeflow"
+fly secrets set DATABASE_URL="postgresql+asyncpg://user:pass@your-pg-host:5432/biaoxiaozhi"
 fly secrets set REDIS_URL="rediss://default:password@your-upstash-host:6379"
 fly secrets set FREE_TIER_DAILY_LIMIT=5
 fly secrets set PLAYWRIGHT_HEADLESS=true
@@ -181,13 +181,13 @@ Fly.io 上推荐把 worker 作为单独的 app 部署：
 
 ```bash
 # 创建 worker app
-fly apps create scrapeflow-worker
+fly apps create biaoxiaozhi-worker
 
 # 在 worker app 中设置同样的 secrets
-fly secrets set --app scrapeflow-worker SECRET_KEY=... REDIS_URL=...
+fly secrets set --app biaoxiaozhi-worker SECRET_KEY=... REDIS_URL=...
 
 # 部署 worker（用同样的 Dockerfile，覆盖 command）
-fly deploy --app scrapeflow-worker \
+fly deploy --app biaoxiaozhi-worker \
   --strategy rolling
 ```
 
@@ -195,13 +195,13 @@ fly deploy --app scrapeflow-worker \
 
 ```toml
 [app]
-name = "scrapeflow-worker"
+name = "biaoxiaozhi-worker"
 
 [build]
   dockerfile = "Dockerfile"
 
 [deploy]
-  release_command = "rq worker scrapeflow --url $REDIS_URL"
+  release_command = "python -m app.worker_loop"
 
 [vm]
   memory = "1gb"
@@ -222,7 +222,7 @@ name = "scrapeflow-worker"
   - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - **Service 2**: Worker 服务（RQ）
   - Source: 仓库根目录
-  - Start command: `rq worker scrapeflow --url $REDIS_URL`
+  - Start command: `python -m app.worker_loop`
 - **Database 1**: Redis（Railway 提供）
 - **Database 2**: PostgreSQL（Railway 提供，可选，生产推荐）
 
@@ -266,7 +266,7 @@ MVP 用 SQLite，生产建议迁移到 PostgreSQL：
 1. 在 `requirements.txt` 添加 `asyncpg`
 2. 修改 `.env`：
    ```env
-   DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/scrapeflow
+   DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/biaoxiaozhi
    ```
 3. 重启服务，`lifespan` 钩子会自动 `create_all` 建表
 4. （可选）用 Alembic 管理后续 migration
@@ -277,7 +277,7 @@ MVP 用 SQLite，生产建议迁移到 PostgreSQL：
 
 ```bash
 # Docker
-docker compose logs -f scrapeflow
+docker compose logs -f biaoxiaozhi
 docker compose logs -f worker
 
 # Fly.io
@@ -353,9 +353,9 @@ PLAYWRIGHT_TIMEOUT_SECONDS=60
 ### SQLite 备份
 
 ```bash
-docker compose stop scrapeflow worker
-cp data/scrapeflow.db data/scrapeflow.db.backup.$(date +%Y%m%d)
-docker compose start scrapeflow worker
+docker compose stop biaoxiaozhi worker
+cp data/bidagent.db data/bidagent.db.backup.$(date +%Y%m%d)
+docker compose start biaoxiaozhi worker
 ```
 
 ### PostgreSQL 备份

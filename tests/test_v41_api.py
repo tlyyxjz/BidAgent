@@ -48,6 +48,23 @@ from app.models import (  # noqa: F401
 from app.models.organization import Organization  # noqa: F401
 
 
+# BE-C1: 覆盖 verify_api_key 依赖，使测试无需传 Bearer token
+@pytest.fixture(autouse=True)
+async def _override_v41_auth():
+    from app.api.auth import verify_api_key
+    from app.main import app
+    from app.models.user import ApiKey, User
+
+    async def _mock_verify():
+        user = User(id=1, email="v41-test@test.com", is_active=True)
+        api_key = ApiKey(id=1, user_id=1, is_active=True)
+        return user, api_key, "test-key"
+
+    app.dependency_overrides[verify_api_key] = _mock_verify
+    yield
+    app.dependency_overrides.pop(verify_api_key, None)
+
+
 async def _seed_tender(
     project_name: str = "测试医疗设备采购项目",
     bid_number: str = "TEST-2026-001",

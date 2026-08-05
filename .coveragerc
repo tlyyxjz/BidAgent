@@ -1,3 +1,4 @@
+# 配置已迁移到 pyproject.toml，此文件保留向后兼容
 [run]
 source = app
 omit =

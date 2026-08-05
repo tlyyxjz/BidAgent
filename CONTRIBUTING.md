@@ -23,10 +23,14 @@ BidAgent/
 ├── app/core/          # 核心组件（浏览器池、会话管理）
 ├── app/models/        # 数据库模型
 ├── app/processors/    # 算法处理器（SimHash、反幻觉、BOQ）
+├── app/llm/           # LLM 抽取层（extractor/parser/prompts）
+├── app/services/      # 业务服务（data_deletion/）
+├── app/utils/         # 凭证与工具（credentials/api_key/aes_crypto/url_safety/logger）
+├── app/report/        # Word 报告生成（docx_generator/docx_sections）
 ├── app/templates/     # 采集器模板
 ├── app/scheduler/     # 定时调度器
 ├── static/            # 前端页面
-├── tests/             # 测试用例（1882 项，含 parametrize 展开，覆盖率 90.17%）
+├── tests/             # 测试用例（1882 项，含 parametrize 展开，覆盖率 90.42%）
 ├── docs/              # 文档
 └── scripts/           # 工具脚本
 ```

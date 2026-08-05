@@ -7,23 +7,27 @@
 - Word/任意二进制附件
 - 首次发送 + 最多 3 次重试，退避 1/2/4 秒
 - 同步 smtplib 通过 asyncio.to_thread 执行
+
+按职责拆分：模板渲染移到 app.core.email_template，本模块保留 SMTP 连接与发送逻辑。
 """
 
 from __future__ import annotations
 
 import asyncio
-import mimetypes
 import smtplib
 import ssl
 from dataclasses import dataclass
-from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import formataddr, make_msgid, parseaddr
+from email.utils import make_msgid
 from pathlib import Path
 from typing import Any
 
 from app.config import settings
+from app.core.email_template import (
+    _normalize_recipients,
+    _sanitize_header,
+    build_message,
+)
 from app.utils.logger import get_logger
 
 logger = get_logger("email_sender")
@@ -42,45 +46,6 @@ class SMTPConfig:
     from_addr: str
     from_name: str
     timeout: int
-
-
-def _sanitize_header(value: str, field_name: str) -> str:
-    """拒绝 CR/LF 邮件头注入。"""
-    value = str(value).strip()
-    if "\r" in value or "\n" in value:
-        raise ValueError(f"{field_name} 包含非法换行符")
-    return value
-
-
-def _normalize_recipients(to_addrs: list[str]) -> list[str]:
-    """校验、规范化并去重收件人。"""
-    result: list[str] = []
-    seen: set[str] = set()
-
-    for raw in to_addrs:
-        candidate = _sanitize_header(raw, "收件人")
-        if not candidate:
-            continue
-
-        display_name, address = parseaddr(candidate)
-        _ = display_name
-
-        # parseaddr 对部分垃圾输入比较宽松，因此要求地址具备基本结构。
-        if (
-            not address
-            or "@" not in address
-            or address.startswith("@")
-            or address.endswith("@")
-            or " " in address
-        ):
-            raise ValueError(f"无效收件地址: {candidate}")
-
-        key = address.casefold()
-        if key not in seen:
-            seen.add(key)
-            result.append(address)
-
-    return result
 
 
 class EmailSender:
@@ -155,7 +120,7 @@ class EmailSender:
                 if "@" in config.from_addr
                 else None
             )
-            message = self._build_message(
+            message = build_message(
                 config=config,
                 from_name=from_name,
                 recipients=recipients,
@@ -213,44 +178,6 @@ class EmailSender:
                 f"{type(last_error).__name__}: {last_error}"
             ),
         }
-
-    @staticmethod
-    def _build_message(
-        config: SMTPConfig,
-        from_name: str,
-        recipients: list[str],
-        subject: str,
-        body: str,
-        attachment_path: Path,
-        message_id: str,
-    ) -> MIMEMultipart:
-        message = MIMEMultipart("mixed")
-        message["Subject"] = subject
-        message["From"] = formataddr(
-            (from_name, config.from_addr)
-        )
-        message["To"] = ", ".join(recipients)
-        message["Message-ID"] = message_id
-        message.attach(MIMEText(body, "plain", "utf-8"))
-
-        content_type, _ = mimetypes.guess_type(
-            attachment_path.name
-        )
-        subtype = "octet-stream"
-        if content_type and "/" in content_type:
-            subtype = content_type.split("/", 1)[1]
-
-        attachment = MIMEApplication(
-            attachment_path.read_bytes(),
-            _subtype=subtype,
-        )
-        attachment.add_header(
-            "Content-Disposition",
-            "attachment",
-            filename=("utf-8", "", attachment_path.name),
-        )
-        message.attach(attachment)
-        return message
 
     @classmethod
     def _send_sync(

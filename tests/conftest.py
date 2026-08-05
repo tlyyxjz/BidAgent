@@ -59,19 +59,35 @@ from app.models.user import (
 )
 
 
-async def _drop_all_tables() -> None:
-    """逐表 DROP IF EXISTS，每个表独立事务，避免表缺失导致事务 aborted。"""
-    for table_name in reversed(list(Base.metadata.tables.keys())):
+def _delete_db_file() -> None:
+    """删除持久化 SQLite 测试库文件（含 WAL/SHM），保证每次全新建表。
+
+    持久化文件会累积 metadata 之外的陈旧表（如旧迁移残留的 evidence 表），
+    并导致 create_all 的 checkfirst 读到陈旧 schema 信息而漏建/错建表
+    （典型报错 "no such table: tender_projects"、"table users already exists"）。
+    删除文件 + dispose 连接池后，create_all 从零建表，彻底规避该问题。
+    """
+    database_file = Path("data/test_scrapeflow.db")
+    for suffix in ("", "-wal", "-shm"):
+        p = Path(str(database_file) + suffix)
         try:
-            async with engine.begin() as conn:
-                await conn.execute(text(f"DROP TABLE IF EXISTS [{table_name}]"))
+            if p.exists():
+                p.unlink()
         except Exception:
             pass
-    # 清空连接池，刷新 aiosqlite schema 缓存（避免跨文件共享库时 checkfirst 读到陈旧表信息）
+
+
+async def _drop_all_tables() -> None:
+    """彻底重置测试数据库：删除文件 + 刷新连接池。
+
+    相比逐表 DROP，删除文件能同时清除 metadata 之外的陈旧表（如 evidence），
+    避免 create_all 的 checkfirst 读到陈旧 schema 信息导致漏建表。
+    """
     try:
         await engine.dispose()
     except Exception:
         pass
+    _delete_db_file()
 
 @pytest.fixture(autouse=True)
 async def _reset_db_and_rate_limit(monkeypatch):

@@ -1,42 +1,44 @@
 """定时订阅 + 增量推送调度。
 
+按职责拆分：推送辅助函数移到 app.scheduler.subscription_push，
+本模块保留 create_subscription / trigger_subscription / run_scheduled_subscriptions
+（因为测试通过 monkeypatch 在本模块命名空间上 patch push_to_channels、
+is_cron_due、generate_report、parse_query、_recently_pushed_same_hash、
+trigger_subscription 等名字，这些函数必须在同模块内查找这些名字）。
+
 命题硬要求：
 - 支持每日/每周定时推送（cron 表达式到期才推送）
 - 已推送内容不重复推送（PushLog 表 + SQL NOT EXISTS 过滤）
-
-C-4 修复：本文件控制在 300 行以内，工具函数移到 utils.py，推送渠道移到 push.py。
 C-2 修复：trigger_subscription 组装 source_texts 传给 generate_report，反幻觉真正生效。
 """
 
 from __future__ import annotations
 
-import hashlib
-from datetime import timedelta
-from pathlib import Path
 from typing import Any
 
-from sqlalchemy import not_, select
+from sqlalchemy import select
 
 from app.llm.parser import parse_query
 from app.llm.schemas import ParsedFilters
 from app.models.database import AsyncSessionLocal
 from app.models.subscription import (
     Subscription,
-    PushLog,
     TRIGGER_IMMEDIATE,
     TRIGGER_SCHEDULED,
 )
-from app.models.tender import Tender
 from app.report.docx_generator import generate_report
 from app.scheduler.push import push_to_channels
-from app.scheduler.utils import is_cron_due, safe_contains, utc_now
+from app.scheduler.subscription_push import (
+    DEDUP_WINDOW_MINUTES,
+    _compute_content_hash,
+    _record_push,
+    _recently_pushed_same_hash,
+    get_unpushed_tenders,
+)
+from app.scheduler.utils import is_cron_due, utc_now
 from app.utils.logger import get_logger
 
 logger = get_logger("scheduler.subscription")
-
-# M-2 修复：at-least-once 幂等去重窗口。
-# commit 失败导致重推时，若 N 分钟内已推送过相同 content_hash，跳过本次推送。
-DEDUP_WINDOW_MINUTES = 30
 
 
 async def create_subscription(
@@ -88,108 +90,6 @@ async def create_subscription(
             sub.id, user_id, trigger_type,
         )
         return sub.id
-
-
-async def get_unpushed_tenders(
-    db,
-    subscription_id: int,
-    filters: ParsedFilters,
-    limit: int = 100,
-) -> list[Tender]:
-    """获取该订阅尚未推送过的招标信息（增量推送核心）。
-
-    命题硬要求：已经推送的内容不要重复推送。
-    M-1 修复：用 SQL NOT EXISTS 在数据库层面直接过滤。
-    """
-    stmt = select(Tender).where(
-        not_(
-            select(PushLog.id).where(
-                PushLog.subscription_id == subscription_id,
-                PushLog.tender_id == Tender.id,
-            ).exists()
-        )
-    )
-    if filters.region:
-        # M-1 修复：用 safe_contains 显式指定 escape 字符，转义才生效
-        stmt = stmt.where(safe_contains(Tender.location, filters.region))
-    if filters.topic:
-        stmt = stmt.where(safe_contains(Tender.project_name, filters.topic))
-    if filters.notice_types:
-        stmt = stmt.where(Tender.notice_type.in_(filters.notice_types))
-    stmt = stmt.order_by(Tender.publish_time.desc()).limit(limit)
-    result = await db.execute(stmt)
-    tenders = result.scalars().all()
-
-    logger.info(
-        "get_unpushed_tenders sub_id={} unpushed_count={}",
-        subscription_id, len(tenders),
-    )
-    return tenders
-
-
-async def _record_push(
-    db,
-    subscription_id: int,
-    tender_ids: list[int],
-    content_hash: str | None = None,
-) -> None:
-    """记录推送日志（用于下次增量去重）。
-
-    Sol S-10 修复：不再自行 commit，由调用方在同一事务中提交，
-    保证 PushLog + last_pushed_at + 推送成功的原子性。
-    m-3 优化：使用 db.add_all 批量插入。
-    M-2 修复：写入 content_hash 用于幂等去重。
-    """
-    if not tender_ids:
-        return
-    now = utc_now()
-    push_logs = [
-        PushLog(
-            subscription_id=subscription_id,
-            tender_id=tid,
-            pushed_at=now,
-            content_hash=content_hash,
-        )
-        for tid in tender_ids
-    ]
-    db.add_all(push_logs)
-
-
-def _compute_content_hash(report_path: str, tender_ids: list[int]) -> str:
-    """M-2 修复：计算本次推送内容的 SHA256 哈希。
-
-    用于 at-least-once 幂等去重：如果同一报告内容（相同 tender_ids + 相同文件）
-    在 DEDUP_WINDOW_MINUTES 内已推送过，跳过本次推送。
-    """
-    h = hashlib.sha256()
-    h.update(str(sorted(tender_ids)).encode("utf-8"))
-    try:
-        p = Path(report_path)
-        if p.is_file():
-            h.update(p.read_bytes())
-    except OSError:
-        # 文件读不到不影响哈希基本结构（tender_ids 已足够）
-        pass
-    return h.hexdigest()
-
-
-async def _recently_pushed_same_hash(
-    db,
-    subscription_id: int,
-    content_hash: str,
-) -> bool:
-    """M-2 修复：检查最近 DEDUP_WINDOW_MINUTES 内是否已推送过相同 content_hash。
-
-    命中则跳过本次推送，降低 commit 失败导致的重复邮件概率。
-    """
-    threshold = utc_now() - timedelta(minutes=DEDUP_WINDOW_MINUTES)
-    stmt = select(PushLog.id).where(
-        PushLog.subscription_id == subscription_id,
-        PushLog.content_hash == content_hash,
-        PushLog.pushed_at >= threshold,
-    ).limit(1)
-    result = await db.execute(stmt)
-    return result.first() is not None
 
 
 async def trigger_subscription(

@@ -15,27 +15,44 @@
 
 本文件承接 v41_api.py 拆分出的端点，保证单文件 ≤300 行。
 端点函数由 v41_api.py 集中注册到同一 router。
+
+拆分说明（保证单文件 ≤300 行，公开接口不变）：
+- 共享响应助手 _ok/_err → v41_common.py
+- 抽取结果组装 _build_result_from_tender / _extraction_to_payload → v41_extract_worker.py
+- 组织画像端点 → v41_organizations.py
+- 质量统计端点 → v41_stats.py
+- 本文件保留：抽取任务状态机（_EXTRACT_TASKS/_set_task_status）、
+  create_extract_task / get_extract_task 端点、_run_extract_task / _do_extract 主流程，
+  并 re-export 其余端点与辅助函数以保持 import 路径不变。
 """
 from __future__ import annotations
 
 import asyncio
-import hashlib
+import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
-from fastapi import Body, Depends, Query
+from fastapi import Body
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.config import settings
-from app.models.database import AsyncSessionLocal, get_db
-from app.models.evidence import Evidence, ExtractedField, FieldEvidenceLink
+from app.models.database import AsyncSessionLocal
 from app.models.tender import Tender
 from app.utils.logger import get_logger
 from app.utils.url_safety import is_safe_url_async
+
+from app.api.v41_common import _err, _ok
+from app.api.v41_extract_worker import _build_result_from_tender, _extraction_to_payload  # noqa: F401
+from app.api.v41_organizations import (  # noqa: F401
+    _collect_org_records,
+    _resolve_org_name,
+    get_organization,
+    organizations_search,
+)
+from app.api.v41_stats import get_stats_quality  # noqa: F401
 
 logger = get_logger("v41.extract")
 
@@ -52,15 +69,25 @@ _WORKER_START_DELAY = 0.1
 # httpx 抓取超时（秒）
 _FETCH_TIMEOUT = 15.0
 
-
-def _ok(data: Any) -> JSONResponse:
-    """统一成功响应。"""
-    return JSONResponse({"code": 0, "data": data, "msg": "ok"})
+# BE-C3: 已完成任务 TTL（秒），超过后惰性清理
+_TASK_TTL = 3600  # 1 小时
 
 
-def _err(msg: str, code: int = 404) -> JSONResponse:
-    """统一错误响应。"""
-    return JSONResponse({"code": code, "data": None, "msg": msg}, status_code=code)
+def _cleanup_old_tasks() -> None:
+    """清理超过 TTL 的已完成任务（惰性清理，在创建新任务时调用）。
+
+    仅删除 status 为 succeeded/partially_succeeded/failed 且 completed_at
+    距今超过 _TASK_TTL 秒的任务，未完成或刚完成的任务不受影响。
+    """
+    now = time.time()
+    expired = [
+        tid for tid, task in _EXTRACT_TASKS.items()
+        if task.get("status") in ("succeeded", "partially_succeeded", "failed")
+        and task.get("completed_at")
+        and now - task["completed_at"] > _TASK_TTL
+    ]
+    for tid in expired:
+        _EXTRACT_TASKS.pop(tid, None)
 
 
 async def _set_task_status(task_id: str, status: str, **extra: Any) -> None:
@@ -70,11 +97,13 @@ async def _set_task_status(task_id: str, status: str, **extra: Any) -> None:
         if task is None:
             return
         task["status"] = status
-        task["updated_at"] = datetime.utcnow().isoformat()
+        task["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         if status in ("succeeded", "partially_succeeded", "failed"):
-            task["finished_at"] = datetime.utcnow().isoformat()
+            task["finished_at"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+            # BE-C3: 记录完成时间戳（数值，供 TTL 清理使用）
+            task["completed_at"] = time.time()
         elif status == "running":
-            task["started_at"] = datetime.utcnow().isoformat()
+            task["started_at"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         for k, v in extra.items():
             task[k] = v
 
@@ -93,9 +122,11 @@ async def create_extract_task(payload: dict = Body(default={})) -> JSONResponse:
     返回 task_id 与初始状态 queued。
     后台 asyncio task 异步执行 _run_extract_task 流转状态。
     """
+    # BE-C3: 惰性清理过期已完成任务
+    _cleanup_old_tasks()
     payload = payload or {}
     task_id = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
     task = {
         "task_id": task_id,
         "status": "queued",
@@ -274,264 +305,3 @@ async def _do_extract(
         "fetched_text_length": len(raw_text),
         "extraction_source": "llm",
     }
-
-
-async def _build_result_from_tender(tender: Tender, db: AsyncSession) -> dict[str, Any]:
-    """从 DB 中已存在的 Tender + ExtractedField + Evidence 组装结果。"""
-    fields_rows = (await db.execute(
-        select(ExtractedField).where(ExtractedField.tender_id == tender.id)
-        .order_by(ExtractedField.id)
-    )).scalars().all()
-
-    fields_payload: list[dict[str, Any]] = []
-    evidences_count = 0
-    for f in fields_rows:
-        links = (await db.execute(
-            select(FieldEvidenceLink, Evidence)
-            .join(Evidence, FieldEvidenceLink.evidence_id == Evidence.id)
-            .where(FieldEvidenceLink.field_id == f.id)
-            .order_by(FieldEvidenceLink.sequence)
-        )).all()
-        evidences = [{
-            "evidence_id": f"{f.id}_{link.sequence}",
-            "text": ev.evidence_text,
-            "raw_start": ev.raw_start,
-            "raw_end": ev.raw_end,
-            "role": link.evidence_role,
-            "match_method": ev.match_method,
-            "confidence": ev.confidence,
-            "verified": ev.verified,
-        } for link, ev in links]
-        evidences_count += len(evidences)
-        fields_payload.append({
-            "field_name": f.field_name,
-            "field_status": f.field_status,
-            "raw_value": f.raw_value,
-            "normalized_value": f.normalized_value,
-            "amount_type": f.amount_type,
-            "support_level": f.support_level,
-            "evidences": evidences,
-        })
-
-    # 即便无字段也算 succeeded（DB 命中但未抽取过字段，是真实状态）
-    return {
-        "_status": "succeeded",
-        "_error": None,
-        "tender_id": tender.id,
-        "project_name": tender.project_name,
-        "source_platform": tender.source_platform,
-        "fields": fields_payload,
-        "fields_count": len(fields_payload),
-        "evidences_count": evidences_count,
-        "extraction_source": "db_cached",
-    }
-
-
-def _extraction_to_payload(extraction: Any) -> list[dict[str, Any]]:
-    """把 ExtractionResult 转为字段 payload（容错处理）。"""
-    if extraction is None:
-        return []
-    fields = getattr(extraction, "fields", None)
-    if fields is None and isinstance(extraction, dict):
-        fields = extraction.get("fields")
-    if not fields:
-        return []
-    payload = []
-    for f in fields:
-        if hasattr(f, "model_dump"):
-            f = f.model_dump()
-        if not isinstance(f, dict):
-            continue
-        payload.append({
-            "field_name": f.get("field_name") or f.get("name") or "",
-            "field_status": f.get("field_status") or "present",
-            "raw_value": f.get("raw_value") or f.get("value"),
-            "normalized_value": f.get("normalized_value"),
-            "amount_type": f.get("amount_type"),
-            "support_level": f.get("support_level") or "unsupported",
-            "evidences": f.get("candidate_evidences") or f.get("evidences") or [],
-        })
-    return payload
-
-
-# ==== 8. GET /api/organizations/search ====
-
-async def organizations_search(
-    keyword: str | None = Query(None, description="组织名关键词"),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
-) -> JSONResponse:
-    """搜索组织实体（v4.1 第12节）。聚合 purchaser_name/winner_name 及 Tender 三字段。"""
-    org_count: dict[str, int] = {}
-    # 从 ExtractedField 聚合
-    rows = (await db.execute(
-        select(ExtractedField.raw_value, ExtractedField.field_name,
-               func.count(ExtractedField.id).label("cnt"))
-        .where(ExtractedField.field_name.in_(["purchaser_name", "winner_name"]))
-        .group_by(ExtractedField.raw_value, ExtractedField.field_name)
-    )).all()
-    for r in rows:
-        if r.raw_value:
-            org_count[r.raw_value] = org_count.get(r.raw_value, 0) + r.cnt
-    # 从 Tender 表三字段聚合
-    trows = (await db.execute(
-        select(Tender.tender_org, Tender.win_company, Tender.agency)
-    )).all()
-    for tr in trows:
-        for name in (tr.tender_org, tr.win_company, tr.agency):
-            if name:
-                org_count[name] = org_count.get(name, 0) + 1
-    items = []
-    for name, cnt in org_count.items():
-        if keyword and keyword not in name:
-            continue
-        items.append({
-            "org_id": f"org_{hashlib.sha1(name.encode('utf-8')).hexdigest()[:12]}",
-            "org_name": name,
-            "occurrence_count": cnt,
-        })
-    items.sort(key=lambda x: -x["occurrence_count"])
-    total = len(items)
-    page_items = items[(page - 1) * page_size: page * page_size]
-    return _ok({"items": page_items, "total": total, "page": page, "page_size": page_size})
-
-
-# ==== 9. GET /api/organizations/{org_id} ====
-
-async def get_organization(org_id: str, db: AsyncSession = Depends(get_db)) -> JSONResponse:
-    """获取组织实体公开活动画像（v4.1 第12节，调用 observation_signals 模块）。
-
-    org_id 支持两种格式：
-    - org_{sha1前12位}：通过哈希反查组织名
-    - 直接传组织名：URL 编码后传入
-    """
-    org_name = await _resolve_org_name(org_id, db)
-    if not org_name:
-        return _err(f"组织 {org_id} 不存在")
-    win_records = await _collect_org_records(org_name, db)
-    from app.processors.observation_signals import analyze_observation_signals
-    result = analyze_observation_signals(
-        org_id=org_id, org_name=org_name, win_records=win_records,
-    )
-    signals_payload = [
-        {"signal_name": s.signal_name, "observed_value": s.observed_value,
-         "observation_period": s.observation_period, "coverage_note": s.coverage_note,
-         "details": s.details, "disclaimer": s.disclaimer}
-        for s in result.signals
-    ]
-    data_completeness = {
-        "coverage_platforms": result.coverage_platforms,
-        "coverage_time_range": result.coverage_time_range,
-        "valid_notice_count": result.valid_notice_count,
-        "entity_resolution_status": result.entity_resolution_status,
-        "signal_caliber": result.signal_caliber,
-    }
-    profile_payload = None
-    if result.profile is not None:
-        prof = result.profile
-        profile_payload = {
-            "win_count": prof.win_count,
-            "total_win_amount": prof.total_win_amount,
-            "main_purchasers": prof.main_purchasers,
-            "main_agencies": prof.main_agencies,
-            "active_regions": prof.active_regions,
-            "first_win_date": prof.first_win_date,
-            "last_win_date": prof.last_win_date,
-        }
-    return _ok({
-        "org_id": org_id,
-        "org_name": org_name,
-        "normalized_name": result.normalized_name,
-        # 数据完整性字段（v4.1 第 9.4 节）：同时保留扁平字段以兼容现有测试
-        "coverage_platforms": result.coverage_platforms,
-        "coverage_time_range": result.coverage_time_range,
-        "valid_notice_count": result.valid_notice_count,
-        "entity_resolution_status": result.entity_resolution_status,
-        "signal_caliber": result.signal_caliber,
-        "data_completeness": data_completeness,
-        "profile": profile_payload,
-        "signals": signals_payload,
-        "summary": result.summary,
-        "analyzed_at": result.analyzed_at,
-    })
-
-
-async def _resolve_org_name(org_id: str, db: AsyncSession) -> str | None:
-    """根据 org_id 反查组织名，支持哈希 ID 与直接名称两种格式。"""
-    if org_id.startswith("org_") and len(org_id) == 16:
-        rows = (await db.execute(
-            select(ExtractedField.raw_value).where(
-                ExtractedField.field_name.in_(["purchaser_name", "winner_name"])
-            )
-        )).scalars().all()
-        trows = (await db.execute(
-            select(Tender.tender_org, Tender.win_company, Tender.agency)
-        )).all()
-        names = set(n for n in rows if n)
-        for tr in trows:
-            for n in (tr.tender_org, tr.win_company, tr.agency):
-                if n:
-                    names.add(n)
-        for name in names:
-            if f"org_{hashlib.sha1(name.encode('utf-8')).hexdigest()[:12]}" == org_id:
-                return name
-        return None
-    return org_id
-
-
-async def _collect_org_records(org_name: str, db: AsyncSession) -> list[dict]:
-    """收集某组织作为中标人的公开记录，用于 observation_signals 信号计算。"""
-    rows = (await db.execute(
-        select(ExtractedField, Tender)
-        .join(Tender, ExtractedField.tender_id == Tender.id)
-        .where(ExtractedField.field_name == "winner_name")
-        .where(ExtractedField.raw_value == org_name)
-    )).all()
-    records = []
-    for _f, t in rows:
-        records.append({
-            "purchaser": t.tender_org or "",
-            "region": t.location or "",
-            "win_amount": float(t.win_amount) if t.win_amount else 0,
-            "win_date": t.publish_time.isoformat() if t.publish_time else "",
-            "award_date": t.publish_time.isoformat() if t.publish_time else "",
-            "source_platform": t.source_platform or "",
-            "notice_title": t.project_name or "",
-        })
-    return records
-
-
-# ==== 12. GET /api/stats/quality ====
-
-async def get_stats_quality(db: AsyncSession = Depends(get_db)) -> JSONResponse:
-    """获取数据质量和评测统计（v4.1 第12节）。"""
-    tender_count = (await db.execute(select(func.count(Tender.id)))).scalar() or 0
-    field_count = (await db.execute(select(func.count(ExtractedField.id)))).scalar() or 0
-    evidence_count = (await db.execute(select(func.count(Evidence.id)))).scalar() or 0
-    sl_rows = (await db.execute(
-        select(ExtractedField.support_level, func.count(ExtractedField.id))
-        .group_by(ExtractedField.support_level)
-    )).all()
-    fs_rows = (await db.execute(
-        select(ExtractedField.field_status, func.count(ExtractedField.id))
-        .group_by(ExtractedField.field_status)
-    )).all()
-    mm_rows = (await db.execute(
-        select(Evidence.match_method, func.count(Evidence.id))
-        .group_by(Evidence.match_method)
-    )).all()
-    verified_count = (await db.execute(
-        select(func.count(Evidence.id)).where(Evidence.verified.is_(True))
-    )).scalar() or 0
-    return _ok({
-        "tender_count": tender_count,
-        "field_count": field_count,
-        "evidence_count": evidence_count,
-        "verified_evidence_count": verified_count,
-        "support_level_distribution": {r[0]: r[1] for r in sl_rows},
-        "field_status_distribution": {r[0]: r[1] for r in fs_rows},
-        "match_method_distribution": {r[0]: r[1] for r in mm_rows},
-        "verification_rate": round(verified_count / evidence_count, 4) if evidence_count else 0.0,
-        "server_time": datetime.utcnow().isoformat(),
-    })

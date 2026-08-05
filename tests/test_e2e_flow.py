@@ -323,13 +323,34 @@ class TestAttachmentDownloader:
         assert result["status"] == "skipped"
 
     async def test_download_http_error(self):
-        """404 URL 应返回 failed。"""
+        """404 URL 应返回 failed（mock httpx，不发起真实 HTTP 请求）。"""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        import httpx
+
         from app.processors.attachment_downloader import download_attachment
-        # 使用 httpbin 的 404 端点（如不可达会 skip，不影响测试通过）
-        result = await download_attachment(
-            "https://httpbin.org/status/404"
-        )
-        assert result["status"] in ["failed", "skipped"]
+
+        # 构造 404 响应：raise_for_status 抛出 HTTPStatusError
+        fake_request = httpx.Request("GET", "https://example.com/nonexistent.pdf")
+        fake_response = httpx.Response(status_code=404, request=fake_request)
+
+        mock_client = MagicMock()
+        mock_client.head = AsyncMock(return_value=fake_response)
+        mock_client.get = AsyncMock(return_value=fake_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        # patch httpx.AsyncClient 构造函数，返回 mock_client
+        # 同时 patch attachment_downloader._is_safe_url 避免 DNS 解析
+        with patch("httpx.AsyncClient", return_value=mock_client), patch(
+            "app.processors.attachment_downloader._is_safe_url",
+            return_value=(True, ""),
+        ):
+            result = await download_attachment(
+                "https://example.com/nonexistent.pdf"
+            )
+
+        assert result["status"] == "failed"
 
 
 # ==== 6. 全流程集成测试 ====

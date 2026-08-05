@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -43,6 +43,23 @@ from app.models.organization import Organization  # noqa: F401
 
 def _client():
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+
+
+# BE-C1: 覆盖 verify_api_key 依赖，使测试无需传 Bearer token
+@pytest.fixture(autouse=True)
+async def _override_v41_auth():
+    from app.api.auth import verify_api_key
+    from app.main import app
+    from app.models.user import ApiKey, User
+
+    async def _mock_verify():
+        user = User(id=1, email="v41-extra@test.com", is_active=True)
+        api_key = ApiKey(id=1, user_id=1, is_active=True)
+        return user, api_key, "test-key"
+
+    app.dependency_overrides[verify_api_key] = _mock_verify
+    yield
+    app.dependency_overrides.pop(verify_api_key, None)
 
 
 # ==== seeding 辅助 ====
@@ -228,6 +245,8 @@ class TestGetSourceVersionsExtra:
             result = await db.execute(select(Tender).where(Tender.id == tid))
             tender = result.scalar_one()
             tender.project_name = "更新后的项目名称"
+            # 显式拉开 updated_at（不依赖真实时钟，避免与容差阈值耦合）
+            tender.updated_at = tender.created_at + timedelta(hours=1)
             await db.commit()
         async with _client() as ac:
             resp = await ac.get(f"/api/sources/src_{tid}/versions")

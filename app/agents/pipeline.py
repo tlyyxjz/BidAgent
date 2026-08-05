@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 import uuid
 from typing import Any
 
@@ -31,6 +32,26 @@ logger = get_logger("agent.pipeline")
 # session 存储（MVP 阶段用内存 dict，生产环境改 Redis）
 _sessions: dict[str, dict[str, Any]] = {}
 _sessions_lock = asyncio.Lock()
+
+# BE-C3: 已完成 session TTL（秒），超过后惰性清理
+_SESSION_TTL = 3600  # 1 小时
+
+
+def _cleanup_old_sessions() -> None:
+    """清理超过 TTL 的已完成 session（惰性清理，在访问 session 时调用）。
+
+    仅删除 stage 为 done/error 且 completed_at 距今超过 _SESSION_TTL 秒的
+    session，未完成或刚完成的 session 不受影响。
+    """
+    now = time.time()
+    expired = [
+        sid for sid, session in _sessions.items()
+        if session.get("stage") in ("done", "error")
+        and session.get("completed_at")
+        and now - session["completed_at"] > _SESSION_TTL
+    ]
+    for sid in expired:
+        _sessions.pop(sid, None)
 
 
 async def run_pipeline(
@@ -56,6 +77,8 @@ async def run_pipeline(
         >>> session = await get_session(session_id)
         >>> print(session["stage"])  # "intent" / "collecting" / ... / "done"
     """
+    # BE-C3: 惰性清理过期已完成 session
+    _cleanup_old_sessions()
     session_id = uuid.uuid4().hex
 
     # 初始化 session
@@ -98,6 +121,8 @@ async def get_session(session_id: str) -> dict[str, Any] | None:
         session 字典，含 stage / progress / message / result 等字段。
         如果 session_id 不存在，返回 None。
     """
+    # BE-C3: 惰性清理过期已完成 session
+    _cleanup_old_sessions()
     async with _sessions_lock:
         session = _sessions.get(session_id)
         if session is None:
@@ -224,6 +249,8 @@ async def _mark_done(session_id: str, final_state: dict[str, Any]) -> None:
         session["message"] = "Pipeline 完成"
         session["finished_at"] = now
         session["updated_at"] = now
+        # BE-C3: 记录完成时间戳（数值，供 TTL 清理使用）
+        session["completed_at"] = time.time()
 
         # 提取最终结果
         session["result"] = {
@@ -250,6 +277,8 @@ async def _mark_error(session_id: str, error: str) -> None:
         session["error"] = error
         session["finished_at"] = now
         session["updated_at"] = now
+        # BE-C3: 记录完成时间戳（数值，供 TTL 清理使用）
+        session["completed_at"] = time.time()
 
 
 def _safe_dict(obj: Any) -> dict[str, Any]:

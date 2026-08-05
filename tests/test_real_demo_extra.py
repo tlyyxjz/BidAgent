@@ -387,7 +387,8 @@ async def test_real_versions_not_found():
 
 async def test_real_versions_single_version():
     """单版本（updated_at == created_at）：versions 仅 1 条，change_type=create。"""
-    tid = await _seed_tender()
+    now = utc_now()
+    tid = await _seed_tender(created_at=now, updated_at=now)
     async with _client() as ac:
         resp = await ac.get(f"/api/real/tenders/{tid}/versions")
     versions = resp.json()["data"]["versions"]
@@ -395,6 +396,29 @@ async def test_real_versions_single_version():
     assert versions[0]["change_type"] == "create"
     assert versions[0]["change_type_label"] == "初始抓取"
 
+
+
+async def test_real_versions_microsecond_gap_single_version():
+    """容差回归：updated_at 仅比 created_at 晚微秒级（同一次 INSERT 的双默认值）仍为单版本。"""
+    now = utc_now()
+    tid = await _seed_tender(created_at=now, updated_at=now + timedelta(microseconds=500))
+    async with _client() as ac:
+        resp = await ac.get(f"/api/real/tenders/{tid}/versions")
+    versions = resp.json()["data"]["versions"]
+    assert len(versions) == 1
+    assert versions[0]["change_type"] == "create"
+
+
+async def test_real_versions_gap_over_tolerance_two_versions():
+    """容差回归：updated_at 超过容差（10ms）时生成复查版本。"""
+    now = utc_now()
+    tid = await _seed_tender(created_at=now, updated_at=now + timedelta(seconds=5))
+    async with _client() as ac:
+        resp = await ac.get(f"/api/real/tenders/{tid}/versions")
+    versions = resp.json()["data"]["versions"]
+    assert len(versions) == 2
+    assert versions[0]["change_type"] == "none"
+    assert versions[1]["change_type"] == "create"
 
 async def test_real_versions_with_updated_at():
     """updated_at > created_at 时：生成第二条 none 版本（versions[0]）。"""

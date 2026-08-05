@@ -33,7 +33,7 @@ class TestValidatorVersion:
 
     def test_version_exists(self):
         # v1.2: 主编号非法时回退取括号里"招标编号：XXX"
-        assert VALIDATOR_VERSION == "1.2"
+        assert VALIDATOR_VERSION == "1.4"
 
 
 class TestValidateAmount:
@@ -419,6 +419,32 @@ class TestRealWorldCases:
         for raw, expected_valid in cases:
             result = validate_project_identifier(raw)
             assert result.valid == expected_valid, f"Failed: {raw}"
+
+    def test_amount_thousands_separator(self):
+        """千分位金额格式（v1.3）。"""
+        cases = [
+            ("1,234.56万元", 12345600.0, "1234.56万元"),
+            ("99,999,999.00元", 99999999.0, "10000.00万元"),
+            ("1,000,000元", 1000000.0, "100.00万元"),
+        ]
+        for raw, expected_yuan, expected_norm in cases:
+            result = validate_amount(raw)
+            assert result.valid, f"Failed: {raw}"
+            assert result.normalized_value == expected_yuan, f"Failed: {raw} -> {result.normalized_value}"
+            assert result.normalized == expected_norm, f"Failed: {raw} -> {result.normalized}"
+
+    def test_date_strip_bracket_notes(self):
+        """日期剥离括号备注（v1.4）。"""
+        cases = [
+            ("2026年8月10日（原8月1日）", "2026-08-10"),
+            ("2026年8月1日 09:00（北京时间）", "2026-08-01 09:00"),
+            ("2026-08-10（变更后）", "2026-08-10"),
+            ("2026年8月1日", "2026-08-01"),  # 无括号不受影响
+        ]
+        for raw, expected_norm in cases:
+            result = validate_date(raw)
+            assert result.valid, f"Failed: {raw}"
+            assert result.normalized == expected_norm, f"Failed: {raw} -> {result.normalized}"
 
 
 class TestCoverageFiller:

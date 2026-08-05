@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bidagent"
+version = "4.1.0"
+description = "标小智 - 智能招投标助手"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy[asyncio]",
+    "aiosqlite",
+    "pydantic",
+    "pydantic-settings",
+    "httpx",
+    "playwright",
+    "slowapi",
+    "redis",
+    "rq",
+    "loguru",
+    "sentry-sdk",
+    "pytest",
+    "pytest-asyncio",
+    # 超聚变命题新增
+    "python-docx",
+    "APScheduler",
+    "python-multipart",
+    "email-validator",
+    "croniter",
+    "aiofiles",
+    # PDF 附件解析（命题第 4 项硬要求增强）
+    "pdfplumber>=0.10.0",
+    # OCR 兜底（扫描件 PDF）
+    "ddddocr>=1.4.7",
+    # SimHash 分词
+    "jieba>=0.42.1",
+    # v4.1 sec 13.1 credentials: Argon2id + AES-GCM
+    "argon2-cffi>=23.1.0",
+    "cryptography>=42.0.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=app --cov-report=term-missing --cov-fail-under=90"
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/templates/html/*",
+    "app/scheduler_loop.py",
+    "app/worker_loop.py",
+    "app/core/queue.py",
+    "app/core/browser_renderer.py",
+    "app/core/proxy.py",
+    "app/core/webhook_sender.py",
+    "app/processors/pdf_parser.py",
+    "app/processors/attachment_downloader.py",
+    "*/__pycache__/*",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+fail_under = 90
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "E402", "F401"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"*_reexport.py" = ["F401"]

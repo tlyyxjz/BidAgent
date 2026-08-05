@@ -115,6 +115,11 @@ async def _ingest_with_db(
                     sh = int(
                         await asyncio.to_thread(simhash_computer, str(text))
                     )
+                    # 修复：无符号 64 位 simhash 超出 SQLite INTEGER 上限（2^63-1）
+                    # 会触发 OverflowError 导致入库失败，统一归一到有符号表示
+                    sh &= 0xFFFFFFFFFFFFFFFF
+                    if sh >= 0x8000000000000000:
+                        sh -= 0x10000000000000000
                 except (TypeError, ValueError) as exc:
                     logger.warning("simhash 计算失败 idx=%d err=%s", idx, exc)
         simhash_values.append(sh)

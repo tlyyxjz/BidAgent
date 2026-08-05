@@ -27,3 +27,22 @@ dist/
 Dockerfile
 docker-compose.yml
 .dockerignore
+
+# 拆分遗留的临时文件
+*.new
+*.bak
+app/**/_*reexport.py
+
+# 调试/探测脚本
+_inspect_*.py
+_test_*.txt
+test_write.txt
+_cov*.json
+coverage_*.txt
+_coverage_final.txt
+
+# 备份目录
+_test_isolation_backup/
+_test_isolation_v2_backup/
+_tmp_pytest/
+static_backup_*/

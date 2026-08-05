@@ -16,13 +16,10 @@ from __future__ import annotations
 import json
 
 from typing import Any
-from urllib.parse import urlparse
 
 from playwright.async_api import (
-    Browser,
-    BrowserContext,
-    Error as PlaywrightError,
     Page,
+    Error as PlaywrightError,
     TimeoutError as PlaywrightTimeoutError,
     async_playwright,
 )
@@ -37,24 +34,21 @@ from app.core.proxy import (
 from app.core.cache_manager import cache_manager
 from app.core.rate_limiter import domain_rate_limiter
 from app.core.robots_checker import robots_checker
-from app.core.source_whitelist import source_whitelist
-from app.core.snapshot_manager import snapshot_manager
-from app.core.template_monitor import template_monitor
-from app.templates import get_template
-from app.templates.base import ScrapeTemplate
-from app.utils.hostname_cache import HostnameLRUCache
 from app.utils.logger import get_logger
-from app.utils.url_safety import is_safe_url, is_safe_url_async
+from app.utils.url_safety import is_safe_url
+
+# 拆分后的子模块：re-export 错误类保持公开接口不变
+from app.core.scraper_errors import HttpForbiddenError, ScrapeError  # noqa: F401
+from app.core.scraper_extract import (  # noqa: F401
+    click_next as _click_next_fn,
+    extract_list as _extract_list_fn,
+    extract_page as _extract_page_fn,
+    extract_single as _extract_single_fn,
+)
+from app.core.scraper_playwright import scrape_with_playwright
+from app.core.scraper_utils import merge_template
 
 logger = get_logger("scraper")
-
-
-class ScrapeError(Exception):
-    """抓取过程中的统一错误。"""
-
-
-class HttpForbiddenError(Exception):
-    """HTTP 403 Forbidden：被反爬封禁，必须停止抓取，不得换 UA/代理重试。"""
 
 
 class Scraper:
@@ -210,40 +204,7 @@ class Scraper:
     @staticmethod
     def _merge_template(request: dict[str, Any]) -> dict[str, Any]:
         """合并模板默认配置；用户显式字段优先。"""
-        template_name = request.get("template")
-        if not template_name:
-            return dict(request)
-
-        tpl: ScrapeTemplate | None = get_template(template_name)
-        if tpl is None:
-            logger.warning("未知模板 %s，忽略", template_name)
-            return dict(request)
-
-        merged: dict[str, Any] = {
-            "selectors": dict(tpl.selectors),
-            "list_selector": tpl.list_selector,
-            "wait_for_selector": tpl.wait_for_selector,
-            "next_page_selector": tpl.next_page_selector,
-            # Sol S-11：保留 template 名，scrape() 时根据它动态加载 storage_state
-            "template": template_name,
-        }
-        # S-3 修复：传递模板上的 cookies（登录态采集，如 qianlima 模板）
-        # 用户显式传 cookies 时优先用户传的（在下方覆盖逻辑里处理）
-        template_cookies = getattr(tpl, "cookies", None)
-        if template_cookies:
-            merged["cookies"] = list(template_cookies)
-        # 用户字段覆盖模板
-        # Sol S-11：新增 storage_state 可覆盖字段（用户显式传入优先）
-        for key in ("selectors", "list_selector", "wait_for_selector",
-                    "next_page_selector", "max_pages", "cookies",
-                    "extra_headers", "storage_state"):
-            if key in request and request[key]:
-                if key == "selectors" and isinstance(request[key], dict):
-                    merged["selectors"].update(request[key])
-                else:
-                    merged[key] = request[key]
-        merged["url"] = request.get("url")
-        return merged
+        return merge_template(request)
 
     async def _scrape_with_playwright(
         self,
@@ -259,183 +220,28 @@ class Scraper:
         storage_state: dict[str, Any] | None = None,
         template_name: str | None = None,
     ) -> dict[str, Any]:
-        """启动 Playwright 执行实际抓取。"""
-        ua = get_random_user_agent()
-        proxy_arg = {"server": proxy} if proxy else None
+        """启动 Playwright 执行实际抓取。
 
-        async with async_playwright() as p:
-            browser: Browser = await p.chromium.launch(
-                headless=self.headless,
-                proxy=proxy_arg,
-            )
-            try:
-                # Sol S-11：context 创建支持 storage_state（含 cookies + origins）
-                context_options: dict[str, Any] = {
-                    "user_agent": ua,
-                    "viewport": {"width": 1280, "height": 800},
-                    "locale": "zh-CN",
-                }
-                if storage_state is not None:
-                    context_options["storage_state"] = storage_state
-
-                context: BrowserContext = await browser.new_context(
-                    **context_options
-                )
-                context.set_default_timeout(self.timeout_ms)
-                context.set_default_navigation_timeout(self.timeout_ms)
-
-                # 登录态：注入 cookies + 自定义 headers
-                # （storage_state 已含 cookies，这里处理用户显式传入的额外 cookies）
-                if extra_headers:
-                    await context.set_extra_http_headers(extra_headers)
-                if cookies:
-                    await context.add_cookies(cookies)
-
-                page: Page = await context.new_page()
-
-                # 新-4 修复：SSRF 重定向防护
-                # Playwright 默认跟随重定向，攻击者可让公网域名 302 到 169.254.169.254。
-                # 用 page.route 拦截所有请求，对每个跳转后的 URL 做二次 is_safe_url 校验。
-                # M-2 修复（第四轮）：用 is_safe_url_async 避免 DNS 解析阻塞事件循环。
-                # M-2 修复（第五轮）：
-                #   1. 只对 document 请求严格校验（HTML 主文档/导航），子资源继承主域名安全判定
-                #   2. hostname 级 LRU 缓存避免同域名重复 DNS 解析（30-50 子资源 → 1 次 DNS）
-                # m-2 修复（第七轮）：抽 HostnameLRUCache 成独立类，提升可测试性
-                # m-1 修复（第八轮）：HostnameLRUCache import 提到文件顶部
-                hostname_cache = HostnameLRUCache(capacity=64)
-
-                async def _ssrf_guard(route):
-                    req_url = route.request.url
-                    try:
-                        hostname = urlparse(req_url).hostname or ""
-                    except Exception:  # noqa: BLE001
-                        hostname = ""
-                    hostname_lower = hostname.lower()
-
-                    # document 请求严格校验（防 302 重定向到内网）
-                    if route.request.resource_type == "document":
-                        safe, reason = await is_safe_url_async(req_url)
-                        if not safe:
-                            logger.warning(
-                                "SSRF guard blocked document url=%s reason=%s",
-                                req_url[:80], reason,
-                            )
-                            await route.abort("blockedbyclient")
-                            return
-                        # 缓存 hostname 校验结果，供子资源复用
-                        if hostname_lower:
-                            hostname_cache.set(hostname_lower, (True, ""))
-                        await route.continue_()
-                        return
-
-                    # 子资源请求：用 hostname 缓存校验，未命中则做一次完整校验
-                    if hostname_lower:
-                        cached = hostname_cache.get(hostname_lower)
-                        if cached is not None:
-                            if not cached[0]:
-                                await route.abort("blockedbyclient")
-                                return
-                            await route.continue_()
-                            return
-                        # 未命中缓存：做一次校验并缓存
-                        safe, reason = await is_safe_url_async(req_url)
-                        hostname_cache.set(hostname_lower, (safe, reason))
-                        # m-3 修复（第六轮）：缓存未命中时打 debug 日志，对称排查
-                        if safe:
-                            logger.debug(
-                                "SSRF guard asset first-check ok hostname=%s url=%s",
-                                hostname_lower, req_url[:80],
-                            )
-                        else:
-                            logger.warning(
-                                "SSRF guard blocked asset url=%s reason=%s",
-                                req_url[:80], reason,
-                            )
-                            await route.abort("blockedbyclient")
-                            return
-                    await route.continue_()
-
-                await page.route("**/*", _ssrf_guard)
-
-                # #34 修复：检查 HTTP 响应状态码，403 时抛专用异常停止抓取
-                # （Playwright page.goto 遇到 403 通常不抛异常，会渲染为错误页，
-                # 导致原逻辑误判为成功或被反爬封禁后仍换 UA/代理重试加重封禁）。
-                response = await page.goto(url, wait_until="domcontentloaded")
-                if response and response.status == 403:
-                    raise HttpForbiddenError(url)
-
-                if wait_for:
-                    try:
-                        await page.wait_for_selector(wait_for, timeout=self.timeout_ms)
-                    except PlaywrightTimeoutError:
-                        logger.warning(
-                            "wait_for_selector 超时 url=%s selector=%s",
-                            url, wait_for,
-                        )
-
-                all_items: list[dict[str, Any]] = []
-                pages_scraped = 0
-
-                for page_num in range(1, max_pages + 1):
-                    pages_scraped = page_num
-                    items = await self._extract_page(page, selectors, list_selector)
-                    all_items.extend(items)
-
-                    # 翻页
-                    if next_page and page_num < max_pages:
-                        clicked = await self._click_next(page, next_page)
-                        if not clicked:
-                            logger.info("没有下一页，停止翻页 url=%s at_page=%d", url, page_num)
-                            break
-                        # 翻页后等待新内容
-                        if wait_for:
-                            try:
-                                await page.wait_for_selector(wait_for, timeout=self.timeout_ms)
-                            except PlaywrightTimeoutError:
-                                pass
-                    else:
-                        break
-
-                # v4.1 §5.3 snapshot_manager：保存页面快照（SHA256 哈希 + 版本管理）
-                try:
-                    html_content = await page.content()
-                    snap_record = await snapshot_manager.save_snapshot(
-                        url, html_content,
-                        material=False,
-                    )
-                    if snap_record.is_new_version:
-                        logger.info(
-                            "snapshot saved url=%s v%d hash=%s",
-                            url[:80], snap_record.version_number,
-                            snap_record.content_hash[:16],
-                        )
-                except Exception as exc:  # noqa: BLE001
-                    logger.warning("snapshot save failed url=%s err=%s", url[:80], exc)
-
-                # v4.1 §5.3 template_monitor：检测页面模板结构变更
-                if selectors and template_name:
-                    try:
-                        changed = await template_monitor.check(
-                            template_name, page, selectors,
-                        )
-                        if changed:
-                            logger.warning(
-                                "template structure may have changed name=%s url=%s",
-                                template_name, url[:80],
-                            )
-                    except Exception as exc:  # noqa: BLE001
-                        logger.warning(
-                            "template_monitor check failed name=%s err=%s",
-                            template_name, exc,
-                        )
-
-                return {
-                    "url": url,
-                    "data": all_items,
-                    "pages_scraped": pages_scraped,
-                }
-            finally:
-                await browser.close()
+        依赖注入：``async_playwright`` 和 ``get_random_user_agent`` 从本模块
+        命名空间解析后传入 ``scrape_with_playwright``，使测试 monkeypatch 生效。
+        """
+        return await scrape_with_playwright(
+            url=url,
+            selectors=selectors,
+            list_selector=list_selector,
+            wait_for=wait_for,
+            next_page=next_page,
+            max_pages=max_pages,
+            proxy=proxy,
+            cookies=cookies,
+            extra_headers=extra_headers,
+            storage_state=storage_state,
+            template_name=template_name,
+            headless=self.headless,
+            timeout_ms=self.timeout_ms,
+            playwright_factory=async_playwright,
+            user_agent=get_random_user_agent(),
+        )
 
     async def _extract_page(
         self,
@@ -444,68 +250,26 @@ class Scraper:
         list_selector: str | None,
     ) -> list[dict[str, Any]]:
         """从当前 page 提取数据。"""
-        if not selectors:
-            # 没有选择器，返回页面纯文本摘要
-            title = await page.title()
-            return [{"_title": title}]
-
-        if list_selector:
-            return await self._extract_list(page, selectors, list_selector)
-        return await self._extract_single(page, selectors)
+        return await _extract_page_fn(page, selectors, list_selector)
 
     @staticmethod
     async def _extract_single(
         page: Page, selectors: dict[str, str]
     ) -> list[dict[str, Any]]:
         """单条目提取。"""
-        item: dict[str, Any] = {}
-        for field, sel in selectors.items():
-            try:
-                element = await page.query_selector(sel)
-                item[field] = (await element.inner_text()) if element else None
-            except PlaywrightError as exc:
-                logger.warning("字段提取失败 field=%s selector=%s err=%s", field, sel, exc)
-                item[field] = None
-        return [item]
+        return await _extract_single_fn(page, selectors)
 
     @staticmethod
     async def _extract_list(
         page: Page, selectors: dict[str, str], list_selector: str
     ) -> list[dict[str, Any]]:
         """列表提取：每个 list_selector 元素都按 selectors 抽取字段。"""
-        elements = await page.query_selector_all(list_selector)
-        items: list[dict[str, Any]] = []
-        for el in elements:
-            item: dict[str, Any] = {}
-            for field, sel in selectors.items():
-                try:
-                    child = await el.query_selector(sel)
-                    item[field] = (await child.inner_text()) if child else None
-                except PlaywrightError as exc:
-                    logger.warning(
-                        "列表字段提取失败 field=%s selector=%s err=%s", field, sel, exc
-                    )
-                    item[field] = None
-            items.append(item)
-        return items
+        return await _extract_list_fn(page, selectors, list_selector)
 
     @staticmethod
     async def _click_next(page: Page, next_page_selector: str) -> bool:
         """点击下一页；返回是否成功。"""
-        try:
-            btn = await page.query_selector(next_page_selector)
-            if not btn:
-                return False
-            await btn.click()
-            # 等待网络空闲
-            try:
-                await page.wait_for_load_state("networkidle", timeout=5000)
-            except PlaywrightTimeoutError:
-                pass
-            return True
-        except PlaywrightError as exc:
-            logger.warning("翻页失败 selector=%s err=%s", next_page_selector, exc)
-            return False
+        return await _click_next_fn(page, next_page_selector)
 
 
 # 模块级单例

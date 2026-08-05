@@ -19,154 +19,29 @@
 - 映射表必须可序列化和反序列化（to_dict / from_dict）
 - 不依赖实时网页 DOM
 - 性能目标：小于 20KB 文本 P95 不超过 50ms
+
+本模块按功能职责拆分为子模块，此处通过 re-export 保持原公开接口兼容：
+- normalizer_constants：版本号与正则/缓存常量
+- normalizer_mapping：OffsetMapping 双坐标映射表
+
+normalize_text / _normalize_char / is_normalized 保留在本模块，以便
+app.processors.normalizer.time.perf_counter 的 monkeypatch 生效。
 """
 from __future__ import annotations
 
-import re
 import time
 import unicodedata
-from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
-# 规范化器版本号（规则变更时必须升级）
-NORMALIZER_VERSION = "1.0"
-
-# 全角空格（U+3000）单独处理
-_FULLWIDTH_SPACE = "\u3000"
-
-# NFKC 规范化结果缓存（按字符缓存，避免重复 unicodedata.normalize 调用）
-# 性能优化：20KB 全角文本场景下，unicodedata.normalize 是主要瓶颈
-_NFKC_CACHE: Dict[str, str] = {}
-
-# 连续空白正则（匹配 1 个或多个空白字符，包括空格、制表符、全角空格等，但不含换行）
-_WHITESPACE_RUN = re.compile(r"[ \t\u3000\r\f\v]{2,}")
-
-# 行首/行尾空白（去除每行首尾的空格和制表符，但保留换行）
-_LINE_TRIM = re.compile(r"^[ \t\u3000]+|[ \t\u3000]+$", re.MULTILINE)
-
-
-@dataclass
-class OffsetMapping:
-    """双坐标映射表。
-
-    mapping[i] = j 表示 normalized_text[i] 对应 clean_raw_text[j]。
-    反向查询通过 reverse_mapping[j] = i 完成（一对多时取最小 i）。
-
-    约束：
-    - mapping 长度等于 normalized_text 长度
-    - reverse_mapping 长度等于 clean_raw_text 长度（-1 表示该原始字符被压缩删除）
-    - mapping 必须严格递增（normalized 顺序对应 raw 顺序）
-    """
-    mapping: List[int] = field(default_factory=list)
-    reverse_mapping: List[int] = field(default_factory=list)
-    normalized_text: str = ""
-    raw_text: str = ""
-    normalizer_version: str = NORMALIZER_VERSION
-
-    def to_normalized(self, raw_start: int, raw_end: int) -> Tuple[int, int]:
-        """原始坐标 → 规范化坐标。
-
-        如果 raw_start 或 raw_end 落在被压缩删除的字符上，
-        取最近的未删除字符（向后/向前查找）。
-        """
-        n_raw = len(self.reverse_mapping)
-        n_norm = len(self.mapping)
-
-        if n_norm == 0:
-            return (0, 0)
-
-        # 处理 start
-        norm_start = -1
-        if 0 <= raw_start < n_raw:
-            norm_start = self.reverse_mapping[raw_start]
-            if norm_start == -1:
-                for i in range(raw_start + 1, n_raw):
-                    if self.reverse_mapping[i] != -1:
-                        norm_start = self.reverse_mapping[i]
-                        break
-                if norm_start == -1:
-                    norm_start = n_norm
-        elif raw_start >= n_raw:
-            norm_start = n_norm
-        else:
-            norm_start = 0
-
-        # 处理 end
-        norm_end = -1
-        if 0 <= raw_end < n_raw:
-            norm_end = self.reverse_mapping[raw_end]
-            if norm_end == -1:
-                for i in range(raw_end - 1, -1, -1):
-                    if self.reverse_mapping[i] != -1:
-                        norm_end = self.reverse_mapping[i] + 1
-                        break
-                if norm_end == -1:
-                    norm_end = 0
-        elif raw_end >= n_raw:
-            norm_end = n_norm
-        else:
-            norm_end = 0
-
-        if norm_start < 0:
-            norm_start = 0
-        if norm_end > n_norm:
-            norm_end = n_norm
-        if norm_end < norm_start:
-            norm_end = norm_start
-
-        return (norm_start, norm_end)
-
-    def to_raw(self, norm_start: int, norm_end: int) -> Tuple[int, int]:
-        """规范化坐标 → 原始坐标。"""
-        n_norm = len(self.mapping)
-        n_raw = len(self.reverse_mapping)
-
-        if n_norm == 0 or n_raw == 0:
-            return (0, 0)
-
-        raw_start = 0
-        if 0 <= norm_start < n_norm:
-            raw_start = self.mapping[norm_start]
-        elif norm_start >= n_norm:
-            raw_start = n_raw
-
-        raw_end = 0
-        if norm_end <= 0:
-            raw_end = 0
-        elif norm_end <= n_norm:
-            raw_end = self.mapping[norm_end - 1] + 1
-        else:
-            raw_end = n_raw
-
-        if raw_start < 0:
-            raw_start = 0
-        if raw_end > n_raw:
-            raw_end = n_raw
-        if raw_end < raw_start:
-            raw_end = raw_start
-
-        return (raw_start, raw_end)
-
-    def to_dict(self) -> dict:
-        """序列化为字典（可 JSON 化）。"""
-        return {
-            "mapping": self.mapping,
-            "reverse_mapping": self.reverse_mapping,
-            "normalized_text": self.normalized_text,
-            "raw_text": self.raw_text,
-            "normalizer_version": self.normalizer_version,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "OffsetMapping":
-        """从字典反序列化。"""
-        return cls(
-            mapping=list(data["mapping"]),
-            reverse_mapping=list(data["reverse_mapping"]),
-            normalized_text=data["normalized_text"],
-            raw_text=data["raw_text"],
-            normalizer_version=data.get("normalizer_version", NORMALIZER_VERSION),
-        )
+# re-export 常量与映射表（保持向后兼容）
+from app.processors.normalizer_constants import (  # noqa: F401
+    NORMALIZER_VERSION,
+    _FULLWIDTH_SPACE,
+    _LINE_TRIM,
+    _NFKC_CACHE,
+    _WHITESPACE_RUN,
+)
+from app.processors.normalizer_mapping import OffsetMapping  # noqa: F401
 
 
 def _normalize_char(ch: str) -> str:

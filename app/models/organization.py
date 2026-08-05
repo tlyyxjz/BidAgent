@@ -15,14 +15,16 @@ W3 周验收要求：基础组织实体活动画像
 - 业务角色通过 PartyRole 表关联（多角色支持：同一组织可同时是采购人和代理机构）
 - ULID 使用 ulid-py 库（project_memory 要求）
 - 消歧基于名称规范化 + 统一社会信用代码 + SimHash 模糊匹配
+
+拆分说明（保证单文件 ≤300 行，公开接口不变）：
+- 名称规范化 + 消歧逻辑 → organization_disambiguation.py
+- 供应商画像生成 → organization_profile.py
+- 本文件保留：组织/角色枚举、ORM 模型（Organization/PartyRole）、组织类型推断
+  并 re-export 上述模块的公开符号，保持 ``from app.models.organization import X`` 可用。
 """
 from __future__ import annotations
 
-import hashlib
-import re
-from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import (
     Boolean,
@@ -39,6 +41,18 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.models.database import Base
 from app.models.user import utc_now
 from app.utils.logger import get_logger
+
+# 拆分模块 re-export（保持原有 import 路径不变）
+from app.models.organization_disambiguation import (  # noqa: F401
+    DisambiguationResult,
+    compute_name_hash,
+    disambiguate_organization,
+    normalize_org_name,
+)
+from app.models.organization_profile import (  # noqa: F401
+    SupplierProfile,
+    build_supplier_profile,
+)
 
 logger = get_logger("organization")
 
@@ -189,184 +203,6 @@ class PartyRole(Base):
         )
 
 
-# ========== 名称规范化 + 消歧 ==========
-
-# 名称规范化清洗规则
-_NAME_CLEAN_PATTERNS = [
-    (re.compile(r"[（(].*?[)）]"), ""),           # 去除括号内容
-    (re.compile(r"股份有限公司$"), "股份有限公司"),  # 统一后缀
-    (re.compile(r"有限公司$"), "有限公司"),
-    (re.compile(r"责任公司$"), "责任公司"),
-    (re.compile(r"\s+"), ""),                     # 去除空白
-    (re.compile(r"[·•・]"), "·"),                 # 统一间隔号
-]
-
-
-def normalize_org_name(raw_name: str) -> str:
-    """规范化组织名称（用于消歧）。
-
-    清洗规则：
-    1. 去除括号内容（如"(上海)"）
-    2. 统一公司后缀（股份有限公司/有限公司/责任公司）
-    3. 去除空白
-    4. 统一间隔号
-
-    Args:
-        raw_name: 原始名称
-
-    Returns:
-        规范化后的名称
-    """
-    if not raw_name:
-        return ""
-    name = raw_name.strip()
-    for pattern, replacement in _NAME_CLEAN_PATTERNS:
-        name = pattern.sub(replacement, name)
-    return name.strip()
-
-
-def compute_name_hash(normalized_name: str) -> str:
-    """计算规范化名称的哈希（用于快速查重）。
-
-    Args:
-        normalized_name: 规范化后的名称
-
-    Returns:
-        SHA256 前 16 字符
-    """
-    return hashlib.sha256(normalized_name.encode("utf-8")).hexdigest()[:16]
-
-
-# ========== 消歧结果数据类 ==========
-
-@dataclass
-class DisambiguationResult:
-    """组织名称消歧结果。"""
-    # 是否消歧成功
-    matched: bool
-    # 匹配到的 organization_id（若 matched=False 则为 None）
-    organization_id: Optional[str] = None
-    # 规范化后的名称
-    normalized_name: str = ""
-    # 名称哈希
-    name_hash: str = ""
-    # 置信度（0.0-1.0）
-    confidence: float = 0.0
-    # 匹配方式（exact_credit_code / exact_name / fuzzy_name / no_match）
-    match_method: str = "no_match"
-    # 候选列表（模糊匹配时可能有多个候选）
-    candidates: list = None
-
-    def __post_init__(self):
-        if self.candidates is None:
-            self.candidates = []
-
-
-# ========== 消歧逻辑 ==========
-
-def disambiguate_organization(
-    raw_name: str,
-    *,
-    unified_credit_code: str = "",
-    existing_orgs: list = None,
-    fuzzy_threshold: int = 3,
-) -> DisambiguationResult:
-    """组织名称消歧。
-
-    消歧优先级（从高到低）：
-    1. unified_credit_code 精确匹配（置信度 1.0）
-    2. normalized_name 精确匹配（置信度 0.95）
-    3. 名称模糊匹配（SimHash 汉明距离 ≤ threshold，置信度 0.7-0.9）
-    4. 无匹配（新建组织）
-
-    Args:
-        raw_name: 原始名称
-        unified_credit_code: 统一社会信用代码（可选）
-        existing_orgs: 现有组织列表 [(organization_id, normalized_name, unified_credit_code)]
-        fuzzy_threshold: 模糊匹配汉明距离阈值（默认 3）
-
-    Returns:
-        DisambiguationResult
-    """
-    if not raw_name or not raw_name.strip():
-        return DisambiguationResult(matched=False, match_method="empty_name")
-
-    normalized = normalize_org_name(raw_name)
-    name_hash = compute_name_hash(normalized)
-
-    if not existing_orgs:
-        return DisambiguationResult(
-            matched=False,
-            normalized_name=normalized,
-            name_hash=name_hash,
-            match_method="no_match",
-        )
-
-    # 1. unified_credit_code 精确匹配
-    if unified_credit_code:
-        for org_id, org_name, org_code in existing_orgs:
-            if org_code and org_code == unified_credit_code:
-                return DisambiguationResult(
-                    matched=True,
-                    organization_id=org_id,
-                    normalized_name=normalized,
-                    name_hash=name_hash,
-                    confidence=1.0,
-                    match_method="exact_credit_code",
-                )
-
-    # 2. normalized_name 精确匹配
-    for org_id, org_name, org_code in existing_orgs:
-        if org_name and org_name == normalized:
-            return DisambiguationResult(
-                matched=True,
-                organization_id=org_id,
-                normalized_name=normalized,
-                name_hash=name_hash,
-                confidence=0.95,
-                match_method="exact_name",
-            )
-
-    # 3. 模糊匹配（SimHash）
-    from app.processors.simhash import compute_simhash, hamming_distance
-
-    target_hash = compute_simhash(normalized)
-    candidates = []
-    for org_id, org_name, org_code in existing_orgs:
-        if not org_name:
-            continue
-        cand_hash = compute_simhash(org_name)
-        if target_hash == 0 or cand_hash == 0:
-            continue
-        dist = hamming_distance(target_hash, cand_hash)
-        if dist <= fuzzy_threshold:
-            # 汉明距离越小置信度越高
-            confidence = max(0.7, 0.9 - 0.1 * dist)
-            candidates.append((org_id, org_name, dist, confidence))
-
-    if candidates:
-        # 按汉明距离升序，取最相似的
-        candidates.sort(key=lambda x: x[2])
-        best = candidates[0]
-        return DisambiguationResult(
-            matched=True,
-            organization_id=best[0],
-            normalized_name=normalized,
-            name_hash=name_hash,
-            confidence=best[3],
-            match_method="fuzzy_name",
-            candidates=candidates,
-        )
-
-    # 4. 无匹配
-    return DisambiguationResult(
-        matched=False,
-        normalized_name=normalized,
-        name_hash=name_hash,
-        match_method="no_match",
-    )
-
-
 # ========== 组织类型推断 ==========
 
 # 组织类型关键词
@@ -393,124 +229,3 @@ def infer_org_type(name: str) -> str:
         if any(kw in name for kw in keywords):
             return org_type
     return ORG_TYPE_UNKNOWN
-
-
-# ========== 供应商画像生成 ==========
-
-@dataclass
-class SupplierProfile:
-    """供应商公开活动画像（v4.1 第四章 4.5 + 第八章）。
-
-    基于历史中标记录生成。
-    """
-    organization_id: str
-    normalized_name: str
-    # 中标总次数
-    win_count: int = 0
-    # 累计中标金额（元）
-    total_win_amount: float = 0.0
-    # 主要采购人（中标项目的采购人）
-    main_purchasers: list = None
-    # 主要代理机构
-    main_agencies: list = None
-    # 业务领域（基于中标项目名称聚类）
-    business_areas: list = None
-    # 活跃地区
-    active_regions: list = None
-    # 首次中标时间
-    first_win_date: str = ""
-    # 最近中标时间
-    last_win_date: str = ""
-    # 画像生成时间
-    profile_generated_at: str = ""
-
-    def __post_init__(self):
-        if self.main_purchasers is None:
-            self.main_purchasers = []
-        if self.main_agencies is None:
-            self.main_agencies = []
-        if self.business_areas is None:
-            self.business_areas = []
-        if self.active_regions is None:
-            self.active_regions = []
-
-
-def build_supplier_profile(
-    organization_id: str,
-    normalized_name: str,
-    win_records: list,
-) -> SupplierProfile:
-    """生成供应商画像。
-
-    Args:
-        organization_id: 组织 ID
-        normalized_name: 规范化名称
-        win_records: 中标记录列表，每个元素是 dict:
-            {
-                "win_amount": float,
-                "purchaser_name": str,
-                "agency_name": str,
-                "project_name": str,
-                "region": str,
-                "win_date": str,
-            }
-
-    Returns:
-        SupplierProfile
-    """
-    profile = SupplierProfile(
-        organization_id=organization_id,
-        normalized_name=normalized_name,
-        win_count=len(win_records),
-    )
-
-    if not win_records:
-        from datetime import datetime
-        profile.profile_generated_at = datetime.utcnow().isoformat()
-        return profile
-
-    amounts = []
-    purchasers = []
-    agencies = []
-    regions = []
-    dates = []
-
-    for rec in win_records:
-        # 金额
-        try:
-            amt = float(rec.get("win_amount", 0) or 0)
-            amounts.append(amt)
-        except (ValueError, TypeError):
-            pass
-        # 采购人
-        if rec.get("purchaser_name"):
-            purchasers.append(rec["purchaser_name"])
-        # 代理机构
-        if rec.get("agency_name"):
-            agencies.append(rec["agency_name"])
-        # 地区
-        if rec.get("region"):
-            regions.append(rec["region"])
-        # 日期
-        if rec.get("win_date"):
-            dates.append(rec["win_date"])
-
-    # 累计金额
-    profile.total_win_amount = sum(amounts) if amounts else 0.0
-
-    # 主要采购人/代理机构（按出现频次 top 5）
-    from collections import Counter
-    profile.main_purchasers = [name for name, _ in Counter(purchasers).most_common(5)]
-    profile.main_agencies = [name for name, _ in Counter(agencies).most_common(5)]
-    profile.active_regions = [name for name, _ in Counter(regions).most_common(5)]
-
-    # 首次/最近中标时间
-    if dates:
-        dates.sort()
-        profile.first_win_date = dates[0]
-        profile.last_win_date = dates[-1]
-
-    from datetime import datetime
-    profile.profile_generated_at = datetime.utcnow().isoformat()
-
-    return profile

@@ -2,6 +2,40 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/) 规范。
 
+## [Unreleased] - 2026-08-05
+
+### Added
+- GitHub Actions CI（.github/workflows/ci.yml）：pytest 全量 + 覆盖率 90% 阈值 + pip-audit 依赖漏洞扫描
+
+### Fixed
+- 版本历史假"复查无变化"版本：created_at/updated_at 双默认值微秒级差值导致新建记录被误判为已更新，增加 10ms 容差（real_demo_versions / v41_sources）
+- 两个时间戳依赖用例改为显式设值，消除时钟 flaky（test_real_versions_single_version / test_versions_with_updated_at）；新增微秒差/超容差两个边界回归用例
+
+### Changed
+- 清理全部 pytest warnings：移除 test_new_modules.py 模块级 asyncio mark 误标；datetime.utcnow() 弃用调用改为 datetime.now(timezone.utc)（v41_extract / v41_stats / organization_profile）；app/scheduler/utils.py docstring 非法转义改为 raw string
+- README 评测数据同步至 final5 实测（field_precision 98.08%、null_false_positive_rate 0.63%），并补充 span 级与字段级证据指标口径说明
+- 测试 1937 passed · 0 warnings · 覆盖率见 README（含 2 个容差边界回归用例）
+
+## [4.1.1] - 2026-08-04
+
+### Changed
+- 大规模模块拆分：28个超过300行的文件拆分为约90个文件，每个文件≤300行
+- 所有拆分通过 re-export 保持公开接口不变，业务逻辑零修改
+- 测试通过 1884 passed, 覆盖率 90.42%
+
+### 拆分详情
+- app/api/demo_api.py (1391行) → 12个子模块
+- app/processors/field_validator.py (708行) → 5个子模块
+- app/llm/extractor.py (707行) → 4个子模块
+- app/services/data_deletion.py (670行) → 9个子模块（mixin包）
+- app/processors/evidence_locator.py (663行) → 6个子模块（mixin包）
+- app/processors/source_lineage.py (640行) → 3个子模块
+- app/core/scraper.py (512行) → 5个子模块
+- 其他21个文件同步拆分
+
+### Removed
+- 删除临时文件：.bak/.new/空文件/_inspect*/_tmp_pytest/_test_isolation_backup
+
 ## [4.1.0] - 2026-07-31 (W3 交付)
 
 ### 新增

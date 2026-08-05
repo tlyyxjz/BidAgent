@@ -88,3 +88,24 @@ playwright-report/
 test-results/
 annotation_tool/tests/playwright-report/
 annotation_tool/tests/test-results/
+
+# 拆分遗留的临时文件
+*.new
+*.bak
+app/**/_*reexport.py
+
+# 调试/探测脚本产物
+_inspect_*.py
+_test_*.txt
+test_write.txt
+_cov*.json
+coverage_*.txt
+_coverage_final.txt
+
+# 前端备份
+static_backup_*/
+
+# 评测原始数据（按需取消注释）
+# _w2_annotations/
+# _w2_raw/
+# _w3_raw/

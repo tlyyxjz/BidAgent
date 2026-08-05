@@ -16,6 +16,7 @@ S-4 拆分：HTML 字符串已迁移到 app/templates/html/，本文件只保留
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
@@ -26,10 +27,7 @@ router = APIRouter(prefix="/ui", tags=["ui"])
 
 _STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
 
-_GOLD_RAW_DIR = Path(
-    r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent"
-    r"\work-mode-projects\6a57291a0778ce48bfe693d2\_w2_raw"
-)
+_GOLD_RAW_DIR = Path(os.environ.get("GOLD_DATA_DIR", str(Path(__file__).resolve().parents[2] / "_w2_raw")))
 _GOLD_ANNOT_DIR = Path(
     r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent"
     r"\work-mode-projects\6a57291a0778ce48bfe693d2\_w2_annotations"
