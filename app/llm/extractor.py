@@ -17,514 +17,63 @@
 - prompt 变更需记录 prompt_hash
 - 失败时记录错误，不静默丢弃
 """
+
 from __future__ import annotations
 
-import hashlib
 import json
 import time
-from typing import Any, Optional
 
 import httpx
 
 from app.config import settings
-from app.llm.extraction_schemas import (
-    CORE_FIELD_NAMES,
-    EXTRACTION_AMOUNT_TYPES,
-    EXTRACTION_EVIDENCE_ROLES,
-    EXTRACTION_FIELD_STATUSES,
-    CandidateEvidence,
-    ExtractionResult,
-    FieldExtraction,
+from app.llm.extraction_schemas import ExtractionResult
+from app.llm.extractor_prompts import (
+    EXTRACTION_FEWSHOT_EXAMPLES,
+    EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
+    EXTRACTION_SYSTEM_PROMPT,
+    EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
 )
-from app.processors.display_grade import compute_display_grade
+from app.llm.extractor_prompt_builder import (
+    build_extraction_prompt,
+    build_extraction_prompt_no_evidence,
+    compute_prompt_hash,
+)
+from app.llm.extractor_parser import (
+    _populate_display_grades,
+    parse_extraction_response,
+)
 from app.utils.logger import get_logger
 
 logger = get_logger("llm_extractor")
 
-# ========== W2-01 抽取 System Prompt ==========
 
-EXTRACTION_SYSTEM_PROMPT = """你是一个政府采购公告字段抽取助手。从公告原文中抽取六类核心字段，并为每个字段提供候选证据。
+async def _post_with_retry(client, url, headers, json, max_retries=4):
+    """httpx POST 请求，带指数退避重试（抗瞬时网络抖动）。
 
-需要抽取的六类核心字段：
-1. project_identifier：项目编号（招标编号、政府采购计划编号）
-2. purchaser_name：采购人（招标人、项目业主）
-3. winner_name：中标人（中标公司、成交供应商）
-4. amount：金额及类型（预算金额/控制价/中标金额/合同金额/单价）
-5. publish_date：发布日期（公告发布时间）
-6. bid_deadline：投标截止日期（投标文件递交截止时间）
-
-输出要求：
-1. 每个字段必须输出 field_status：
-   - present：字段存在且有值
-   - absent：字段不存在（如招标公告没有中标人）
-   - ambiguous：字段存在但含义模糊
-   - multi_value：多值字段（如多分包、多中标人）
-
-2. 每个字段必须提供候选证据（1～3 段）：
-   - evidence_text：原文中的连续片段，不得改写
-   - role：证据角色
-     * primary：主证据（直接证明字段值）
-     * context：上下文证据（提供背景信息）
-     * qualifier：限定条件证据（如金额类型、币种）
-
-3. amount 字段必须输出：
-   - amount_type：金额类型（budget/ceiling/award/contract/unit_price）
-   - currency：货币（CNY/USD/EUR）
-   - original_unit：原始单位（如 "万元"/"元"/"亿元"，从原文提取）
-   - tax_status：含税状态（included/excluded/unknown，无法判断留 null）
-   - display_precision：原文显示精度（如 "0.01万元"/"1元"，用于金额容差判定）
-   - normalized_value：归一化数值（留 null，由程序校验后填充）
-
-4. 多值字段（multi_value）：
-   - 如多分包金额，每个分包单独输出一条
-   - 如多中标人，每个中标人单独输出一条
-
-输出格式为标准 JSON：
-{
-  "fields": [
-    {
-      "field_name": "project_identifier",
-      "field_status": "present",
-      "raw_value": "ZFCG-2026-001",
-      "amount_type": null,
-      "currency": null,
-      "lot_id": null,
-      "original_unit": null,
-      "tax_status": null,
-      "display_precision": null,
-      "normalized_value": null,
-      "candidate_evidences": [
-        {"evidence_text": "一、项目编号：ZFCG-2026-001", "role": "primary"}
-      ]
-    }
-  ]
-}
-
-约束：
-- 候选证据文本必须是原文中的连续片段，不得改写、不得翻译、不得概括
-- 字段不存在的字段也要输出，field_status=absent
-- 不得编造原文中不存在的内容
-- 只返回 JSON，不要任何解释"""
-
-# Few-shot 示例（Sol 要求：LLM few-shot 必须用 json.dumps 输出标准 JSON）
-EXTRACTION_FEWSHOT_EXAMPLES = [
-    {
-        "raw_text": "招标公告\n项目编号：ZFCG-2026-001\n项目名称：政府采购服务器项目\n预算金额：100.00万元\n采购人：某机关单位\n投标截止时间：2026年8月1日 09:00\n发布日期：2026年7月15日",
-        "result": {
-            "fields": [
-                {
-                    "field_name": "project_identifier",
-                    "field_status": "present",
-                    "raw_value": "ZFCG-2026-001",
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                    "candidate_evidences": [
-                        {"evidence_text": "项目编号：ZFCG-2026-001", "role": "primary"}
-                    ],
-                },
-                {
-                    "field_name": "purchaser_name",
-                    "field_status": "present",
-                    "raw_value": "某机关单位",
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                    "candidate_evidences": [
-                        {"evidence_text": "采购人：某机关单位", "role": "primary"}
-                    ],
-                },
-                {
-                    "field_name": "winner_name",
-                    "field_status": "absent",
-                    "raw_value": None,
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                    "candidate_evidences": [],
-                },
-                {
-                    "field_name": "amount",
-                    "field_status": "present",
-                    "raw_value": "100.00万元",
-                    "amount_type": "budget",
-                    "currency": "CNY",
-                    "lot_id": None,
-                    "original_unit": "万元",
-                    "tax_status": "unknown",
-                    "display_precision": "0.01万元",
-                    "normalized_value": None,
-                    "candidate_evidences": [
-                        {"evidence_text": "预算金额：100.00万元", "role": "primary"}
-                    ],
-                },
-                {
-                    "field_name": "publish_date",
-                    "field_status": "present",
-                    "raw_value": "2026年7月15日",
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                    "candidate_evidences": [
-                        {"evidence_text": "发布日期：2026年7月15日", "role": "primary"}
-                    ],
-                },
-                {
-                    "field_name": "bid_deadline",
-                    "field_status": "present",
-                    "raw_value": "2026年8月1日 09:00",
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                    "candidate_evidences": [
-                        {"evidence_text": "投标截止时间：2026年8月1日 09:00", "role": "primary"}
-                    ],
-                },
-            ]
-        },
-    }
-]
-
-
-# ========== W2-08 消融实验 A 组：无证据 System Prompt ==========
-# Sol 要求 (W2-08)：A 组 (Direct LLM) 必须使用独立的无证据 prompt，
-# 不能复用有证据 prompt 仅在评测时忽略证据 (那样 LLM 仍被要求输出证据，
-# 不符合 "Direct LLM 无证据要求" 的实验目的)。
-EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE = """你是一个政府采购公告字段抽取助手。从公告原文中抽取六类核心字段。
-
-需要抽取的六类核心字段：
-1. project_identifier：项目编号（招标编号、政府采购计划编号）
-2. purchaser_name：采购人（招标人、项目业主）
-3. winner_name：中标人（中标公司、成交供应商）
-4. amount：金额及类型（预算金额/控制价/中标金额/合同金额/单价）
-5. publish_date：发布日期（公告发布时间）
-6. bid_deadline：投标截止日期（投标文件递交截止时间）
-
-输出要求：
-1. 每个字段必须输出 field_status：
-   - present：字段存在且有值
-   - absent：字段不存在（如招标公告没有中标人）
-   - ambiguous：字段存在但含义模糊
-   - multi_value：多值字段（如多分包、多中标人）
-
-2. amount 字段必须输出：
-   - amount_type：金额类型（budget/ceiling/award/contract/unit_price）
-   - currency：货币（CNY/USD/EUR）
-   - original_unit：原始单位（如 "万元"/"元"/"亿元"，从原文提取）
-   - tax_status：含税状态（included/excluded/unknown，无法判断留 null）
-   - display_precision：原文显示精度（如 "0.01万元"/"1元"，用于金额容差判定）
-   - normalized_value：归一化数值（留 null，由程序校验后填充）
-
-3. 多值字段（multi_value）：
-   - 如多分包金额，每个分包单独输出一条
-   - 如多中标人，每个中标人单独输出一条
-
-输出格式为标准 JSON：
-{
-  "fields": [
-    {
-      "field_name": "project_identifier",
-      "field_status": "present",
-      "raw_value": "ZFCG-2026-001",
-      "amount_type": null,
-      "currency": null,
-      "lot_id": null,
-      "original_unit": null,
-      "tax_status": null,
-      "display_precision": null,
-      "normalized_value": null
-    }
-  ]
-}
-
-约束：
-- 字段不存在的字段也要输出，field_status=absent
-- 不得编造原文中不存在的内容
-- 只返回 JSON，不要任何解释"""
-
-# Few-shot 示例（无证据版本：不输出 candidate_evidences 字段）
-EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE = [
-    {
-        "raw_text": "招标公告\n项目编号：ZFCG-2026-001\n项目名称：政府采购服务器项目\n预算金额：100.00万元\n采购人：某机关单位\n投标截止时间：2026年8月1日 09:00\n发布日期：2026年7月15日",
-        "result": {
-            "fields": [
-                {
-                    "field_name": "project_identifier",
-                    "field_status": "present",
-                    "raw_value": "ZFCG-2026-001",
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                },
-                {
-                    "field_name": "purchaser_name",
-                    "field_status": "present",
-                    "raw_value": "某机关单位",
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                },
-                {
-                    "field_name": "winner_name",
-                    "field_status": "absent",
-                    "raw_value": None,
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                },
-                {
-                    "field_name": "amount",
-                    "field_status": "present",
-                    "raw_value": "100.00万元",
-                    "amount_type": "budget",
-                    "currency": "CNY",
-                    "lot_id": None,
-                    "original_unit": "万元",
-                    "tax_status": "unknown",
-                    "display_precision": "0.01万元",
-                    "normalized_value": None,
-                },
-                {
-                    "field_name": "publish_date",
-                    "field_status": "present",
-                    "raw_value": "2026年7月15日",
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                },
-                {
-                    "field_name": "bid_deadline",
-                    "field_status": "present",
-                    "raw_value": "2026年8月1日 09:00",
-                    "amount_type": None,
-                    "currency": None,
-                    "lot_id": None,
-                },
-            ]
-        },
-    }
-]
-
-
-def compute_prompt_hash(
-    system_prompt: str = None,
-    fewshot_examples: list = None,
-) -> str:
-    """计算 prompt 哈希（Sol 要求：prompt 变更需记录 prompt_hash）。
-
-    Args:
-        system_prompt: system prompt，默认 EXTRACTION_SYSTEM_PROMPT
-        fewshot_examples: few-shot 示例列表，默认 EXTRACTION_FEWSHOT_EXAMPLES
-
-    Returns:
-        SHA256 哈希（前 16 字符）
+    - 网络类异常（连接中断/超时/空响应）会重试
+    - 非网络类异常（如 HTTP 4xx 校验错误）不重试，直接抛出
     """
-    if system_prompt is None:
-        system_prompt = EXTRACTION_SYSTEM_PROMPT
-    if fewshot_examples is None:
-        fewshot_examples = EXTRACTION_FEWSHOT_EXAMPLES
-    content = system_prompt + json.dumps(fewshot_examples, ensure_ascii=False)
-    return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
+    import asyncio
 
-
-def build_extraction_prompt(raw_text: str) -> str:
-    """构建字段抽取的 user prompt（含 Few-shot 示例）。
-
-    Args:
-        raw_text: 公告原文
-
-    Returns:
-        user prompt 字符串
-    """
-    examples_text = "\n\n".join(
-        f"公告原文：\n{ex['raw_text']}\n\n输出 JSON：\n{json.dumps(ex['result'], ensure_ascii=False)}"
-        for ex in EXTRACTION_FEWSHOT_EXAMPLES
-    )
-    return f"""参考以下示例：
-
-{examples_text}
-
-现在请抽取这个公告的字段：
-公告原文：
-{raw_text}
-
-输出 JSON："""
-
-
-def build_extraction_prompt_no_evidence(raw_text: str) -> str:
-    """构建无证据版本的 user prompt（A 组消融实验专用）。
-
-    Args:
-        raw_text: 公告原文
-
-    Returns:
-        user prompt 字符串（few-shot 不含 candidate_evidences）
-    """
-    examples_text = "\n\n".join(
-        f"公告原文：\n{ex['raw_text']}\n\n输出 JSON：\n{json.dumps(ex['result'], ensure_ascii=False)}"
-        for ex in EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE
-    )
-    return f"""参考以下示例：
-
-{examples_text}
-
-现在请抽取这个公告的字段：
-公告原文：
-{raw_text}
-
-输出 JSON："""
-
-
-# ========== 响应解析与校验 ==========
-
-
-def _validate_extraction(data: dict[str, Any]) -> None:
-    """校验 LLM 输出是否符合 Schema。
-
-    Raises:
-        ValueError: 校验失败
-    """
-    if "fields" not in data:
-        raise ValueError("LLM 输出缺少 fields 字段")
-
-    fields = data["fields"]
-    if not isinstance(fields, list):
-        raise ValueError("fields 必须是列表")
-
-    if len(fields) == 0:
-        raise ValueError("fields 不能为空")
-
-    for i, field_data in enumerate(fields):
-        if "field_name" not in field_data:
-            raise ValueError(f"fields[{i}] 缺少 field_name")
-
-        field_name = field_data["field_name"]
-        if field_name not in CORE_FIELD_NAMES:
-            raise ValueError(
-                f"fields[{i}] 非法 field_name: {field_name}，合法值: {CORE_FIELD_NAMES}"
-            )
-
-        field_status = field_data.get("field_status", "present")
-        if field_status not in EXTRACTION_FIELD_STATUSES:
-            raise ValueError(
-                f"fields[{i}] 非法 field_status: {field_status}，合法值: {EXTRACTION_FIELD_STATUSES}"
-            )
-
-        # amount 字段的 amount_type 校验
-        if field_name == "amount":
-            amount_type = field_data.get("amount_type")
-            if amount_type and amount_type not in EXTRACTION_AMOUNT_TYPES:
-                raise ValueError(
-                    f"fields[{i}] 非法 amount_type: {amount_type}，合法值: {EXTRACTION_AMOUNT_TYPES}"
-                )
-
-        # 候选证据校验
-        evidences = field_data.get("candidate_evidences", [])
-        for j, ev in enumerate(evidences):
-            if "evidence_text" not in ev:
-                raise ValueError(
-                    f"fields[{i}].candidate_evidences[{j}] 缺少 evidence_text"
-                )
-            role = ev.get("role", "primary")
-            if role not in EXTRACTION_EVIDENCE_ROLES:
-                raise ValueError(
-                    f"fields[{i}].candidate_evidences[{j}] 非法 role: {role}"
-                )
-
-
-def parse_extraction_response(
-    data: dict[str, Any], model_id: str, latency_ms: int, total_tokens: int = 0
-) -> ExtractionResult:
-    """解析 LLM 抽取响应。
-
-    Args:
-        data: LLM 返回的 JSON dict
-        model_id: 模型标识
-        latency_ms: 延迟毫秒
-        total_tokens: 总 token 数
-
-    Returns:
-        ExtractionResult
-
-    Raises:
-        ValueError: 解析或校验失败
-    """
-    _validate_extraction(data)
-
-    fields = []
-    for field_data in data["fields"]:
-        # W2-10 修复：per-field try/except 容错，单字段失败不影响其他字段
+    delay = 2.0
+    last_exc = None
+    for attempt in range(max_retries):
         try:
-            evidences = [
-                CandidateEvidence(
-                    evidence_text=ev["evidence_text"],
-                    role=ev.get("role", "primary"),
-                )
-                for ev in field_data.get("candidate_evidences", [])
-            ]
-            # W2-10 修复：raw_value 归一化，dict/list 转 JSON 字符串，其他非 str 转 str
-            raw_value = field_data.get("raw_value")
-            if isinstance(raw_value, (dict, list)):
-                raw_value = json.dumps(raw_value, ensure_ascii=False)
-            elif raw_value is not None and not isinstance(raw_value, str):
-                raw_value = str(raw_value)
-            # v4.1 sec 7.2: amount object 4 new keys (LLM outputs, program may override normalized_value)
-            normalized_value = field_data.get("normalized_value")
-            if isinstance(normalized_value, (dict, list)):
-                normalized_value = json.dumps(normalized_value, ensure_ascii=False)
-            elif normalized_value is not None and not isinstance(normalized_value, str):
-                normalized_value = str(normalized_value)
-            field_ext = FieldExtraction(
-                field_name=field_data["field_name"],
-                field_status=field_data.get("field_status", "present"),
-                raw_value=raw_value,
-                amount_type=field_data.get("amount_type"),
-                currency=field_data.get("currency"),
-                lot_id=field_data.get("lot_id"),
-                normalized_value=normalized_value,
-                original_unit=field_data.get("original_unit"),
-                tax_status=field_data.get("tax_status"),
-                display_precision=field_data.get("display_precision"),
-                candidate_evidences=evidences,
-            )
-            fields.append(field_ext)
-        except Exception as exc:
-            logger.warning(
-                "parse field failed name={} error={}",
-                field_data.get("field_name", "<unknown>"),
-                exc,
-            )
-
-    return ExtractionResult(
-        fields=fields,
-        model_id=model_id,
-        prompt_hash=compute_prompt_hash(),
-        total_tokens=total_tokens,
-        latency_ms=latency_ms,
-    )
-
-
-# ========== W3-07 display_grade 接入 ==========
-
-def _populate_display_grades(
-    result: ExtractionResult,
-    source_role: str = "official_original",
-) -> None:
-    """原地为 result.fields 计算并写入 display_grade（调用方已设 support_level/cross_verified）.
-
-    说明：
-      - 当前 LLM 抽取阶段无法判断来源交叉验证，cross_verified 默认取字段原值。
-      - display_grade 只基于当前字段的 support_level + source_role + cross_verified + field_status
-        进行纯函数计算，不与数据库绑定。
-    """
-    for field in result.fields:
-        field.display_grade = compute_display_grade(
-            support_level=field.support_level,
-            source_role=source_role,
-            cross_verified=field.cross_verified,
-            field_status=field.field_status,
-        )
-
+            resp = await client.post(url, headers=headers, json=json)
+            resp.raise_for_status()
+            return resp
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            # HTTP 4xx 业务错误不重试（如 400/401/429 之外的）
+            status = None
+            if hasattr(exc, "response") and exc.response is not None:
+                status = exc.response.status_code
+            if status is not None and 400 <= status < 500 and status != 429:
+                raise
+            if attempt < max_retries - 1:
+                await asyncio.sleep(delay)
+                delay *= 2
+    raise last_exc
 
 # ========== LLM 调用 ==========
 
@@ -567,12 +116,12 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
 
     try:
         async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
-            resp = await client.post(
+            resp = await _post_with_retry(
+                client,
                 f"{settings.DEEPSEEK_BASE_URL}/v1/chat/completions",
                 headers=headers,
                 json=payload,
             )
-            resp.raise_for_status()
             data = resp.json()
 
         content = data["choices"][0]["message"]["content"]
@@ -653,12 +202,12 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
 
     try:
         async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
-            response = await client.post(
-                f"{settings.DEEPSEEK_BASE_URL}/chat/completions",
+            response = await _post_with_retry(
+                client,
+                f"{settings.DEEPSEEK_BASE_URL}/v1/chat/completions",
                 headers=headers,
                 json=payload,
             )
-            response.raise_for_status()
 
         data = response.json()
         latency_ms = int((time.perf_counter() - start_time) * 1000)
