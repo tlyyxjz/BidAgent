@@ -26,6 +26,8 @@ async def run(state: dict[str, Any]) -> dict[str, Any]:
     if not tenders:
         logger.warning("finance_agent: 无可用公告数据")
         state.setdefault("finance_summary", {})
+        # v4.1 契约：无论有无数据，state 必须含 observation_signals（空观察信号）
+        state.setdefault("observation_signals", {})
         return state
 
     try:
