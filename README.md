@@ -3,7 +3,7 @@
 > 面向供应链金融贷前尽调的可验证招投标数据引擎 · GOAI 2026。将不可核验的 LLM 输出转化为可复核、可追踪的数据资产——LLM 只生成候选，确定性程序负责验证。
 
 **当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
-**测试**：1937 passed · 0 warnings · **评测数据**：107 篇真实公告 · **分支**：feature/glm-w4-k3-data
+**测试**：1942 passed · 0 warnings · **评测数据**：162 篇真实公告 · 金标 598 篇 · **分支**：feature/glm-w4-k3-data
 
 ---
 
@@ -140,7 +140,8 @@ TenderProject（采购项目）
 
 | 项目 | 数值 |
 |---|---|
-| 数据库公告总数 | 107 篇 |
+| 数据库公告总数 | 162 篇（2026-08 恢复灌库，SimHash 去重）|
+| 金标集 | 598 篇（`tests/fixtures/gold/gold_dataset_v4.json`，document_id 双口径唯一）|
 | W3 评测集 | 100 篇（ccgp_w3）|
 | 实时采集 | 7 篇（ccgp）|
 | 公告类型覆盖 | tender 34 / award 35 / correction 33 / 其他 5 |
@@ -164,9 +165,9 @@ TenderProject（采购项目）
 
 ### 测试
 
-- 1937 passed · 0 errors / 0 failures
+- 1942 passed · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
 - 0 warnings（已清理 asyncio mark 误标与 datetime.utcnow() 弃用告警）
-- 测试覆盖率 90.82%（达到 pyproject.toml 阈值 90%，1937 用例全量实测）
+- 测试覆盖率 90.63%（达到 pyproject.toml 阈值 90%，1942 用例全量实测）
 
 ---
 
@@ -345,12 +346,14 @@ pytest --cov=app --cov-report=term-missing
 | 99 篇全量消融 | `_w3_outputs/w3_ablation_full_99.json` | 4 组 A/B/C/D |
 | Bootstrap CI | `_w3_outputs/w3_bootstrap_ci_full_99.json` | 99 篇置信区间 |
 | 金标冻结 | `tests/fixtures/gold/gold_frozen_v1.json` | 金标标注冻结 |
+| 金标合集（598 篇）| `tests/fixtures/gold/gold_dataset_v4.json` | w4/w5 补标合并，document_id 唯一 |
+| 验证规则清单 | `docs/验证规则清单_v1.0.md` | 验证引擎 34 条规则显性化（G/A/T/D/I/E/M 七族，含变更流程与测试映射）|
 
 ---
 
 ## 当前已知限制
 
-1. **金标数量 107 篇**：未达 v4.1 推荐 300～350 篇，补标进行中（目标 300 篇以上）
+1. **金标数量 598 篇**（2026-08 补标收官，合集 `tests/fixtures/gold/gold_dataset_v4.json`），已超 v4.1 推荐 300～350 篇；全量 598 篇指标复测进行中
 2. **未划分开发集/校准集/测试集**：当前为统一金标集
 3. **temperature 记录口径**：记录 0.0，实际 0.1，不影响指标结论，后续修复
 4. **Demo 视频降级处理**：初赛阶段以代码仓库 + Web Demo 8 页作为等价可验证材料，视频待复赛补录
