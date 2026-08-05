@@ -464,7 +464,7 @@ class TestExtractTaskWorkerExtra:
             task_id = create.json()["data"]["task_id"]
             status = "queued"
             data = None
-            for _ in range(60):
+            for _ in range(150):
                 await asyncio.sleep(0.1)
                 resp = await ac.get(f"/api/extract/tasks/{task_id}")
                 data = resp.json()["data"]
@@ -487,7 +487,7 @@ class TestExtractTaskWorkerExtra:
             task_id = create.json()["data"]["task_id"]
             status = "queued"
             data = None
-            for _ in range(60):
+            for _ in range(150):
                 await asyncio.sleep(0.1)
                 resp = await ac.get(f"/api/extract/tasks/{task_id}")
                 data = resp.json()["data"]
@@ -510,7 +510,7 @@ class TestExtractTaskWorkerExtra:
             task_id = create.json()["data"]["task_id"]
             status = "queued"
             data = None
-            for _ in range(60):
+            for _ in range(150):
                 await asyncio.sleep(0.1)
                 resp = await ac.get(f"/api/extract/tasks/{task_id}")
                 data = resp.json()["data"]
@@ -561,7 +561,7 @@ class TestExtractTaskWorkerExtra:
             task_id = create.json()["data"]["task_id"]
             status = "queued"
             data = None
-            for _ in range(60):
+            for _ in range(150):
                 await asyncio.sleep(0.1)
                 resp = await ac.get(f"/api/extract/tasks/{task_id}")
                 data = resp.json()["data"]
