@@ -40,6 +40,7 @@ from app.report.docx_components import (
     add_detail_table,
     add_footer,
 )
+from app.report.docx_components import add_value_note
 
 
 class TestAddDetailTable:
@@ -707,3 +708,14 @@ class TestConfigProperties:
             assert s.FREE_TIER_DAILY_LIMIT == 10
             assert s.SMTP_PORT == 587
             assert s.BROWSER_POOL_SIZE == 3
+
+
+def test_add_value_note_cost_narrative() -> None:
+    """成本叙事：价值脚注包含实测口径数字（0.85 分钱 / 24 秒）。"""
+    doc = Document()
+    add_value_note(doc)
+    text = "\n".join(p.text for p in doc.paragraphs)
+    assert "0.85 分钱" in text
+    assert "24 秒" in text
+    assert "1-2 人时" in text
+    assert "自动生成" in text

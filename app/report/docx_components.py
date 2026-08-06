@@ -165,6 +165,24 @@ def add_analysis(doc: Document, items: list[dict[str, Any]]) -> None:
     doc.add_paragraph()
 
 
+def add_value_note(doc: Document) -> None:
+    """添加成本效能脚注（面向用户的价值换算）。
+
+    口径来源：598 篇金标全量复测 D 组实测
+    （cost_cny=5.0768 / 598 ≈ 0.0085 元/篇；latency_ms_avg=23626.8）。
+    人工耗时为行业通行估算，表述保持克制。
+    """
+    p = doc.add_paragraph()
+    run = p.add_run(
+        "本报告由标小智系统自动生成（LLM 抽取 + 确定性程序证据验证）。"
+        "按 598 篇真实金标实测口径：单篇公告核验成本约 0.85 分钱、"
+        "单篇端到端约 24 秒；人工完成同等的检索、核验与证据留档"
+        "约需 1-2 人时（行业通行估算）。报告内关键字段均可回溯公告原文。"
+    )
+    run.font.size = Pt(9)
+    run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+
+
 def add_footer(doc: Document) -> None:
     """添加页脚。"""
     doc.add_paragraph()

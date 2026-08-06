@@ -312,6 +312,32 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       </div>
     </div>
 
+    <!-- ===== 4.5 成本效能·用户价值换算 ===== -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head">
+        <h2><i class="ph ph-rocket-launch"></i>成本效能 · 用户价值换算<span class="desc">尽调人员的实际收益 · 全部由下方 598 篇实测数据换算</span></h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+        <div style="background:#F8F6F0;border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums">0.85 分</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:4px">单篇公告核验成本<br>(5.08 元 ÷ 598 篇，含全部 LLM 调用)</div>
+        </div>
+        <div style="background:#F8F6F0;border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums">23.6 秒</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:4px">单篇端到端耗时<br>(抽取 + 证据验证 + 分级过滤)</div>
+        </div>
+        <div style="background:#F8F6F0;border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--success);font-variant-numeric:tabular-nums">0%</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:4px">无依据输出率<br>(每个数字可回溯公告原文)</div>
+        </div>
+        <div style="background:#F8F6F0;border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--warning);font-variant-numeric:tabular-nums">1-2 人时 → 分钟级</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:4px">单供应商中标记录核验<br>(人工整理耗时为行业通行估算)</div>
+        </div>
+      </div>
+      <div class="chart-note" style="margin-top:10px"><i class="ph ph-info"></i>换算依据：D 组（完整流水线）598 篇真实金标复测实测——总成本 5.08 元、平均端到端 23.6 秒/篇。尽调人员过去需要逐平台检索、人工比对并登记公告；标小智把"检索 + 核验 + 证据留档"压缩为一次查询，且每个字段可一键回溯原文。</div>
+    </div>
+
     <!-- ===== 5. Bootstrap CI ===== -->
     <div class="card">
       <div class="card-head">

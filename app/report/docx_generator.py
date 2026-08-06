@@ -27,6 +27,7 @@ from app.report.docx_components import (
     add_anti_hallucination_section,
     add_detail_table,
     add_footer,
+    add_value_note,
 )
 from app.report.docx_sections import (  # noqa: F401  re-export 保持向后兼容
     _add_cover,
@@ -132,7 +133,10 @@ def _generate_report_sync(
     # C-2 修复：传入 source_texts 让校验真正生效
     add_anti_hallucination_section(doc, items, source_texts=source_texts)
 
-    # 7. 页脚
+    # 7. 成本效能脚注（面向用户的价值换算）
+    add_value_note(doc)
+
+    # 8. 页脚
     add_footer(doc)
 
     doc.save(filepath)
