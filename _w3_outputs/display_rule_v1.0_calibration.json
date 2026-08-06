@@ -1,0 +1,47 @@
+{
+  "task": "display_rule_calibration",
+  "rule_version": "v1.0-frozen",
+  "calibration_docs": 90,
+  "rows_evaluated": 540,
+  "grade_stats": {
+    "high": {
+      "fields": 318,
+      "judged": 318,
+      "precision": 0.9968553459119497,
+      "unjustified": 0,
+      "unjustified_rate": 0.0
+    },
+    "review": {
+      "fields": 13,
+      "judged": 13,
+      "precision": 0.9230769230769231,
+      "unjustified": 0,
+      "unjustified_rate": 0.0
+    },
+    "low": {
+      "fields": 209,
+      "judged": 5,
+      "precision": 0.0,
+      "unjustified": 0,
+      "unjustified_rate": 0.0
+    }
+  },
+  "workpoints": {
+    "strict": {
+      "output_fields": 318,
+      "coverage": 0.9607250755287009,
+      "precision": 0.9968553459119497
+    },
+    "default": {
+      "output_fields": 331,
+      "coverage": 1.0,
+      "precision": 0.9939577039274925
+    },
+    "loose": {
+      "output_fields": 331,
+      "coverage": 1.0,
+      "precision": 0.9939577039274925
+    }
+  },
+  "note": "基于 598 诊断性复测的 D 组 rows 在校准集上离线复算，佐证 display_grade 三级规则与四策略工作点；test 集未参与。"
+}
