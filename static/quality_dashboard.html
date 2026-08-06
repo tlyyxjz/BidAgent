@@ -195,7 +195,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="page-head">
       <div>
         <h1><i class="ph-bold ph-chart-line-up"></i>W3 数据质量评测结果</h1>
-        <div class="sub">金标 v4 合集 598 篇 · 3,564 字段 · deepseek-v4-flash · 证据验证 + 来源谱系 + 展示等级 · 2026-08-06 全量复测</div>
+        <div class="sub">金标 v4 合集 598 篇 · 3,564 字段 · deepseek-v4-flash · 证据验证 + 来源谱系 + 展示等级 · 2026-08-06 全量复测 (correction recall 提升 46.6%→70.7%)</div>
       </div>
       <div class="right-info">
         <div class="h-badge info"><i class="ph ph-download-simple"></i>W3 冻结集</div>
@@ -245,14 +245,14 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="grid2">
       <div class="card">
         <div class="card-head">
-          <h2><i class="ph ph-chart-bar"></i>真实 IoU 分布<span class="desc">1775 个匹配证据 (IoU >= 0.5)</span></h2>
+          <h2><i class="ph ph-chart-bar"></i>真实 IoU 分布<span class="desc">1869 个匹配证据 (IoU >= 0.5)</span></h2>
         </div>
         <div id="chart-iou" class="chart-box"></div>
         <div class="chart-note"><i class="ph ph-info"></i>完美(>=0.99): 163 个 (50.8%) | 良好(0.7-0.99): 59 个 (18.4%) | 一般(0.5-0.7): 99 个 (30.8%)</div>
       </div>
       <div class="card" id="rejects">
         <div class="card-head">
-          <h2><i class="ph ph-warning"></i>错误案例归因<span class="desc">756 个未匹配字段 按字段分布</span></h2>
+          <h2><i class="ph ph-warning"></i>错误案例归因<span class="desc">683 个未匹配字段 按字段分布</span></h2>
         </div>
         <div id="chart-error" class="chart-box"></div>
         <div class="chart-note"><i class="ph ph-info"></i>错误集中在 amount(金额) 与 bid_deadline(投标截止日期), 各 16 例, 合计占 91.4%.</div>
@@ -263,7 +263,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <!-- ===== 3.5 典型 Bad Case 分析 ===== -->
     <div class="card" style="margin-bottom:12px">
       <div class="card-head">
-        <h2><i class="ph ph-warning"></i>典型 Bad Case 分析<span class="desc">756 个未匹配字段中 4 个代表性案例 · 展示系统如何识别与标记错误</span></h2>
+        <h2><i class="ph ph-warning"></i>典型 Bad Case 分析<span class="desc">683 个未匹配字段中 4 个代表性案例 · 展示系统如何识别与标记错误</span></h2>
       </div>
       <div class="badcase-grid">
         <div class="badcase-card">
@@ -295,7 +295,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
           <div class="badcase-analysis"><i class="ph ph-sparkle"></i> <strong>系统标记：</strong>display_grade=low（L4金额格式变体匹配，单位换算后比对失败）。<strong>根因：</strong>万元→元换算后浮点精度丢失。<strong>改进：</strong>金额比对统一到最小显示单位。</div>
         </div>
       </div>
-      <div class="chart-note"><i class="ph ph-info"></i>756 个未匹配字段分布在 598 篇全量复测中，系统对每个错误均标记了 display_grade 和根因。</div>
+      <div class="chart-note"><i class="ph ph-info"></i>683 个未匹配字段分布在 598 篇全量复测中，系统对每个错误均标记了 display_grade 和根因。</div>
     </div>
 
     <!-- ===== 4. Cost Performance ===== -->
@@ -328,7 +328,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 
     <!-- ===== Footer ===== -->
     <div class="footer">
-      <span class="real">全部数据来自真实评测</span> · 数据源文件: gold598_retest.json (598篇全量复测 2026-08-06) / gold598_evidence.json (598篇 IoU 证据定位全量复测 2026-08-06) / w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json<br>
+      <span class="real">全部数据来自真实评测</span> · 数据源文件: gold598_retest.json (598篇全量复测 2026-08-06) / gold598_evidence.json (598篇 IoU 证据定位全量复测 2026-08-06, correction recall 46.6%→70.7%) / w3_ablation_full_99.json / w3_strategy_workpoints.json / w3_cost_performance.json<br>
       标小智 · AI + 金融招投标数据服务 · <span class="src">GOAI 2026 世界人工智能开源大赛参赛演示</span>
       <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-size:11px;color:var(--text-3);line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
     </div>
@@ -344,10 +344,10 @@ var DATA = {
   meta: { docs: 598, fields_total: 3564, fields_sample: 594, model: "deepseek-v4-flash", price_per_m: 1.5 },
   // IoU 证据定位指标来自 598 篇金标 v4 全量复测（gold598_evidence.json, 2026-08-06）
   evidence: {
-    docs_count: 598, fields_present: 2195, fields_found: 1674,
-    evidences_pred: 2727, evidences_matched: 1775,
-    recall: 0.7626, precision: 0.6509,
-    iou_avg: 0.6122, iou_avg_matched: 0.9405,
+    docs_count: 598, fields_present: 2195, fields_found: 1752,
+    evidences_pred: 2739, evidences_matched: 1869,
+    recall: 0.7982, precision: 0.6824,
+    iou_avg: 0.6371, iou_avg_matched: 0.9337,
     iou_p50: 1.0, iou_p95: 1.0
   },
   // A/B/C/D 消融：598 篇金标 v4 全量复测（gold598_retest.json, 2026-08-06, invalid=0）
@@ -372,19 +372,19 @@ var DATA = {
     audit:   { kept_fields:594, field_precision:0.8822, gold_recall:0.9428, desc:"全部保留 (人工复核)" }
   },
   iou_dist: {
-    matched: 1775,
+    matched: 1869,
     buckets: [
-      { range:"0.50-0.60", count:103, grade:"normal" },
-      { range:"0.60-0.70", count:66, grade:"normal" },
-      { range:"0.70-0.80", count:41, grade:"good" },
-      { range:"0.80-0.90", count:104, grade:"good" },
-      { range:"0.90-0.99", count:50, grade:"good" },
-      { range:"0.99-1.00", count:1411, grade:"perfect" }
+      { range:"0.50-0.60", count:135, grade:"normal" },
+      { range:"0.60-0.70", count:75, grade:"normal" },
+      { range:"0.70-0.80", count:44, grade:"good" },
+      { range:"0.80-0.90", count:100, grade:"good" },
+      { range:"0.90-0.99", count:54, grade:"good" },
+      { range:"0.99-1.00", count:1461, grade:"perfect" }
     ],
-    summary: { perfect:1411, good:195, normal:169 }
+    summary: { perfect:1461, good:198, normal:210 }
   },
   error_analysis: {
-    total: 756,
+    total: 683,
     by_field: [
       { key:"amount", name:"金额", count:0 },
       { key:"bid_deadline", name:"投标截止日期", count:0 },
@@ -395,9 +395,9 @@ var DATA = {
     ]
   },
   bootstrap_ci: {
-    recall:    { p:0.7626423690205011, l:0.6893677561164999, u:0.8364434816187211 },
-    precision: { p:0.6508984231756509, l:0.628952811694626, u:0.6791739938526622 },
-    iou_avg:   { p:0.6121602126879352, l:0.587590235324205, u:0.6425828238927871 }
+    recall:    { p:0.7982, l:0.7663, u:0.8321 },
+    precision: { p:0.6824, l:0.6402, u:0.7275 },
+    iou_avg:   { p:0.6371, l:0.6065, u:0.6651 }
   }
 };
 
