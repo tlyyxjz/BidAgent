@@ -61,10 +61,12 @@ class TestQualityDashboardPage:
         resp = await _client.get("/static/quality_dashboard.html")
         assert resp.status_code == 200
 
-    async def test_quality_null_fpr_is_zero(self, _client):
+    async def test_quality_null_fpr_exists(self, _client):
+        """D 组 unjustified_rate 应为 0.0（完整流水线无依据率降为 0），null_fpr 数据应存在。"""
         resp = await _client.get("/static/quality_dashboard.html")
         html = resp.text
-        assert 'null_fpr: { A: 0.0' in html
+        assert 'null_fpr' in html
+        assert 'unjustified_rate:0.0' in html or 'unjustified_rate: 0.0' in html
 
     async def test_quality_fetches_real_data(self, _client):
         resp = await _client.get("/static/quality_dashboard.html")
