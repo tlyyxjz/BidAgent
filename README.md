@@ -246,6 +246,33 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 把生成结果填入 `.env` 的 `SECRET_KEY=`。同时设置至少 8 字符的 `ADMIN_SECRET`。
 
+### 多模型支持（LLM provider 可切换）
+
+抽取与意图解析均走 OpenAI 兼容协议，通过 `.env` 切换供应商：
+
+```bash
+# 供应商：deepseek（默认）/ dashscope / zhipu / openai
+LLM_PROVIDER=deepseek
+
+# 各供应商各自的 key（只填所选 provider 的即可）
+DEEPSEEK_API_KEY=sk-xxx
+# DASHSCOPE_API_KEY=sk-xxx      # 通义千问（阿里云百炼）
+# ZHIPU_API_KEY=xxx             # 智谱 GLM
+# OPENAI_API_KEY=sk-xxx
+
+# 可选覆盖
+# LLM_EXTRACTION_MODEL=deepseek-reasoner  # 抽取任务单独指定模型
+# LLM_BASE_URL / LLM_API_KEY              # 指向任意 OpenAI 兼容端点（如自建代理）
+# LLM_JSON_MODE=true/false                # 强制开关 json_object response_format
+```
+
+说明：
+- 未支持 `response_format=json_object` 的模型（如部分 GLM 版本）会自动关闭该参数，
+  解析层用宽松 JSON 解析器兜底（去围栏 / 截取花括号 / 尾逗号修复），解析失败还会
+  追加纠正指令自动重试一次，抗偶发 JSON 破损。
+- 切换模型后 `prompt_hash` 不变（prompt 内容未变），`model_id` 记录实际使用的模型，
+  评测报告可区分口径。
+
 ### 启动服务
 
 ```bash

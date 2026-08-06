@@ -19,6 +19,13 @@ from typing import Any
 import httpx
 
 from app.config import settings
+from app.llm.provider import (
+    build_chat_payload,
+    chat_endpoint,
+    extract_content_and_usage,
+    parse_json_lenient,
+    resolve_provider,
+)
 from app.llm.prompts import INTENT_SYSTEM_PROMPT, build_intent_prompt
 from app.llm.schemas import ParsedFilters
 from app.utils.logger import get_logger
@@ -63,36 +70,37 @@ def _save_to_cache(query: str, parsed: ParsedFilters) -> None:
 
 
 async def _call_deepseek(query: str) -> dict[str, Any]:
-    """调用 DeepSeek API（OpenAI 兼容协议）。
+    """调用 LLM 意图解析（OpenAI 兼容协议，多 provider 可切换）。
+
+    函数名保留 _call_deepseek 以兼容历史调用点，实际 provider 由
+    LLM_PROVIDER 决定（deepseek/dashscope/zhipu/openai）。
 
     Raises:
         httpx.HTTPError: 网络或 API 错误
-        KeyError / ValueError: 响应解析失败
+        ValueError: 响应解析失败
     """
+    provider = resolve_provider("intent")
+    payload = build_chat_payload(
+        provider,
+        INTENT_SYSTEM_PROMPT,
+        build_intent_prompt(query),
+        temperature=0.1,
+        max_tokens=500,
+    )
     headers = {
-        "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
+        "Authorization": f"Bearer {provider.api_key}",
         "Content-Type": "application/json",
-    }
-    payload = {
-        "model": settings.LLM_MODEL,
-        "messages": [
-            {"role": "system", "content": INTENT_SYSTEM_PROMPT},
-            {"role": "user", "content": build_intent_prompt(query)},
-        ],
-        "temperature": 0.1,
-        "max_tokens": 500,
-        "response_format": {"type": "json_object"},
     }
     async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
         resp = await client.post(
-            f"{settings.DEEPSEEK_BASE_URL}/v1/chat/completions",
+            chat_endpoint(provider),
             headers=headers,
             json=payload,
         )
         resp.raise_for_status()
         data = resp.json()
-        content = data["choices"][0]["message"]["content"]
-        return json.loads(content)
+        content, _ = extract_content_and_usage(data)
+        return parse_json_lenient(content)
 
 
 def _fallback_keyword_parse(query: str) -> ParsedFilters:
@@ -177,9 +185,11 @@ async def parse_query(query: str) -> ParsedFilters:
     if cached:
         return cached
 
-    # 2. 调 LLM
-    if not settings.DEEPSEEK_API_KEY:
-        logger.warning("DEEPSEEK_API_KEY not configured, fallback to keyword")
+    # 2. 调 LLM（provider 未配置 key 时降级关键词解析）
+    try:
+        resolve_provider("intent")
+    except RuntimeError:
+        logger.warning("LLM provider API key not configured, fallback to keyword")
         parsed = _fallback_keyword_parse(query)
         _save_to_cache(query, parsed)
         return parsed

@@ -155,3 +155,6 @@
 {"tender_id": 127, "status": "ok", "fields_written": 0, "tokens": 5646, "latency_ms": 19298}
 {"tender_id": 31, "status": "ok", "fields_written": 5, "tokens": 7021, "latency_ms": 37159}
 {"tender_id": 52, "status": "ok", "fields_written": 1, "tokens": 6785, "latency_ms": 32624}
+{"tender_id": 119, "status": "ok", "fields_written": 0, "tokens": 3419, "latency_ms": 5999}
+{"tender_id": 116, "status": "ok", "fields_written": 1, "tokens": 3263, "latency_ms": 8726}
+{"tender_id": 120, "status": "ok", "fields_written": 1, "tokens": 3661, "latency_ms": 12280}

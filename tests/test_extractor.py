@@ -256,19 +256,32 @@ class TestCallExtractionLLM:
     @pytest.mark.asyncio
     async def test_call_no_api_key_raises(self):
         """无 API key 抛异常。"""
-        with patch("app.llm.extractor.settings") as mock_settings:
-            mock_settings.DEEPSEEK_API_KEY = ""
+        mock_settings = MagicMock()
+        mock_settings.LLM_PROVIDER = "deepseek"
+        mock_settings.DEEPSEEK_API_KEY = ""
+        mock_settings.LLM_API_KEY = ""
+        with patch("app.llm.extractor.settings", mock_settings), patch(
+            "app.llm.provider.settings", mock_settings
+        ):
             with pytest.raises(RuntimeError, match="not configured"):
                 await call_extraction_llm("测试文本")
 
     @pytest.mark.asyncio
     async def test_call_api_failure_returns_error(self):
         """Sol 要求：失败时记录错误，不静默丢弃。"""
-        with patch("app.llm.extractor.settings") as mock_settings:
-            mock_settings.DEEPSEEK_API_KEY = "test-key"
-            mock_settings.LLM_MODEL = "test-model"
-            mock_settings.LLM_TIMEOUT_SECONDS = 10
-            mock_settings.DEEPSEEK_BASE_URL = "https://test"
+        mock_settings = MagicMock()
+        mock_settings.LLM_PROVIDER = "deepseek"
+        mock_settings.DEEPSEEK_API_KEY = "test-key"
+        mock_settings.LLM_MODEL = "test-model"
+        mock_settings.LLM_TIMEOUT_SECONDS = 10
+        mock_settings.DEEPSEEK_BASE_URL = "https://test"
+        mock_settings.LLM_EXTRACTION_MODEL = ""
+        mock_settings.LLM_API_KEY = ""
+        mock_settings.LLM_BASE_URL = ""
+        mock_settings.LLM_JSON_MODE = ""
+        with patch("app.llm.extractor.settings", mock_settings), patch(
+            "app.llm.provider.settings", mock_settings
+        ):
 
             with patch("httpx.AsyncClient") as mock_client_cls:
                 mock_client = AsyncMock()
@@ -316,11 +329,19 @@ class TestCallExtractionLLM:
             "usage": {"total_tokens": 500},
         }
 
-        with patch("app.llm.extractor.settings") as mock_settings:
-            mock_settings.DEEPSEEK_API_KEY = "test-key"
-            mock_settings.LLM_MODEL = "test-model"
-            mock_settings.LLM_TIMEOUT_SECONDS = 10
-            mock_settings.DEEPSEEK_BASE_URL = "https://test"
+        mock_settings = MagicMock()
+        mock_settings.LLM_PROVIDER = "deepseek"
+        mock_settings.DEEPSEEK_API_KEY = "test-key"
+        mock_settings.LLM_MODEL = "test-model"
+        mock_settings.LLM_TIMEOUT_SECONDS = 10
+        mock_settings.DEEPSEEK_BASE_URL = "https://test"
+        mock_settings.LLM_EXTRACTION_MODEL = ""
+        mock_settings.LLM_API_KEY = ""
+        mock_settings.LLM_BASE_URL = ""
+        mock_settings.LLM_JSON_MODE = ""
+        with patch("app.llm.extractor.settings", mock_settings), patch(
+            "app.llm.provider.settings", mock_settings
+        ):
 
             with patch("httpx.AsyncClient") as mock_client_cls:
                 mock_client = AsyncMock()
@@ -465,19 +486,32 @@ class TestCallExtractionLLMNoEvidence:
     @pytest.mark.asyncio
     async def test_call_no_evidence_no_api_key_raises(self):
         """无 API key 抛异常。"""
-        with patch("app.llm.extractor.settings") as mock_settings:
-            mock_settings.DEEPSEEK_API_KEY = ""
+        mock_settings = MagicMock()
+        mock_settings.LLM_PROVIDER = "deepseek"
+        mock_settings.DEEPSEEK_API_KEY = ""
+        mock_settings.LLM_API_KEY = ""
+        with patch("app.llm.extractor.settings", mock_settings), patch(
+            "app.llm.provider.settings", mock_settings
+        ):
             with pytest.raises(RuntimeError, match="not configured"):
                 await call_extraction_llm_no_evidence("测试文本")
 
     @pytest.mark.asyncio
     async def test_call_no_evidence_api_failure_returns_error(self):
         """Sol 要求：失败时记录错误，不静默丢弃。"""
-        with patch("app.llm.extractor.settings") as mock_settings:
-            mock_settings.DEEPSEEK_API_KEY = "test-key"
-            mock_settings.LLM_MODEL = "test-model"
-            mock_settings.LLM_TIMEOUT_SECONDS = 10
-            mock_settings.DEEPSEEK_BASE_URL = "https://test"
+        mock_settings = MagicMock()
+        mock_settings.LLM_PROVIDER = "deepseek"
+        mock_settings.DEEPSEEK_API_KEY = "test-key"
+        mock_settings.LLM_MODEL = "test-model"
+        mock_settings.LLM_TIMEOUT_SECONDS = 10
+        mock_settings.DEEPSEEK_BASE_URL = "https://test"
+        mock_settings.LLM_EXTRACTION_MODEL = ""
+        mock_settings.LLM_API_KEY = ""
+        mock_settings.LLM_BASE_URL = ""
+        mock_settings.LLM_JSON_MODE = ""
+        with patch("app.llm.extractor.settings", mock_settings), patch(
+            "app.llm.provider.settings", mock_settings
+        ):
 
             with patch("httpx.AsyncClient") as mock_client_cls:
                 mock_client = AsyncMock()
@@ -522,11 +556,19 @@ class TestCallExtractionLLMNoEvidence:
             "usage": {"total_tokens": 400},
         }
 
-        with patch("app.llm.extractor.settings") as mock_settings:
-            mock_settings.DEEPSEEK_API_KEY = "test-key"
-            mock_settings.LLM_MODEL = "test-model"
-            mock_settings.LLM_TIMEOUT_SECONDS = 10
-            mock_settings.DEEPSEEK_BASE_URL = "https://test"
+        mock_settings = MagicMock()
+        mock_settings.LLM_PROVIDER = "deepseek"
+        mock_settings.DEEPSEEK_API_KEY = "test-key"
+        mock_settings.LLM_MODEL = "test-model"
+        mock_settings.LLM_TIMEOUT_SECONDS = 10
+        mock_settings.DEEPSEEK_BASE_URL = "https://test"
+        mock_settings.LLM_EXTRACTION_MODEL = ""
+        mock_settings.LLM_API_KEY = ""
+        mock_settings.LLM_BASE_URL = ""
+        mock_settings.LLM_JSON_MODE = ""
+        with patch("app.llm.extractor.settings", mock_settings), patch(
+            "app.llm.provider.settings", mock_settings
+        ):
 
             with patch("httpx.AsyncClient") as mock_client_cls:
                 mock_client = AsyncMock()

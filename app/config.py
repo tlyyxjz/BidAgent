@@ -43,6 +43,18 @@ class Settings(BaseSettings):
     DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     LLM_MODEL: str = "deepseek-chat"
     LLM_TIMEOUT_SECONDS: int = 30
+    # 多模型支持：抽取专用模型覆盖（空=回落 LLM_MODEL）
+    LLM_EXTRACTION_MODEL: str = ""
+    # 显式覆盖任意 OpenAI 兼容端点（优先级高于 provider 专属配置）
+    LLM_API_KEY: str = ""
+    LLM_BASE_URL: str = ""
+    # json_object response_format 开关（空=按 provider 默认）
+    LLM_JSON_MODE: str = ""
+    # 智谱 GLM / OpenAI（多 provider 可切换）
+    ZHIPU_API_KEY: str = ""
+    ZHIPU_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"
+    OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     # 报告输出目录（命题交付物）
     REPORT_OUTPUT_DIR: str = "data/reports"
     # 附件下载目录（命题第 4 项硬要求）

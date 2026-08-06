@@ -42,6 +42,14 @@ from app.llm.extractor_parser import (
     _populate_display_grades,
     parse_extraction_response,
 )
+from app.llm.provider import (
+    ProviderInfo,
+    build_chat_payload,
+    chat_endpoint,
+    extract_content_and_usage,
+    parse_json_lenient,
+    resolve_provider,
+)
 from app.utils.logger import get_logger
 
 logger = get_logger("llm_extractor")
@@ -78,8 +86,59 @@ async def _post_with_retry(client, url, headers, json, max_retries=4):
 # ========== LLM 调用 ==========
 
 
+async def _call_and_parse(
+    provider: ProviderInfo,
+    system_prompt: str,
+    user_prompt: str,
+    max_tokens: int = 8000,
+) -> tuple[dict, int]:
+    """调用 LLM（多 provider）并宽松解析 JSON。
+
+    解析失败处理（抗 flash 档偶发 JSON 破损）：
+    1. parse_json_lenient 宽松修复（去围栏/截取花括号/尾逗号）
+    2. 仍失败则追加纠正指令重试一次
+
+    Returns:
+        (parsed_json, total_tokens)
+
+    Raises:
+        ValueError: 两次解析均失败
+        httpx.HTTPError: 网络/API 错误
+    """
+    followup: list[dict] = []
+    last_parse_err: ValueError | None = None
+    for attempt in range(2):
+        payload = build_chat_payload(
+            provider, system_prompt, user_prompt,
+            temperature=0.1, max_tokens=max_tokens,
+        )
+        payload["messages"].extend(followup)
+        headers = {
+            "Authorization": f"Bearer {provider.api_key}",
+            "Content-Type": "application/json",
+        }
+        async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
+            resp = await _post_with_retry(
+                client, chat_endpoint(provider), headers=headers, json=payload
+            )
+            data = resp.json()
+        content, total_tokens = extract_content_and_usage(data)
+        try:
+            return parse_json_lenient(content), total_tokens
+        except ValueError as exc:
+            last_parse_err = exc
+            logger.warning(
+                "LLM JSON parse failed attempt={} error={}", attempt + 1, str(exc)[:200]
+            )
+            followup = [{
+                "role": "user",
+                "content": "你上一次的输出不是合法 JSON。请只输出合法 JSON，不要包含 markdown 标记或额外说明。",
+            }]
+    raise last_parse_err
+
+
 async def call_extraction_llm(raw_text: str) -> ExtractionResult:
-    """调用 LLM 抽取字段 + 候选证据。
+    """调用 LLM 抽取字段 + 候选证据（多模型可切换，由 LLM_PROVIDER 决定）。
 
     优先级：LLM API → 抛异常（W2-01 不做关键词降级，由调用方处理）
 
@@ -90,49 +149,27 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
         ExtractionResult
 
     Raises:
-        RuntimeError: LLM 调用失败
+        RuntimeError: LLM provider 未配置 API key
         ValueError: 响应解析失败
     """
-    if not settings.DEEPSEEK_API_KEY:
-        raise RuntimeError("DEEPSEEK_API_KEY not configured")
+    provider = resolve_provider("extraction")
 
     start_time = time.perf_counter()
-    model_id = settings.LLM_MODEL
-
-    headers = {
-        "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": settings.LLM_MODEL,
-        "messages": [
-            {"role": "system", "content": EXTRACTION_SYSTEM_PROMPT},
-            {"role": "user", "content": build_extraction_prompt(raw_text)},
-        ],
-        "temperature": 0.1,
-        "max_tokens": 8000,
-        "response_format": {"type": "json_object"},
-    }
+    model_id = provider.model
 
     try:
-        async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
-            resp = await _post_with_retry(
-                client,
-                f"{settings.DEEPSEEK_BASE_URL}/v1/chat/completions",
-                headers=headers,
-                json=payload,
-            )
-            data = resp.json()
-
-        content = data["choices"][0]["message"]["content"]
-        parsed_json = json.loads(content)
+        parsed_json, total_tokens = await _call_and_parse(
+            provider,
+            EXTRACTION_SYSTEM_PROMPT,
+            build_extraction_prompt(raw_text),
+        )
         latency_ms = int((time.perf_counter() - start_time) * 1000)
-        total_tokens = data.get("usage", {}).get("total_tokens", 0)
 
         result = parse_extraction_response(parsed_json, model_id, latency_ms, total_tokens)
 
         logger.info(
-            "LLM extraction success model={} fields={} tokens={} latency={}ms",
+            "LLM extraction success provider={} model={} fields={} tokens={} latency={}ms",
+            provider.name,
             model_id,
             len(result.fields),
             result.total_tokens,
@@ -145,7 +182,8 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
     except Exception as exc:
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         logger.error(
-            "LLM extraction failed model={} latency={}ms error={}",
+            "LLM extraction failed provider={} model={} latency={}ms error={}",
+            provider.name,
             model_id,
             latency_ms,
             str(exc),
@@ -162,7 +200,7 @@ async def call_extraction_llm(raw_text: str) -> ExtractionResult:
 
 
 async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
-    """调用 LLM 抽取字段（无证据版本，A 组消融实验专用）。
+    """调用 LLM 抽取字段（无证据版本，A 组消融实验专用，多模型可切换）。
 
     与 call_extraction_llm 的区别：
     - 使用 EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE（不要求 candidate_evidences）
@@ -175,46 +213,22 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
     Returns:
         ExtractionResult（candidate_evidences 为空列表）
     """
-    if not settings.DEEPSEEK_API_KEY:
-        raise RuntimeError("DEEPSEEK_API_KEY not configured")
+    provider = resolve_provider("extraction")
 
     start_time = time.perf_counter()
-    model_id = settings.LLM_MODEL
+    model_id = provider.model
     no_evidence_hash = compute_prompt_hash(
         EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
         EXTRACTION_FEWSHOT_EXAMPLES_NO_EVIDENCE,
     )
 
-    headers = {
-        "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": settings.LLM_MODEL,
-        "messages": [
-            {"role": "system", "content": EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE},
-            {"role": "user", "content": build_extraction_prompt_no_evidence(raw_text)},
-        ],
-        "temperature": 0.1,
-        "max_tokens": 8000,
-        "response_format": {"type": "json_object"},
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS) as client:
-            response = await _post_with_retry(
-                client,
-                f"{settings.DEEPSEEK_BASE_URL}/v1/chat/completions",
-                headers=headers,
-                json=payload,
-            )
-
-        data = response.json()
+        parsed_json, total_tokens = await _call_and_parse(
+            provider,
+            EXTRACTION_SYSTEM_PROMPT_NO_EVIDENCE,
+            build_extraction_prompt_no_evidence(raw_text),
+        )
         latency_ms = int((time.perf_counter() - start_time) * 1000)
-        total_tokens = data.get("usage", {}).get("total_tokens", 0)
-
-        parsed_json = data["choices"][0]["message"]["content"]
-        parsed_json = json.loads(parsed_json)
 
         result = parse_extraction_response(
             parsed_json, model_id, latency_ms, total_tokens
@@ -223,7 +237,8 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
         result.prompt_hash = no_evidence_hash
 
         logger.info(
-            "LLM no-evidence extraction OK model={} fields={} tokens={} latency={}ms",
+            "LLM no-evidence extraction OK provider={} model={} fields={} tokens={} latency={}ms",
+            provider.name,
             model_id,
             len(result.fields),
             total_tokens,
@@ -236,7 +251,8 @@ async def call_extraction_llm_no_evidence(raw_text: str) -> ExtractionResult:
     except Exception as exc:
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         logger.error(
-            "LLM no-evidence extraction failed model={} latency={}ms error={}",
+            "LLM no-evidence extraction failed provider={} model={} latency={}ms error={}",
+            provider.name,
             model_id,
             latency_ms,
             str(exc),
