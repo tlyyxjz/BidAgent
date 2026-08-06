@@ -1,21 +1,18 @@
-"""data_migration.py 补充测试：提升覆盖率 94% -> 95%+.
+"""notice/platform 类型映射与哈希辅助函数补充测试。
 
-覆盖未覆盖行: 67, 74, 78
-
-策略:
-- _map_notice_type(None) / _map_notice_type("") -> "tender" (行 67)
-- _map_platform_type(None) / _map_platform_type("") -> "unknown" (行 74)
-- _map_platform_type("commercial.com") -> "commercial" (行 78)
+注：这些函数原在 data_migration.py，P0-1 重写后迁至
+app.processors.entity_sync（map_notice_type / map_platform_type），
+本文件通过别名保持原测试用例不变。
 """
 from __future__ import annotations
 
 import pytest
 
-from app.utils.data_migration import (
+from app.processors.entity_sync import (
     _content_sha256,
-    _map_notice_type,
-    _map_platform_type,
     _NOTICE_TYPE_MAP,
+    map_notice_type as _map_notice_type,
+    map_platform_type as _map_platform_type,
 )
 
 

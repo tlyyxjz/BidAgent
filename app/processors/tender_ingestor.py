@@ -202,6 +202,11 @@ async def _ingest_with_db(
             if simhash_value is not None:
                 candidates.append((tender.id, simhash_value))
 
+        # P0-1：同步四层实体 + 组织/参与方关系（幂等，失败降级不阻塞）
+        from app.processors.entity_sync_hook import sync_tender_entities
+
+        await sync_tender_entities(db, [t for t, _ in to_insert])
+
     if commit:
         await db.commit()
 

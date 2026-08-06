@@ -231,5 +231,11 @@ async def main() -> None:
         print("  ", r)
 
 
+def _print_entity_sync_hint() -> None:
+    """P0-1：证据回填后提示运行四层实体参与方回填。"""
+    print("[提示] 证据回填完成后，运行以下命令同步四层实体参与方关系：")
+    print("       python scripts/backfill_entities.py")
+
+
 if __name__ == "__main__":
     asyncio.run(main())

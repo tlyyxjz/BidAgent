@@ -117,6 +117,15 @@ async def create_tender(
     db.add(tender)
     await db.commit()
     await db.refresh(tender)
+
+    # P0-1：手动注入的公告同步四层实体（失败降级不阻塞）
+    try:
+        from app.processors.entity_sync_hook import sync_tender_entities
+
+        await sync_tender_entities(db, [tender])
+        await db.commit()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("实体同步失败（降级跳过）: {}", exc)
     logger.info("tender created id={} name={}", tender.id, tender.project_name[:50])
     return {"code": 201, "data": _to_response(tender).model_dump(), "msg": "ok"}
 
@@ -130,6 +139,17 @@ async def create_tenders_batch(
     tenders = [Tender(**item.model_dump()) for item in payload.items]
     db.add_all(tenders)
     await db.commit()
+
+    # P0-1：批量注入的公告同步四层实体（失败降级不阻塞）
+    try:
+        from app.processors.entity_sync_hook import sync_tender_entities
+
+        for t in tenders:
+            await db.refresh(t)  # 拿到自增 id
+        await sync_tender_entities(db, tenders)
+        await db.commit()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("实体同步失败（降级跳过）: {}", exc)
     logger.info("batch created count={}", len(tenders))
     return {
         "code": 201,
