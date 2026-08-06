@@ -1,7 +1,8 @@
 """v4.1 第12节标准 REST API 实现.
 
 对应《标小智 项目总体规划 v4.1》第十二章定义的 12 个标准 REST API 端点。
-数据源暂用现有 Tender + ExtractedField + Evidence 表（不强制四层实体）。
+数据源优先四层实体表（tender_notices / notice_participants 等），
+未命中时回退 Tender 扁平表并以 data_source 字段标注（与 v41_sources 同模式）。
 
 统一返回格式：{"code": 0, "data": ..., "msg": "ok"}。
 单文件控制在 300 行以内，超出部分拆到 v41_extract.py / v41_sources.py。
@@ -26,7 +27,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.database import get_db
 from app.models.evidence import Evidence, ExtractedField, FieldEvidenceLink
 from app.models.tender import Tender
-from app.models.tender_project import NoticeSource, NoticeVersion
+from app.models.tender_project import (
+    NoticeParticipant,
+    NoticeSource,
+    NoticeVersion,
+    TenderNotice,
+)
 from app.api.v41_extract import _EXTRACT_TASKS  # noqa: F401  复用任务存储
 from app.api.auth import verify_api_key
 
@@ -92,19 +98,46 @@ async def get_project(project_id: str, db: AsyncSession = Depends(get_db)) -> JS
     tender = (await db.execute(select(Tender).where(Tender.id == pid))).scalar_one_or_none()
     if not tender:
         return _err(f"项目 {project_id} 不存在")
-    # 公告生命周期：现仅一条公告，扩展到四层实体后会有多个阶段
-    lifecycle = [{
-        "notice_id": str(tender.id),
-        "notice_type": tender.notice_type or "tender",
-        "title": tender.project_name,
-        "publish_date": tender.publish_time.isoformat() if tender.publish_time else None,
-        "status": "active",
-    }]
+
+    # 公告生命周期：优先查四层实体（同项目下全部 TenderNotice）
+    lifecycle: list[dict] = []
+    data_source = "tender_fallback"
+    source_url = tender.source_url or f"migrated://tender/{tender.id}"
+    pid_row = (await db.execute(
+        select(TenderNotice.project_id)
+        .join(NoticeSource, NoticeSource.notice_id == TenderNotice.notice_id)
+        .where(NoticeSource.source_url == source_url)
+    )).first()
+    if pid_row is not None:
+        notices = (await db.execute(
+            select(TenderNotice)
+            .where(TenderNotice.project_id == pid_row[0])
+            .order_by(TenderNotice.publish_date)
+        )).scalars().all()
+        lifecycle = [{
+            "notice_id": n.notice_id,
+            "notice_type": n.notice_type,
+            "title": n.canonical_title,
+            "publish_date": n.publish_date.isoformat() if n.publish_date else None,
+            "status": n.status or "active",
+        } for n in notices]
+        data_source = "tender_notice_table"
+
+    # 回退：扁平 Tender 表（单公告）
+    if not lifecycle:
+        lifecycle = [{
+            "notice_id": str(tender.id),
+            "notice_type": tender.notice_type or "tender",
+            "title": tender.project_name,
+            "publish_date": tender.publish_time.isoformat() if tender.publish_time else None,
+            "status": "active",
+        }]
     return _ok({
         "project_id": str(tender.id),
         "canonical_name": tender.project_name,
         "project_identifier": tender.bid_number,
         "lifecycle": lifecycle,
+        "data_source": data_source,
     })
 
 
@@ -141,17 +174,44 @@ async def get_notice_participants(notice_id: str, db: AsyncSession = Depends(get
     tender = (await db.execute(select(Tender).where(Tender.id == nid))).scalar_one_or_none()
     if not tender:
         return _err(f"公告 {notice_id} 不存在")
-    participants = []
-    if tender.tender_org:
-        participants.append({"role": "purchaser", "raw_name": tender.tender_org,
-                             "normalized_name": tender.tender_org, "resolution_status": "resolved"})
-    if tender.agency:
-        participants.append({"role": "procuring_agency", "raw_name": tender.agency,
-                             "normalized_name": tender.agency, "resolution_status": "resolved"})
-    if tender.win_company:
-        participants.append({"role": "winner", "raw_name": tender.win_company,
-                             "normalized_name": tender.win_company, "resolution_status": "resolved"})
-    return _ok({"participants": participants, "total": len(participants)})
+
+    # 优先查四层实体：NoticeSource → NoticeParticipant（P0-1 回填的真实数据）
+    participants: list[dict] = []
+    data_source = "tender_fallback"
+    source_url = tender.source_url or f"migrated://tender/{tender.id}"
+    notice_row = (await db.execute(
+        select(NoticeSource.notice_id).where(NoticeSource.source_url == source_url)
+    )).first()
+    if notice_row is not None:
+        rows = (await db.execute(
+            select(NoticeParticipant)
+            .where(NoticeParticipant.notice_id == notice_row[0])
+            .order_by(NoticeParticipant.participant_role)
+        )).scalars().all()
+        participants = [{
+            "participant_id": np.participant_id,
+            "role": np.participant_role,
+            "raw_name": np.raw_name,
+            "normalized_name": np.normalized_name or np.raw_name,
+            "organization_id": np.organization_id,
+            "resolution_status": np.resolution_status,
+        } for np in rows]
+        if participants:
+            data_source = "entity_table"
+
+    # 回退：扁平 Tender 表组织列（历史兼容）
+    if not participants:
+        if tender.tender_org:
+            participants.append({"role": "purchaser", "raw_name": tender.tender_org,
+                                 "normalized_name": tender.tender_org, "resolution_status": "resolved"})
+        if tender.agency:
+            participants.append({"role": "procuring_agency", "raw_name": tender.agency,
+                                 "normalized_name": tender.agency, "resolution_status": "resolved"})
+        if tender.win_company:
+            participants.append({"role": "winner", "raw_name": tender.win_company,
+                                 "normalized_name": tender.win_company, "resolution_status": "resolved"})
+    return _ok({"participants": participants, "total": len(participants),
+                "data_source": data_source})
 
 
 # 7. GET /api/fields/{field_id}

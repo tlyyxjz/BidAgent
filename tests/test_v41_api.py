@@ -308,6 +308,143 @@ async def test_get_notice_participants():
     assert {"purchaser", "procuring_agency", "winner"}.issubset(roles)
 
 
+async def test_get_notice_participants_from_entity_table():
+    """P0-1 下游：notice_participants 表命中 → 优先实体表数据。"""
+    from app.models.tender_project import (
+        NoticeParticipant, NoticeSource, TenderNotice, TenderProject,
+    )
+    custom_url = "https://www.ccgp.gov.cn/test/participants-entity/001"
+    # tender 组织列全空（模拟真实库），数据只在实体表
+    tid = await _seed_tender(
+        source_url=custom_url, tender_org=None, win_company=None, agency=None,
+    )
+    async with AsyncSessionLocal() as db:
+        project = TenderProject(
+            canonical_name="参与方实体测试项目",
+            industry_category="service",
+            resolution_status="resolved",
+        )
+        db.add(project)
+        await db.flush()
+        notice = TenderNotice(
+            project_id=project.project_id,
+            notice_type="award",
+            canonical_title="参与方实体测试公告",
+            status="active",
+        )
+        db.add(notice)
+        await db.flush()
+        ns = NoticeSource(
+            notice_id=notice.notice_id,
+            source_url=custom_url,
+            source_platform="ccgp",
+            platform_type="government",
+            publication_role="original",
+            source_quality="official_original",
+            source_group=f"grp_{notice.notice_id[:8]}",
+        )
+        db.add(ns)
+        await db.flush()
+        db.add(NoticeParticipant(
+            notice_id=notice.notice_id,
+            raw_name="测试采购单位",
+            normalized_name="测试采购单位",
+            participant_role="purchaser",
+            resolution_status="resolved",
+        ))
+        db.add(NoticeParticipant(
+            notice_id=notice.notice_id,
+            raw_name="测试中标单位",
+            normalized_name="测试中标单位",
+            participant_role="winner",
+            resolution_status="resolved",
+        ))
+        await db.commit()
+
+    async with _client() as ac:
+        resp = await ac.get(f"/api/notices/{tid}/participants")
+    body = resp.json()
+    assert body["code"] == 0
+    assert body["data"]["data_source"] == "entity_table"
+    roles = {p["role"] for p in body["data"]["participants"]}
+    assert roles == {"purchaser", "winner"}
+    assert body["data"]["total"] == 2
+
+
+async def test_get_notice_participants_fallback_tender_columns():
+    """无四层实体时回退 tender 组织列，data_source=tender_fallback。"""
+    tid = await _seed_tender(source_url="http://no-entity.example.com/x/1")
+    async with _client() as ac:
+        resp = await ac.get(f"/api/notices/{tid}/participants")
+    body = resp.json()
+    assert body["code"] == 0
+    assert body["data"]["data_source"] == "tender_fallback"
+    assert body["data"]["total"] >= 1
+
+
+async def test_get_project_lifecycle_from_entity_table():
+    """P0-1 下游：同项目两条 TenderNotice → lifecycle 返回完整生命周期。"""
+    from app.models.tender_project import (
+        NoticeSource, TenderNotice, TenderProject,
+    )
+    custom_url = "https://www.ccgp.gov.cn/test/lifecycle-entity/001"
+    tid = await _seed_tender(source_url=custom_url)
+    async with AsyncSessionLocal() as db:
+        project = TenderProject(
+            canonical_name="生命周期实体测试项目",
+            industry_category="goods",
+            resolution_status="resolved",
+        )
+        db.add(project)
+        await db.flush()
+        n1 = TenderNotice(
+            project_id=project.project_id,
+            notice_type="tender",
+            canonical_title="招标公告",
+            status="active",
+            publish_date=datetime(2026, 7, 1),
+        )
+        n2 = TenderNotice(
+            project_id=project.project_id,
+            notice_type="award",
+            canonical_title="中标公告",
+            status="active",
+            publish_date=datetime(2026, 7, 20),
+        )
+        db.add_all([n1, n2])
+        await db.flush()
+        db.add(NoticeSource(
+            notice_id=n2.notice_id,
+            source_url=custom_url,
+            source_platform="ccgp",
+            platform_type="government",
+            publication_role="original",
+            source_quality="official_original",
+            source_group=f"grp_{n2.notice_id[:8]}",
+        ))
+        await db.commit()
+
+    async with _client() as ac:
+        resp = await ac.get(f"/api/projects/{tid}")
+    body = resp.json()
+    assert body["code"] == 0
+    assert body["data"]["data_source"] == "tender_notice_table"
+    lc = body["data"]["lifecycle"]
+    assert len(lc) == 2
+    assert [x["notice_type"] for x in lc] == ["tender", "award"]
+
+
+async def test_get_project_lifecycle_fallback():
+    """无四层实体时 lifecycle 回退单公告，data_source=tender_fallback。"""
+    tid = await _seed_tender(source_url="http://no-entity.example.com/x/2")
+    async with _client() as ac:
+        resp = await ac.get(f"/api/projects/{tid}")
+    body = resp.json()
+    assert body["code"] == 0
+    assert body["data"]["data_source"] == "tender_fallback"
+    assert len(body["data"]["lifecycle"]) == 1
+
+
 # ==== 6. GET /api/sources/{source_id}/versions ====
 
 async def test_get_source_versions():
