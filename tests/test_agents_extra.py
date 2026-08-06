@@ -49,6 +49,7 @@ def _make_tender(**kwargs):
     t.project_name = kwargs.get("project_name", "")
     t.core_content = kwargs.get("core_content", "")
     t.source_url = kwargs.get("source_url", None)
+    t.source_raw_text = kwargs.get("source_raw_text", None)
     t.source_platform = kwargs.get("source_platform", "ccgp")
     t.tender_org = kwargs.get("tender_org", "")
     return t
@@ -292,7 +293,10 @@ class TestQualityAgent:
         from app.agents.quality_agent import quality_agent
 
         tenders = [
-            _make_tender(id=1, core_content="金额 100 万元", source_url="http://x"),
+            _make_tender(
+                id=1, core_content="金额 100 万元", source_url="http://x",
+                source_raw_text="原文：预算金额 100 万元",
+            ),
         ]
         factory = _make_db_factory(tenders)
         fake_report = MagicMock()
@@ -328,7 +332,10 @@ class TestQualityAgent:
         from app.agents.quality_agent import quality_agent
 
         tenders = [
-            _make_tender(id=1, core_content="正常内容", source_url="http://x"),
+            _make_tender(
+                id=1, core_content="正常内容", source_url="http://x",
+                source_raw_text="原文：正常内容",
+            ),
         ]
         factory = _make_db_factory(tenders)
         fake_report = MagicMock()
@@ -612,3 +619,33 @@ class TestRunMultiAgentWorkflow:
 
         assert result["user_id"] == 42
         assert result["platforms"] == ["ggzy"]
+
+
+    @pytest.mark.asyncio
+    async def test_no_raw_text_counts_unverified(self):
+        """P2-8：无 source_raw_text 时不调 check_content，不计入核验分母。"""
+        from app.agents.quality_agent import quality_agent
+
+        tenders = [
+            _make_tender(id=1, core_content="内容", source_url="http://x"),
+        ]
+        factory = _make_db_factory(tenders)
+        with patch("app.models.database.AsyncSessionLocal", factory), \
+                patch(
+                    "app.processors.hallucination_checker.check_content",
+                ) as mock_check:
+            state = await quality_agent({
+                "collect_summary": {
+                    "total": 1,
+                    "duplicates": 0,
+                    "platforms_collected": ["ccgp"],
+                },
+                "process_summary": {},
+                "subscription_id": 1,
+            })
+
+        mock_check.assert_not_called()
+        qs = state["quality_summary"]
+        assert qs["total_checked"] == 1
+        assert qs["total_verified"] == 0
+        assert qs["hallucination_flags"] == 0

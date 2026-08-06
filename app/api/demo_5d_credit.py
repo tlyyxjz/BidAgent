@@ -108,17 +108,11 @@ def _build_5d_credit(meta: dict) -> list[dict]:
     meta 字段有限，部分维度以代理指标估算。
     """
     # v4.1 §9.1: 不输出信用评分，score/grade 设为 None，仅保留观察值
-    def _grade(s: float) -> str:
-        if s >= 85:
-            return "high"
-        if s >= 70:
-            return "medium"
-        return "low"
 
     # 集中度：中标次数多 → 集中度风险低 → 公开活动观察度高（代理：total_projects）
     conc = min(100.0, 55 + (meta["total_projects"] / 1_200.0) * 45.0)
-    # 金额异常：金额一致性高 → 异常低 → 公开活动观察度高
-    amt = meta["amount_consistency_score"]
+    # 金额维度：展示可观察的事实量（累计中标金额），不输出准分数
+    amt_yuan = meta["total_amount_yuan"]
     # 频率异常：稳定活跃 → 频率正常 → 公开活动观察度高（代理：active_days_30d）
     freq = 50 + (meta["active_days_30d"] / 30.0) * 50.0
     # 地域集中：类型覆盖广 → 地域分散 → 公开活动观察度高（代理：type_coverage_count）
@@ -141,7 +135,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "icon": "ph-shield-check",
             "score": None,
             "grade": None,
-            "display": f"{amt:.1f} / 100",
+            "display": f"{amt_yuan / 1e8:.1f} 亿元",
             "description": "金额一致性，越高异常越低（对齐 observation_signals.py）",
         },
         {

@@ -68,19 +68,11 @@ async def demo_org_by_name(name: str, db: AsyncSession = Depends(get_db)) -> JSO
     if data_source == "real":
         # 5 维度对齐 observation_signals.py 口径（集中度25/金额20/频率20/地域15/采购人20）
         dims = _build_5d_credit(meta)
-        _WEIGHTS = {
-            "concentration": 0.25,
-            "amount_anomaly": 0.20,
-            "frequency": 0.20,
-            "region": 0.15,
-            "purchaser": 0.20,
-        }
-        # v4.1 §9.1: 不输出综合评分
-        overall = None
     else:
-        # 真实数据未命中：每个维度 score 为 None，overall 为 None，不伪造数字
+        # 真实数据未命中：每个维度 score 为 None，不伪造数字
         dims = _build_5d_credit_no_data()
-        overall = None
+    # v4.1 §9.1: 不输出信用评分/综合评分
+    overall = None
     # 复用原 demo/organizations/{org_id} 返回的画像字段，再叠加 5 维度 + overall
     org_id = meta["org_id"]
     if real_activity is not None:

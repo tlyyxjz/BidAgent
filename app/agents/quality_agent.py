@@ -30,6 +30,7 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
     输出 state（新增）:
         - quality_summary: dict — 质检结果摘要
             - total_checked: int — 质检总数
+            - total_verified: int — 实际与原文比对核验数（无原文不计入）
             - duplicates_removed: int — 去重数
             - hallucination_flags: int — 反幻觉标记数
             - quality_score: float — 质量评分（0-1）
@@ -62,13 +63,19 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
         )
         tenders = result.scalars().all()
 
-        # 反幻觉校验
+        # 反幻觉校验（P2-8 修复：以 source_raw_text 原文为比对基准，
+        # 原实现 check_content(core_content, core_content) 拿自己比自己恒通过）
         hallucination_flags = 0
+        verified = 0
         for t in tenders:
             if not t.core_content or not t.source_url:
                 continue
+            if not t.source_raw_text:
+                # 无原文可比对：记为未核验，不算通过也不算幻觉
+                continue
             # check_content 返回 CheckReport 对象(有 .passed / .facts 属性)
-            report = check_content(t.core_content, t.core_content)
+            report = check_content(t.core_content, t.source_raw_text)
+            verified += 1
             if not report.passed:
                 hallucination_flags += 1
                 logger.warning(
@@ -76,17 +83,18 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
                     t.id, report.total_facts, report.verified_facts, report.hallucinated_facts,
                 )
 
-    # 质量评分：去重率 + 反幻觉通过率
+    # 质量评分：去重率 + 反幻觉通过率（分母为实际核验数，未核验不充数）
     total = collect_summary.get("total", 0)
     duplicates = collect_summary.get("duplicates", 0)
     dedup_rate = 1.0 - (duplicates / total if total > 0 else 0)
     hallucination_pass_rate = 1.0 - (
-        hallucination_flags / len(tenders) if tenders else 0
+        hallucination_flags / verified if verified else 0
     )
     quality_score = (dedup_rate + hallucination_pass_rate) / 2
 
     state["quality_summary"] = {
         "total_checked": len(tenders),
+        "total_verified": verified,
         "duplicates_removed": duplicates,
         "hallucination_flags": hallucination_flags,
         "quality_score": round(quality_score, 3),
