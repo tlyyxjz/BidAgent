@@ -2,6 +2,40 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/) 规范。
 
+## [Unreleased] - 2026-08-07
+
+### Added
+- 新增 GET /api/demo/report/download?sid=xxx 端点：从 pipeline session 取 report_path 下载完整报告（方案A 修复）
+- 新增 tests/test_demo_report_download.py：5 个用例覆盖成功/无session/无report/文件丢失/缺参数
+- 新增 tests/test_report_rendering_extra.py：6 个用例覆盖金额 None 处理/高预算建议跳过/编号递增
+
+### Fixed
+- 报告下载链路 15 个 bug 修复（共发现 16 个，Bug 16 pipeline 中间阶段更新待后续处理）：
+  - Bug 1/2/5/7/12/13/15: 前端下载按钮改走 pipeline 产物，解决数据不相关/字段缺失/参数缺失
+  - Bug 3/14: 摘要页金额 None 不再当 0 求和，无有效金额显示"暂无有效预算数据"
+  - Bug 4/5: 无有效金额时跳过"高预算项目关注建议"，建议编号动态递增
+  - Bug 6: downloadReport 输入框 ID chatInput->msgInput
+  - Bug 8: 轮询 status 映射增加 completed（后端实际值）
+  - Bug 9: AGENTS 卡片索引4/5 改为 finance/delivery 对齐后端 stages
+  - Bug 10: 报告文件名从后端 report_path 提取实际值
+  - Bug 11: pipeline 失败时显示错误，不显示假"完成"
+
+### Changed
+- GET /api/demo/report 降级为 fallback 端点（docstring 标注，行为不变）
+- _chat_scripts.py AGENTS 卡片：report/delivery -> finance/delivery（对齐后端 6 阶段）
+
+### 接口变更记录（第十一章）
+- 新增 API: GET /api/demo/report/download?sid=xxx
+  - 请求: query param sid (必填, pipeline session_id)
+  - 响应: Word 文件流
+  - 错误: 404 (session不存在/报告未生成/文件丢失), 422 (缺sid参数)
+  - 影响: 前端 downloadReport() 默认走此端点，fallback 才走旧端点
+
+### 测试
+- 全量回归: 1992 passed, 0 failed, 覆盖率 90.31% (基线 1979 + 13 新增)
+- 新增代码覆盖率: demo_report.py 97%, docx_components.py 100%, docx_sections.py 100%
+- 核心模块覆盖率均 >=85%，新增代码增量 >=90%（v1.1 标准）
+
 ## [Unreleased] - 2026-08-05
 
 ### Added

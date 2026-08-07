@@ -100,8 +100,10 @@ def _add_summary(doc: Document, filters: ParsedFilters, items: list[dict[str, An
         _set_run_font(run, "黑体")
 
     total = len(items)
-    total_budget = sum(float(i.get("budget_amount") or 0) for i in items)
-    avg_budget = total_budget / total if total else 0
+    # 方案C修复：过滤 None 金额，避免将无金额数据当 0 求和导致"0.00 万元"误导
+    valid_budgets = [float(i["budget_amount"]) for i in items if i.get("budget_amount")]
+    total_budget = sum(valid_budgets)
+    avg_budget = total_budget / len(valid_budgets) if valid_budgets else 0
     platforms = list({str(i.get("source_platform") or "unknown") for i in items})
 
     p = doc.add_paragraph()
@@ -109,11 +111,16 @@ def _add_summary(doc: Document, filters: ParsedFilters, items: list[dict[str, An
     p.add_run(f"从 {len(platforms)} 个平台共采集到 {total} 条招投标信息。").font.size = Pt(11)
 
     p = doc.add_paragraph()
-    p.add_run("涉及预算总金额约 ").font.size = Pt(11)
-    run = p.add_run(f"{total_budget / 10000:.2f} 万元")
-    run.font.bold = True
-    run.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
-    p.add_run(f"，平均单项目预算 {avg_budget / 10000:.2f} 万元。").font.size = Pt(11)
+    if valid_budgets:
+        p.add_run("涉及预算总金额约 ").font.size = Pt(11)
+        run = p.add_run(f"{total_budget / 10000:.2f} 万元")
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+        p.add_run(f"，平均单项目预算 {avg_budget / 10000:.2f} 万元。").font.size = Pt(11)
+    else:
+        run = p.add_run("本期项目中暂无有效预算数据。")
+        run.font.size = Pt(11)
+        run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
 
     p = doc.add_paragraph()
     p.add_run("数据来源平台：").font.bold = True

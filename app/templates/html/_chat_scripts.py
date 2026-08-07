@@ -11,8 +11,8 @@ const AGENTS=[
   {id:'collector',name:'数据采集 Agent',icon:'<i class="ph-bold ph-globe"></i>',desc:'多平台爬取招标公告数据',status:'pending',progress:0},
   {id:'processor',name:'清洗抽取 Agent',icon:'<i class="ph-bold ph-gear-six"></i>',desc:'LLM 抽取6类核心字段',status:'pending',progress:0},
   {id:'quality',name:'质量校验 Agent',icon:'<i class="ph-bold ph-shield-check"></i>',desc:'证据定位 + 反幻觉校验',status:'pending',progress:0},
-  {id:'report',name:'报告生成 Agent',icon:'<i class="ph-bold ph-file-text"></i>',desc:'生成 Word 分析报告',status:'pending',progress:0},
-  {id:'delivery',name:'交付推送 Agent',icon:'<i class="ph-bold ph-paper-plane-tilt"></i>',desc:'邮件/订阅推送交付',status:'pending',progress:0},
+  {id:'finance',name:'金融分析 Agent',icon:'<i class="ph-bold ph-chart-line-up"></i>',desc:'供应商公开活动观察信号分析',status:'pending',progress:0},
+  {id:'delivery',name:'报告交付 Agent',icon:'<i class="ph-bold ph-paper-plane-tilt"></i>',desc:'生成 Word 报告并推送交付',status:'pending',progress:0},
 ];
 let running=false;
 function renderAgents(){
@@ -40,7 +40,7 @@ function addMsg(role,content){
 function setInput(t){document.getElementById('msgInput').value=t}
 // A1 修复：真实轮询 pipeline 进度（替代 setTimeout 模拟）
 const STAGE_AGENT_MAP={'intent':0,'collecting':1,'processing':2,'quality':3,'finance':4,'done':5};
-let _pipelineSid=null;
+let _pipelineSid=null;let _lastReportSid=null;
 async function runReal(){
   AGENTS.forEach(a=>{a.status='pending';a.progress=0});renderAgents();
   // 轮询真实 pipeline 状态
@@ -59,7 +59,7 @@ async function runReal(){
       for(const [stageName,stageInfo] of Object.entries(stages)){
         const idx=STAGE_AGENT_MAP[stageName];
         if(idx===undefined)continue;
-        if(stageInfo.status==='done'){AGENTS[idx].status='done';AGENTS[idx].progress=100}
+        if(stageInfo.status==='completed'||stageInfo.status==='done'){AGENTS[idx].status='done';AGENTS[idx].progress=100}
         else if(stageInfo.status==='running'){AGENTS[idx].status='running';AGENTS[idx].progress=Math.max(AGENTS[idx].progress,50)}
         else if(stageInfo.status==='pending' && AGENTS[idx].status==='done'){/* skip */}
       }
@@ -99,15 +99,30 @@ async function sendMsg(){
     if(sd.code===200 && sd.data.session_id){
       _pipelineSid=sd.data.session_id;
       const result=await runReal();
+      const finalSid=_pipelineSid;
       _pipelineSid=null;
-      const r=result&&result.result||{};
+      // Bug 11 修复：pipeline 失败时显示错误，不提供下载
+      if(!result||result.error){
+        const errMsg=result&&result.error?result.error:'pipeline 执行失败';
+        botMsg.querySelector('.bubble').innerHTML=
+          `<div style="color:#c62828"><i class="ph-bold ph-warning"></i> 处理失败：${errMsg}</div>`+
+          `<div style="font-size:12px;color:#888;margin-top:4px">请稍后重试，或检查查询条件是否合理</div>`;
+        running=false;btn.disabled=false;input.focus();
+        return;
+      }
+      const r=result.result||{};
       const cs=r.collect_summary||{};
       const ps=r.process_summary||{};
       const foundCount=cs.total||ps.total_processed||0;
-      const reportName=slots.keyword||'招标分析';
-      const rn=`招标分析报告_${reportName}_${new Date().toISOString().slice(0,10)}.docx`;
+      // Bug 10 修复：使用后端实际报告文件名
+      const reportPath=r.report_path||'';
+      const rn=reportPath?reportPath.split(/[\\\\/]/).pop():`招标分析报告_${slots.keyword||'招标'}_${new Date().toISOString().slice(0,10)}.docx`;
+      // 方案A：保存 sid 供 downloadReport 使用
+      if(finalSid&&reportPath){_lastReportSid=finalSid}
+      const hasReport=!!reportPath;
       botMsg.querySelector('.bubble').innerHTML=
         `处理完成！共找到 <b>${foundCount}</b> 条相关招标公告。`+
+        (hasReport?
         `<div class="report-card">
           <div class="report-icon"><i class="ph-bold ph-file-text" style="font-size:28px;color:#2e7d32"></i></div>
           <div class="report-info">
@@ -115,7 +130,8 @@ async function sendMsg(){
             <div class="report-size">Word 文档 · 真实 pipeline 生成 · 包含项目列表+趋势分析+风险提示</div>
           </div>
           <a href="#" class="report-btn" onclick="downloadReport();return false;">下载报告</a>
-        </div>`;
+        </div>`
+        :`<div style="font-size:12px;color:#888;margin-top:4px">本期未采集到新数据，未生成报告</div>`);
     }else{
       botMsg.querySelector('.bubble').innerHTML=`Pipeline 启动失败: ${sd.msg||'未知错误'}`;
     }
@@ -159,9 +175,14 @@ function renderSlots(s){
 renderAgents();document.getElementById('msgInput').focus();
 
 function downloadReport(){
-  const q=document.getElementById('chatInput')?document.getElementById('chatInput').value.trim():'';
+  // 方案A：优先从 pipeline session 下载完整报告
+  if(_lastReportSid){
+    window.location.href='/api/demo/report/download?sid='+encodeURIComponent(_lastReportSid);
+    return;
+  }
+  // Bug 6 修复：fallback 用正确输入框 ID（原 chatInput 不存在，实际为 msgInput）
+  const q=document.getElementById('msgInput')?document.getElementById('msgInput').value.trim():'';
   const query=q||'医疗设备采购';
-  // 调真实后端 /api/demo/report 生成 Word 报告
   window.location.href='/api/demo/report?query='+encodeURIComponent(query);
 }
 

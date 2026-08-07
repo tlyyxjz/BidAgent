@@ -117,21 +117,25 @@ def add_analysis(doc: Document, items: list[dict[str, Any]]) -> None:
     grade_desc.font.size = Pt(9)
     _set_run_font(grade_desc, "宋体")
 
-    # 按预算排序找 top 3
-    sorted_items = sorted(
-        items, key=lambda x: float(x.get("budget_amount") or 0), reverse=True
-    )
-    top3 = sorted_items[:3]
+    # 方案C修复：仅在有有效预算金额时才输出高预算建议，避免推荐 0 金额项目
+    suggestion_num = 0
+    valid_budget_items = [i for i in items if i.get("budget_amount")]
+    if valid_budget_items:
+        suggestion_num += 1
+        sorted_items = sorted(
+            valid_budget_items, key=lambda x: float(x["budget_amount"]), reverse=True
+        )
+        top3 = sorted_items[:3]
 
-    p = doc.add_paragraph()
-    p.add_run("1. 高预算项目关注建议").font.bold = True
-    p = doc.add_paragraph()
-    p.add_run("以下 3 个项目预算金额最高，建议优先关注：").font.size = Pt(11)
-    for item in top3:
-        budget = float(item.get("budget_amount") or 0) / 10000
-        p = doc.add_paragraph(style="List Number")
-        p.add_run(str(item.get("project_name") or "-")).font.bold = True
-        p.add_run(f"（{item.get('tender_org') or '未知'}，预算 {budget:.2f} 万元）")
+        p = doc.add_paragraph()
+        p.add_run(f"{suggestion_num}. 高预算项目关注建议").font.bold = True
+        p = doc.add_paragraph()
+        p.add_run(f"以下 {len(top3)} 个项目预算金额最高，建议优先关注：").font.size = Pt(11)
+        for item in top3:
+            budget = float(item["budget_amount"]) / 10000
+            p = doc.add_paragraph(style="List Number")
+            p.add_run(str(item.get("project_name") or "-")).font.bold = True
+            p.add_run(f"（{item.get('tender_org') or '未知'}，预算 {budget:.2f} 万元）")
 
     # 按截止时间排序找最紧急的
     deadline_items = [i for i in items if i.get("deadline")]
@@ -139,8 +143,9 @@ def add_analysis(doc: Document, items: list[dict[str, Any]]) -> None:
     urgent = deadline_items[:3]
 
     if urgent:
+        suggestion_num += 1
         p = doc.add_paragraph()
-        p.add_run("2. 即将截止项目提醒").font.bold = True
+        p.add_run(f"{suggestion_num}. 即将截止项目提醒").font.bold = True
         p = doc.add_paragraph()
         p.add_run("以下项目截止时间临近，请尽快行动：").font.size = Pt(11)
         for item in urgent:
@@ -152,8 +157,9 @@ def add_analysis(doc: Document, items: list[dict[str, Any]]) -> None:
             p.add_run(str(item.get("project_name") or "-")).font.bold = True
             p.add_run(f"（截止时间：{dl}）")
 
+    suggestion_num += 1
     p = doc.add_paragraph()
-    p.add_run("3. 数据声明").font.bold = True
+    p.add_run(f"{suggestion_num}. 数据声明").font.bold = True
     p = doc.add_paragraph()
     run = p.add_run(
         "本报告数据来源于公开招投标信息平台，仅供参考。"
