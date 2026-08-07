@@ -602,3 +602,25 @@ async def test_demo_org_by_name_direct_call_unknown():
     assert data["data_source"] == "no_data"
     assert data["org_type"] == "未知类型"
     assert data["region"] == "未登记区域"
+
+
+async def test_demo_org_by_name_no_data_credit_dimensions_all_empty():
+    """no_data 空态：5 维度 score/grade 全为 None、display 全为 '--'（不伪造分数）。
+
+    w6 重构核心：移除 _ORG_INDEX 预置样本后，未命中组织必须返回诚实空态，
+    5 个观察维度（集中度/金额异常/频率/地域/采购人）均不得展示估算分数。
+    """
+    async with _client() as ac:
+        resp = await ac.get("/api/demo/orgs/by-name/不存在组织XYZ")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["data_source"] == "no_data"
+    dims = data["credit_dimensions"]
+    assert len(dims) == 5
+    expected_keys = {"concentration", "amount_anomaly", "frequency", "region", "purchaser"}
+    actual_keys = {d["key"] for d in dims}
+    assert actual_keys == expected_keys
+    for d in dims:
+        assert d["score"] is None, f"{d['key']} score 应为 None，不伪造"
+        assert d["grade"] is None, f"{d['key']} grade 应为 None，不伪造"
+        assert d["display"] == "--", f"{d['key']} display 应为 '--'，不展示估算值"
