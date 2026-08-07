@@ -256,7 +256,7 @@ body{background:var(--bg)}
   </div>
 
   <div class="card">
-    <div class="card-header"><span class="card-title"><span class="card-icon"><i class="ph ph-chart-line-up" style="color:var(--success)"></i></span>中标活跃度（90天）</span><span class="card-more">近90天</span></div>
+    <div class="card-header"><span class="card-title"><span class="card-icon"><i class="ph ph-chart-line-up" style="color:var(--success)"></i></span>公告入库活跃度（90天）</span><span class="card-more">按入库时间</span></div>
     <div class="chart-container"><svg class="chart-svg" id="activityChart"></svg></div>
   </div>
 
@@ -270,7 +270,7 @@ body{background:var(--bg)}
   </div>
 
   <div class="card">
-    <div class="card-header"><span class="card-title"><span class="card-icon"><i class="ph ph-warning" style="color:var(--error)"></i></span>废标关联记录</span><span class="card-more">近半年</span></div>
+    <div class="card-header"><span class="card-title"><span class="card-icon"><i class="ph ph-warning" style="color:var(--error)"></i></span>废标/流标关联</span><span class="card-more">当前采集范围</span></div>
     <div class="waste-list" id="wasteList"></div>
   </div>
 
@@ -415,6 +415,7 @@ function renderActivity(daily){
 }
 function renderPurchasers(list){
   const el=document.getElementById('purchaserList');
+  if(!list||!list.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#948E80;">当前采集库中暂无该组织的采购人记录</div>';return}
   const max=Math.max(...list.map(p=>p.count),1);
   el.innerHTML=list.map((p,i)=>`<div class="purchaser-item">
     <div class="purchaser-rank r${i+1}">${i+1}</div>
@@ -427,7 +428,7 @@ function renderPurchasers(list){
 }
 function renderWaste(list){
   const el=document.getElementById('wasteList');
-  if(!list.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#948E80;">暂无废标记录</div>';return}
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#948E80;">当前采集范围（招标/中标/更正公告）不含废标/流标公告，无关联记录</div>';return}
   el.innerHTML=list.map(w=>`<div class="waste-item">
     <div class="waste-title">${esc(w.project_name)}</div>
     <div class="waste-meta"><span><i class="ph ph-calendar-check"></i> ${w.waste_date}</span></div>
@@ -435,7 +436,7 @@ function renderWaste(list){
   </div>`).join('');
 }
 function renderCompleteness(dc){
-  document.getElementById('scoreValue').textContent=dc.completeness_score+'%';
+  document.getElementById('scoreValue').textContent=(dc.completeness_score!=null?dc.completeness_score+'%':'--');
   const el=document.getElementById('completenessList');
   el.innerHTML=`<div class="completeness-item"><span class="completeness-label">时间范围</span><span class="completeness-value">${dc.time_range}</span></div>
     <div class="completeness-item"><span class="completeness-label">公告总数</span><span class="completeness-value">${dc.total_notices} 条</span></div>
@@ -443,11 +444,20 @@ function renderCompleteness(dc){
     <div class="completeness-item"><span class="completeness-label">中标公告</span><span class="completeness-value">${dc.award_count} 条</span></div>
     <div class="completeness-item"><span class="completeness-label">更正公告</span><span class="completeness-value">${dc.correction_count} 条</span></div>`;
   document.getElementById('platformTags').innerHTML=dc.platforms.map(p=>`<span class="platform-tag">${p}</span>`).join('');
-  document.getElementById('missingList').innerHTML='<i class="ph ph-warning" style="color:#A63B2B"></i> 缺失字段：'+dc.missing_fields.join('、');
+  document.getElementById('missingList').innerHTML=(dc.missing_fields&&dc.missing_fields.length)?'<i class="ph ph-warning" style="color:#A63B2B"></i> 缺失字段：'+dc.missing_fields.join('、'):'<i class="ph ph-check-circle" style="color:var(--success)"></i> 关键字段无缺失';
+}
+function showNoDataBanner(orgName){
+  if(document.getElementById('noDataBanner'))return;
+  const b=document.createElement('div');
+  b.id='noDataBanner';
+  b.style.cssText='margin-bottom:16px;padding:12px 16px;background:var(--warning-bg);border:1px solid #F1E4C4;border-radius:6px;font-size:13px;color:#7C5E14';
+  b.innerHTML='<i class="ph ph-info" style="margin-right:6px"></i>当前采集库中未命中「'+orgName+'」的公开招投标记录，以下指标均为空值（不展示估算数据）。';
+  const c=document.querySelector('.main-container');
+  if(c)c.insertBefore(b,c.firstChild);
 }
 async function loadData(){
   const p=new URLSearchParams(window.location.search);
-  const name=p.get('name')||'北京大学第三医院';
+  const name=p.get('name')||'中国科学院亚热带农业生态研究所';
   const oid=p.get('org')||'org_001';
   try{
     let d;
@@ -468,6 +478,7 @@ async function loadData(){
     }
     if(d.code!==200)throw new Error(d.msg||'加载失败');
     const o=d.data;
+    if(o.data_source==='no_data'){showNoDataBanner(o.org_name);}
     document.getElementById('orgName').textContent=o.org_name;
     document.getElementById('orgNameBig').textContent=o.org_name;
     document.getElementById('orgAvatar').textContent=o.org_name.slice(0,1);
@@ -479,7 +490,7 @@ async function loadData(){
     document.getElementById('statTender').textContent=a.tender_count;
     document.getElementById('statAward').textContent=a.award_count;
     document.getElementById('statWaste').textContent=o.waste_bid_count;
-    document.getElementById('cr3Value').textContent=(o.top3_concentration*100).toFixed(1)+'%';
+    document.getElementById('cr3Value').textContent=(o.top3_concentration!=null)?(o.top3_concentration*100).toFixed(1)+'%':'--';
     renderActivity(a.daily);
     renderPurchasers(o.top3_purchasers);
     renderWaste(o.waste_bid_related);

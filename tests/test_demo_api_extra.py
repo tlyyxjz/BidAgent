@@ -215,77 +215,73 @@ async def test_collector_status_with_tenders_platform_distribution():
 # ==== b) GET /api/demo/organizations/{org_id} ====
 
 
-async def test_org_profile_existing_org():
-    """存在的组织 ID（org_001）返回预置画像数据。"""
+async def _seed_org_field(org_name: str, notice_type: str = "tender") -> int:
+    """Seeding: Tender + ExtractedField(purchaser_name) 命中组织画像真实查询。"""
+    from app.models.evidence import ExtractedField
+
+    tid = await _seed_tender(tender_org=org_name, notice_type=notice_type)
+    async with AsyncSessionLocal() as db:
+        db.add(ExtractedField(
+            tender_id=tid, field_name="purchaser_name", field_status="present",
+            raw_value=org_name, normalized_value=org_name, support_level="direct"))
+        await db.commit()
+    return tid
+
+
+async def test_org_profile_real_data_by_name():
+    """org_id 直接传组织名且命中真实数据 → data_source=real。"""
+    await _seed_org_field("测试组织画像甲")
     async with _client() as ac:
-        resp = await ac.get("/api/demo/organizations/org_001")
+        resp = await ac.get("/api/demo/organizations/测试组织画像甲")
     assert resp.status_code == 200
-    body = resp.json()
-    assert body["code"] == 200
-    data = body["data"]
-    assert data["org_id"] == "org_001"
-    assert data["org_name"] == "北第三医院"
-    assert data["org_type"] == "医疗机构"
-    assert data["region"] == "北京市海淀区"
+    data = resp.json()["data"]
+    assert data["data_source"] == "real"
+    assert data["org_name"] == "测试组织画像甲"
+    assert data["activity_90d"]["total"] >= 1
 
 
-async def test_org_profile_non_existing_org():
-    """不存在的组织 ID：返回 200 + fallback org_name（mock 端点不返回 404）。"""
+async def test_org_profile_unknown_org_honest_empty():
+    """未知组织：200 + data_source=no_data + 指标归零/置空（不伪造）。"""
     async with _client() as ac:
         resp = await ac.get("/api/demo/organizations/nonexistent_org")
     assert resp.status_code == 200
     data = resp.json()["data"]
-    assert data["org_id"] == "nonexistent_org"
-    assert data["org_name"] == "组织 nonexistent_org"
+    assert data["data_source"] == "no_data"
+    assert data["activity_90d"]["total"] == 0
+    assert data["top3_purchasers"] == []
+    assert data["top3_concentration"] is None
+    assert data["waste_bid_related"] == []
+    assert data["waste_bid_count"] == 0
 
 
 async def test_org_profile_activity_90d_structure():
-    """验证 activity_90d 结构：total/tender_count/award_count + daily 90 天。"""
+    """activity_90d 结构：total/tender_count/award_count + 90 天 daily。"""
+    await _seed_org_field("测试组织画像乙")
     async with _client() as ac:
-        resp = await ac.get("/api/demo/organizations/org_002")
-    data = resp.json()["data"]
-    activity = data["activity_90d"]
+        resp = await ac.get("/api/demo/organizations/测试组织画像乙")
+    activity = resp.json()["data"]["activity_90d"]
     assert isinstance(activity["total"], int)
     assert isinstance(activity["tender_count"], int)
     assert isinstance(activity["award_count"], int)
     assert len(activity["daily"]) == 90
-    # 每条 daily 含 date + count
     for d in activity["daily"]:
-        assert "date" in d
-        assert "count" in d
+        assert "date" in d and "count" in d
 
 
-async def test_org_profile_top3_purchasers_and_waste_bids():
-    """验证 top3_purchasers / waste_bid_related / data_completeness 字段。
-
-    此 mock 端点不输出信用评分（无 observation_score / credit_dimensions 字段），
-    对齐 v4.1 §9.1「不输出信用评分」。
-    """
+async def test_org_profile_waste_empty_and_completeness():
+    """废标恒空（采集范围不含）+ 完整性真实字段齐全 + 不输出信用评分。"""
+    await _seed_org_field("测试组织画像丙")
     async with _client() as ac:
-        resp = await ac.get("/api/demo/organizations/org_003")
+        resp = await ac.get("/api/demo/organizations/测试组织画像丙")
     data = resp.json()["data"]
-    # top3_purchasers
-    top3 = data["top3_purchasers"]
-    assert len(top3) == 3
-    for p in top3:
-        assert "name" in p
-        assert "count" in p
-        assert "ratio" in p
-    assert isinstance(data["top3_concentration"], float)
-    # waste_bid_related
-    waste = data["waste_bid_related"]
-    assert isinstance(waste, list)
-    assert data["waste_bid_count"] == len(waste)
-    for w in waste:
-        assert "project_name" in w
-        assert "waste_date" in w
-        assert "reason" in w
-    # data_completeness
+    assert data["waste_bid_related"] == []
+    assert data["waste_bid_count"] == 0
+    assert isinstance(data["waste_bid_note"], str)
     dc = data["data_completeness"]
-    assert "platforms" in dc
-    assert "total_notices" in dc
-    assert "completeness_score" in dc
-    # 此 mock 端点不输出信用评分
+    for k in ["platforms", "total_notices", "tender_count", "award_count",
+              "correction_count", "completeness_score", "missing_fields", "time_range"]:
+        assert k in dc
+    # 此端点不输出信用评分（v4.1 §9.1）
     assert "observation_score" not in data
     assert "credit_dimensions" not in data
 
@@ -408,49 +404,27 @@ async def test_report_default_query():
 # ==== f) GET /api/demo/orgs/by-name/{name} (demo_org_by_name) ====
 
 
-async def test_demo_org_by_name_existing_org_in_index():
-    """命中 _ORG_INDEX（无真实数据）→ data_source=no_data，5 维度 score=None。
-
-    验证返回的 6 维观察信号结构：org_id/org_name/org_type/region/observation_score/
-    credit_dimensions/data_source/activity_90d/top3_purchasers/waste_bid_related/
-    data_completeness。
-    """
+async def test_demo_org_by_name_unknown_org_honest_empty():
+    """真实库未命中：data_source=no_data + 指标归零/置空（不再使用样本库伪造）。"""
     async with _client() as ac:
         resp = await ac.get("/api/demo/orgs/by-name/北京大学第三医院")
     assert resp.status_code == 200
     body = resp.json()
     assert body["code"] == 200
     data = body["data"]
-    # 基本字段
-    assert data["org_name"] == "北京大学第三医院"
-    assert data["org_type"] == "医疗机构"
-    assert data["region"] == "北京市海淀区"
-    assert data["org_id"] == "org_001"
-    # 真实数据库无记录 → no_data
-    assert data["data_source"] == "no_data"
-    # v4.1 §9.1: observation_score 必须为 None（不输出信用评分）
-    assert data["observation_score"] is None
-    # observation_note 存在
-    assert isinstance(data["observation_note"], str)
-
-
-async def test_demo_org_by_name_unknown_org():
-    """未命中真实数据与样本库 → 占位元数据（org_type=未知类型，region=未登记区域）。"""
-    async with _client() as ac:
-        resp = await ac.get("/api/demo/orgs/by-name/不存在组织XYZ123")
-    assert resp.status_code == 200
-    data = resp.json()["data"]
     assert data["data_source"] == "no_data"
     assert data["org_type"] == "未知类型"
     assert data["region"] == "未登记区域"
     assert data["observation_score"] is None
-    # top3_purchasers 仍可渲染（不伪造评分）
-    assert isinstance(data["top3_purchasers"], list)
-    assert len(data["top3_purchasers"]) == 3
+    assert data["activity_90d"]["total"] == 0
+    assert data["top3_purchasers"] == []
+    assert data["top3_concentration"] is None
+    assert data["waste_bid_related"] == []
+    assert isinstance(data["observation_note"], str)
 
 
 async def test_demo_org_by_name_observation_score_always_none():
-    """v4.1 §9.1: observation_score 始终为 None（无论是否命中样本库）。"""
+    """v4.1 §9.1: observation_score 始终为 None（无论是否命中）。"""
     for name in ["北京协和医院", "上海市教育委员会", "深圳卫健委", "完全不存在组织ABC"]:
         async with _client() as ac:
             resp = await ac.get(f"/api/demo/orgs/by-name/{name}")
@@ -459,55 +433,45 @@ async def test_demo_org_by_name_observation_score_always_none():
 
 
 async def test_demo_org_by_name_activity_90d_structure():
-    """验证 activity_90d 结构：total/tender_count/award_count + 90 天 daily。"""
+    """activity_90d 结构：total/tender_count/award_count + 90 天 daily（no_data 全零）。"""
     async with _client() as ac:
         resp = await ac.get("/api/demo/orgs/by-name/北京协和医院")
-    data = resp.json()["data"]
-    activity = data["activity_90d"]
+    activity = resp.json()["data"]["activity_90d"]
     assert isinstance(activity["total"], int)
     assert isinstance(activity["tender_count"], int)
     assert isinstance(activity["award_count"], int)
     assert len(activity["daily"]) == 90
     for d in activity["daily"]:
-        assert "date" in d
-        assert "count" in d
+        assert "date" in d and "count" in d
 
 
-async def test_demo_org_by_name_top3_purchasers_and_waste_bids():
-    """验证 top3_purchasers / waste_bid_related / data_completeness 字段结构。"""
+async def test_demo_org_by_name_real_waste_empty_and_completeness():
+    """真实数据命中：废标恒空 + 完整性为真实字段。"""
+    from app.models.evidence import ExtractedField
+
+    tid = await _seed_tender(tender_org="测试真实组织废标", notice_type="tender")
+    async with AsyncSessionLocal() as db:
+        db.add(ExtractedField(
+            tender_id=tid, field_name="purchaser_name", field_status="present",
+            raw_value="测试真实组织废标", normalized_value="测试真实组织废标",
+            support_level="direct"))
+        await db.commit()
     async with _client() as ac:
-        resp = await ac.get("/api/demo/orgs/by-name/中国科学院计算技术研究所")
+        resp = await ac.get("/api/demo/orgs/by-name/测试真实组织废标")
     data = resp.json()["data"]
-    # top3_purchasers
-    top3 = data["top3_purchasers"]
-    assert len(top3) == 3
-    for p in top3:
-        assert "name" in p
-        assert "count" in p
-        assert "ratio" in p
-    assert isinstance(data["top3_concentration"], (int, float))
-    # waste_bid_related
-    waste = data["waste_bid_related"]
-    assert isinstance(waste, list)
-    assert data["waste_bid_count"] == len(waste)
-    for w in waste:
-        assert "project_name" in w
-        assert "waste_date" in w
-        assert "reason" in w
-    # data_completeness
+    assert data["data_source"] == "real"
+    assert data["waste_bid_related"] == []
+    assert data["waste_bid_count"] == 0
+    assert isinstance(data["waste_bid_note"], str)
     dc = data["data_completeness"]
-    assert "platforms" in dc
-    assert "total_notices" in dc
-    assert "completeness_score" in dc
-    assert "tender_count" in dc
-    assert "award_count" in dc
-    assert "correction_count" in dc
-    assert "time_range" in dc
-    assert "missing_fields" in dc
+    assert isinstance(dc["platforms"], list) and len(dc["platforms"]) >= 1
+    assert dc["total_notices"] >= 1
+    assert isinstance(dc["completeness_score"], (int, float))
+    assert "time_range" in dc and "missing_fields" in dc and "correction_count" in dc
 
 
 async def test_demo_org_by_name_credit_dimensions_structure():
-    """验证 credit_dimensions 5 维度 key/name/icon/display/description（对齐 observation_signals.py）。
+    """credit_dimensions 5 维度 key/name/icon/display/description（no_data 占位同样齐全）。
 
     5 维度对齐 observation_signals.py 口径（v4.1 第九章）：
     concentration / amount_anomaly / frequency / region / purchaser。
@@ -572,13 +536,13 @@ async def test_demo_org_by_name_path_with_slash():
     assert data["org_name"] == "某地/分部"
 
 
-async def test_demo_org_by_name_data_completeness_platforms():
-    """data_completeness.platforms 在 no_data 模式下使用 fallback 列表。"""
+async def test_demo_org_by_name_data_completeness_platforms_no_data():
+    """no_data 模式：platforms 为空列表（不伪造平台名）。"""
     async with _client() as ac:
         resp = await ac.get("/api/demo/orgs/by-name/北京市教育委员会")
     dc = resp.json()["data"]["data_completeness"]
     assert isinstance(dc["platforms"], list)
-    assert len(dc["platforms"]) >= 1
+    assert dc["platforms"] == []
 
 # ==== g) Direct function calls (for coverage tracking) ====
 # httpx.ASGITransport may not be tracked by coverage.py; direct calls ensure coverage.
@@ -595,7 +559,7 @@ async def test_demo_org_by_name_direct_call_no_data():
     data = _json.loads(resp.body)["data"]
     assert data["data_source"] == "no_data"
     assert data["observation_score"] is None
-    assert data["org_type"] == "医疗机构"
+    assert data["org_type"] == "未知类型"
     assert len(data["credit_dimensions"]) == 5
 
 
