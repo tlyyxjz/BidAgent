@@ -478,6 +478,36 @@ async def test_real_organization_activity_90d():
         assert "count" in d
 
 
+async def test_real_organization_amount_total_real_sum():
+    """amount_total 为该采购人名下公告 win_amount 真实求和（不估算、不伪造）。
+
+    w6 数据诚实性：对齐 demo_org_query.py，禁止 row.cnt * 10000000 估算乘数。
+    """
+    purchaser = "测试采购人_金额求和"
+    tid1 = await _seed_tender(win_amount=Decimal("5000000.00"))
+    await _seed_field(tid1, "purchaser_name", purchaser)
+    tid2 = await _seed_tender(win_amount=Decimal("3000000.00"))
+    await _seed_field(tid2, "purchaser_name", purchaser)
+    async with _client() as ac:
+        resp = await ac.get(f"/api/real/tenders/{tid1}/organization")
+    top3 = resp.json()["data"]["top3_purchasers"]
+    target = next(p for p in top3 if p["name"] == purchaser)
+    assert target["count"] == 2
+    assert target["amount_total"] == 8000000.0
+
+
+async def test_real_organization_amount_total_none_when_no_win_amount():
+    """无 win_amount 时 amount_total 为 None（不伪造估算值）。"""
+    purchaser = "测试采购人_无金额"
+    tid = await _seed_tender(win_amount=None)
+    await _seed_field(tid, "purchaser_name", purchaser)
+    async with _client() as ac:
+        resp = await ac.get(f"/api/real/tenders/{tid}/organization")
+    top3 = resp.json()["data"]["top3_purchasers"]
+    target = next(p for p in top3 if p["name"] == purchaser)
+    assert target["amount_total"] is None
+
+
 async def test_real_organization_not_found():
     """不存在的 ID：返回 404。"""
     async with _client() as ac:

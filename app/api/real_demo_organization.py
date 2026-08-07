@@ -90,9 +90,14 @@ async def get_tender_organization(tender_id: int, db: AsyncSession = Depends(get
         d = start + _td(days=i)
         daily.append({"date": d.strftime("%Y-%m-%d"), "count": date_counts.get(d, 0)})
 
-    # top3 采购人（基于所有公告）
+    # top3 采购人（基于所有公告）；amount_total 为该采购人名下公告 win_amount 真实求和，无值返回 None
     purchasers_result = await db.execute(
-        select(ExtractedField.raw_value, func.count(ExtractedField.id).label("cnt"))
+        select(
+            ExtractedField.raw_value,
+            func.count(ExtractedField.id).label("cnt"),
+            func.sum(Tender.win_amount).label("amount_sum"),
+        )
+        .join(Tender, ExtractedField.tender_id == Tender.id)
         .where(ExtractedField.field_name == "purchaser_name")
         .group_by(ExtractedField.raw_value)
         .order_by(func.count(ExtractedField.id).desc())
@@ -103,7 +108,7 @@ async def get_tender_organization(tender_id: int, db: AsyncSession = Depends(get
         top3_purchasers.append({
             "name": row.raw_value or "未知",
             "count": row.cnt,
-            "amount_total": row.cnt * 10000000,  # 估算
+            "amount_total": float(row.amount_sum) if row.amount_sum is not None else None,
         })
 
     top3_concentration = sum(p["count"] for p in top3_purchasers) / max(total, 1) if total else 0
