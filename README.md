@@ -3,7 +3,7 @@
 > 面向供应链金融贷前尽调的可验证招投标数据引擎 · GOAI 2026。单篇公告核验成本不足 1 分钱、端到端约 24 秒（598 篇金标实测），把供应商中标记录核验从人工约 1-2 人时压缩到分钟级——且每个数字都可回溯公告原文：LLM 只生成候选，确定性程序负责验证。
 
 **当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
-**测试**：1942 passed · 0 warnings · **评测数据**：162 篇真实公告 · 金标 598 篇 · **分支**：feature/w5-ui-redesign
+**测试**：1979 passed · 0 warnings · **评测数据**：162 篇真实公告 · 金标 598 篇 · **分支**：feature/w5-ui-redesign
 
 ---
 
@@ -177,9 +177,9 @@ TenderProject（采购项目）
 
 ### 测试
 
-- 1942 passed · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
+- 1979 passed · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
 - 0 warnings（已清理 asyncio mark 误标与 datetime.utcnow() 弃用告警）
-- 测试覆盖率 90.63%（达到 pyproject.toml 阈值 90%，1942 用例全量实测）
+- 测试覆盖率 90.30%（达到 pyproject.toml 阈值 90%，1979 用例全量实测）
 
 ---
 
