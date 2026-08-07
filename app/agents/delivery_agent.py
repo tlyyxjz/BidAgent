@@ -54,9 +54,23 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
 
     logger.info("delivery_agent started sub_id={}", sub_id)
 
-    # 查询未推送的 tenders
+    # 查询未推送的 tenders（增量推送语义）
     async with AsyncSessionLocal() as db:
         unpushed = await get_unpushed_tenders(db, sub_id, parsed)
+
+        # Bug 17 修复：用户主动查询场景下，即使无"新推送"数据，
+        # 也应基于查询条件生成报告（避免前端被迫走残缺的 demo_report fallback）。
+        # 回退到带过滤的全量查询（与 get_unpushed_tenders 相同的 region/topic/notice_types 过滤，
+        # 但不带 NOT EXISTS 增量过滤），确保用户拿到与查询主题相关的完整报告。
+        is_fallback = False
+        if not unpushed:
+            logger.info(
+                "delivery_agent no unpushed tenders, fallback to filtered query sub_id={}",
+                sub_id,
+            )
+            unpushed = await _query_tenders_with_filters(db, parsed)
+            is_fallback = bool(unpushed)
+
         items = [
             {
                 "project_name": t.project_name,
@@ -80,9 +94,9 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
             "webhook_sent": False,
             "delivered": False,
             "message_id": None,
-            "reason": "no new tenders",
+            "reason": "no tenders matched",
         }
-        logger.info("delivery_agent skipped (no new tenders)")
+        logger.info("delivery_agent skipped (no tenders matched query)")
         return state
 
     # 生成 Word 报告（传入 finance_summary，生成金融分析章节）
@@ -98,6 +112,24 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
     state["report_path"] = report_path
 
     # 触发推送（SMTP + Webhook，复用现有 trigger_subscription 逻辑）
+    # Bug 17 注：fallback 场景下不触发推送（避免对已推送数据重复推送）
+    if is_fallback:
+        state["delivery_summary"] = {
+            "report_generated": True,
+            "report_path": report_path,
+            "total_tenders": len(unpushed),
+            "email_sent": False,
+            "webhook_sent": False,
+            "delivered": False,
+            "message_id": None,
+            "fallback_query": True,
+        }
+        logger.info(
+            "delivery_agent completed (fallback) report={} skipped push",
+            report_path,
+        )
+        return state
+
     delivery_result = await _trigger_push(state, sub_id, unpushed)
 
     state["delivery_summary"] = {
@@ -117,6 +149,35 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
         delivery_result.get("message_id"),
     )
     return state
+
+
+async def _query_tenders_with_filters(db, filters) -> list[Any]:
+    """带过滤条件的全量查询（Bug 17 修复：fallback 查询）。
+
+    与 get_unpushed_tenders 相同的 region/topic/notice_types 过滤逻辑，
+    但不带 NOT EXISTS 增量过滤，用于用户主动查询场景下数据已全部推送时的回退查询。
+
+    Args:
+        db: AsyncSession
+        filters: ParsedFilters
+
+    Returns:
+        list[Tender]，最多 100 条，按 publish_time 降序
+    """
+    from sqlalchemy import select
+    from app.scheduler.utils import safe_contains
+    from app.models.tender import Tender
+
+    stmt = select(Tender)
+    if filters.region:
+        stmt = stmt.where(safe_contains(Tender.location, filters.region))
+    if filters.topic:
+        stmt = stmt.where(safe_contains(Tender.project_name, filters.topic))
+    if filters.notice_types:
+        stmt = stmt.where(Tender.notice_type.in_(filters.notice_types))
+    stmt = stmt.order_by(Tender.publish_time.desc()).limit(100)
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
 
 
 def _build_source_texts(tenders: list[Any]) -> dict[str, str]:
