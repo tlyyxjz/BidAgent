@@ -54,26 +54,53 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
 
     logger.info("delivery_agent started sub_id={}", sub_id)
 
-    # 查询未推送的 tenders（增量推送语义）
-    async with AsyncSessionLocal() as db:
-        unpushed = await get_unpushed_tenders(db, sub_id, parsed)
+    # 优先复用 processor_agent 已查到的 tender_ids（保证 delivery 查到的
+    # 数据与 processor 一致，避免 notice_types 等过滤差异导致查到 0 条）
+    # P0 修复：区分"processor 查到0条"(tender_ids=[]) 和"未走 processor"(None)
+    # processor 查0条时不应 fallback 出无关数据（如实返回空）
+    tender_ids = state.get("tender_ids")
+    _processor_ran = tender_ids is not None
 
-        # Bug 17 修复：用户主动查询场景下，即使无"新推送"数据，
-        # 也应基于查询条件生成报告（避免前端被迫走残缺的 demo_report fallback）。
-        # 回退到带过滤的全量查询（与 get_unpushed_tenders 相同的 region/topic/notice_types 过滤，
-        # 但不带 NOT EXISTS 增量过滤），确保用户拿到与查询主题相关的完整报告。
-        is_fallback = False
-        if not unpushed:
+    # 查询未推送的 tenders（增量推送语义），查不到 fallback 到全量过滤查询
+    async with AsyncSessionLocal() as db:
+        if tender_ids:
+            # 复用 processor 的查询结果（用户主动查询场景）
+            from sqlalchemy import select
+            from app.models.tender import Tender as _T
+            result = await db.execute(
+                select(_T).where(_T.id.in_(tender_ids)).order_by(_T.id.desc())
+            )
+            unpushed = list(result.scalars().all())
+            is_fallback = True
             logger.info(
-                "delivery_agent no unpushed tenders, fallback to filtered query sub_id={}",
+                "delivery_agent reuse processor tender_ids count={}", len(tender_ids),
+            )
+        elif _processor_ran:
+            # P0 修复：processor 已执行但查到0条，如实返回空（不再 fallback
+            # 出无关数据，避免报告内容与查询条件不符）
+            logger.info(
+                "delivery_agent processor found 0 tenders, skip fallback sub_id={}",
                 sub_id,
             )
-            unpushed = await _query_tenders_with_filters(db, parsed)
-            is_fallback = bool(unpushed)
+            unpushed = []
+            is_fallback = False
+        else:
+            unpushed = await get_unpushed_tenders(db, sub_id, parsed)
+
+            # 订阅推送场景：无 unpushed 时 fallback 到全量过滤查询
+            is_fallback = False
+            if not unpushed:
+                logger.info(
+                    "delivery_agent no unpushed tenders, fallback to filtered query sub_id={}",
+                    sub_id,
+                )
+                unpushed = await _query_tenders_with_filters(db, parsed)
+                is_fallback = bool(unpushed)
 
         items = [
             {
                 "project_name": t.project_name,
+                "bid_number": t.bid_number,
                 "publish_time": t.publish_time.isoformat() if t.publish_time else None,
                 "source_url": t.source_url,
                 "core_content": t.core_content,
@@ -95,19 +122,23 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
             "delivered": False,
             "message_id": None,
             "reason": "no tenders matched",
+            # P2: 透传 region_relaxed，让前端/报告说明"已回退全国数据"
+            "region_relaxed": (state.get("process_summary") or {}).get("region_relaxed", False),
         }
         logger.info("delivery_agent skipped (no tenders matched query)")
         return state
 
-    # 生成 Word 报告（传入 finance_summary，生成金融分析章节）
+    # 生成 Word 报告（传入 finance_summary + quality_summary，生成金融分析+证据验证章节）
     source_texts = _build_source_texts(unpushed)
     finance_summary = state.get("finance_summary")
+    quality_summary = state.get("quality_summary")
     report_path = await generate_report(
         parsed,
         items,
         job_id=f"agent_{sub_id}",
         source_texts=source_texts or None,
         finance_summary=finance_summary,
+        quality_summary=quality_summary,
     )
     state["report_path"] = report_path
 
@@ -123,6 +154,8 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
             "delivered": False,
             "message_id": None,
             "fallback_query": True,
+            # P2: 透传 region_relaxed
+            "region_relaxed": (state.get("process_summary") or {}).get("region_relaxed", False),
         }
         logger.info(
             "delivery_agent completed (fallback) report={} skipped push",
@@ -140,6 +173,8 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
         "webhook_sent": delivery_result.get("webhook_sent", False),
         "delivered": delivery_result.get("delivered", False),
         "message_id": delivery_result.get("message_id"),
+        # P2: 透传 region_relaxed
+        "region_relaxed": (state.get("process_summary") or {}).get("region_relaxed", False),
     }
 
     logger.info(
@@ -152,32 +187,66 @@ async def delivery_agent(state: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _query_tenders_with_filters(db, filters) -> list[Any]:
-    """带过滤条件的全量查询（Bug 17 修复：fallback 查询）。
+    """带过滤条件的全量查询（用户主动查询 / 订阅 fallback）。
 
-    与 get_unpushed_tenders 相同的 region/topic/notice_types 过滤逻辑，
-    但不带 NOT EXISTS 增量过滤，用于用户主动查询场景下数据已全部推送时的回退查询。
+    宽松匹配策略：topic / region / keywords 任一命中 project_name /
+    core_content / tender_org / location 即返回；全部查不到时返回空列表
+    （不再 fallback 返回不相关数据，如实反映查询结果）。
 
     Args:
         db: AsyncSession
         filters: ParsedFilters
 
     Returns:
-        list[Tender]，最多 100 条，按 publish_time 降序
+        list[Tender]，最多 100 条，按 publish_time 降序；无匹配返回 []
     """
-    from sqlalchemy import select
+    from sqlalchemy import or_, select
     from app.scheduler.utils import safe_contains
     from app.models.tender import Tender
 
-    stmt = select(Tender)
+    # 1. 宽松匹配：topic（拆词）/ keywords / region 任一命中即返回
+    # P0 修复：与 processor_agent 一致，用 _split_topic 拆词，不用整句
+    from app.agents.processor_agent import _split_topic
+    conditions = []
+    topic_words = _split_topic(filters.topic or "")
+    for kw in topic_words:
+        conditions.append(safe_contains(Tender.project_name, kw))
+        conditions.append(safe_contains(Tender.core_content, kw))
+    for kw in (getattr(filters, "keywords", []) or []):
+        if kw:
+            conditions.append(safe_contains(Tender.project_name, kw))
+            conditions.append(safe_contains(Tender.tender_org, kw))
     if filters.region:
-        stmt = stmt.where(safe_contains(Tender.location, filters.region))
-    if filters.topic:
-        stmt = stmt.where(safe_contains(Tender.project_name, filters.topic))
-    if filters.notice_types:
-        stmt = stmt.where(Tender.notice_type.in_(filters.notice_types))
-    stmt = stmt.order_by(Tender.publish_time.desc()).limit(100)
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
+        # P0 修复：补上 project_name 和 core_content（很多公告 tender_org/location 为空）
+        conditions.append(safe_contains(Tender.project_name, filters.region))
+        conditions.append(safe_contains(Tender.location, filters.region))
+        conditions.append(safe_contains(Tender.tender_org, filters.region))
+        conditions.append(safe_contains(Tender.core_content, filters.region))
+
+    if conditions:
+        stmt = select(Tender).where(or_(*conditions))
+        # P1 修复：notice_types中英文兼容映射（与processor_agent一致）
+        if filters.notice_types:
+            _nt_map = {"中标": "award", "成交": "award", "更正": "correction",
+                       "变更": "correction", "招标": "tender", "采购": "tender"}
+            _nt_vals: list[str] = []
+            for nt in filters.notice_types:
+                matched = False
+                for k, v in _nt_map.items():
+                    if k in str(nt) or v == str(nt):
+                        _nt_vals.append(v)
+                        matched = True
+                        break
+                if not matched:
+                    _nt_vals.append(str(nt))
+            stmt = stmt.where(Tender.notice_type.in_(_nt_vals))
+        stmt = stmt.order_by(Tender.publish_time.desc()).limit(100)
+        result = await db.execute(stmt)
+        tenders = list(result.scalars().all())
+        return tenders
+
+    # 无匹配条件或匹配为空时返回空列表（不再 fallback 返回不相关数据）
+    return []
 
 
 def _build_source_texts(tenders: list[Any]) -> dict[str, str]:

@@ -14,9 +14,10 @@ P0-2 修复（2026-08-06）：
 """
 from __future__ import annotations
 
-import logging
 from dataclasses import asdict, is_dataclass
 from typing import Any
+
+from app.utils.logger import get_logger
 
 from app.processors.observation_signals import analyze_observation_signals
 from app.processors.observation_types import (
@@ -28,7 +29,7 @@ from app.processors.observation_types import (
     SIGNAL_INFO_CONFLICT,
 )
 
-logger = logging.getLogger("finance_agent")
+logger = get_logger("agent.finance")
 
 # 中文信号名 → docx 报告章节使用的英文键（对齐 report/docx_sections.py）
 _SIGNAL_KEY_MAP = {
@@ -48,23 +49,95 @@ def _field(obj: Any, name: str, default: Any = None) -> Any:
     return getattr(obj, name, default)
 
 
+# 字段名别名映射：finance_agent 逻辑名 -> LLM 抽取器规范名 + ORM 名
+# LLM 抽取器（extraction_schemas.py CORE_FIELD_NAMES）输出：
+#   project_identifier / purchaser_name / winner_name / amount / publish_date / bid_deadline
+# ORM Tender 对象顶层字段：win_company / tender_org / budget_amount / publish_time ...
+_FIELD_ALIASES: dict[str, list[str]] = {
+    "win_company": ["winner_name", "win_company", "中标人", "中标企业"],
+    "tender_org": ["purchaser_name", "tender_org", "采购人", "采购单位"],
+    "win_amount": ["amount", "win_amount", "中标金额", "合同金额"],
+    "budget_amount": ["amount", "budget_amount", "预算金额"],
+    "publish_time": ["publish_date", "publish_time", "发布日期"],
+    "win_date": ["publish_date", "win_date", "中标日期", "成交日期"],
+    "project_name": ["project_name", "title", "项目名称"],
+    "location": ["location", "region", "地区"],
+    "source_url": ["source_url", "notice_url", "url"],
+    "source_platform": ["source_platform", "platform"],
+}
+
+
+def _extract_field_from_tender(t: Any, field_name: str) -> Any:
+    """从 tender 对象提取字段值（兼容顶层字段和 fields 列表两种格式）。
+
+    通过 _FIELD_ALIASES 同时匹配逻辑名 + LLM 规范名 + ORM 名，解决
+    字段名不一致（LLM输出winner_name而代码查win_company）导致分组为空的问题。
+    """
+    aliases = _FIELD_ALIASES.get(field_name, [field_name])
+
+    # 1. 先尝试顶层字段（ORM 对象或扁平 dict）
+    for alias in aliases:
+        val = _field(t, alias)
+        if val:
+            return val
+
+    # 2. 尝试从 fields 列表提取（processor/quality agent 产出的格式）
+    fields = _field(t, "fields") or []
+    if isinstance(fields, list):
+        for f in fields:
+            if isinstance(f, dict) and f.get("field_name") in aliases:
+                return f.get("raw_value") or f.get("value")
+    return None
+
+
 def _group_win_records(tenders: list) -> dict[str, list[dict]]:
-    """按中标企业分组构造中标观察记录（v4.1 §9.2 信号计算入参）。"""
+    """按中标企业分组构造中标观察记录（v4.1 §9.2 信号计算入参）。
+
+    P0 修复：
+    1. ccgp 列表页不提供 win_company（0% 填充率），fallback 到 tender_org
+    2. 字段在 fields 列表里（非顶层），需要用 _extract_field_from_tender 提取
+    """
     grouped: dict[str, list[dict]] = {}
+    _fallback_count = 0
     for t in tenders:
-        company = _field(t, "win_company") or ""
+        # 优先用 win_company，缺失时 fallback 到 tender_org
+        company = _extract_field_from_tender(t, "win_company") or ""
+        if not company:
+            company = _extract_field_from_tender(t, "tender_org") or ""
+            _fallback_count += 1
         if not company:
             continue
         record = {
-            "win_date": str(_field(t, "publish_time") or _field(t, "win_date") or ""),
-            "win_amount": _field(t, "win_amount") or _field(t, "budget_amount"),
-            "notice_title": _field(t, "project_name") or _field(t, "title") or "",
-            "purchaser": _field(t, "tender_org") or "",
-            "region": _field(t, "location") or "",
-            "notice_url": _field(t, "source_url") or "",
-            "source_platform": _field(t, "source_platform") or "",
+            "win_date": str(
+                _extract_field_from_tender(t, "publish_time")
+                or _extract_field_from_tender(t, "win_date")
+                or _field(t, "publish_time")
+                or ""
+            ),
+            "win_amount": (
+                _extract_field_from_tender(t, "win_amount")
+                or _extract_field_from_tender(t, "budget_amount")
+                or _field(t, "win_amount")
+                or _field(t, "budget_amount")
+            ),
+            "notice_title": (
+                _extract_field_from_tender(t, "project_name")
+                or _field(t, "project_name")
+                or _field(t, "title")
+                or ""
+            ),
+            "purchaser": _extract_field_from_tender(t, "tender_org") or _field(t, "tender_org") or "",
+            "region": _extract_field_from_tender(t, "location") or _field(t, "location") or "",
+            "notice_url": _extract_field_from_tender(t, "source_url") or _field(t, "source_url") or "",
+            "source_platform": _extract_field_from_tender(t, "source_platform") or _field(t, "source_platform") or "",
         }
         grouped.setdefault(company, []).append(record)
+
+    if _fallback_count > 0:
+        logger.info(
+            "finance_agent: win_company缺失{}条，fallback到tender_org分组",
+            _fallback_count,
+        )
     return grouped
 
 
@@ -109,7 +182,13 @@ async def run(state: dict[str, Any]) -> dict[str, Any]:
 
     严格不输出信用评分，不调用 BOQ/废标引擎。
     """
-    tenders = state.get("quality_tenders") or state.get("processed_tenders") or []
+    # P1 修复：区分"quality_agent未运行"(None)和"quality_tenders为空"([])
+    # 未运行时回退到processed_tenders；已运行时只用验证后的数据(即使为空)
+    quality_tenders = state.get("quality_tenders")
+    if quality_tenders is not None:
+        tenders = quality_tenders
+    else:
+        tenders = state.get("processed_tenders") or []
 
     if not tenders:
         logger.warning("finance_agent: 无可用公告数据")
@@ -117,6 +196,9 @@ async def run(state: dict[str, Any]) -> dict[str, Any]:
         # v4.1 契约：无论有无数据，state 必须含 observation_signals（空观察信号）
         state.setdefault("observation_signals", {})
         return state
+
+    # P2: 读取采集平台列表，用于回填 coverage_platforms
+    collect_summary = state.get("collect_summary") or {}
 
     try:
         grouped = _group_win_records(tenders)
@@ -128,12 +210,29 @@ async def run(state: dict[str, Any]) -> dict[str, Any]:
 
         signals_by_org: dict[str, dict] = {}
         for company, records in grouped.items():
+            # P1 修复：用hashlib替代内置hash()，确保跨进程确定性
+            import hashlib
+            org_hash = hashlib.md5(company.encode("utf-8")).hexdigest()[:12]
             result = analyze_observation_signals(
-                org_id=f"org_{abs(hash(company)) % 10**12:012d}",
+                org_id=f"org_{org_hash}",
                 org_name=company,
                 win_records=records,
             )
             signals_by_org[company] = _result_to_dict(result)
+
+        # P2 修复：processed_tenders 缺 source_platform 字段，导致
+        # observation_signals 内部算出的 coverage_platforms 恒为空。
+        # 从 collect_summary 读取采集平台列表，后处理回填每个组织。
+        # 兼容两种结构：platforms_collected (旧) 或 per_platform (新, list[dict])
+        _platforms = collect_summary.get("platforms_collected") or []
+        if not _platforms:
+            for _pp in (collect_summary.get("per_platform") or []):
+                _name = _pp.get("platform") if isinstance(_pp, dict) else None
+                if _name and _name not in _platforms:
+                    _platforms.append(_name)
+        for _org_name, _org_res in signals_by_org.items():
+            if not _org_res.get("coverage_platforms") and _platforms:
+                _org_res["coverage_platforms"] = list(_platforms)
 
         # 全量按组织保存（供 API / 前端画像）
         state["observation_signals"] = signals_by_org

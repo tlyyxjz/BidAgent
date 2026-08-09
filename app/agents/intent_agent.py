@@ -55,6 +55,14 @@ async def intent_agent(state: dict[str, Any]) -> dict[str, Any]:
             missing_slots,
         )
 
+    # 兜底：topic 仍为 None 时用 raw_query 当 topic，避免查询无主题
+    if not parsed.topic and parsed.raw_query:
+        parsed.topic = parsed.raw_query
+        # P2 修复：fallback 后重新同步 state["topic"]，避免与 parsed.topic 不一致
+        # （原实现 state["topic"] 在 fallback 前已写入，仍是 None，下游读 state["topic"] 会拿到空值）
+        state["topic"] = parsed.topic
+        logger.info("intent_agent topic fallback to raw_query={}", parsed.topic[:30])
+
     logger.info(
         "intent_agent completed topic={} region={} trigger_type={}",
         parsed.topic, parsed.region, parsed.trigger_type,

@@ -1,4 +1,4 @@
-"""Agent 4: 质量保障 Agent。
+﻿"""Agent 4: 质量保障 Agent。
 
 职责：SimHash 去重 + 反幻觉校验。
 
@@ -37,73 +37,168 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
     """
     collect_summary = state.get("collect_summary") or {}
     process_summary = state.get("process_summary") or {}
+    processed_tenders = state.get("processed_tenders") or []
 
     logger.info(
-        "quality_agent started total_collected={} total_processed={}",
+        "quality_agent started total_collected={} total_processed={} extracted={}",
         collect_summary.get("total", 0),
         process_summary.get("total_processed", 0),
+        len(processed_tenders),
     )
 
-    # SimHash 去重已在 tender_ingestor.ingest_scrape_result 中完成
-    # 这里做反幻觉校验 + 质量评分
-    from app.models.database import AsyncSessionLocal
-    from app.models.tender import Tender
-    from app.processors.hallucination_checker import check_content
-    from sqlalchemy import select
+    # P1 修复：SimHash 64 位内容级去重（核心卖点，原实现完全未接入）
+    # 对每条公告的 source_raw_text 计算 SimHash，汉明距离<=3 视为近似重复
+    from app.processors.simhash import compute_simhash, find_duplicate_in_iter
+    import asyncio as _asyncio
 
-    sub_id = state.get("subscription_id")
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(
-            select(Tender)
-            .where(Tender.source_platform.in_(
-                collect_summary.get("platforms_collected", ["ccgp"])
-            ))
-            .order_by(Tender.id.desc())
-            .limit(100)
-        )
-        tenders = result.scalars().all()
+    def _compute_simhash_batch(texts: list[str]) -> list[int]:
+        """批量计算 SimHash（在线程池中执行，避免阻塞事件循环）。"""
+        return [compute_simhash(t) for t in texts]
 
-        # 反幻觉校验（P2-8 修复：以 source_raw_text 原文为比对基准，
-        # 原实现 check_content(core_content, core_content) 拿自己比自己恒通过）
-        hallucination_flags = 0
-        verified = 0
-        for t in tenders:
-            if not t.core_content or not t.source_url:
+    simhash_duplicates = 0
+    if processed_tenders:
+        texts = [pt.get("source_raw_text") or "" for pt in processed_tenders]
+        # CPU 密集任务 offload 到线程池（project_memory 硬约束）
+        simhashes = await _asyncio.to_thread(_compute_simhash_batch, texts)
+
+        _simhash_seen: list[tuple[int, int]] = []  # (原始索引, simhash)
+        _deduped: list[dict[str, Any]] = []
+        for idx, (pt, sh) in enumerate(zip(processed_tenders, simhashes)):
+            pt["_simhash"] = sh
+            if sh == 0:
+                # 空文本无法计算指纹，保留待证据验证阶段处理
+                _deduped.append(pt)
                 continue
-            if not t.source_raw_text:
-                # 无原文可比对：记为未核验，不算通过也不算幻觉
-                continue
-            # check_content 返回 CheckReport 对象(有 .passed / .facts 属性)
-            report = check_content(t.core_content, t.source_raw_text)
-            verified += 1
-            if not report.passed:
-                hallucination_flags += 1
-                logger.warning(
-                    "quality_agent hallucination detected tender_id={} total={} verified={} hallucinated={}",
-                    t.id, report.total_facts, report.verified_facts, report.hallucinated_facts,
+            dup = find_duplicate_in_iter(sh, _simhash_seen, threshold=3)
+            if dup is not None:
+                simhash_duplicates += 1
+                pt["_is_simhash_duplicate"] = True
+                logger.debug(
+                    "simhash duplicate tender_idx={} matched_idx={} hamming<=3",
+                    idx, dup[0],
                 )
+                continue
+            _simhash_seen.append((idx, sh))
+            _deduped.append(pt)
 
-    # 质量评分：去重率 + 反幻觉通过率（分母为实际核验数，未核验不充数）
+        if simhash_duplicates > 0:
+            logger.info(
+                "quality_agent simhash dedup removed={} remaining={}",
+                simhash_duplicates, len(_deduped),
+            )
+        processed_tenders = _deduped
+
+    # 真实证据定位 + 程序验证（接 evidence_locator + field_validator）
+    # 修复：原实现只拿 core_content 与 source_raw_text 自比（恒通过），
+    # 核心卖点"证据定位 + 反幻觉校验"未接入
+    from app.processors.evidence_locator._locator import EvidenceLocator
+    from app.processors.evidence_locator._verify import verify_evidence
+    from app.processors.field_validator import validate_field
+
+    total_fields = 0
+    verified_fields = 0
+    unjustified_fields = 0
+    hallucination_flags = 0
+    verified_tenders: list[dict[str, Any]] = []
+
+    for pt in processed_tenders:
+        raw_text = pt.get("source_raw_text") or ""
+        fields = pt.get("fields") or []
+        if not raw_text or not fields:
+            continue
+
+        locator = EvidenceLocator(raw_text)
+        tender_verified: list[dict[str, Any]] = []
+        for f in fields:
+            total_fields += 1
+            field_name = f.get("field_name", "")
+            raw_value = f.get("raw_value") or ""
+            candidate_evidences = f.get("candidate_evidences") or []
+
+            # 证据定位：在原文中定位候选证据
+            located = False
+            verified_evidence_text = ""
+            for ce in candidate_evidences:
+                ce_text = ce.get("evidence_text") or ""
+                if not ce_text:
+                    continue
+                loc_result = locator.locate(ce_text)
+                if loc_result.found and loc_result.location:
+                    # 验证偏移量正确性
+                    valid, _msg = verify_evidence(
+                        raw_text, ce_text,
+                        loc_result.location.start,
+                        loc_result.location.end,
+                    )
+                    if valid:
+                        located = True
+                        verified_evidence_text = ce_text
+                        break
+
+            if located:
+                verified_fields += 1
+                f["evidence_verified"] = True
+                f["verified_evidence"] = verified_evidence_text
+            else:
+                # 证据未定位到：标记为无依据（unjustified）
+                unjustified_fields += 1
+                f["evidence_verified"] = False
+
+            # 确定性校验（金额/日期/编号三类字段）
+            if raw_value and field_name in ("amount", "publish_date", "bid_deadline", "project_identifier"):
+                try:
+                    field_type = "amount" if field_name == "amount" else (
+                        "date" if "date" in field_name or field_name == "bid_deadline" else "project_identifier"
+                    )
+                    vr = validate_field(field_type, raw_value)
+                    f["deterministic_valid"] = vr.valid
+                    if not vr.valid:
+                        hallucination_flags += 1
+                except Exception:  # noqa: BLE001
+                    f["deterministic_valid"] = None
+
+            tender_verified.append(f)
+
+        verified_tenders.append({
+            **pt,
+            "fields": tender_verified,
+        })
+
+    # 质量评分：去重率 + 证据验证通过率（P2: 纳入幻觉惩罚）
     total = collect_summary.get("total", 0)
     duplicates = collect_summary.get("duplicates", 0)
     dedup_rate = 1.0 - (duplicates / total if total > 0 else 0)
-    hallucination_pass_rate = 1.0 - (
-        hallucination_flags / verified if verified else 0
+    # P0 修复：0字段时通过率应为0.0而非1.0（无数据≠100%通过）
+    evidence_pass_rate = (
+        verified_fields / total_fields if total_fields > 0 else 0.0
     )
-    quality_score = (dedup_rate + hallucination_pass_rate) / 2
+    # P2 修复：幻觉标记应拉低质量分（有幻觉≠高质量）
+    hallucination_rate = (
+        hallucination_flags / total_fields if total_fields > 0 else 0.0
+    )
+    base_score = (dedup_rate + evidence_pass_rate) / 2
+    quality_score = base_score * (1.0 - hallucination_rate)
 
     state["quality_summary"] = {
-        "total_checked": len(tenders),
-        "total_verified": verified,
+        "total_checked": len(processed_tenders),
+        "total_fields": total_fields,
+        "verified_fields": verified_fields,
+        "unjustified_fields": unjustified_fields,
         "duplicates_removed": duplicates,
+        "simhash_duplicates": simhash_duplicates,
         "hallucination_flags": hallucination_flags,
+        "hallucination_rate": round(hallucination_rate, 3),
         "quality_score": round(quality_score, 3),
         "dedup_rate": round(dedup_rate, 3),
-        "hallucination_pass_rate": round(hallucination_pass_rate, 3),
+        "evidence_pass_rate": round(evidence_pass_rate, 3),
     }
 
+    # 传递给 finance_agent 做六维观察信号计算
+    state["quality_tenders"] = verified_tenders
+
     logger.info(
-        "quality_agent completed total_checked={} duplicates={} hallucination_flags={} quality_score={:.3f}",
-        len(tenders), duplicates, hallucination_flags, quality_score,
+        "quality_agent completed total_checked={} fields={} verified={} unjustified={} simhash_dups={} halluc={} quality_score={:.3f}",
+        len(processed_tenders), total_fields, verified_fields, unjustified_fields,
+        simhash_duplicates, hallucination_flags, quality_score,
     )
     return state
