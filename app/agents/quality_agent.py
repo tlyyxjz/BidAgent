@@ -64,7 +64,7 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
         _simhash_seen: list[tuple[int, int]] = []  # (原始索引, simhash)
         _deduped: list[dict[str, Any]] = []
         for idx, (pt, sh) in enumerate(zip(processed_tenders, simhashes)):
-            pt["_simhash"] = sh
+            # E4 修复：不直接修改原始 pt（避免 _simhash 泄入 quality_tenders/finance）
             if sh == 0:
                 # 空文本无法计算指纹，保留待证据验证阶段处理
                 _deduped.append(pt)
@@ -72,7 +72,6 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
             dup = find_duplicate_in_iter(sh, _simhash_seen, threshold=3)
             if dup is not None:
                 simhash_duplicates += 1
-                pt["_is_simhash_duplicate"] = True
                 logger.debug(
                     "simhash duplicate tender_idx={} matched_idx={} hamming<=3",
                     idx, dup[0],
@@ -87,6 +86,14 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
                 simhash_duplicates, len(_deduped),
             )
         processed_tenders = _deduped
+        # A2 修复：去重后同步更新 state["tender_ids"]，让 delivery 不再查到已去重的重复公告
+        _deduped_ids = [pt.get("id") for pt in _deduped if pt.get("id") is not None]
+        if _deduped_ids and simhash_duplicates > 0:
+            state["tender_ids"] = _deduped_ids
+            logger.info(
+                "quality_agent updated tender_ids after dedup: {} -> {}",
+                len(state.get("tender_ids", [])), len(_deduped_ids),
+            )
 
     # 真实证据定位 + 程序验证（接 evidence_locator + field_validator）
     # 修复：原实现只拿 core_content 与 source_raw_text 自比（恒通过），
@@ -167,7 +174,10 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
     # 质量评分：去重率 + 证据验证通过率（P2: 纳入幻觉惩罚）
     total = collect_summary.get("total", 0)
     duplicates = collect_summary.get("duplicates", 0)
-    dedup_rate = 1.0 - (duplicates / total if total > 0 else 0)
+    # C2 修复：dedup_rate 纳入 SimHash 内容去重数（原只算采集层 URL 去重）
+    # C2b 最终修复：保持原分母 collect_total，加 max(0) 兜底防负数
+    # （采集层 total 和 quality 层不在同一层级，分母不能混用）
+    dedup_rate = max(0.0, 1.0 - ((duplicates + simhash_duplicates) / total if total > 0 else 0))
     # P0 修复：0字段时通过率应为0.0而非1.0（无数据≠100%通过）
     evidence_pass_rate = (
         verified_fields / total_fields if total_fields > 0 else 0.0
@@ -179,6 +189,10 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
     base_score = (dedup_rate + evidence_pass_rate) / 2
     quality_score = base_score * (1.0 - hallucination_rate)
 
+    # A3 修复：组织画像覆盖率写进 quality_summary（前端可见"本次分析覆盖 N/100 条"）
+    _total_input = len(state.get("processed_tenders") or [])
+    _llm_covered = sum(1 for pt in (state.get("processed_tenders") or [])
+                       if pt.get("fields"))
     state["quality_summary"] = {
         "total_checked": len(processed_tenders),
         "total_fields": total_fields,
@@ -191,6 +205,10 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
         "quality_score": round(quality_score, 3),
         "dedup_rate": round(dedup_rate, 3),
         "evidence_pass_rate": round(evidence_pass_rate, 3),
+        # A3: 覆盖率指标
+        "llm_coverage_total": _total_input,
+        "llm_coverage_extracted": _llm_covered,
+        "llm_coverage_rate": round(_llm_covered / _total_input, 3) if _total_input > 0 else 0.0,
     }
 
     # 传递给 finance_agent 做六维观察信号计算

@@ -227,8 +227,9 @@ async def _query_tenders_with_filters(db, filters) -> list[Any]:
         stmt = select(Tender).where(or_(*conditions))
         # P1 修复：notice_types中英文兼容映射（与processor_agent一致）
         if filters.notice_types:
+            # B5 修复：与 processor_agent 一致，删除"采购"→tender 映射
             _nt_map = {"中标": "award", "成交": "award", "更正": "correction",
-                       "变更": "correction", "招标": "tender", "采购": "tender"}
+                       "变更": "correction", "招标": "tender"}
             _nt_vals: list[str] = []
             for nt in filters.notice_types:
                 matched = False

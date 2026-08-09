@@ -242,14 +242,16 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
             return state
 
         # 如果有搜索关键词，按 project_name 或 core_content 过滤
+        # B4 修复：裸 ilike → safe_contains（转义 %/_ 特殊字符，硬约束）
+        from app.scheduler.utils import safe_contains
         if search_words:
             keyword_filters = []
             for kw in search_words:
                 if kw:
                     keyword_filters.append(
                         or_(
-                            Tender.project_name.ilike(f"%{kw}%"),
-                            Tender.core_content.ilike(f"%{kw}%"),
+                            safe_contains(Tender.project_name, kw),
+                            safe_contains(Tender.core_content, kw),
                         )
                     )
             if keyword_filters:
@@ -257,20 +259,22 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
                                     else or_(*keyword_filters))
 
         # 按 region 过滤（P0 修复：补上 project_name 和 location）
+        # B4 修复：裸 ilike → safe_contains
         region_relaxed = False
         if region:
             query = query.where(
                 or_(
-                    Tender.project_name.ilike(f"%{region}%"),
-                    Tender.tender_org.ilike(f"%{region}%"),
-                    Tender.core_content.ilike(f"%{region}%"),
-                    Tender.location.ilike(f"%{region}%"),
+                    safe_contains(Tender.project_name, region),
+                    safe_contains(Tender.tender_org, region),
+                    safe_contains(Tender.core_content, region),
+                    safe_contains(Tender.location, region),
                 )
             )
 
         # 按公告类型过滤（notice_types 中英文兼容映射 → DB 英文值）
+        # B5 修复：删除"采购"→tender映射（"采购"是通用词，中标公告也含"采购"）
         _nt_map = {"中标": "award", "成交": "award", "更正": "correction",
-                   "变更": "correction", "招标": "tender", "采购": "tender"}
+                   "变更": "correction", "招标": "tender"}
         _nt_vals: list[str] = []
         for nt in (getattr(parsed, "notice_types", []) or []):
             matched = False
@@ -284,13 +288,15 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
         if _nt_vals:
             query = query.where(Tender.notice_type.in_(_nt_vals))
 
+        # F1 修复：排序改 publish_time desc（原 id desc，补录数据时 id 与时间不一致）
         result = await db.execute(
-            query.order_by(Tender.id.desc()).limit(100)
+            query.order_by(Tender.publish_time.desc().nullslast()).limit(100)
         )
         tenders = result.scalars().all()
 
-        # P0 修复：region 过滤后0条时，回退到不过滤 region（展示全国数据）
-        if not tenders and region:
+        # B3 修复：region 过滤后<5条时回退全国数据（原仅0条回退，数据过少体验差）
+        # DB 现状仅 167 条唯一公告，地区过滤后常只 1-2 条
+        if region and len(tenders) < 5:
             logger.warning(
                 "region='{}' 过滤后0条，回退到全国数据",
                 region,
@@ -308,8 +314,8 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
                     if kw:
                         kw_filters2.append(
                             or_(
-                                Tender.project_name.ilike(f"%{kw}%"),
-                                Tender.core_content.ilike(f"%{kw}%"),
+                                safe_contains(Tender.project_name, kw),
+                                safe_contains(Tender.core_content, kw),
                             )
                         )
                 if kw_filters2:
@@ -317,8 +323,9 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
                                           else or_(*kw_filters2))
             if _nt_vals:
                 query2 = query2.where(Tender.notice_type.in_(_nt_vals))
+            # F1 修复：回退查询也用 publish_time desc
             result2 = await db.execute(
-                query2.order_by(Tender.id.desc()).limit(100)
+                query2.order_by(Tender.publish_time.desc().nullslast()).limit(100)
             )
             tenders = result2.scalars().all()
 
@@ -337,7 +344,12 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
 
         # 相关性评分（简单 TF 匹配，MVP 阶段）
         score = _compute_relevance(t.project_name or "", t.core_content or "", topic)
+        # B1 修复：把 score 挂到 tender 上，供后续 LLM 抽取按相关性排序
+        t._relevance_score = score
         relevance_scores.append(score)
+
+    # B1 修复：LLM 抽取前按相关性降序排序（原按 id desc，可能抽取到最不相关的公告）
+    tenders = sorted(tenders, key=lambda t: getattr(t, "_relevance_score", 0.0), reverse=True)
 
     avg_relevance = (
         sum(relevance_scores) / len(relevance_scores)
@@ -415,8 +427,34 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
         else:
             llm_failed += 1
 
-    # 传递给 quality_agent 做证据定位 + 验证
-    state["processed_tenders"] = extracted_results
+    # A1+A2 修复：processed_tenders 存全量（含未抽取的 90 条），LLM 字段挂子集
+    # 原实现只存 extracted_results（≤10 条），导致质检/金融分析覆盖不全
+    _extracted_by_id = {r["tender_id"]: r for r in extracted_results}
+    processed_tenders_full: list[dict[str, Any]] = []
+    for t in tenders:
+        pt = {
+            "id": t.id,
+            "project_name": t.project_name,
+            "source_url": t.source_url,
+            "source_raw_text": t.source_raw_text or t.core_content or "",
+            "core_content": t.core_content or "",
+            "tender_org": t.tender_org or "",
+            "publish_time": t.publish_time.isoformat() if t.publish_time else None,
+            "notice_type": t.notice_type or "",
+            "source_platform": t.source_platform or "",
+            "_relevance_score": getattr(t, "_relevance_score", 0.0),
+        }
+        ext = _extracted_by_id.get(t.id)
+        if ext:
+            pt["fields"] = ext["fields"]
+            pt["model_id"] = ext.get("model_id")
+            pt["total_tokens"] = ext.get("total_tokens")
+            pt["llm_error"] = ext.get("error")
+        else:
+            pt["fields"] = []
+        processed_tenders_full.append(pt)
+    # 传递给 quality_agent 做证据定位 + 验证（全量数据）
+    state["processed_tenders"] = processed_tenders_full
     state["process_summary"]["llm_extracted"] = llm_success
     state["process_summary"]["llm_failed"] = llm_failed
 
