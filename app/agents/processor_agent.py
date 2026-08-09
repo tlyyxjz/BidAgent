@@ -203,8 +203,10 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
         "全部", "的全部", "全部的", "全部的标",
         "项目", "的项目", "所有项目", "全部项目",
         "公告", "的公告", "所有公告", "全部公告",
-        "中标", "的中标", "所有中标", "全部中标",
-        "招标", "的招标", "所有招标", "全部招标",
+        # 保留"所有中标"/"全部中标"等无意义组合，但移除单独的"中标"/"招标"
+        # （单独的"招标"/"中标"是有效搜索词，第一批P0已从_STOP_WORDS移除）
+        "所有中标", "全部中标",
+        "所有招标", "全部招标",
     }
     search_words = [w for w in search_words if w not in _MEANINGLESS_WORDS]
     if not search_words and region:
