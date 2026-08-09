@@ -130,7 +130,7 @@ class TestProcessorAgent:
 
     @pytest.mark.asyncio
     async def test_no_parsed_filters_defaults_to_empty_topic(self):
-        """无 parsed_filters 时 topic/region/keywords 均为空。"""
+        """无 parsed_filters 时无搜索关键词，跳过查询返回空（P0修复：不退化为全表）。"""
         from app.agents.processor_agent import processor_agent
 
         tenders = [_make_tender(id=1, project_name="办公用品", core_content="")]
@@ -142,10 +142,9 @@ class TestProcessorAgent:
             })
 
         ps = state["process_summary"]
-        assert ps["total_processed"] == 1
-        assert ps["category_distribution"]["其他"] == 1
-        # 无 topic → _compute_relevance 返回 0.5
-        assert ps["avg_relevance_score"] == 0.5
+        # P0修复：无搜索关键词时不退化为全表查询，返回0条
+        assert ps["total_processed"] == 0
+        assert ps["avg_relevance_score"] == 0.0
 
     @pytest.mark.asyncio
     async def test_raw_query_extracts_extra_keywords(self):
@@ -250,65 +249,73 @@ class TestProcessorAgentHelpers:
 
         assert _compute_relevance("proj", "content", "   ") == 0.5
 
-    def test_compute_relevance_partial_char_match(self):
-        """主题不在文本中但部分字符匹配时返回 matched/total。"""
+    def test_compute_relevance_partial_word_match(self):
+        """主题含多词但文本只匹配部分词时返回 matched/total。
+
+        P0 修复后 _compute_relevance 改为词级匹配（_split_topic 分词），
+        不再按字符迭代。topic="教育 设备" 拆为 ["教育","设备"]，
+        文本含"教育"不含"设备" → 1/2。
+        """
         from app.agents.processor_agent import _compute_relevance
 
-        # topic="abx"，文本含 a/b 不含 x → 2/3
-        assert _compute_relevance("a b", "content", "abx") == 2 / 3
+        assert _compute_relevance("教育项目", "content", "教育 设备") == 0.5
 
 
 # ==== quality_agent 测试 ====
 
 class TestQualityAgent:
-    """quality_agent 主流程测试。"""
+    """quality_agent 主流程测试（适配 EvidenceLocator + validate_field 新逻辑）。"""
 
     @pytest.mark.asyncio
     async def test_empty_tenders_full_quality_score(self):
         """无招标数据时质量评分为 1.0。"""
         from app.agents.quality_agent import quality_agent
 
-        factory = _make_db_factory([])
-        with patch("app.models.database.AsyncSessionLocal", factory):
-            state = await quality_agent({
-                "collect_summary": {
-                    "total": 0,
-                    "duplicates": 0,
-                    "platforms_collected": ["ccgp"],
-                },
-                "process_summary": {"total_processed": 0},
-                "subscription_id": 1,
-            })
+        state = await quality_agent({
+            "collect_summary": {
+                "total": 0,
+                "duplicates": 0,
+                "platforms_collected": ["ccgp"],
+            },
+            "process_summary": {"total_processed": 0},
+            "processed_tenders": [],
+            "subscription_id": 1,
+        })
 
         qs = state["quality_summary"]
         assert qs["total_checked"] == 0
         assert qs["hallucination_flags"] == 0
-        assert qs["quality_score"] == 1.0
+        # P0修复：0字段时通过率应为0.0（无数据≠100%通过）
+        # quality_score = (dedup_rate=1.0 + evidence_pass_rate=0.0) / 2 * (1 - 0.0) = 0.5
+        assert qs["quality_score"] == 0.5
         assert qs["dedup_rate"] == 1.0
-        assert qs["hallucination_pass_rate"] == 1.0
+        assert qs["evidence_pass_rate"] == 0.0
 
     @pytest.mark.asyncio
     async def test_detects_hallucination_lowers_score(self):
-        """检测到幻觉时 hallucination_flags 增加、评分下降。"""
+        """确定性校验失败时 hallucination_flags 增加、评分下降。"""
         from app.agents.quality_agent import quality_agent
 
-        tenders = [
-            _make_tender(
-                id=1, core_content="金额 100 万元", source_url="http://x",
-                source_raw_text="原文：预算金额 100 万元",
-            ),
+        processed_tenders = [
+            {
+                "id": 1,
+                "source_raw_text": "\u539f\u6587\uff1a\u9884\u7b97\u91d1\u989d 100 \u4e07\u5143",
+                "fields": [
+                    {
+                        "field_name": "amount",
+                        "raw_value": "abc",
+                        "candidate_evidences": [],
+                    },
+                ],
+            },
         ]
-        factory = _make_db_factory(tenders)
-        fake_report = MagicMock()
-        fake_report.passed = False
-        fake_report.total_facts = 2
-        fake_report.verified_facts = 0
-        fake_report.hallucinated_facts = 2
-        with patch("app.models.database.AsyncSessionLocal", factory), \
-                patch(
-                    "app.processors.hallucination_checker.check_content",
-                    return_value=fake_report,
-                ):
+
+        fake_vr = MagicMock()
+        fake_vr.valid = False
+        with patch(
+            "app.processors.field_validator.validate_field",
+            return_value=fake_vr,
+        ):
             state = await quality_agent({
                 "collect_summary": {
                     "total": 5,
@@ -316,38 +323,49 @@ class TestQualityAgent:
                     "platforms_collected": ["ccgp"],
                 },
                 "process_summary": {},
+                "processed_tenders": processed_tenders,
                 "subscription_id": 1,
             })
 
         qs = state["quality_summary"]
         assert qs["hallucination_flags"] == 1
         assert qs["total_checked"] == 1
-        assert qs["hallucination_pass_rate"] == 0.0
-        # dedup_rate=1.0, hallucination_pass_rate=0.0 → 0.5
-        assert qs["quality_score"] == 0.5
+        # candidate_evidences 为空 → 证据未定位 → evidence_pass_rate=0.0
+        assert qs["evidence_pass_rate"] == 0.0
+        # P2修复：幻觉惩罚生效
+        # hallucination_rate=1/1=1.0, base=(1.0+0.0)/2=0.5
+        # quality_score = 0.5 * (1 - 1.0) = 0.0
+        assert qs["hallucination_rate"] == 1.0
+        assert qs["quality_score"] == 0.0
 
     @pytest.mark.asyncio
     async def test_passes_when_no_hallucination(self):
-        """反幻觉校验通过时不计幻觉标记。"""
+        """确定性校验通过时不计幻觉标记。"""
         from app.agents.quality_agent import quality_agent
 
-        tenders = [
-            _make_tender(
-                id=1, core_content="正常内容", source_url="http://x",
-                source_raw_text="原文：正常内容",
-            ),
+        processed_tenders = [
+            {
+                "id": 1,
+                "source_raw_text": "\u539f\u6587\uff1a\u9884\u7b97\u91d1\u989d 100 \u4e07\u5143",
+                "fields": [
+                    {
+                        "field_name": "amount",
+                        "raw_value": "100",
+                        "candidate_evidences": [
+                            {"evidence_text": "\u9884\u7b97\u91d1\u989d 100 \u4e07\u5143"},
+                        ],
+                    },
+                ],
+            },
         ]
-        factory = _make_db_factory(tenders)
-        fake_report = MagicMock()
-        fake_report.passed = True
-        fake_report.total_facts = 1
-        fake_report.verified_facts = 1
-        fake_report.hallucinated_facts = 0
-        with patch("app.models.database.AsyncSessionLocal", factory), \
-                patch(
-                    "app.processors.hallucination_checker.check_content",
-                    return_value=fake_report,
-                ):
+
+        fake_vr = MagicMock()
+        fake_vr.valid = True
+        # EvidenceLocator 真实运行：原文包含候选证据 → 定位成功
+        with patch(
+            "app.processors.field_validator.validate_field",
+            return_value=fake_vr,
+        ):
             state = await quality_agent({
                 "collect_summary": {
                     "total": 4,
@@ -355,6 +373,7 @@ class TestQualityAgent:
                     "platforms_collected": ["ccgp"],
                 },
                 "process_summary": {},
+                "processed_tenders": processed_tenders,
                 "subscription_id": 1,
             })
 
@@ -362,53 +381,47 @@ class TestQualityAgent:
         assert qs["hallucination_flags"] == 0
         # duplicates=1, total=4 → dedup_rate = 1 - 1/4 = 0.75
         assert qs["dedup_rate"] == 0.75
-        assert qs["hallucination_pass_rate"] == 1.0
+        assert qs["evidence_pass_rate"] == 1.0
         assert qs["quality_score"] == round((0.75 + 1.0) / 2, 3)
 
     @pytest.mark.asyncio
-    async def test_skips_tenders_missing_content_or_url(self):
-        """core_content 或 source_url 缺失的 tender 跳过反幻觉校验。"""
+    async def test_skips_tenders_missing_raw_text_or_fields(self):
+        """source_raw_text 或 fields 缺失的 tender 跳过证据校验。"""
         from app.agents.quality_agent import quality_agent
 
-        tenders = [
-            _make_tender(id=1, core_content=None, source_url="http://x"),
-            _make_tender(id=2, core_content="content", source_url=None),
-            _make_tender(id=3, core_content="", source_url=""),
+        processed_tenders = [
+            {"id": 1, "fields": [{"field_name": "x"}], "source_raw_text": ""},
+            {"id": 2, "fields": [], "source_raw_text": "\u539f\u6587\u7532"},
+            {"id": 3, "source_raw_text": "\u539f\u6587\u4e59"},
         ]
-        factory = _make_db_factory(tenders)
-        with patch("app.models.database.AsyncSessionLocal", factory), \
-                patch(
-                    "app.processors.hallucination_checker.check_content",
-                ) as mock_check:
-            state = await quality_agent({
-                "collect_summary": {
-                    "total": 3,
-                    "duplicates": 0,
-                    "platforms_collected": ["ccgp"],
-                },
-                "process_summary": {},
-                "subscription_id": 1,
-            })
+        state = await quality_agent({
+            "collect_summary": {
+                "total": 3,
+                "duplicates": 0,
+                "platforms_collected": ["ccgp"],
+            },
+            "process_summary": {},
+            "processed_tenders": processed_tenders,
+            "subscription_id": 1,
+        })
 
-        mock_check.assert_not_called()
         qs = state["quality_summary"]
         assert qs["hallucination_flags"] == 0
         assert qs["total_checked"] == 3
+        assert qs["total_fields"] == 0
 
     @pytest.mark.asyncio
     async def test_missing_collect_summary_defaults(self):
         """collect_summary 缺失时用默认值计算。"""
         from app.agents.quality_agent import quality_agent
 
-        factory = _make_db_factory([])
-        with patch("app.models.database.AsyncSessionLocal", factory):
-            state = await quality_agent({
-                "process_summary": {},
-                "subscription_id": 1,
-            })
+        state = await quality_agent({
+            "process_summary": {},
+            "processed_tenders": [],
+            "subscription_id": 1,
+        })
 
         qs = state["quality_summary"]
-        # collect_summary={} → total=0, duplicates=0, platforms_collected=["ccgp"]
         assert qs["total_checked"] == 0
         assert qs["duplicates_removed"] == 0
 
@@ -424,38 +437,51 @@ class TestPipelineAsyncExecution:
         from app.agents import pipeline
 
         async def mock_agent(state):
-            state["collect_summary"] = {"total": 1}
             return state
 
-        graph = AgentGraph()
-        graph.add_agent("intent", "mock", mock_agent, is_entry=True)
-
-        with patch.object(pipeline, "_build_six_agent_graph", return_value=graph):
+        mock_seq = [
+            (mock_agent, "intent", "intent"),
+            (mock_agent, "collect", "collecting"),
+            (mock_agent, "process", "processing"),
+            (mock_agent, "quality", "quality"),
+            (mock_agent, "finance", "finance"),
+            (mock_agent, "delivery", "done"),
+        ]
+        with patch.object(pipeline, "_SIX_AGENT_SEQUENCE", mock_seq):
             session_id = await pipeline.run_pipeline({"query": "测试"})
-            # 须在 patch 上下文内等待，否则后台任务使用真实 graph
             session = await self._wait_for_stage(session_id, {"done"})
         assert session["stage"] == "done"
         assert session["progress"] == 100
         assert session["finished_at"] is not None
         assert session["error"] is None
         assert session["result"] is not None
-        assert "collect_summary" in session["result"]
 
     @pytest.mark.asyncio
     async def test_run_pipeline_marks_error_on_failure(self):
-        """graph.run 抛异常时 session 标记 error。"""
+        """agent 抛异常时 session 标记 error。"""
         from app.agents import pipeline
 
-        graph = MagicMock()
-        graph.run = AsyncMock(side_effect=RuntimeError("pipeline boom"))
+        async def boom_agent(state):
+            raise RuntimeError("pipeline boom")
 
-        with patch.object(pipeline, "_build_six_agent_graph", return_value=graph):
+        async def ok_agent(state):
+            return state
+
+        mock_seq = [
+            (boom_agent, "intent", "intent"),
+            (ok_agent, "collect", "collecting"),
+            (ok_agent, "process", "processing"),
+            (ok_agent, "quality", "quality"),
+            (ok_agent, "finance", "finance"),
+            (ok_agent, "delivery", "done"),
+        ]
+        with patch.object(pipeline, "_SIX_AGENT_SEQUENCE", mock_seq):
             session_id = await pipeline.run_pipeline({"query": "测试"})
             session = await self._wait_for_stage(session_id, {"error"})
         assert session["stage"] == "error"
         assert "pipeline boom" in session["error"]
         assert session["finished_at"] is not None
-        assert session["message"] == "Pipeline 失败: pipeline boom"
+        assert "pipeline boom" in session["message"]
 
     @staticmethod
     async def _wait_for_stage(session_id, target_stages, timeout_s=2.0):
@@ -623,29 +649,28 @@ class TestRunMultiAgentWorkflow:
 
     @pytest.mark.asyncio
     async def test_no_raw_text_counts_unverified(self):
-        """P2-8：无 source_raw_text 时不调 check_content，不计入核验分母。"""
+        """P2-8：无 source_raw_text 时不做证据校验，total_fields 为 0。"""
         from app.agents.quality_agent import quality_agent
 
-        tenders = [
-            _make_tender(id=1, core_content="内容", source_url="http://x"),
+        processed_tenders = [
+            {
+                "id": 1,
+                "fields": [{"field_name": "amount", "raw_value": "100"}],
+                "source_raw_text": "",
+            },
         ]
-        factory = _make_db_factory(tenders)
-        with patch("app.models.database.AsyncSessionLocal", factory), \
-                patch(
-                    "app.processors.hallucination_checker.check_content",
-                ) as mock_check:
-            state = await quality_agent({
-                "collect_summary": {
-                    "total": 1,
-                    "duplicates": 0,
-                    "platforms_collected": ["ccgp"],
-                },
-                "process_summary": {},
-                "subscription_id": 1,
-            })
+        state = await quality_agent({
+            "collect_summary": {
+                "total": 1,
+                "duplicates": 0,
+                "platforms_collected": ["ccgp"],
+            },
+            "process_summary": {},
+            "processed_tenders": processed_tenders,
+            "subscription_id": 1,
+        })
 
-        mock_check.assert_not_called()
         qs = state["quality_summary"]
         assert qs["total_checked"] == 1
-        assert qs["total_verified"] == 0
+        assert qs["total_fields"] == 0
         assert qs["hallucination_flags"] == 0
