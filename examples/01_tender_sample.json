@@ -1,0 +1,113 @@
+{
+  "meta": {
+    "sample_id": "01_tender_sample",
+    "notice_type": "tender",
+    "description": "招标公告示例 - 东南大学网络与信息中心数据中心云平台维保服务采购项目（DB id=114，真实数据）",
+    "source": "ccgp.gov.cn",
+    "fetched_at": "2026-08-05T17:51:52"
+  },
+  "notice": {
+    "tender_id": 114,
+    "project_name": "东南大学网络与信息中心数据中心云平台软件和存储、网络及计算设备维保服务采购项目公开招标公告",
+    "notice_type": "tender",
+    "source_platform": "ccgp",
+    "source_url": "http://www.ccgp.gov.cn/cggg/zygg/gkzb/202608/t20260805_27075652.htm",
+    "publish_time": "2026-08-05T17:51:52",
+    "tender_org": "东南大学",
+    "location": "南京市",
+    "bid_number": "SEU-ZB-260525",
+    "budget_amount": 1840000.00
+  },
+  "extracted_fields": [
+    {
+      "field_name": "project_identifier",
+      "raw_value": "SEU-ZB-260525（JD066026M8ZC02687）",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 533
+    },
+    {
+      "field_name": "purchaser_name",
+      "raw_value": "东南大学",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 534
+    },
+    {
+      "field_name": "amount",
+      "raw_value": "184.000000 万元",
+      "normalized_value": 1840000.00,
+      "amount_type": "budget",
+      "currency": "CNY",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 535
+    },
+    {
+      "field_name": "publish_date",
+      "raw_value": "2026年08月05日",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 536
+    },
+    {
+      "field_name": "bid_deadline",
+      "raw_value": "2026年08月26日 09点00分",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 537
+    }
+  ],
+  "evidence": [
+    {
+      "id": 533,
+      "evidence_text": "项目编号：SEU-ZB-260525（JD066026M8ZC02687）",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 829,
+      "raw_end": 866,
+      "field_name": "project_identifier"
+    },
+    {
+      "id": 534,
+      "evidence_text": "采购单位东南大学",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 145,
+      "raw_end": 153,
+      "field_name": "purchaser_name"
+    },
+    {
+      "id": 535,
+      "evidence_text": "预算金额：184.000000 万元（人民币）",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 912,
+      "raw_end": 935,
+      "field_name": "amount"
+    },
+    {
+      "id": 536,
+      "evidence_text": "公告时间2026年08月05日 15:43",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 160,
+      "raw_end": 181,
+      "field_name": "publish_date"
+    },
+    {
+      "id": 537,
+      "evidence_text": "提交投标文件截止时间：2026年08月26日 09点00分（北京时间）",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 2884,
+      "raw_end": 2919,
+      "field_name": "bid_deadline"
+    }
+  ]
+}

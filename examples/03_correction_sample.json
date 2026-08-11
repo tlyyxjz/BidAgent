@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "sample_id": "03_correction_sample",
+    "notice_type": "correction",
+    "description": "更正公告示例 - 华北电力大学超临界CO2氛围可光学观测燃烧器更正公告（DB id=97，真实数据）",
+    "source": "ccgp.gov.cn",
+    "fetched_at": "2026-08-05T18:19:18"
+  },
+  "notice": {
+    "tender_id": 97,
+    "project_name": "华北电力大学超临界CO2氛围可光学观测燃烧器更正公告",
+    "notice_type": "correction",
+    "source_platform": "ccgp",
+    "source_url": "http://www.ccgp.gov.cn/cggg/zygg/gzgg/202608/t20260803_27057555.htm",
+    "publish_time": "2026-08-05T18:19:18",
+    "tender_org": "华北电力大学",
+    "location": "北京市"
+  },
+  "extracted_fields": [
+    {
+      "field_name": "publish_date",
+      "raw_value": "2026年08月03日 14:14",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 444
+    },
+    {
+      "field_name": "bid_deadline",
+      "raw_value": "2026年08月25日 09点30分",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 445
+    }
+  ],
+  "evidence": [
+    {
+      "id": 444,
+      "evidence_text": "2026年08月03日 14:14",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 30,
+      "raw_end": 47,
+      "field_name": "publish_date"
+    },
+    {
+      "id": 445,
+      "evidence_text": "提交投标文件截止时间、开标时间更正为：2026年08月25日 09点30分（北京时间）",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 504,
+      "raw_end": 547,
+      "field_name": "bid_deadline"
+    }
+  ],
+  "correction_note": "更正公告仅抽取被更正的关键字段（发布日期、投标截止时间），原公告其他字段不重复抽取。证据文本明确包含'更正为'字样，体现更正语义。"
+}
