@@ -31,3 +31,5 @@ jieba>=0.42.1
 # v4.1 sec 13.1 credentials: Argon2id + AES-GCM
 argon2-cffi>=23.1.0
 cryptography>=42.0.0
+# ULID 生成（app.models._tender_ulid 优先实现 / app.processors.bootstrap 采样 ID 硬依赖）
+ulid-py>=1.1.0
