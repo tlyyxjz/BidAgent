@@ -87,7 +87,7 @@ def add_detail_table(doc: Document, items: list[dict[str, Any]]) -> None:
             try:
                 pt = datetime.fromisoformat(str(publish_time)).strftime("%m-%d")
             except (ValueError, TypeError):
-                pt = str(publish_time)[:5] if len(str(publish_time)) >= 5 else "-"
+                pt = str(publish_time)[:10] if len(str(publish_time)) >= 10 else str(publish_time)
         else:
             pt = "-"
 
@@ -102,7 +102,7 @@ def add_detail_table(doc: Document, items: list[dict[str, Any]]) -> None:
             core_content = core_content[:35] + "…"
         item_grade = item.get("display_grade")
         if item_grade in ("high", "review", "low"):
-            grade_label = {"high": "✓", "review": "?", "low": "!"}
+            grade_label = {"high": "可信", "review": "待核", "low": "存疑"}
             core_content = f"[{grade_label.get(item_grade, '?')}] {core_content}"
 
         # 预算金额格式化

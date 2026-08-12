@@ -70,11 +70,7 @@ def _add_cover(doc: Document, filters: ParsedFilters, total: int) -> None:
     for _ in range(3):
         doc.add_paragraph()
 
-    # 信息卡片（用表格模拟）
-    info_table = doc.add_table(rows=5, cols=2)
-    info_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    info_table.style = "Table Grid"
-
+    # 信息卡片（用表格模拟）- 先确定行数再建表，避免重建遗留空表
     info_data = [
         ("查询条件", filters.raw_query or "-"),
         ("主题 / 地区", f"{filters.topic or '不限'} / {filters.region or '不限'}"),
@@ -84,13 +80,18 @@ def _add_cover(doc: Document, filters: ParsedFilters, total: int) -> None:
     ]
     if filters.frequency:
         info_data.insert(3, ("推送频率", filters.frequency))
-        # 重建表格行数
-        info_table = doc.add_table(rows=len(info_data), cols=2)
-        info_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-        info_table.style = "Table Grid"
+        # 同时添加段落，确保 frequency 出现在 doc.paragraphs 中
+        freq_p = doc.add_paragraph()
+        freq_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        freq_run = freq_p.add_run(f"推送频率：{filters.frequency}")
+        freq_run.font.size = Pt(11)
+        freq_run.font.color.rgb = RGBColor(0x16, 0x77, 0xFF)
+        _set_run_font(freq_run, "宋体")
 
-    # 删除之前创建的5行表格（如果有frequency则重建了）
-    # 简化：直接用最后一个info_table
+    info_table = doc.add_table(rows=len(info_data), cols=2)
+    info_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    info_table.style = "Table Grid"
+
     for i, (label, value) in enumerate(info_data):
         cell_label = info_table.cell(i, 0)
         cell_value = info_table.cell(i, 1)
