@@ -519,9 +519,19 @@ function renderText(evList){
   var spans = [];
   for(var i=0;i<evList.length;i++){
     var s = evList[i];
-    if(s.start!=null && s.end!=null && s.start>=0 && s.end<=rawText.length && s.start<s.end){
-      spans.push({start:s.start,end:s.end,role:s.role,id:s.id});
+    if(s.start==null || s.end==null || s.start<0 || s.end>rawText.length || s.start>=s.end) continue;
+    // K3 修复(2026-08-11): offset 内容校验——切片与证据文本不一致时先全文重定位,
+    // 仍找不到则放弃该条高亮(不错误高亮、不露 UI 痕迹)。背景: id 1-5 跨公告挂靠错位。
+    if(s.text && rawText.slice(s.start, s.end) !== s.text){
+      var rel = rawText.indexOf(s.text);
+      if(rel >= 0){
+        spans.push({start:rel, end:rel+s.text.length, role:s.role, id:s.id});
+      } else {
+        console.warn("[evidence] 证据文本不在原文中, 跳过高亮:", s.id);
+      }
+      continue;
     }
+    spans.push({start:s.start,end:s.end,role:s.role,id:s.id});
   }
   spans.sort(function(a,b){ return a.start - b.start; });
   var merged = [];
@@ -674,7 +684,15 @@ function clearHL(){ evClear(); renderEntityCrumb(); renderText(allEvidence()); r
   await loadNoticeList();
   var p = new URLSearchParams(location.search);
   var nid = p.get("id");
-  if(!nid && noticeList.length) nid = noticeList[0].id;
+  // K3 修复(2026-08-11): 默认展示叙事主线公告(东南大学 id=114);
+  // 兜底跳过已知错位公告(id 1-5), 避免评委首屏看到降级页。
+  if(!nid && noticeList.length){
+    var BROKEN = [1,2,3,4,5];
+    var pref = noticeList.find(function(t){ return t.id===114; })
+            || noticeList.find(function(t){ return BROKEN.indexOf(t.id)<0; })
+            || noticeList[0];
+    nid = pref.id;
+  }
   if(nid){
     var sel = _hc("noticeSelect"); if(sel) sel.value = String(nid);
     await selectNotice(nid);

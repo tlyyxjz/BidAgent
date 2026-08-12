@@ -379,10 +379,11 @@ class TestQualityAgent:
 
         qs = state["quality_summary"]
         assert qs["hallucination_flags"] == 0
-        # duplicates=1, total=4 → dedup_rate = 1 - 1/4 = 0.75
-        assert qs["dedup_rate"] == 0.75
+        # dedup_rate 只用内容去重（simhash_duplicates=0 / total_checked=1）= 1.0
+        # 采集层 URL 去重(duplicates=1)不算内容去重
+        assert qs["dedup_rate"] == 1.0
         assert qs["evidence_pass_rate"] == 1.0
-        assert qs["quality_score"] == round((0.75 + 1.0) / 2, 3)
+        assert qs["quality_score"] == round((1.0 + 1.0) / 2, 3)
 
     @pytest.mark.asyncio
     async def test_skips_tenders_missing_raw_text_or_fields(self):

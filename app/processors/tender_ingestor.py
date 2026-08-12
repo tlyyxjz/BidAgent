@@ -88,6 +88,20 @@ async def _ingest_with_db(
     source_platform = _infer_platform(source_url, template)
     items = scrape_result.get("data") or []
 
+    # P0 修复：过滤非公告数据（ccgp 的 /zcdt/、/gpsr/、/news/ 栏目是新闻/政策，不是招标公告）
+    _BID_NOTICE_PATHS = ("/cggg/",)  # 只有公告栏目才入库
+    filtered_items = []
+    for _item in items:
+        if not isinstance(_item, dict):
+            continue
+        _item_url = _item.get("detail_url") or _item.get("url") or ""
+        # ccgp 平台：只允许 /cggg/ 路径的数据入库
+        if "ccgp.gov.cn" in _item_url or "ccgp" in (source_platform or ""):
+            if _item_url and not any(_p in _item_url for _p in _BID_NOTICE_PATHS):
+                continue  # 非公告栏目，跳过
+        filtered_items.append(_item)
+    items = filtered_items
+
     total = len(items)
     inserted = 0
     duplicates = 0
@@ -141,7 +155,26 @@ async def _ingest_with_db(
             source_platform, len(candidates),
         )
 
-    # 阶段 3：Python 层批量比对 + db.add（M-4：循环内不 flush）
+    # 阶段 3a：source_url 精确幂等查重（P0-0：防止同一公告重复入库）
+    existing_urls: set[str] = set()
+    incoming_urls: list[str | None] = []
+    for item in items:
+        if isinstance(item, dict):
+            u = str(item.get("detail_url") or item.get("source_url") or item.get("url") or "").strip()
+            incoming_urls.append(u if u else None)
+        else:
+            incoming_urls.append(None)
+    urls_to_check = [u for u in incoming_urls if u]
+    if urls_to_check:
+        stmt_url = select(Tender.id, Tender.source_url).where(
+            Tender.source_url.in_(urls_to_check)
+        )
+        result_url = await db.execute(stmt_url)
+        existing_urls = {row[1] for row in result_url.all() if row[1]}
+        if existing_urls:
+            logger.info("source_url 精确幂等：已存在 %d 条", len(existing_urls))
+
+    # 阶段 3b：Python 层批量比对 + db.add（M-4：循环内不 flush）
     to_insert: list[tuple[Tender, int | None]] = []
     for idx, item in enumerate(items):
         try:
@@ -150,6 +183,13 @@ async def _ingest_with_db(
                 continue
 
             simhash_value = simhash_values[idx]
+
+            # P0-0：source_url 精确幂等——已存在的 URL 直接跳过
+            item_url = incoming_urls[idx] if idx < len(incoming_urls) else None
+            if item_url and item_url in existing_urls:
+                duplicates += 1
+                logger.info("跳过重复 source_url idx=%d url=%s", idx, item_url[:80])
+                continue
 
             if simhash_value is not None:
                 dup_pair = find_duplicate_in_iter(
@@ -185,6 +225,31 @@ async def _ingest_with_db(
                     )
             except Exception as exc:  # noqa: BLE001
                 logger.warning("source_lineage 计算失败: %s", exc)
+
+            # P0-1：确定性字段解析补全（ccgp 公告格式规整，正则先行）
+            try:
+                from app.processors.ccgp_field_parser import parse_fields
+                title = str(item.get("project_name") or item.get("title") or tender.project_name or "")
+                content = item.get("core_content") or item.get("content") or item.get("source_raw_text") or ""
+                if content and ("ccgp" in (source_platform or "") or "ccgp" in (source_url or "")):
+                    parsed = parse_fields(title, content)
+                    # 只补全空字段，不覆盖已有值
+                    if not tender.tender_org and parsed.get("tender_org"):
+                        tender.tender_org = parsed["tender_org"][:300]
+                    if not tender.location and parsed.get("location"):
+                        tender.location = parsed["location"][:200]
+                    if not tender.publish_time and parsed.get("publish_time"):
+                        tender.publish_time = parsed["publish_time"]
+                    if not tender.budget_amount and parsed.get("budget_amount"):
+                        tender.budget_amount = parsed["budget_amount"]
+                    if not tender.win_amount and parsed.get("win_amount"):
+                        tender.win_amount = parsed["win_amount"]
+                    if not tender.notice_type and parsed.get("notice_type"):
+                        tender.notice_type = parsed["notice_type"]
+                    if not tender.bid_number and parsed.get("bid_number"):
+                        tender.bid_number = parsed["bid_number"][:100]
+            except Exception as exc:
+                logger.warning("ccgp字段解析失败 idx=%d err=%s", idx, exc)
 
             db.add(tender)
             to_insert.append((tender, simhash_value))

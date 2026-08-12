@@ -48,10 +48,18 @@ async def extract_single(
     return [item]
 
 
+# 字段名包含这些关键词时，提取 href 属性而非 inner_text（用于获取详情页 URL 做幂等）
+_HREF_FIELDS = ("detail_url", "url", "link", "href", "source_url")
+
+
 async def extract_list(
     page: Page, selectors: dict[str, str], list_selector: str
 ) -> list[dict[str, Any]]:
-    """列表提取：每个 list_selector 元素都按 selectors 抽取字段。"""
+    """列表提取：每个 list_selector 元素都按 selectors 抽取字段。
+
+    当字段名包含 url/link/href/detail_url 时，提取元素的 href 属性
+    而非文本内容——用于获取真正的公告详情页 URL 做入库幂等。
+    """
     elements = await page.query_selector_all(list_selector)
     items: list[dict[str, Any]] = []
     for el in elements:
@@ -59,7 +67,25 @@ async def extract_list(
         for field, sel in selectors.items():
             try:
                 child = await el.query_selector(sel)
-                item[field] = (await child.inner_text()) if child else None
+                if child is None:
+                    item[field] = None
+                elif field.lower() in _HREF_FIELDS or field.lower().endswith("_url"):
+                    # URL 类字段：取 href 属性做幂等键
+                    href = await child.get_attribute("href")
+                    if href:
+                        from urllib.parse import urlparse
+                        base = page.url
+                        if href.startswith("http"):
+                            item[field] = href
+                        elif href.startswith("/"):
+                            p = urlparse(base)
+                            item[field] = f"{p.scheme}://{p.netloc}{href}"
+                        else:
+                            item[field] = href
+                    else:
+                        item[field] = None
+                else:
+                    item[field] = await child.inner_text()
             except PlaywrightError as exc:
                 logger.warning(
                     "列表字段提取失败 field=%s selector=%s err=%s", field, sel, exc

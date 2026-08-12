@@ -26,6 +26,37 @@ from app.processors.observation_types import (
 )
 
 
+import re
+
+# 金额数值提取正则：匹配整数/小数/科学计数法，忽略前后非数字字符
+_AMOUNT_RE = re.compile(r"[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
+
+
+def _parse_amount(value) -> float:
+    """从各种格式提取金额数值（float）。
+
+    兼容 '209.7000000（万元）' / '500.0' / 500.0 / None / '' 等。
+    """
+    if value is None:
+        return 0.0
+    if isinstance(value, (int, float)):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+    s = str(value).strip()
+    if not s:
+        return 0.0
+    s = s.replace(",", "")
+    m = _AMOUNT_RE.search(s)
+    if not m:
+        return 0.0
+    try:
+        return float(m.group(0))
+    except (TypeError, ValueError):
+        return 0.0
+
+
 # ========== 信号计算函数 ==========
 
 def _get_recent_records(
@@ -64,7 +95,7 @@ def assess_award_activity(
     recent_records = _get_recent_records(win_records, days)
     win_count = len(recent_records)
     total_amount = sum(
-        float(r.get("win_amount", 0) or 0) for r in recent_records
+        _parse_amount(r.get("win_amount", 0)) for r in recent_records
     )
 
     # 金额趋势（按月统计）
@@ -75,8 +106,8 @@ def assess_award_activity(
             continue
         try:
             month_key = win_date_str[:7]  # YYYY-MM
-            monthly_trend[month_key] = monthly_trend.get(month_key, 0) + float(
-                rec.get("win_amount", 0) or 0
+            monthly_trend[month_key] = monthly_trend.get(month_key, 0) + _parse_amount(
+                rec.get("win_amount", 0)
             )
         except (ValueError, TypeError):
             continue

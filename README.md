@@ -210,6 +210,42 @@ TenderProject（采购项目）
 
 ---
 
+## 5 分钟快速启动（评委友好版）
+
+```bash
+# 1. 克隆 + 进入目录
+git clone <repo_url> BidAgent && cd BidAgent
+
+# 2. 创建虚拟环境 + 安装依赖
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+pip install -r requirements.txt
+python -m playwright install chromium
+
+# 3. 配置环境变量（生成密钥 + 填 LLM key）
+cp .env.example .env
+python -c "import secrets; print(secrets.token_hex(32))"  # 填入 SECRET_KEY=
+# 编辑 .env 设置 DEEPSEEK_API_KEY=sk-xxx（或其他 LLM provider）
+
+# 4. 启动服务
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 5. 打开 Web Demo
+# http://localhost:8000/ui          (工作台首页)
+# http://localhost:8000/docs        (API 文档)
+# http://localhost:8000/health      (健康检查)
+```
+
+**一键启动（含数据库初始化 + 样例加载）**：
+
+```bash
+python run_demo.py
+```
+
+详见 [examples/](examples/) 目录的示例输入输出。
+
+---
+
 ## 安装与启动
 
 ### 环境准备

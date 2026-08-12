@@ -115,7 +115,21 @@ async def collector_agent(state: dict[str, Any]) -> dict[str, Any]:
             "collector_agent skip realtime collect (dedup {}s) cache_key={}",
             _COLLECT_DEDUP_SECONDS, cache_key[:50],
         )
-        state["collect_summary"] = cached["summary"]
+        # 修复：缓存命中时 DB 不会新增，需修正 summary 避免误导下游
+        # 原 summary 的 inserted 是首次采集的值，重放时 inserted 应为 0
+        _cached_summary = dict(cached["summary"])
+        _cached_total = _cached_summary.get("total", 0)
+        _cached_inserted = _cached_summary.get("inserted", 0)
+        _cached_summary["inserted"] = 0
+        # 原先的 inserted 现在也算 duplicates（因为已在 DB 里了）
+        _cached_summary["duplicates"] = _cached_summary.get("duplicates", 0) + _cached_inserted
+        _cached_summary["cached"] = True
+        # per_platform 也需同步修正
+        _pp = _cached_summary.get("per_platform", [])
+        for _p in _pp:
+            _p["inserted"] = 0
+            _p["duplicates"] = _p.get("duplicates", 0) + _cached_inserted
+        state["collect_summary"] = _cached_summary
         state["subscription_id"] = sub_id
         return state
 

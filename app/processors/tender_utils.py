@@ -167,7 +167,7 @@ def _build_tender(
         contact_email=_hash_contact(pick("contact_email", "email", "联系邮箱")),
         notice_type=str(pick("notice_type", "公告类型") or "")[:50] or None,
         source_platform=source_platform,
-        source_url=str(pick("source_url", "url") or source_url or "")[:500] or None,
+        source_url=str(pick("detail_url", "source_url", "url") or source_url or "")[:500] or None,
         core_content=pick("core_content", "content", "核心内容") or "",
         # C-2 修复：保存原始页面文本，反幻觉校验时比对
         source_raw_text=pick("source_raw_text", "raw_text", "source_text") or "",

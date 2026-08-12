@@ -17,8 +17,8 @@ import json
 INTENT_SYSTEM_PROMPT = """你是一个招投标信息查询意图解析助手。将用户的自然语言查询转化为结构化 JSON 过滤条件。
 
 需要提取的字段：
-- topic: 主题/关键词（如 服务器、充电桩、IT设备、医疗器械）
-- region: 地区（省份/城市名，如 上海、安徽、广东深圳）
+- topic: 主题/关键词（如 服务器、充电桩、IT设备、医疗器械；也包含机构名/采购单位名，如"北京大学""某医院""某局"，机构名一律放 topic，不放 region）
+- region: 地区（仅限省份/城市地名，如 上海、安徽、广东深圳；机构名不得填入 region）
 - time_range: 时间范围（格式：7d/30d/3m/1y 分别表示最近 7 天/30 天/3 个月/1 年；或 ISO 日期范围如 2026-03-01~2026-03-31）
 - frequency: 频率（用户要求推送的频率，如 "每天9:00" → "0 9 * * *"；"今天9:00" → "once:09:00"；"每周一" → "0 9 * * 1"；无频率留 null）
 - trigger_type: 触发类型（"immediate" 立即查询 / "scheduled" 定时订阅，含频率时为 scheduled）
@@ -71,6 +71,36 @@ INTENT_FEWSHOT_EXAMPLES = [
             "trigger_type": "scheduled",
             "industry": None,
             "keywords": ["充电桩"],
+            "notice_types": ["招标公告"],
+            "min_budget": None,
+            "max_budget": None,
+        },
+    },
+    {
+        "query": "北京教育系统的中标公告 最近30天",
+        "result": {
+            "topic": "教育",
+            "region": "北京",
+            "time_range": "30d",
+            "frequency": None,
+            "trigger_type": "immediate",
+            "industry": "教育",
+            "keywords": ["教育"],
+            "notice_types": ["中标公告"],
+            "min_budget": None,
+            "max_budget": None,
+        },
+    },
+    {
+        "query": "广东省医疗设备招标",
+        "result": {
+            "topic": "医疗设备",
+            "region": "广东",
+            "time_range": "30d",
+            "frequency": None,
+            "trigger_type": "immediate",
+            "industry": "医疗器械",
+            "keywords": ["医疗", "设备"],
             "notice_types": ["招标公告"],
             "min_budget": None,
             "max_budget": None,

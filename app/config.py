@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     LLM_BASE_URL: str = ""
     # json_object response_format 开关（空=按 provider 默认）
     LLM_JSON_MODE: str = ""
+    # LLM 抽取上限（每批最多抽取多少条公告，避免全量抽取超时）
+    LLM_EXTRACT_MAX: int = 10
     # 智谱 GLM / OpenAI（多 provider 可切换）
     ZHIPU_API_KEY: str = ""
     ZHIPU_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"

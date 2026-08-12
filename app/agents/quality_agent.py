@@ -172,12 +172,13 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
         })
 
     # 质量评分：去重率 + 证据验证通过率（P2: 纳入幻觉惩罚）
-    total = collect_summary.get("total", 0)
-    duplicates = collect_summary.get("duplicates", 0)
-    # C2 修复：dedup_rate 纳入 SimHash 内容去重数（原只算采集层 URL 去重）
-    # C2b 最终修复：保持原分母 collect_total，加 max(0) 兜底防负数
-    # （采集层 total 和 quality 层不在同一层级，分母不能混用）
-    dedup_rate = max(0.0, 1.0 - ((duplicates + simhash_duplicates) / total if total > 0 else 0))
+    # dedup_rate 只反映内容去重（SimHash），不用采集层 URL 去重
+    # （collect_summary.duplicates 是 URL 重复，与内容质量无关）
+    total_checked = len(processed_tenders)
+    if total_checked <= 1:
+        dedup_rate = 1.0  # 单条或无数据不可能有内容重复
+    else:
+        dedup_rate = max(0.0, 1.0 - simhash_duplicates / total_checked)
     # P0 修复：0字段时通过率应为0.0而非1.0（无数据≠100%通过）
     evidence_pass_rate = (
         verified_fields / total_fields if total_fields > 0 else 0.0
@@ -198,7 +199,7 @@ async def quality_agent(state: dict[str, Any]) -> dict[str, Any]:
         "total_fields": total_fields,
         "verified_fields": verified_fields,
         "unjustified_fields": unjustified_fields,
-        "duplicates_removed": duplicates,
+        "duplicates_removed": collect_summary.get("duplicates", 0),
         "simhash_duplicates": simhash_duplicates,
         "hallucination_flags": hallucination_flags,
         "hallucination_rate": round(hallucination_rate, 3),

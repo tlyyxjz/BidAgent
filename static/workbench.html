@@ -718,7 +718,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       } catch (e) { console.warn('load tenders count failed', e); }
     })();
 
-/* v4.1 KPI 真实数据加载 */
+/* v4.1 KPI 真实数据加载（修复版：code=0 兼容 + 4 卡片全部赋值） */
 async function loadKpiData(){
   try{
     var r=await fetch("/api/stats/quality", { signal: AbortSignal.timeout(15000) });
@@ -726,18 +726,24 @@ async function loadKpiData(){
     if (r.status === 403) { alert('无权限访问'); return; }
     if (r.status === 429) { alert('请求过于频繁，请稍后再试'); return; }
     var d=await r.json();
-    if(d.code===200 && d.data){
+    if((d.code===0||d.code===200) && d.data){
       var el;
+      /* 卡片1: 公告总数 */
+      if(el=document.getElementById("kpiTotalTenders")){
+        el.innerHTML=(d.data.tender_count||0)+'<span class="unit">篇</span>'
+      }
+      /* 卡片2: 字段精确率 = verification_rate * 100 */
       if(el=document.getElementById("kpiFieldPrecision")){
-        var verified=d.data.verified_evidence_count||0;
-        var total=d.data.evidence_count||1;
-        el.innerHTML=((verified/total*100).toFixed(1))+'<span class="unit">%</span>'
+        var rate=d.data.verification_rate||0;
+        el.innerHTML=(rate*100).toFixed(1)+'<span class="unit">%</span>'
       }
+      /* 卡片3: 证据验证通过 = verified_evidence_count */
       if(el=document.getElementById("kpiEvidenceCount")){
-        el.innerHTML=(d.data.evidence_count||0)+'<span class="unit">条</span>'
+        el.innerHTML=(d.data.verified_evidence_count||0)+'<span class="unit">条</span>'
       }
+      /* 卡片4: 组织画像 = field_count（字段数近似组织活动记录数） */
       if(el=document.getElementById("kpiOrgCount")){
-        el.innerHTML=(d.data.tender_count||0)+'<span class="unit">条</span>'
+        el.innerHTML=(d.data.field_count||0)+'<span class="unit">条</span>'
       }
     }
   }catch(e){console.warn("loadKpiData failed:",e);}
@@ -751,7 +757,7 @@ async function loadRecentMeta(){
     if (r.status === 403) { alert('无权限访问'); return; }
     if (r.status === 429) { alert('请求过于频繁，请稍后再试'); return; }
     var d=await r.json();
-    if(d.code===200&&d.data){
+    if((d.code===0||d.code===200)&&d.data){
       var el=document.getElementById('recentQualityMeta');
       if(el){
         var prec=((d.data.verification_rate||0)*100).toFixed(1);

@@ -130,39 +130,56 @@ async def get_session(session_id: str) -> dict[str, Any] | None:
         return dict(session)  # 返回副本，避免外部修改
 
 
+# 六 Agent 执行序列：(agent_func, agent_name, session_stage_key)
+# session_stage_key 对齐前端 STAGE_AGENT_MAP 的 key
+_SIX_AGENT_SEQUENCE = [
+    (intent_agent, "intent", "intent"),
+    (collector_agent, "collect", "collecting"),
+    (processor_agent, "process", "processing"),
+    (quality_agent, "quality", "quality"),
+    (finance_agent, "finance", "finance"),
+    (delivery_agent, "delivery", "done"),
+]
+
+
 async def _run_pipeline_async(
     session_id: str,
     filters: dict[str, Any],
     platforms: list[str] | None,
     user_id: int,
 ) -> None:
-    """实际执行六 Agent pipeline（异步任务）。"""
+    """实际执行六 Agent pipeline（异步任务）。
+
+    手动逐个驱动 6 个 Agent，每个 Agent 执行前后更新 session stage，
+    前端轮询才能看到真实阶段进度（修复原 graph.run 一次性同步跑完导致
+    intent 之后瞬间全绿的 bug）。
+    """
     logger.info("pipeline async started session_id={}", session_id)
 
     # 构建初始 state
-    initial_state = {
+    state: dict[str, Any] = {
         "query": filters.get("query", ""),
         "user_id": user_id,
         "platforms": platforms or ["ccgp"],
-        "session_id": session_id,  # 供 Agent 内部更新 session
+        "session_id": session_id,
     }
 
-    # 构建六 Agent 图
-    graph = _build_six_agent_graph()
+    # 手动驱动 6 个 Agent，逐个更新 session stage
+    for agent_func, agent_name, stage_key in _SIX_AGENT_SEQUENCE:
+        await _update_stage(session_id, stage_key, "running")
+        try:
+            logger.info("agent started: {}", agent_name)
+            state = await agent_func(state)
+            await _update_stage(session_id, stage_key, "completed")
+            logger.info("agent completed: {}", agent_name)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("agent failed: {}", agent_name)
+            await _update_stage(session_id, stage_key, "failed")
+            await _mark_error(session_id, f"{agent_name} agent 执行失败: {exc}")
+            return
 
-    try:
-        # 每个 Agent 执行前更新 session
-        await _update_stage(session_id, "intent", "running")
-
-        # 包装每个 Agent，在执行前后更新 session
-        final_state = await graph.run(initial_state)
-
-        # 标记完成
-        await _mark_done(session_id, final_state)
-
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("pipeline failed session_id={}", session_id)
-        await _mark_error(session_id, str(exc))
+    # 标记完成
+    await _mark_done(session_id, state)
 
 
 def _build_six_agent_graph() -> AgentGraph:

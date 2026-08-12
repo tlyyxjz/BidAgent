@@ -90,54 +90,61 @@ def _extract_field_from_tender(t: Any, field_name: str) -> Any:
     return None
 
 
+def _build_record(t: Any) -> dict:
+    """从 tender 构造单条公开活动观察记录（字段名对齐 analyze_observation_signals 入参）。"""
+    return {
+        "win_date": str(
+            _extract_field_from_tender(t, "publish_time")
+            or _extract_field_from_tender(t, "win_date")
+            or _field(t, "publish_time")
+            or ""
+        ),
+        "win_amount": (
+            _extract_field_from_tender(t, "win_amount")
+            or _extract_field_from_tender(t, "budget_amount")
+            or _field(t, "win_amount")
+            or _field(t, "budget_amount")
+        ),
+        "notice_title": (
+            _extract_field_from_tender(t, "project_name")
+            or _field(t, "project_name")
+            or _field(t, "title")
+            or ""
+        ),
+        "purchaser": _extract_field_from_tender(t, "tender_org") or _field(t, "tender_org") or "",
+        "region": _extract_field_from_tender(t, "location") or _field(t, "location") or "",
+        "notice_url": _extract_field_from_tender(t, "source_url") or _field(t, "source_url") or "",
+        "source_platform": _extract_field_from_tender(t, "source_platform") or _field(t, "source_platform") or "",
+    }
+
+
 def _group_win_records(tenders: list) -> dict[str, list[dict]]:
     """按中标企业分组构造中标观察记录（v4.1 §9.2 信号计算入参）。
 
-    P0 修复：
-    1. ccgp 列表页不提供 win_company（0% 填充率），fallback 到 tender_org
-    2. 字段在 fields 列表里（非顶层），需要用 _extract_field_from_tender 提取
+    仅当存在 winner_name / win_company 字段时才计入；若全无中标人字段，
+    调用方应改走 _group_purchaser_records（采购人视角）。
     """
     grouped: dict[str, list[dict]] = {}
-    _fallback_count = 0
     for t in tenders:
-        # 优先用 win_company，缺失时 fallback 到 tender_org
         company = _extract_field_from_tender(t, "win_company") or ""
         if not company:
-            company = _extract_field_from_tender(t, "tender_org") or ""
-            _fallback_count += 1
-        if not company:
             continue
-        record = {
-            "win_date": str(
-                _extract_field_from_tender(t, "publish_time")
-                or _extract_field_from_tender(t, "win_date")
-                or _field(t, "publish_time")
-                or ""
-            ),
-            "win_amount": (
-                _extract_field_from_tender(t, "win_amount")
-                or _extract_field_from_tender(t, "budget_amount")
-                or _field(t, "win_amount")
-                or _field(t, "budget_amount")
-            ),
-            "notice_title": (
-                _extract_field_from_tender(t, "project_name")
-                or _field(t, "project_name")
-                or _field(t, "title")
-                or ""
-            ),
-            "purchaser": _extract_field_from_tender(t, "tender_org") or _field(t, "tender_org") or "",
-            "region": _extract_field_from_tender(t, "location") or _field(t, "location") or "",
-            "notice_url": _extract_field_from_tender(t, "source_url") or _field(t, "source_url") or "",
-            "source_platform": _extract_field_from_tender(t, "source_platform") or _field(t, "source_platform") or "",
-        }
-        grouped.setdefault(company, []).append(record)
+        grouped.setdefault(company, []).append(_build_record(t))
+    return grouped
 
-    if _fallback_count > 0:
-        logger.info(
-            "finance_agent: win_company缺失{}条，fallback到tender_org分组",
-            _fallback_count,
-        )
+
+def _group_purchaser_records(tenders: list) -> dict[str, list[dict]]:
+    """按采购人分组构造采购活动观察记录（招标公告场景的 fallback）。
+
+    招标公告无中标人字段，六维信号中的"中标活跃度/中标集中度"在此场景下
+    语义为"采购活跃度/采购集中度"，由调用方通过 perspective 字段标注。
+    """
+    grouped: dict[str, list[dict]] = {}
+    for t in tenders:
+        purchaser = _extract_field_from_tender(t, "tender_org") or _field(t, "tender_org") or ""
+        if not purchaser:
+            continue
+        grouped.setdefault(purchaser, []).append(_build_record(t))
     return grouped
 
 
@@ -192,7 +199,7 @@ async def run(state: dict[str, Any]) -> dict[str, Any]:
 
     if not tenders:
         logger.warning("finance_agent: 无可用公告数据")
-        state.setdefault("finance_summary", {})
+        state.setdefault("finance_summary", {"reason": "无可用公告数据"})
         # v4.1 契约：无论有无数据，state 必须含 observation_signals（空观察信号）
         state.setdefault("observation_signals", {})
         return state
@@ -201,10 +208,25 @@ async def run(state: dict[str, Any]) -> dict[str, Any]:
     collect_summary = state.get("collect_summary") or {}
 
     try:
+        # 优先按中标人分组（中标公告场景）
         grouped = _group_win_records(tenders)
+        perspective = "winner"
         if not grouped:
-            logger.warning("finance_agent: 公告中无中标企业字段，跳过信号计算")
-            state.setdefault("finance_summary", {})
+            # 无中标人字段（招标公告场景）：fallback 到按采购人分组
+            grouped = _group_purchaser_records(tenders)
+            perspective = "purchaser"
+            if grouped:
+                logger.info(
+                    "finance_agent: 无中标人字段，fallback到采购人视角分组 orgs={}",
+                    len(grouped),
+                )
+
+        if not grouped:
+            # 中标人和采购人字段都缺失
+            logger.warning("finance_agent: 公告中无中标企业/采购人字段，跳过信号计算")
+            state.setdefault("finance_summary", {
+                "reason": "公告中无中标企业/采购人字段，无法生成观察信号",
+            })
             state.setdefault("observation_signals", {})
             return state
 
@@ -243,11 +265,16 @@ async def run(state: dict[str, Any]) -> dict[str, Any]:
             "observation_signals": _flat_signals_for_report(signals_by_org[top_org]),
             "by_organization": signals_by_org,
             "primary_organization": top_org,
+            # 新增：观察视角标注（winner=中标人视角 / purchaser=采购人视角）
+            "perspective": perspective,
         }
-        logger.info("finance_agent: 6 维观察信号生成完成 orgs={}", len(signals_by_org))
+        logger.info(
+            "finance_agent: 6 维观察信号生成完成 orgs={} perspective={}",
+            len(signals_by_org), perspective,
+        )
     except Exception:
         logger.exception("finance_agent: 观察信号生成失败")
-        state.setdefault("finance_summary", {})
+        state.setdefault("finance_summary", {"reason": "观察信号生成异常"})
         state.setdefault("observation_signals", {})
 
     # AgentGraph 约定：Agent 返回完整 state（含 _agent_history 与前序输出）

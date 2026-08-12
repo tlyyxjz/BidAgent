@@ -44,23 +44,68 @@ def build_scrape_request(
 ) -> dict[str, Any] | None:
     """基于平台名和过滤条件构造 scraper 请求。
 
-    每个 platform 对应一个搜索 URL 模板 + 内置模板名。
-    GPT-5.6 Sol 后续可扩展登录态采集（qianlima）。
+    P0 修复：搜索词必须包含 region（地区）+ topic（主题），
+    否则"山东教育中标"只会用"教育"搜，丢掉地区和类型。
+    公告类型通过 ccgp 的 bidType 参数过滤。
     """
     url = _PLATFORM_URLS.get(platform)
     if url is None:
         return None
 
     topic = filters.topic or filters.raw_query or ""
+    region = filters.region or ""
+
+    # P0 修复：搜索词只用 topic（纯主题词），不加 region
+    # 原因：ccgp搜索引擎对"山东教育"这种组合词匹配率极低（0-1条），
+    # 单独搜"教育"能有20+条结果。地区过滤由processor在DB层做。
+    search_kw = topic or filters.raw_query or ""
+
+    # P1 修复：当 topic 含时间词/空格（intent fallback 把整句 raw_query 当 topic 时），
+    # 用 region 作为搜索词（如"北京 近7天"→topic="北京 近7天"→改用 region="北京"）
+    _TIME_WORDS = ["最近", "近", "天", "个月", "月", "年"]
+    if (not search_kw
+        or " " in search_kw
+        or any(w in search_kw for w in _TIME_WORDS)):
+        if region and region != search_kw:
+            search_kw = region
+            logger.info("collector search_kw fallback to region={!r}", search_kw)
+
+    # ccgp bidType 映射（支持中英文）
+    # 中文关键词 → bidType 值
+    _NT_KEYWORDS = [
+        (["中标", "成交", "award"], 2),
+        (["招标", "采购", "tender"], 1),
+        (["更正", "变更", "correction"], 3),
+        (["废标", "流标", "cancel"], 4),
+    ]
+    notice_types = filters.notice_types or []
+    bid_type = 0  # 默认全部
+    for nt in notice_types:
+        nt_str = str(nt)
+        for keywords, val in _NT_KEYWORDS:
+            if any(kw in nt_str or kw in nt_str.lower() for kw in keywords):
+                bid_type = val
+                break
+        if bid_type != 0:
+            break
+
     if platform == "ccgp":
-        url = f"{url}&bidSort=0&pinMu=0&bidType=1&kw={quote(topic)}&displayRent="
+        url = f"{url}&bidSort=0&pinMu=0&bidType={bid_type}&kw={quote(search_kw)}&displayRent="
     elif platform == "chinabidding":
-        url = f"{url}?keyword={quote(topic)}"
+        url = f"{url}?keyword={quote(search_kw)}"
+
+    logger.info(
+        "build_scrape_request platform={} kw='{}' region='{}' topic='{}' bidType={} notice_types={}",
+        platform, search_kw, region, topic, bid_type, notice_types,
+    )
+
+    import os as _os
+    _max_pages = int(_os.environ.get("SCRAPER_MAX_PAGES", "3"))
 
     return {
         "url": url,
         "template": platform,
-        "max_pages": 1,  # 订阅触发只抓首页，控制耗时
+        "max_pages": _max_pages,
     }
 
 

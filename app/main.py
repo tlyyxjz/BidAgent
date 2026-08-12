@@ -10,6 +10,13 @@
 
 from __future__ import annotations
 
+import sys
+# Windows 上 Playwright 需要 ProactorEventLoop（支持 subprocess）
+# uvicorn 默认可能用 SelectorEventLoop 导致 NotImplementedError
+if sys.platform == "win32":
+    import asyncio
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path

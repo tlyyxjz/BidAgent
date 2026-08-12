@@ -109,3 +109,18 @@ static_backup_*/
 # _w2_annotations/
 # _w2_raw/
 # _w3_raw/
+
+# ==== K3 复查残留文件隔离（2026-08-11）====
+*.bak_*
+_diag_*.py
+_tmp_*
+temp_*.py
+_smoke_*.py
+_test_ccgp*.py
+_test_collector.py
+_query_*.py
+_find_*.py
+commit_msg.txt
+_ppt_unpacked/
+_tmp_pytest/
+*.bak8

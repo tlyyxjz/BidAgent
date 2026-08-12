@@ -1,4 +1,4 @@
-"""BidAgent 金标标注工具后端
+﻿"""BidAgent 金标标注工具后端
 
 v4.1 §10.4 测试集需人类标注员标注。
 本服务提供文档加载、标注保存、导出金标JSON的后端API。
@@ -164,7 +164,7 @@ def index():
 
 @app.get("/{static_file}")
 def static(static_file: str):
-    allowed = {"index.html", "schema.js", "style.css", "sample_data.js"}
+    allowed = {"index.html", "schema.js", "style.css", "sample_data.js", "app.js"}
     if static_file not in allowed:
         raise HTTPException(404, f"文件不存在: {static_file}")
     fp = TOOL_DIR / static_file

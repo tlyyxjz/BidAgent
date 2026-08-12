@@ -187,7 +187,7 @@ class TestQueryTendersWithFilters:
 
     @pytest.mark.asyncio
     async def test_region_filter_applied(self) -> None:
-        """region 过滤条件正确应用到查询。"""
+        """region 过滤条件正确应用，宽松匹配查到空 → 返回空（不再 fallback）。"""
         mock_db = AsyncMock()
         mock_result = MagicMock()
         mock_scalars = MagicMock()
@@ -198,12 +198,13 @@ class TestQueryTendersWithFilters:
         filters = ParsedFilters(raw_query="上海充电桩", topic="充电桩", region="上海")
         tenders = await _query_tenders_with_filters(mock_db, filters)
 
-        mock_db.execute.assert_called_once()
+        # 宽松匹配查到空 → 直接返回空列表（execute 只调 1 次，不再兜底最近100条）
+        assert mock_db.execute.call_count == 1
         assert tenders == []
 
     @pytest.mark.asyncio
-    async def test_no_filters_returns_all(self) -> None:
-        """无过滤条件 → 返回所有数据（最多 100 条）。"""
+    async def test_no_filters_returns_empty(self) -> None:
+        """无过滤条件 → 返回空列表（不再 fallback 返回全部，如实反映查询结果）。"""
         mock_db = AsyncMock()
         mock_result = MagicMock()
         mock_scalars = MagicMock()
@@ -214,4 +215,6 @@ class TestQueryTendersWithFilters:
         filters = ParsedFilters(raw_query="测试")
         tenders = await _query_tenders_with_filters(mock_db, filters)
 
-        assert len(tenders) == 2
+        # 无 topic/region/keywords → conditions 为空 → 不查询，直接返回 []
+        assert tenders == []
+        mock_db.execute.assert_not_called()

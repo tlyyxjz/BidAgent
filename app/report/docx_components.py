@@ -19,9 +19,13 @@ from app.report.utils import set_run_font as _set_run_font
 
 
 def add_detail_table(doc: Document, items: list[dict[str, Any]]) -> None:
-    """添加项目明细表（命题 5 字段 + 索引）。
+    """添加项目明细表（精简紧凑版）。
 
-    命题硬要求字段：标题/发布时间/来源链接/核心内容/附件链接
+    优化点：
+    - 标题截断到40字，核心内容截断到35字（避免单格过高）
+    - 来源URL只显示平台简称（如 ccgp），完整URL在反幻觉章节可查
+    - 字号8pt，段落间距压缩，控制行高
+    - 列宽重新分配，整体更紧凑
     """
     h = doc.add_heading("二、项目明细", level=1)
     for run in h.runs:
@@ -31,23 +35,49 @@ def add_detail_table(doc: Document, items: list[dict[str, Any]]) -> None:
         doc.add_paragraph("暂无采集数据。")
         return
 
-    # 命题 5 字段 + 序号
-    headers = ["序号", "标题", "发布时间", "来源链接", "核心内容", "附件链接"]
+    from docx.oxml.ns import qn
+
+    # 精简为6列：序号/标题/发布时间/预算/来源平台/核心内容摘要
+    headers = ["序号", "项目名称", "发布时间", "预算", "来源", "内容摘要"]
     table = doc.add_table(rows=1 + len(items), cols=len(headers))
     table.style = "Light Grid Accent 1"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
-    # 表头
+    # 表头（带底色）
     hdr = table.rows[0].cells
     for i, header in enumerate(headers):
         hdr[i].text = ""
         p = hdr[i].paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
         run = p.add_run(header)
         run.font.bold = True
-        run.font.size = Pt(10)
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
         _set_run_font(run, "黑体")
         hdr[i].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        shading = hdr[i]._element.get_or_add_tcPr()
+        shd = shading.makeelement(qn("w:shd"), {
+            qn("w:val"): "clear",
+            qn("w:fill"): "1677FF",
+        })
+        shading.append(shd)
+
+    # 平台名映射（URL → 简称）
+    def _platform_short(url: str) -> str:
+        if not url or url == "-":
+            return "-"
+        if "ccgp.gov.cn" in url:
+            return "ccgp"
+        if "chinabidding" in url:
+            return "chinabidding"
+        if "qianlima" in url:
+            return "千里马"
+        # 取域名主体
+        import re as _re
+        m = _re.search(r"//([^/]+)", url)
+        return m.group(1)[:15] if m else url[:15]
 
     # 数据行
     for idx, item in enumerate(items, 1):
@@ -55,35 +85,67 @@ def add_detail_table(doc: Document, items: list[dict[str, Any]]) -> None:
         publish_time = item.get("publish_time")
         if publish_time:
             try:
-                pt = datetime.fromisoformat(str(publish_time)).strftime("%Y-%m-%d")
+                pt = datetime.fromisoformat(str(publish_time)).strftime("%m-%d")
             except (ValueError, TypeError):
-                pt = str(publish_time)[:10]
+                pt = str(publish_time)[:5] if len(str(publish_time)) >= 5 else "-"
         else:
             pt = "-"
 
-        # v4.1 sec 8: 若 item 携带 display_grade，在核心内容前标注可信度徽标
-        core_content = str(item.get("core_content") or "-")[:200]
+        # 标题截断到40字
+        title = str(item.get("project_name") or "-")
+        if len(title) > 40:
+            title = title[:40] + "…"
+
+        # 核心内容截断到35字
+        core_content = str(item.get("core_content") or "-")
+        if len(core_content) > 35:
+            core_content = core_content[:35] + "…"
         item_grade = item.get("display_grade")
         if item_grade in ("high", "review", "low"):
-            grade_label = {"high": "可信", "review": "待核", "low": "存疑"}
-            core_content = f"[{grade_label.get(item_grade, item_grade)}] {core_content}"
+            grade_label = {"high": "✓", "review": "?", "low": "!"}
+            core_content = f"[{grade_label.get(item_grade, '?')}] {core_content}"
+
+        # 预算金额格式化
+        budget = item.get("budget_amount")
+        if budget:
+            try:
+                bval = float(budget) / 10000
+                budget_str = f"{bval:.1f}万" if bval >= 1 else f"{bval*10000:.0f}元"
+            except (ValueError, TypeError):
+                budget_str = str(budget)[:8]
+        else:
+            budget_str = "-"
+
+        source_url = str(item.get("source_url") or "-")
+
         values = [
             str(idx),
-            str(item.get("project_name") or "-"),
+            title,
             pt,
-            str(item.get("source_url") or "-"),
+            budget_str,
+            _platform_short(source_url),
             core_content,
-            str(item.get("attachment_url") or "-"),
         ]
         for i, val in enumerate(values):
             row[i].text = ""
             p = row[i].paragraphs[0]
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.line_spacing = 1.0
             run = p.add_run(val)
-            run.font.size = Pt(9)
+            run.font.size = Pt(8)
             _set_run_font(run, "宋体")
+            # 交替行底色（偶数行浅灰）
+            if idx % 2 == 0:
+                shading = row[i]._element.get_or_add_tcPr()
+                shd = shading.makeelement(qn("w:shd"), {
+                    qn("w:val"): "clear",
+                    qn("w:fill"): "F5F7FA",
+                })
+                shading.append(shd)
 
-    # 设置列宽
-    widths = [Cm(1), Cm(4), Cm(2), Cm(3), Cm(4), Cm(3)]
+    # 列宽（6列，总宽约16cm，适合A4）
+    widths = [Cm(0.8), Cm(6.5), Cm(1.5), Cm(1.5), Cm(1.5), Cm(4.2)]
     for row in table.rows:
         for i, cell in enumerate(row.cells):
             if i < len(widths):
@@ -195,7 +257,7 @@ def add_footer(doc: Document) -> None:
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(
-        f"— ScrapeFlow 报告结束 · 生成于 {datetime.now().strftime('%Y-%m-%d %H:%M')} —"
+        f"— 标小智 报告结束 · 生成于 {datetime.now().strftime('%Y-%m-%d %H:%M')} —"
     )
     run.font.size = Pt(9)
     run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)

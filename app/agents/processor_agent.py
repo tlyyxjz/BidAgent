@@ -41,7 +41,7 @@ _STOP_WORDS = {
 
 # 业务领域词典：查询里出现这些词时优先保留（不拆分）
 _DOMAIN_WORDS = {
-    "医疗", "设备", "教育", "格力", "空调", "电脑", "软件", "云服务",
+    "医疗", "教育", "格力", "空调", "电脑", "软件", "云服务",
     "安保", "保安", "保洁", "物业", "装修", "工程", "建筑", "绿化",
     "家具", "印刷", "车辆", "电梯", "消防", "网络", "服务器",
 }
@@ -258,16 +258,17 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
                 query = query.where(and_(*keyword_filters) if len(keyword_filters) == 1
                                     else or_(*keyword_filters))
 
-        # 按 region 过滤（P0 修复：补上 project_name 和 location）
-        # B4 修复：裸 ilike → safe_contains
+        # 按 region 过滤
+        # 匹配 tender_org（采购人）+ location（地区）+ project_name（项目名）
+        # 不匹配 core_content（正文含地区名不代表项目在该地区）
         region_relaxed = False
+        region_no_match = False
         if region:
             query = query.where(
                 or_(
-                    safe_contains(Tender.project_name, region),
                     safe_contains(Tender.tender_org, region),
-                    safe_contains(Tender.core_content, region),
                     safe_contains(Tender.location, region),
+                    safe_contains(Tender.project_name, region),
                 )
             )
 
@@ -288,46 +289,30 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
         if _nt_vals:
             query = query.where(Tender.notice_type.in_(_nt_vals))
 
+        # 加 time_range 过滤（用户说"最近7天"应只返回7天内公告）
+        time_range = getattr(parsed, "time_range", None) or getattr(parsed, "date_range", None)
+        time_days = _parse_time_range_days(time_range)
+        if time_days:
+            from datetime import datetime as _dt, timedelta as _td
+            _cutoff = _dt.now() - _td(days=time_days)
+            query = query.where(Tender.publish_time >= _cutoff)
+            logger.info("time_range='{}' -> 过滤最近{}天 (cutoff={})", time_range, time_days, _cutoff.date())
+
         # F1 修复：排序改 publish_time desc（原 id desc，补录数据时 id 与时间不一致）
         result = await db.execute(
             query.order_by(Tender.publish_time.desc().nullslast()).limit(100)
         )
         tenders = result.scalars().all()
 
-        # B3 修复：region 过滤后<5条时回退全国数据（原仅0条回退，数据过少体验差）
-        # DB 现状仅 167 条唯一公告，地区过滤后常只 1-2 条
-        if region and len(tenders) < 5:
+        # P3 修复：region 过滤后0条时不回退全国（避免不相关公告混入）
+        # 原逻辑回退全国导致"浙江中标"返回上海/复旦等非浙江公告，准度0%
+        # 新逻辑：保持0条结果，在 summary 标注 region_no_match 让前端提示用户
+        if region and len(tenders) == 0:
             logger.warning(
-                "region='{}' 过滤后0条，回退到全国数据",
+                "region='{}' 过滤后0条，不回退全国（P3修复：保持结果准确性）",
                 region,
             )
-            region_relaxed = True
-            # 重建查询（去掉 region 条件，保留其他过滤）
-            query2 = select(Tender)
-            if platforms_collected:
-                query2 = query2.where(
-                    Tender.source_platform.in_(platforms_collected)
-                )
-            if search_words:
-                kw_filters2 = []
-                for kw in search_words:
-                    if kw:
-                        kw_filters2.append(
-                            or_(
-                                safe_contains(Tender.project_name, kw),
-                                safe_contains(Tender.core_content, kw),
-                            )
-                        )
-                if kw_filters2:
-                    query2 = query2.where(and_(*kw_filters2) if len(kw_filters2) == 1
-                                          else or_(*kw_filters2))
-            if _nt_vals:
-                query2 = query2.where(Tender.notice_type.in_(_nt_vals))
-            # F1 修复：回退查询也用 publish_time desc
-            result2 = await db.execute(
-                query2.order_by(Tender.publish_time.desc().nullslast()).limit(100)
-            )
-            tenders = result2.scalars().all()
+            region_no_match = True
 
     # 把查询到的 tender_ids 存入 state，供 delivery_agent 复用（避免
     # delivery 用不同过滤条件重查导致查到 0 条而不生成报告）
@@ -361,6 +346,7 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
         "category_distribution": category_dist,
         "avg_relevance_score": round(avg_relevance, 3),
         "region_relaxed": region_relaxed,
+        "region_no_match": region_no_match,
     }
 
     # 真实 LLM 抽取 6 类核心字段（接 app/llm/extractor.py）
@@ -485,6 +471,51 @@ def _classify_category(project_name: str) -> str:
     if any(kw in name for kw in ["工程", "施工", "建设", "装修", "改造"]):
         return "工程"
     return "其他"
+
+
+import re as _re_time
+
+def _parse_time_range_days(time_range: str | None) -> int | None:
+    """解析 time_range 字符串为天数。
+
+    支持：
+    - '7d' / '7天' / '最近7天' -> 7
+    - '30d' / '30天' / '最近30天' / '最近1个月' / '1个月' -> 30
+    - '3m' / '3个月' / '最近3个月' -> 90
+    - '1y' / '1年' / '最近1年' -> 365
+    - None / '' / 无法解析 -> None（不过滤）
+
+    Args:
+        time_range: 时间范围字符串
+
+    Returns:
+        天数（int）或 None
+    """
+    # 类型保护：非字符串直接返回 None（兼容 MagicMock 测试）
+    if not isinstance(time_range, str):
+        return None
+    if not time_range or not time_range.strip():
+        return None
+    s = time_range.strip()
+    # 优先匹配显式单位
+    m = _re_time.search(r"(\d+)\s*(d|天|日)", s, _re_time.IGNORECASE)
+    if m:
+        return int(m.group(1))
+    m = _re_time.search(r"(\d+)\s*(m|个月|月)", s, _re_time.IGNORECASE)
+    if m:
+        return int(m.group(1)) * 30
+    m = _re_time.search(r"(\d+)\s*(y|年)", s, _re_time.IGNORECASE)
+    if m:
+        return int(m.group(1)) * 365
+    # 中文"最近X天"格式
+    m = _re_time.search(r"最近(\d+)天", s)
+    if m:
+        return int(m.group(1))
+    # 纯数字默认按天
+    m = _re_time.search(r"(\d+)", s)
+    if m:
+        return int(m.group(1))
+    return None
 
 
 def _compute_relevance(project_name: str, core_content: str, topic: str) -> float:

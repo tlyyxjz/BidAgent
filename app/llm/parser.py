@@ -103,6 +103,42 @@ async def _call_deepseek(query: str) -> dict[str, Any]:
         return parse_json_lenient(content)
 
 
+def _fix_topic(parsed_dict: dict, raw_query: str) -> dict:
+    """代码兜底：如果 LLM 返回的 topic 过长或含空格，用拆词取核心词。
+
+    LLM 有时会把整句当 topic（如"北京教育系统的中标公告 最近30天"），
+    这里用 processor_agent._split_topic 拆词，取第一个有意义的关键词。
+    """
+    topic = parsed_dict.get("topic", "")
+    if not topic:
+        return parsed_dict
+    # topic 过长（>6字）或含空格/时间词，需要拆
+    needs_split = (
+        len(topic) > 6
+        or " " in topic
+        or "最近" in topic
+        or "天" in topic
+        or "公告" in topic
+        or "招标" in topic
+    )
+    if not needs_split:
+        return parsed_dict
+    try:
+        from app.agents.processor_agent import _split_topic
+        words = _split_topic(topic)
+        if words:
+            parsed_dict["topic"] = words[0]
+            # 同时更新 keywords
+            keywords = parsed_dict.get("keywords") or []
+            for w in words:
+                if w not in keywords:
+                    keywords.append(w)
+            parsed_dict["keywords"] = keywords
+    except Exception:
+        pass
+    return parsed_dict
+
+
 def _fallback_keyword_parse(query: str) -> ParsedFilters:
     """LLM 不可用时的降级：基于关键词的简单解析。
 
@@ -115,36 +151,89 @@ def _fallback_keyword_parse(query: str) -> ParsedFilters:
     trigger_type = "immediate"
     keywords: list[str] = []
 
-    # 地区识别
-    regions = ["北京", "上海", "广东", "深圳", "浙江", "江苏", "四川",
-               "湖北", "山东", "河南", "福建", "安徽"]
-    for r in regions:
-        if r in query:
-            region = r
+    # 机构名识别（医院/大学/公司/集团/局/委员会/院/中心→当 topic，不当 region）
+    org_suffixes = ["医院", "大学", "学院", "公司", "集团", "局", "委员会",
+                    "厅", "院", "中心", "研究所", "研究院"]
+    for suffix in org_suffixes:
+        if suffix in query:
+            # 提取机构名（suffix 前 2-8 字符 + suffix）
+            idx = query.find(suffix)
+            start = max(0, idx - 6)
+            org_name = query[start:idx + len(suffix)]
+            topic = org_name
+            keywords.append(org_name)
             break
 
-    # 主题识别（命题示例：服务器/充电桩）
-    topics = {
-        "服务器": ["服务器", "机架", "刀片"],
-        "充电桩": ["充电桩", "充电站", "充电设备"],
-        "IT设备": ["IT", "信息化", "计算机", "网络设备"],
-        "医疗器械": ["医疗", "器械"],
-        "建筑工程": ["建筑", "工程", "施工"],
-    }
-    for t, kws in topics.items():
-        if any(k in query for k in kws):
-            topic = t
-            keywords.extend(k for k in kws if k in query)
-            break
+    # 地区识别（仅纯地名，机构名已优先识别为 topic）
+    # 修复：城市名优先于省份名（"台州"比"浙江"更精确），
+    #       且匹配到省份时继续检查是否有城市，城市加入 keywords
+    if topic is None:
+        # 城市名优先（更精确的地域）
+        _CITY_NAMES = [
+            "台州", "杭州", "宁波", "温州", "嘉兴", "湖州",
+            "绍兴", "金华", "衢州", "舟山", "丽水",
+            "深圳", "青岛", "大连", "厦门", "苏州", "无锡", "南京",
+        ]
+        _PROVINCES = [
+            "北京", "上海", "广东", "浙江", "江苏", "四川",
+            "湖北", "山东", "河南", "福建", "安徽", "湖南", "江西",
+            "辽宁", "吉林", "河北", "山西", "陕西", "甘肃", "云南",
+            "贵州", "海南", "青海", "天津", "重庆",
+        ]
+        # 先匹配城市（精确优先）
+        matched_city = None
+        for c in _CITY_NAMES:
+            if c in query:
+                matched_city = c
+                break
+        # 再匹配省份
+        matched_province = None
+        for p in _PROVINCES:
+            if p in query:
+                matched_province = p
+                break
+        # region 优先用城市（更精确），没有城市才用省份
+        if matched_city:
+            region = matched_city
+        elif matched_province:
+            region = matched_province
+        # 如果同时有省份和城市，把城市也加入 keywords（确保搜索时能匹配）
+        if matched_city and matched_province and matched_city != matched_province:
+            if matched_city not in keywords:
+                keywords.append(matched_city)
 
-    # 时间识别（M-3 修复：加括号明确语义）
-    if ("最近" in query and "一月" in query) or "1个月" in query:
-        time_range = "1m"
-    elif ("最近" in query and "3月" in query) or "3个月" in query:
+    # 主题识别（命题示例：服务器/充电桩；机构名已识别则跳过）
+    if topic is None:
+        topics = {
+            "服务器": ["服务器", "机架", "刀片"],
+            "充电桩": ["充电桩", "充电站", "充电设备"],
+            "IT设备": ["IT", "信息化", "计算机", "网络设备"],
+            "医疗器械": ["医疗", "器械"],
+            "建筑工程": ["建筑", "工程", "施工"],
+            "政府采购": ["政府采购", "采购"],
+            "教育": ["教育", "学校", "教学", "图书", "培训"],
+            "环保": ["环保", "环境", "生态", "污水处理"],
+            "安防": ["安防", "监控", "消防", "安保"],
+            "保洁": ["保洁", "物业", "绿化", "环卫"],
+        }
+        for t, kws in topics.items():
+            if any(k in query for k in kws):
+                topic = t
+                keywords.extend(k for k in kws if k in query)
+                break
+
+    # 时间识别（支持 1天/5天/7天/15天/30天/3个月）
+    if ("最近" in query and "3月" in query) or "3个月" in query:
         time_range = "3m"
-    elif "本周" in query:
+    elif ("最近" in query and "一月" in query) or "1个月" in query or "30天" in query:
+        time_range = "30d"
+    elif "15天" in query:
+        time_range = "15d"
+    elif "5天" in query:
+        time_range = "5d"
+    elif "本周" in query or "7天" in query:
         time_range = "7d"
-    elif "今天" in query:
+    elif "今天" in query or "1天" in query:
         time_range = "1d"
 
     # 频率识别（命题示例：每天9:00 / 今天9:00）
@@ -158,6 +247,15 @@ def _fallback_keyword_parse(query: str) -> ParsedFilters:
         frequency = "0 9 * * 1"
         trigger_type = "scheduled"
 
+    # 公告类型识别（映射为 DB 英文值：award/correction/tender）
+    notice_types: list[str] = []
+    if "中标" in query or "成交" in query:
+        notice_types = ["award"]
+    elif "更正" in query or "变更" in query:
+        notice_types = ["correction"]
+    elif "招标" in query or "采购" in query:
+        notice_types = ["tender"]
+
     return ParsedFilters(
         topic=topic,
         region=region,
@@ -165,6 +263,7 @@ def _fallback_keyword_parse(query: str) -> ParsedFilters:
         frequency=frequency,
         trigger_type=trigger_type,
         keywords=keywords,
+        notice_types=notice_types,
         raw_query=query,
     )
 
@@ -201,7 +300,15 @@ async def parse_query(query: str) -> ParsedFilters:
             data["time_range"] = data["date_range"]
         # M-4 修复：防止 LLM 返回的 raw_query 覆盖用户原始查询
         data.pop("raw_query", None)
+        # P0 修复：代码兜底，修正 LLM 返回的 topic 过长问题
+        data = _fix_topic(data, query)
         parsed = ParsedFilters(raw_query=query, **data)
+        # P3 修复：LLM 返回有效JSON但关键字段全空时走 fallback（偶发空响应问题）
+        if not parsed.topic and not parsed.region and not parsed.keywords and not parsed.time_range:
+            logger.warning("LLM returned all-empty fields, fallback to keyword parse")
+            parsed = _fallback_keyword_parse(query)
+            _save_to_cache(query, parsed)
+            return parsed
         _save_to_cache(query, parsed)
         logger.info(
             "LLM parsed query={} → topic={} region={} time_range={} freq={}",

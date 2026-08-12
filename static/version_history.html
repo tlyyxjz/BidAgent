@@ -441,7 +441,7 @@ a{color:inherit;text-decoration:none}
       if(v){ onNoticeSelected(v); }
     };
     var p=new URLSearchParams(window.location.search);
-    var initId=p.get('notice_id')||p.get('nid');
+    var initId=p.get('notice_id')||p.get('nid')||p.get('src')||p.get('id');
     if(initId && state.tenders.some(function(t){return String(t.id)===String(initId);})){
       sel.value=initId;
       onNoticeSelected(initId);

@@ -26,7 +26,7 @@ def _t(company, amount=100.0, day="2026-07-01"):
 async def test_finance_agent_empty_state():
     state = await fa_mod.run({})
     assert state["observation_signals"] == {}
-    assert state["finance_summary"] == {}
+    assert state["finance_summary"] == {"reason": "无可用公告数据"}
 
 
 @pytest.mark.asyncio

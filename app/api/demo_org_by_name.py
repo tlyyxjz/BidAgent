@@ -57,6 +57,8 @@ async def demo_org_by_name(name: str, db: AsyncSession = Depends(get_db)) -> JSO
         top3_purchasers = real_profile["top3_purchasers"]
         top3_concentration = real_profile["top3_concentration"]
         completeness = real_profile["completeness"]
+        # 把 top3_concentration 注入 meta，供 _build_5d_credit 展示"采购人集中"维度
+        meta["top3_concentration"] = top3_concentration
         dims = _build_5d_credit(meta)  # 5 维度对齐 observation_signals.py 口径
     else:
         # 真实数据未命中：诚实空态（不伪造活跃度/Top3/完整性）

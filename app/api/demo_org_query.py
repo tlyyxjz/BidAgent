@@ -78,10 +78,14 @@ async def _query_real_org_by_name(name: str, db: AsyncSession) -> dict | None:
             d = start + _td(days=i)
             daily.append({"date": d.strftime("%Y-%m-%d"), "count": date_counts.get(d, 0)})
 
-        # top3 采购人（基于所有公告）
+        # 该组织相关的所有 tender_ids（提前定义，供后续 top3 采购人/金额等查询过滤使用）
+        tender_ids = sorted({t.id for _f, t in all_occurrences})
+
+        # top3 采购人（仅基于该组织出现的公告，不是全表）
         purchasers_result = await db.execute(
             select(ExtractedField.raw_value, func.count(ExtractedField.id).label("cnt"))
             .where(ExtractedField.field_name == "purchaser_name")
+            .where(ExtractedField.tender_id.in_(tender_ids))
             .group_by(ExtractedField.raw_value)
             .order_by(func.count(ExtractedField.id).desc())
             .limit(3)
@@ -105,14 +109,26 @@ async def _query_real_org_by_name(name: str, db: AsyncSession) -> dict | None:
         from app.api.real_demo import _infer_org_meta  # 局部导入避免循环依赖
         _org_type, _region = _infer_org_meta(name, org_role)
 
-        # 真实中标金额：仅统计该组织作为中标人的公告的 win_amount（不估算、不伪造）
-        tender_ids = sorted({t.id for _f, t in all_occurrences})
-        amount_row = (await db.execute(
-            select(func.sum(Tender.win_amount))
-            .where(Tender.id.in_(tender_ids))
-            .where(Tender.win_company == name)
-        )).scalar()
-        total_amount = float(amount_row) if amount_row else 0.0
+        # 真实金额：根据组织角色分别查询（不估算、不伪造）
+        # - 中标人：sum(win_amount) where win_company == name
+        # - 采购人：sum(budget_amount) where tender_org == name
+        if org_role == "winner":
+            amount_row = (await db.execute(
+                select(func.sum(Tender.win_amount))
+                .where(Tender.id.in_(tender_ids))
+                .where(Tender.win_company == name)
+            )).scalar()
+            total_amount = float(amount_row) if amount_row else 0.0
+            amount_type = "中标金额"
+        else:
+            # 采购人：统计采购预算总额
+            amount_row = (await db.execute(
+                select(func.sum(Tender.budget_amount))
+                .where(Tender.id.in_(tender_ids))
+                .where(Tender.tender_org == name)
+            )).scalar()
+            total_amount = float(amount_row) if amount_row else 0.0
+            amount_type = "采购预算"
 
         # 真实数据完整性：关键字段覆盖率 + 采集时间范围
         key_result = await db.execute(
@@ -155,6 +171,7 @@ async def _query_real_org_by_name(name: str, db: AsyncSession) -> dict | None:
             "region": _region,
             "total_projects": total,
             "total_amount_yuan": total_amount,
+            "amount_type": amount_type,
             "award_win_rate": award_count / max(tender_count, 1) if tender_count else 0.0,
             "active_days_30d": min(30, sum(1 for d in daily[-30:] if d["count"] > 0)),
             "amount_consistency_score": completeness_score,

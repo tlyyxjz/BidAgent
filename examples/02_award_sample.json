@@ -1,0 +1,113 @@
+{
+  "meta": {
+    "sample_id": "02_award_sample",
+    "notice_type": "award",
+    "description": "中标公告示例 - 东南大学苏州校区教室设备升级改造采购项目（DB id=25，真实数据）",
+    "source": "ccgp.gov.cn",
+    "fetched_at": "2026-08-05T18:09:25"
+  },
+  "notice": {
+    "tender_id": 25,
+    "project_name": "东南大学苏州校区教室设备升级改造采购项目中标公告",
+    "notice_type": "award",
+    "source_platform": "ccgp",
+    "source_url": "http://www.ccgp.gov.cn/cggg/zygg/zbgg/202608/t20260805_27074843.htm",
+    "publish_time": "2026-08-05T18:09:25",
+    "tender_org": "东南大学",
+    "location": "南京市",
+    "bid_number": "SEU-ZB-260443",
+    "win_amount": 2097000.00
+  },
+  "extracted_fields": [
+    {
+      "field_name": "project_identifier",
+      "raw_value": "SEU-ZB-260443（JD066026M8ZC02232）",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 471
+    },
+    {
+      "field_name": "purchaser_name",
+      "raw_value": "东南大学",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 472
+    },
+    {
+      "field_name": "winner_name",
+      "raw_value": "苏州凌格文化教育科技有限公司",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 473
+    },
+    {
+      "field_name": "amount",
+      "raw_value": "209.700000 万元",
+      "normalized_value": 2097000.00,
+      "amount_type": "win_amount",
+      "currency": "CNY",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 474
+    },
+    {
+      "field_name": "publish_date",
+      "raw_value": "2026年08月05日 14:51",
+      "display_grade": "review",
+      "support_level": "direct",
+      "evidence_id": 475
+    }
+  ],
+  "evidence": [
+    {
+      "id": 471,
+      "evidence_text": "一、项目编号：SEU-ZB-260443（JD066026M8ZC02232）",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 483,
+      "raw_end": 522,
+      "field_name": "project_identifier"
+    },
+    {
+      "id": 472,
+      "evidence_text": "采购单位东南大学",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 117,
+      "raw_end": 125,
+      "field_name": "purchaser_name"
+    },
+    {
+      "id": 473,
+      "evidence_text": "供应商名称：苏州凌格文化教育科技有限公司",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 603,
+      "raw_end": 623,
+      "field_name": "winner_name"
+    },
+    {
+      "id": 474,
+      "evidence_text": "总中标金额￥209.700000 万元（人民币）",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 183,
+      "raw_end": 207,
+      "field_name": "amount"
+    },
+    {
+      "id": 475,
+      "evidence_text": "公告时间2026年08月05日 14:51",
+      "match_method": "exact",
+      "verified": true,
+      "confidence": 100,
+      "raw_start": 132,
+      "raw_end": 153,
+      "field_name": "publish_date"
+    }
+  ]
+}

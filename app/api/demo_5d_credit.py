@@ -34,12 +34,27 @@ def _build_5d_credit(meta: dict) -> list[dict]:
     amt_yuan = meta.get("total_amount_yuan")
     active_days = meta.get("active_days_30d") or 0
     type_coverage = meta.get("type_coverage_count") or 0
-    win_rate = meta.get("award_win_rate")
+    # 采购人集中度：top3 采购人覆盖该组织出现的公告数比例（0-1）
+    # 越接近 1 表示采购人越集中（买方少），越接近 0 表示采购人分散（买方多）
+    # 替代原 award_win_rate（对只有中标公告的供应商不准确）
+    top3_concentration = meta.get("top3_concentration")
 
-    # 金额维度：展示可观察的事实量（累计中标金额），无真实金额时展示 "--"
-    amt_display = f"{amt_yuan / 1e8:.2f} 亿元" if amt_yuan else "--"
-    # 采购人集中：中标率缺失时展示 "--"（不伪造代理值）
-    pur_display = f"{win_rate * 100:.1f}%" if win_rate is not None else "--"
+    # 金额维度：根据组织角色展示采购预算或中标金额，自动选择单位，无真实金额时展示 "--"
+    amount_type = meta.get("amount_type") or "中标金额"
+    if amt_yuan:
+        if amt_yuan >= 1e8:
+            amt_display = f"{amt_yuan / 1e8:.2f} 亿元（{amount_type}）"
+        elif amt_yuan >= 1e4:
+            amt_display = f"{amt_yuan / 1e4:.1f} 万元（{amount_type}）"
+        else:
+            amt_display = f"{amt_yuan:.0f} 元（{amount_type}）"
+    else:
+        amt_display = "--"
+    # 采购人集中：top3 采购商集中度，无数据时展示 "--"
+    if top3_concentration is not None:
+        pur_display = f"Top3 占比 {top3_concentration * 100:.1f}%"
+    else:
+        pur_display = "--"
 
     dims = [
         {
@@ -58,7 +73,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "score": None,
             "grade": None,
             "display": amt_display,
-            "description": "累计中标金额（仅统计该组织作为中标人的公告实测值）",
+            "description": f"累计{amount_type}（该组织作为{'采购人' if amount_type == '采购预算' else '中标人'}的公告实测值）",
         },
         {
             "key": "frequency",
@@ -85,7 +100,7 @@ def _build_5d_credit(meta: dict) -> list[dict]:
             "score": None,
             "grade": None,
             "display": pur_display,
-            "description": "采购人分散度（以中标率代理），越分散越低（对齐 observation_signals.py）",
+            "description": "采购人分散度（top3 采购商集中度），越分散越低（对齐 observation_signals.py）",
         },
     ]
     return dims

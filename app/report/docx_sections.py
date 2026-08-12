@@ -27,9 +27,12 @@ def _set_default_font(doc: Document) -> None:
 
 
 def _add_cover(doc: Document, filters: ParsedFilters, total: int) -> None:
-    """封面页。"""
-    # 空行
-    for _ in range(6):
+    """封面页（优化版：品牌色块+分割线+信息卡片）。"""
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.oxml.ns import qn
+
+    # 顶部留白
+    for _ in range(4):
         doc.add_paragraph()
 
     # 主标题
@@ -37,58 +40,87 @@ def _add_cover(doc: Document, filters: ParsedFilters, total: int) -> None:
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = title.add_run("招投标信息聚合报告")
     _set_run_font(run, "黑体")
-    run.font.size = Pt(28)
+    run.font.size = Pt(26)
     run.font.bold = True
-    run.font.color.rgb = RGBColor(0x1F, 0x49, 0x7D)
+    run.font.color.rgb = RGBColor(0x16, 0x77, 0xFF)
+
+    # 品牌色分割线（用段落底边框模拟）
+    line_p = doc.add_paragraph()
+    line_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    pPr = line_p._element.get_or_add_pPr()
+    pBdr = pPr.makeelement(qn("w:pBdr"), {})
+    bottom = pBdr.makeelement(qn("w:bottom"), {
+        qn("w:val"): "single",
+        qn("w:sz"): "12",
+        qn("w:space"): "1",
+        qn("w:color"): "1677FF",
+    })
+    pBdr.append(bottom)
+    pPr.append(pBdr)
 
     doc.add_paragraph()
 
     # 副标题
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = subtitle.add_run("ScrapeFlow · AI 驱动的招投标信息聚合工具")
-    run.font.size = Pt(14)
-    run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+    run = subtitle.add_run("标小智 · AI 驱动的招投标信息聚合工具")
+    run.font.size = Pt(13)
+    run.font.color.rgb = RGBColor(0x59, 0x59, 0x59)
 
-    for _ in range(4):
+    for _ in range(3):
         doc.add_paragraph()
 
-    # 查询条件
-    info = doc.add_paragraph()
-    info.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = info.add_run(f"查询条件：{filters.raw_query}")
-    run.font.size = Pt(12)
+    # 信息卡片（用表格模拟）
+    info_table = doc.add_table(rows=5, cols=2)
+    info_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    info_table.style = "Table Grid"
 
-    info2 = doc.add_paragraph()
-    info2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = info2.add_run(
-        f"主题：{filters.topic or '不限'}  |  "
-        f"地区：{filters.region or '不限'}  |  "
-        f"时间范围：{filters.time_range or filters.date_range or '30d'}"
-    )
-    run.font.size = Pt(11)
-    run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
-
+    info_data = [
+        ("查询条件", filters.raw_query or "-"),
+        ("主题 / 地区", f"{filters.topic or '不限'} / {filters.region or '不限'}"),
+        ("时间范围", str(filters.time_range or filters.date_range or "30d")),
+        ("采集结果", f"共 {total} 条"),
+        ("生成时间", datetime.now().strftime("%Y年%m月%d日 %H:%M")),
+    ]
     if filters.frequency:
-        info3 = doc.add_paragraph()
-        info3.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = info3.add_run(f"推送频率：{filters.frequency}")
-        run.font.size = Pt(11)
-        run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+        info_data.insert(3, ("推送频率", filters.frequency))
+        # 重建表格行数
+        info_table = doc.add_table(rows=len(info_data), cols=2)
+        info_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        info_table.style = "Table Grid"
 
-    info4 = doc.add_paragraph()
-    info4.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = info4.add_run(f"采集结果：共 {total} 条")
-    run.font.size = Pt(11)
-    run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
+    # 删除之前创建的5行表格（如果有frequency则重建了）
+    # 简化：直接用最后一个info_table
+    for i, (label, value) in enumerate(info_data):
+        cell_label = info_table.cell(i, 0)
+        cell_value = info_table.cell(i, 1)
+        cell_label.text = ""
+        cell_value.text = ""
 
-    for _ in range(4):
-        doc.add_paragraph()
+        p1 = cell_label.paragraphs[0]
+        r1 = p1.add_run(label)
+        r1.font.bold = True
+        r1.font.size = Pt(10)
+        r1.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        _set_run_font(r1, "黑体")
+        # 标签列底色
+        shading = cell_label._element.get_or_add_tcPr()
+        shd = shading.makeelement(qn("w:shd"), {
+            qn("w:val"): "clear",
+            qn("w:fill"): "1677FF",
+        })
+        shading.append(shd)
 
-    gen_time = doc.add_paragraph()
-    gen_time.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = gen_time.add_run(f"生成时间：{datetime.now().strftime('%Y年%m月%d日 %H:%M')}")
-    run.font.size = Pt(11)
+        p2 = cell_value.paragraphs[0]
+        r2 = p2.add_run(str(value))
+        r2.font.size = Pt(10)
+        _set_run_font(r2, "宋体")
+
+    # 设置卡片列宽
+    from docx.shared import Cm
+    for row in info_table.rows:
+        row.cells[0].width = Cm(4)
+        row.cells[1].width = Cm(10)
 
     doc.add_page_break()
 
@@ -143,26 +175,49 @@ def _add_finance_section(doc: Document, finance_summary: dict[str, Any] | None) 
         doc.add_paragraph()
         return
 
+    # 空数据时显示 reason（如有）
     signals = finance_summary.get("observation_signals") or {}
+    _reason = finance_summary.get("reason")
+    _perspective = finance_summary.get("perspective", "winner")
     if not signals:
-        doc.add_paragraph("本期无相关数据。")
+        p = doc.add_paragraph()
+        run = p.add_run(_reason or "本期无相关数据。")
+        run.font.size = Pt(10)
+        run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
         doc.add_paragraph()
         return
 
     # 6 维公开活动观察信号（对齐 observation_signals.py）
-    signal_items = [
-        ("中标活跃度", "award_activity", "近 90 天公开中标次数和金额趋势"),
-        ("公开中标集中度", "award_concentration", "Top 3 采购人及地区占比"),
-        ("废标公告关联", "cancellation_link", "企业在废标/流标公告中被观察到的次数"),
-        ("明确投标否决", "explicit_rejection", "公告明确写明企业投标被否决的次数"),
-        ("信息冲突观察", "info_conflict", "相同事实断言在不同来源中的矛盾"),
-        ("高频共现提示", "high_freq_cooccurrence", "企业与其他企业在同一标段被反复观察到"),
-    ]
+    # 招标公告场景（perspective=purchaser）下，信号语义切换为采购侧
+    if _perspective == "purchaser":
+        signal_items = [
+            ("采购活跃度", "award_activity", "近 90 天公开采购次数和金额趋势"),
+            ("公开采购集中度", "award_concentration", "Top 3 供应商及地区占比"),
+            ("废标公告关联", "cancellation_link", "采购项目在废标/流标公告中被观察到的次数"),
+            ("明确投标否决", "explicit_rejection", "公告明确写明该采购项目投标被否决的次数"),
+            ("信息冲突观察", "info_conflict", "相同事实断言在不同来源中的矛盾"),
+            ("高频共现提示", "high_freq_cooccurrence", "采购人与其他采购人在同一标段被反复观察到"),
+        ]
+    else:
+        signal_items = [
+            ("中标活跃度", "award_activity", "近 90 天公开中标次数和金额趋势"),
+            ("公开中标集中度", "award_concentration", "Top 3 采购人及地区占比"),
+            ("废标公告关联", "cancellation_link", "企业在废标/流标公告中被观察到的次数"),
+            ("明确投标否决", "explicit_rejection", "公告明确写明企业投标被否决的次数"),
+            ("信息冲突观察", "info_conflict", "相同事实断言在不同来源中的矛盾"),
+            ("高频共现提示", "high_freq_cooccurrence", "企业与其他企业在同一标段被反复观察到"),
+        ]
 
+    # 视角说明
+    _perspective_note = (
+        "（本期为采购人视角：公告中无中标人字段，按采购人分组呈现采购活动观察信号）"
+        if _perspective == "purchaser"
+        else ""
+    )
     doc.add_paragraph(
         "本章节仅呈现基于公开招投标公告可观察到的活动信号，"
         "不构成对任何企业信用的评价或评分。所有信号均来源于公开数据，"
-        "供供应链金融贷前尽调参考。"
+        f"供供应链金融贷前尽调参考。{_perspective_note}"
     )
     doc.add_paragraph()
 
@@ -182,16 +237,105 @@ def _add_finance_section(doc: Document, finance_summary: dict[str, Any] | None) 
             run = p.add_run("本期未观察到相关数据。")
             run.font.color.rgb = RGBColor(0x80, 0x80, 0x80)
         elif isinstance(value, dict):
+            # 中文标签映射 + 格式化展示
+            _LABELS = {
+                "observed_value": "观察值",
+                "observation_period": "观察周期",
+                "coverage_note": "覆盖说明",
+                "win_count": "次数",
+                "total_amount": "总金额（万元）",
+                "avg_amount": "平均金额（万元）",
+                "monthly_trend": "月度趋势",
+                "top3_purchasers": "Top3 采购人",
+                "top3_regions": "Top3 地区",
+                "top3_purchaser_ratio": "Top3 采购人集中度",
+                "top3_region_ratio": "Top3 地区集中度",
+                "cancellation_notices": "废标公告",
+                "rejection_notices": "否决记录",
+                "conflicts": "冲突记录",
+                "cooccurrences": "共现记录",
+            }
+            # 跳过 disclaimer（太长，已在指标说明里体现）
+            _SKIP_KEYS = {"disclaimer"}
             for sub_key, sub_val in value.items():
+                if sub_key in _SKIP_KEYS:
+                    continue
+                label = _LABELS.get(sub_key, sub_key)
                 p = doc.add_paragraph(style="List Bullet")
-                p.add_run(f"{sub_key}：").font.bold = True
-                p.add_run(str(sub_val))
+                p.add_run(f"{label}：").font.bold = True
+                # 格式化不同类型的值
+                if isinstance(sub_val, list):
+                    if not sub_val:
+                        p.add_run("无")
+                    else:
+                        for item in sub_val[:5]:
+                            if isinstance(item, dict):
+                                # top3_purchasers 等结构：name + count + ratio
+                                parts = []
+                                for k, v in item.items():
+                                    if k == "ratio":
+                                        parts.append(f"占比 {v:.0%}")
+                                    elif k == "count":
+                                        parts.append(f"{v} 次")
+                                    else:
+                                        parts.append(str(v))
+                                p2 = doc.add_paragraph(style="List Bullet 2")
+                                p2.add_run("、".join(parts))
+                            else:
+                                p2 = doc.add_paragraph(style="List Bullet 2")
+                                p2.add_run(str(item))
+                elif isinstance(sub_val, dict):
+                    if not sub_val:
+                        p.add_run("无")
+                    else:
+                        for mk, mv in sub_val.items():
+                            p2 = doc.add_paragraph(style="List Bullet 2")
+                            r = p2.add_run(f"{mk}：")
+                            r.font.bold = True
+                            if isinstance(mv, float):
+                                p2.add_run(f"{mv:.2f}")
+                            else:
+                                p2.add_run(str(mv))
+                elif isinstance(sub_val, float):
+                    if "ratio" in sub_key or "rate" in sub_key:
+                        p.add_run(f"{sub_val:.1%}")
+                    else:
+                        p.add_run(f"{sub_val:.2f}")
+                else:
+                    p.add_run(str(sub_val))
         elif isinstance(value, list):
-            for item in value[:10]:
+            if not value:
                 p = doc.add_paragraph(style="List Bullet")
-                p.add_run(str(item))
+                p.add_run("无")
+            else:
+                for item in value[:10]:
+                    p = doc.add_paragraph(style="List Bullet")
+                    p.add_run(str(item))
         else:
             p = doc.add_paragraph(style="List Bullet")
             p.add_run(str(value))
 
         doc.add_paragraph()
+
+
+def _add_toc(doc: Document) -> None:
+    """添加目录页。"""
+    h = doc.add_heading("目录", level=1)
+    for run in h.runs:
+        _set_run_font(run, "黑体")
+
+    toc_items = [
+        "一、报告摘要",
+        "二、项目明细",
+        "三、分析与建议",
+        "四、公开活动观察信号",
+        "五、证据验证报告（6 Agent 真实能力）",
+    ]
+    for item in toc_items:
+        p = doc.add_paragraph()
+        run = p.add_run(item)
+        run.font.size = Pt(12)
+        _set_run_font(run, "宋体")
+        p.paragraph_format.space_after = Pt(6)
+
+    doc.add_page_break()
