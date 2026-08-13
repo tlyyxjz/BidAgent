@@ -28,10 +28,7 @@ router = APIRouter(prefix="/ui", tags=["ui"])
 _STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
 
 _GOLD_RAW_DIR = Path(os.environ.get("GOLD_DATA_DIR", str(Path(__file__).resolve().parents[2] / "_w2_raw")))
-_GOLD_ANNOT_DIR = Path(
-    r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent"
-    r"\work-mode-projects\6a57291a0778ce48bfe693d2\_w2_annotations"
-)
+_GOLD_ANNOT_DIR = Path(os.environ.get("GOLD_ANNOT_DIR", str(Path(__file__).resolve().parents[2] / "_w2_annotations")))
 
 
 @router.get("", response_class=HTMLResponse)

@@ -9,16 +9,11 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
-_GOLD_RAW_DIR = Path(
-    r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent"
-    r"\work-mode-projects\6a57291a0778ce48bfe693d2\_w2_raw"
-)
-_GOLD_ANNOT_DIR = Path(
-    r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent"
-    r"\work-mode-projects\6a57291a0778ce48bfe693d2\_w2_annotations"
-)
+_GOLD_RAW_DIR = Path(os.environ.get("GOLD_DATA_DIR", str(Path(__file__).resolve().parents[2] / "_w2_raw")))
+_GOLD_ANNOT_DIR = Path(os.environ.get("GOLD_ANNOT_DIR", str(Path(__file__).resolve().parents[2] / "_w2_annotations")))
 
 FIELD_LABELS = {
     "project_identifier": "项目编号",
