@@ -42,7 +42,7 @@ jobs:
           --ignore=tests/test_rate_limiter.py
           --ignore=tests/test_e2e_pages.py
           --ignore=tests/test_e2e_flow.py
-          --timeout=180 --timeout-method=thread
+          --timeout=180 --timeout-method=signal
           --reruns 2 --reruns-delay 1
 
 
