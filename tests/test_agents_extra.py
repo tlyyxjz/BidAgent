@@ -524,9 +524,8 @@ class TestPipelineHelpers:
         async def mock_agent(state):
             return state
 
-        graph = AgentGraph()
-        graph.add_agent("intent", "mock", mock_agent, is_entry=True)
-        with patch.object(pipeline, "_build_six_agent_graph", return_value=graph):
+        mock_seq = [(mock_agent, "mock", "intent")]
+        with patch.object(pipeline, "_SIX_AGENT_SEQUENCE", mock_seq):
             session_id = await pipeline.run_pipeline({"query": "测试"})
             await asyncio.sleep(0.1)
 
@@ -543,9 +542,8 @@ class TestPipelineHelpers:
         async def mock_agent(state):
             return state
 
-        graph = AgentGraph()
-        graph.add_agent("intent", "mock", mock_agent, is_entry=True)
-        with patch.object(pipeline, "_build_six_agent_graph", return_value=graph):
+        mock_seq = [(mock_agent, "mock", "intent")]
+        with patch.object(pipeline, "_SIX_AGENT_SEQUENCE", mock_seq):
             session_id = await pipeline.run_pipeline({"query": "测试"})
             await asyncio.sleep(0.1)
 
