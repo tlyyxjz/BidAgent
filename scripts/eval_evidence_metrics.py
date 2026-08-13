@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -22,7 +23,8 @@ from scripts.eval_evidence_types import (
     IOU_THRESHOLD,
 )
 
-WORK_DIR = Path(r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent\work-mode-projects\6a57291a0778ce48bfe693d2")
+ROOT = Path(__file__).resolve().parent.parent
+WORK_DIR = Path(os.environ.get("GOLD_WORK_DIR", str(ROOT)))  # 金标数据目录（本地评测用，不入包）
 RAW_DIR = WORK_DIR / "_w2_raw"
 ANNOT_DIR = WORK_DIR / "_w2_annotations"
 

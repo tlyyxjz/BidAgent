@@ -2,17 +2,18 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 
-WORK_DIR = Path(r"C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent\work-mode-projects\6a57291a0778ce48bfe693d2")
+WORK_DIR = Path(os.environ.get("GOLD_WORK_DIR", str(ROOT)))  # 金标数据目录（本地评测用，不入包）
 RAW_DIR = WORK_DIR / "_w2_raw"
 ANNOT_DIR = WORK_DIR / "_w2_annotations"
 
 # W3 数据源路径
-BIDAGENT_ROOT = Path(r"C:\Users\Lenovo\Desktop\BidAgent")
+BIDAGENT_ROOT = ROOT  # 仓库根目录（相对化，可移植）
 W3_RAW_DIR = BIDAGENT_ROOT / "_w3_raw"
 W3_GOLD_PATH = BIDAGENT_ROOT / "tests" / "fixtures" / "gold" / "k3_annotations_batch2.json"
 W3_OUTPUT_DIR = BIDAGENT_ROOT / "_w3_outputs"

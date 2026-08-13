@@ -15,7 +15,7 @@
 | invalid_docs_count | 0（全部 5 篇 LLM 调用成功，无失败排除） |
 | 主脚本 | `scripts/eval_ablation.py` |
 | 输出文件 | `_w3_outputs/w3_ablation_smoke_v41_rerun.json` |
-| 环境变量 | `TMPDIR=C:\\Users\\Lenovo\\Desktop\\BidAgent\\_tmp_pytest`, `PYTHONIOENCODING=utf-8` |
+| 环境变量 | `TMPDIR=<项目根目录>/_tmp_pytest`, `PYTHONIOENCODING=utf-8` |
 
 ### 选取的 5 篇公告（覆盖 4 种类型）
 

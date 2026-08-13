@@ -12,7 +12,7 @@
 【项目背景】
 - 命题：实现一个可运行的招投标信息聚合工具
 - 技术栈：FastAPI + SQLAlchemy 2.x async + Playwright + python-docx + DeepSeek LLM
-- 项目路径：C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent\work-mode-projects\6a57291a0778ce48bfe693d2\ppp_dev\scrapeflow
+- 项目路径：<旧工作区>/
 - 现有测试：53 个全部通过
 
 【审查重点（按优先级）】

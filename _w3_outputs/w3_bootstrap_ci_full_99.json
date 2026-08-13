@@ -1,6 +1,6 @@
 {
-  "source": "C:\\Users\\Lenovo\\Desktop\\BidAgent\\_w3_outputs\\w3_ablation_full_99.json",
-  "gold": "C:\\Users\\Lenovo\\Desktop\\BidAgent\\tests\\fixtures\\gold\\k3_annotations_batch2.json",
+  "source": "_w3_outputs/w3_ablation_full_99.json",
+  "gold": "tests/fixtures/gold/k3_annotations_batch2.json",
   "metric_keys": [
     "recall",
     "precision",

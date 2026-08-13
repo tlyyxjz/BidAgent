@@ -24,6 +24,8 @@ aiofiles
 pdfplumber>=0.10.0
 # OCR 兜底（扫描件 PDF）
 ddddocr>=1.4.7
+# 数值计算（app.processors.bootstrap 直接 import；显式声明避免依赖树漂移）
+numpy>=1.24
 # SimHash 分词
 jieba>=0.42.1
 

@@ -6,9 +6,10 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 
-REPORT = Path(r"C:\Users\Lenovo\Desktop\BidAgent\_w3_outputs\w3_03_evidence_full.json")
-GOLD = Path(r"C:\Users\Lenovo\Desktop\BidAgent\tests\fixtures\gold\k3_annotations_batch2.json")
-RAW_DIR = Path(r"C:\Users\Lenovo\Desktop\BidAgent\_w3_raw")
+ROOT = Path(__file__).resolve().parent.parent
+REPORT = ROOT / "_w3_outputs" / "w3_03_evidence_full.json"
+GOLD = ROOT / "tests" / "fixtures" / "gold" / "k3_annotations_batch2.json"
+RAW_DIR = ROOT / "_w3_raw"
 
 with open(REPORT, encoding="utf-8") as f:
     report = json.load(f)

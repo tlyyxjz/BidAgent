@@ -10,7 +10,7 @@
 ## 一、启动准备
 
 ```powershell
-cd C:\Users\Lenovo\Desktop\BidAgent
+cd <项目根目录>/
 $env:SECRET_KEY="a"*64
 $env:ADMIN_SECRET="<your-admin-secret>"
 $env:DATABASE_URL="sqlite+aiosqlite:///./data/bidagent.db"

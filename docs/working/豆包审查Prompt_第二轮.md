@@ -203,7 +203,7 @@ if payload.auto_save and result.get("data"):
 
 完整源代码在：
 ```
-C:\Users\Lenovo\AppData\Roaming\TRAE SOLO CN\ModularData\ai-agent\work-mode-projects\6a57291a0778ce48bfe693d2\ppp_dev\scrapeflow\
+<旧工作区>/
 ```
 
 需要审查的文件：

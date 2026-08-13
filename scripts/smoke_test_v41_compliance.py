@@ -10,7 +10,7 @@
 6. template_monitor.py - 结构签名（mock page）
 
 运行方式：
-    cd C:\\Users\\Lenovo\\Desktop\\BidAgent
+    cd <仓库根目录>
     python scripts/smoke_test_v41_compliance.py
 
 输出：

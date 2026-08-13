@@ -14,7 +14,7 @@
 
 1. **启动 BidAgent 后端**
    ```
-   cd C:\Users\Lenovo\Desktop\BidAgent
+   cd <项目根目录>/
    docker-compose up -d
    ```
    确认 http://localhost:8000/ 可访问
@@ -24,7 +24,7 @@
 
 3. **准备测试数据**
    - 预先跑通一个完整任务，确认 Word 报告已生成
-   - 报告路径：`C:\Users\Lenovo\Desktop\BidAgent\reports\`
+   - 报告路径：`<项目根目录>/reports\`
 
 4. **关闭无关程序**
    - 关微信、QQ、浏览器其他标签页
@@ -167,4 +167,4 @@
 5. 供应商观察信号卡片（含证据下钻高亮）
 6. GitHub 仓库截图
 
-截图集放入 `C:\Users\Lenovo\Desktop\比赛\demo_screenshots\` 文件夹，提交时打包上传。
+截图集放入 `<桌面>/比赛\demo_screenshots\` 文件夹，提交时打包上传。

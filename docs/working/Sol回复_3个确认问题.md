@@ -3,14 +3,14 @@
 ## ZIP 包已上传到桌面
 
 ### 1. 当前项目 ZIP
-- **路径**：`C:\Users\Lenovo\Desktop\bidagent_current.zip`
+- **路径**：`<桌面>/bidagent_current.zip`
 - **大小**：1.07 MB
 - **文件数**：119
 - **内容**：app/（agents/api/core/llm/models/processors/report/scheduler/templates/html/utils）+ tests/（12 个测试文件）+ docs/ + 配置文件（requirements.txt / pytest.ini / Dockerfile / docker-compose.yml / .env.example / .dockerignore / .gitignore）+ qianlima-dom.json
 - **已排除**：.env / __pycache__ / .pytest_cache / data/ / *.db / *.sqlite / *.log / qianlima_session.json / qianlima-dom-probe*.json
 
 ### 2. 完整版 ZIP
-- **路径**：`C:\Users\Lenovo\Desktop\bidagent_complete_v2.zip`
+- **路径**：`<桌面>/bidagent_complete_v2.zip`
 - **大小**：0.39 MB
 - **文件数**：223
 - **内容**：完整版 backend/ 全部代码（app/ + tests/ + tests_deep/ + cloudflare/ + docs/ + 配置文件）

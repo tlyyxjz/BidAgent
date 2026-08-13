@@ -1,7 +1,7 @@
 """标小智 Demo 浏览器自动化演示脚本（场景 2-9）。
 
 用法：
-    1. 启动后端：cd C:\\Users\\Lenovo\\Desktop\\BidAgent && uvicorn app.main:app --port 8000
+    1. 启动后端：cd <仓库根目录> && uvicorn app.main:app --port 8000
     2. 打开 OBS 录屏
     3. 运行：python demo_auto_play.py
 """

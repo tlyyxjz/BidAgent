@@ -18,7 +18,8 @@ import re
 import sys
 from pathlib import Path
 
-RAW_DIR = Path(r"C:\Users\Lenovo\Desktop\BidAgent\_w3_raw")
+ROOT = Path(__file__).resolve().parent.parent
+RAW_DIR = ROOT / "_w3_raw"
 
 # 正文起始标记: "## " 开头的标题行 (公告真正开始)
 BODY_START_RE = re.compile(r"^##\s+", re.MULTILINE)

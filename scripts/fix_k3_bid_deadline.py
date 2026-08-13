@@ -22,7 +22,7 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(r"C:\Users\Lenovo\Desktop\BidAgent")
+ROOT = Path(__file__).resolve().parent.parent
 GOLD_FILE = ROOT / "tests" / "fixtures" / "gold" / "k3_annotations_batch2.json"
 RAW_DIR = ROOT / "_w3_raw"
 
