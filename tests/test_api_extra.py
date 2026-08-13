@@ -19,6 +19,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
+from sqlalchemy import delete
 from app.models.database import AsyncSessionLocal, Base, engine
 from app.models.evidence import ExtractedField
 from app.models.subscription import Subscription
@@ -501,6 +502,11 @@ class TestTenderPublicAPI:
     async def test_list_tenders_empty(self):
         """空库列表查询。"""
         headers = await self._authed_client()
+        # 查询前显式清空 tender 表：全量运行时偶发有前序测试/后台任务的残留数据，
+        # 显式清理保证本测试验证的确实是空库查询路径（测试间隔离）。
+        async with AsyncSessionLocal() as db:
+            await db.execute(delete(Tender))
+            await db.commit()
         async with _client() as ac:
             resp = await ac.get("/api/tenders", headers=headers)
         assert resp.status_code == 200

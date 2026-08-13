@@ -460,7 +460,7 @@ pytest --cov=app --cov-report=term-missing
 - 结构化日志带 request_id 上下文，不记录凭证
 - 统一错误响应 `{code, data, msg}`
 - Docker 多阶段构建 + non-root 用户 + healthcheck
-- GitHub Actions CI：pytest 全量 + 覆盖率 40% 阈值 + pip-audit 依赖漏洞扫描（.github/workflows/ci.yml）
+- GitHub Actions CI：pytest 稳定子集（排除 4 个时序敏感/E2E 文件，单测 180s 超时兜底、偶发失败自动重跑）+ 覆盖率 40% 阈值 + pip-audit 依赖漏洞扫描（.github/workflows/ci.yml）；全量 2031 用例在开发机本地执行
 
 ## 许可证
 
