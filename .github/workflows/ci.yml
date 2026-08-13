@@ -31,10 +31,6 @@ jobs:
         run: mkdir -p data
 
       - name: Run test suite (coverage >= 40%)
-        env:
-          # CI 占位密钥：仅满足 app/config.py 启动校验，非真实凭证
-          SECRET_KEY: 3d72a9cb60434cc461de316f9784fbacc311fdfddbccfbaf16933129d7d9038a
-          ADMIN_SECRET: ci-dummy-admin-secret
         run: >
           python -m pytest -q
           --cov=app --cov-report=term --cov-report=xml --cov-fail-under=40
