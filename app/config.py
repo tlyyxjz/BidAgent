@@ -1,4 +1,4 @@
-"""ScrapeFlow 应用配置，从环境变量加载。
+"""标小智 应用配置，从环境变量加载。
 
 工程规范：
 - SECRET_KEY 必须为 64 字符 hex（用 `secrets.token_hex(32)` 生成）。
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # 管理员密钥（/admin 路由）
     ADMIN_SECRET: str
     # 数据库 URL（MVP: SQLite + aiosqlite）
-    DATABASE_URL: str = "sqlite+aiosqlite:///./data/scrapeflow.db"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./data/bidagent.db"
     # Redis URL（队列 + 速率限制计数）
     REDIS_URL: str = "redis://localhost:6379/0"
     # 代理池（逗号分隔）
@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     # True=STARTTLS（587），False=SMTP_SSL（465）；不能配置为不加密明文
     SMTP_USE_TLS: bool = True
     SMTP_FROM_ADDR: str = ""
-    SMTP_FROM_NAME: str = "ScrapeFlow 招标推送"
+    SMTP_FROM_NAME: str = "标小智 招标推送"
     SMTP_TIMEOUT: int = 30
 
     # ==== 登录态与浏览器池（命题第 2 项硬要求：登录态采集）====

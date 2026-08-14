@@ -235,7 +235,7 @@ class TestIncrementDailyCountRedis:
 
         count = _increment_daily_count("key1", "2026-01-01")
         assert count == 1
-        mock_client.incrby.assert_called_once_with("scrapeflow:daily:2026-01-01:key1", 1)
+        mock_client.incrby.assert_called_once_with("bidagent:daily:2026-01-01:key1", 1)
 
     def test_redis_incr_sets_expire_on_first(self) -> None:
         mock_client = MagicMock()
@@ -244,7 +244,7 @@ class TestIncrementDailyCountRedis:
 
         _increment_daily_count("key1", "2026-01-01")
         mock_client.expire.assert_called_once_with(
-            "scrapeflow:daily:2026-01-01:key1", 86400 * 2
+            "bidagent:daily:2026-01-01:key1", 86400 * 2
         )
 
     def test_redis_incr_no_expire_on_subsequent(self) -> None:

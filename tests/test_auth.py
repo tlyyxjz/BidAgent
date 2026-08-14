@@ -19,7 +19,7 @@ class TestHealth:
         resp = await client.get("/")
         assert resp.status_code == 200
         body = resp.json()
-        assert body["name"] == "ScrapeFlow API"
+        assert body["name"] == "标小智 API"
 
     async def test_root_html_redirects_to_ui(self, client: AsyncClient) -> None:
         """Browser Accept: text/html should redirect to /ui (307)."""

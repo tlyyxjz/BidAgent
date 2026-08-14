@@ -29,7 +29,7 @@ def smtp_config(monkeypatch):
     monkeypatch.setattr(
         settings,
         "SMTP_FROM_NAME",
-        "ScrapeFlow",
+        "标小智",
     )
     monkeypatch.setattr(settings, "SMTP_TIMEOUT", 10)
 

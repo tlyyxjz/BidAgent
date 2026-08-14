@@ -94,7 +94,7 @@ class TestRootEndpoint:
         resp = await client.get("/", headers={"accept": "application/json"})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["name"] == "ScrapeFlow API"
+        assert data["name"] == "标小智 API"
         assert data["version"] == "4.1"
         assert data["health"] == "/health"
         assert data["ui"] == "/ui"

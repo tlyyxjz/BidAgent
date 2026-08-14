@@ -134,12 +134,12 @@ async def _push_email(
         }
 
     # 4. 真实发送
-    subject = f"【ScrapeFlow】订阅 #{sub.id} 新增 {count} 条招标信息"
+    subject = f"【标小智】订阅 #{sub.id} 新增 {count} 条招标信息"
     body = (
         f"您好，\n\n"
         f"您的订阅 #{sub.id} 新增 {count} 条招标信息。\n"
         f"详见附件报告：{attachment.name}\n\n"
-        f"— ScrapeFlow 招标推送"
+        f"— 标小智 招标推送"
     )
     result = await _email_sender.send_with_attachment(
         to_addrs=[sub.notify_email],

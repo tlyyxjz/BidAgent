@@ -226,7 +226,7 @@ class TestAddFooter:
         doc = Document()
         add_footer(doc)
         text = "\n".join(p.text for p in doc.paragraphs)
-        assert "报告结束" in text or "ScrapeFlow" in text or "标" in text
+        assert "报告结束" in text or "标小智" in text or "标" in text
 
     def test_footer_has_date(self) -> None:
         doc = Document()

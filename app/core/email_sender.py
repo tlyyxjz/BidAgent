@@ -62,7 +62,7 @@ class EmailSender:
             from_addr=settings.SMTP_FROM_ADDR.strip(),
             from_name=(
                 settings.SMTP_FROM_NAME.strip()
-                or "ScrapeFlow 招标推送"
+                or "标小智 招标推送"
             ),
             timeout=int(settings.SMTP_TIMEOUT),
         )

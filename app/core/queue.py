@@ -43,7 +43,7 @@ def _get_executor() -> ThreadPoolExecutor:
     """惰性创建线程池（fallback 模式用）。"""
     global _executor
     if _executor is None:
-        _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="scrapeflow")
+        _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="bidagent")
     return _executor
 
 
@@ -91,7 +91,7 @@ async def enqueue_scrape_job(
 
         conn = _get_redis_connection()
         if conn is not None:
-            q = Queue("scrapeflow", connection=conn)
+            q = Queue("bidagent", connection=conn)
             q.enqueue(
                 "app.core.queue.run_scrape_job_sync",
                 job_id,

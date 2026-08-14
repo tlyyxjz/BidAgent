@@ -114,7 +114,7 @@ BidAgent/
 │       ├── aes_crypto.py    #   AES-GCM 加密
 │       ├── url_safety.py    #   SSRF 防护
 │       └── logger.py        #   结构化日志
-├── tests/                   # 测试（1979 passed）
+├── tests/                   # 测试（2031 passed）
 ├── examples/                # 示例输入输出（3 条真实公告）
 ├── static/                  # Web Demo 静态资源
 ├── data/bidagent.db         # SQLite 数据库
@@ -347,7 +347,7 @@ Playwright / httpx 抓取
 | 速率限制 | slowapi | API 级 + 域名级 |
 | 凭证安全 | argon2-cffi + cryptography | Argon2id + AES-GCM |
 | 部署 | Docker 多阶段构建 + non-root + healthcheck | docker-compose |
-| CI | GitHub Actions | pytest 全量 + 覆盖率 90% + pip-audit |
+| CI | GitHub Actions | pytest 全量 + 覆盖率阈值 40% + pip-audit |
 
 ---
 

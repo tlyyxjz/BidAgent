@@ -47,15 +47,15 @@ async def main() -> int:
         logger.error("SMTP_FROM_ADDR / SMTP_USER 都为空")
         return 3
 
-    subject = "[ScrapeFlow 联调测试] 命题 6 增量推送 - SMTP 实发验证"
-    body = f"""ScrapeFlow 命题 6 真实联调测试邮件
+    subject = "[标小智 联调测试] 命题 6 增量推送 - SMTP 实发验证"
+    body = f"""标小智 命题 6 真实联调测试邮件
 
 发件人: {settings.SMTP_FROM_ADDR}
 收件人: {to_addr}
 SMTP 服务器: {settings.SMTP_HOST}:{settings.SMTP_PORT} ({"STARTTLS" if settings.SMTP_USE_TLS else "SMTP_SSL"})
 附件: {attachment.name}
 
-这是一封由 ScrapeFlow 系统自动发送的测试邮件，用于验证命题 6（增量推送）的 SMTP 链路是否真实可用。
+这是一封由 标小智 系统自动发送的测试邮件，用于验证命题 6（增量推送）的 SMTP 链路是否真实可用。
 
 如果你收到了这封邮件且附件可以正常打开，说明：
 1. SMTP 配置正确（host/port/user/password/use_tls）
@@ -64,7 +64,7 @@ SMTP 服务器: {settings.SMTP_HOST}:{settings.SMTP_PORT} ({"STARTTLS" if settin
 4. asyncio.to_thread 包装的同步 smtplib 调用正常
 5. 命题 6 增量推送链路代码完成 → 真实联调通过
 
-—— ScrapeFlow 智汇标讯
+—— 标小智
 """
 
     logger.info("开始发送邮件到 %s ...", to_addr)

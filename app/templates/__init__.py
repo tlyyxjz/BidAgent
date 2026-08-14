@@ -1,4 +1,4 @@
-"""ScrapeFlow 内置网站模板注册."""
+"""标小智 内置网站模板注册."""
 
 from __future__ import annotations
 

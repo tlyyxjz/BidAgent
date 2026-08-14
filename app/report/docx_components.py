@@ -264,7 +264,7 @@ def add_footer(doc: Document) -> None:
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run("2026 AI 先锋未来人才大赛 · 超聚变命题 · 智汇标讯")
+    run = p.add_run("标小智 · GOAI 2026 世界人工智能开源大赛 · AI+金融")
     run.font.size = Pt(8)
     run.font.color.rgb = RGBColor(0xA0, 0xA0, 0xA0)
 

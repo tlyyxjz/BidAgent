@@ -23,7 +23,7 @@ from app.utils.logger import get_logger, setup_logging
 logger = get_logger("worker_loop")
 
 # RQ 队列名称
-QUEUE_NAME = "scrapeflow"
+QUEUE_NAME = "bidagent"
 
 
 def main() -> None:

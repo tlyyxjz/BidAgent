@@ -97,6 +97,6 @@ def new_request_id() -> str:
     return rid
 
 
-def get_logger(name: str = "scrapeflow") -> "Any":
+def get_logger(name: str = "bidagent") -> "Any":
     """获取绑定 request_id 上下文的 logger。"""
     return loguru_logger.bind(name=name)

@@ -18,7 +18,7 @@ from pathlib import Path
 os.environ.setdefault("SECRET_KEY", "a" * 64)  # 64 字符 hex（test 用全 a）
 os.environ.setdefault("ADMIN_SECRET", "test-admin-secret-12345")
 os.environ.setdefault(
-    "DATABASE_URL", "sqlite+aiosqlite:///./data/test_scrapeflow.db"
+    "DATABASE_URL", "sqlite+aiosqlite:///./data/test_bidagent.db"
 )
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("FREE_TIER_DAILY_LIMIT", "3")
@@ -67,7 +67,7 @@ def _delete_db_file() -> None:
     （典型报错 "no such table: tender_projects"、"table users already exists"）。
     删除文件 + dispose 连接池后，create_all 从零建表，彻底规避该问题。
     """
-    database_file = Path("data/test_scrapeflow.db")
+    database_file = Path("data/test_bidagent.db")
     for suffix in ("", "-wal", "-shm"):
         p = Path(str(database_file) + suffix)
         try:

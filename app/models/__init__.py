@@ -1,4 +1,4 @@
-"""ScrapeFlow 数据模型."""
+"""标小智 数据模型."""
 
 from app.models.job import ScrapeJob
 from app.models.organization import Organization, PartyRole  # noqa: F401

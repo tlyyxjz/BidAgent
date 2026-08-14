@@ -1,4 +1,4 @@
-"""FastAPI 入口 - ScrapeFlow API.
+"""FastAPI 入口 - 标小智 API.
 
 工程规范：
 - 所有中间件 async/await。
@@ -80,7 +80,7 @@ def _validate_data_dir(configured_path: str, name: str) -> None:
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """应用生命周期：初始化数据库表，退出时释放连接。"""
     DATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
-    logger.info("starting ScrapeFlow API, data_dir=%s", DATA_DIRECTORY.resolve())
+    logger.info("starting 标小智 API, data_dir=%s", DATA_DIRECTORY.resolve())
 
     # 新-8 修复：校验 COOKIE_DIR / ATTACHMENT_DIR 在 data/ 目录范围内
     # M-6 修复（第四轮）：补上 REPORT_OUTPUT_DIR 校验
@@ -264,7 +264,7 @@ async def root(request: Request):
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/ui", status_code=307)
     return {
-        "name": "ScrapeFlow API",
+        "name": "标小智 API",
         "version": "4.1",
         "docs": "/docs",
         "health": "/health",

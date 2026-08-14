@@ -31,7 +31,7 @@ VALID_PLANS = (PLAN_FREE, PLAN_STARTER, PLAN_PRO)
 
 
 class User(Base):
-    """ScrapeFlow 用户."""
+    """标小智 用户."""
 
     __tablename__ = "users"
 

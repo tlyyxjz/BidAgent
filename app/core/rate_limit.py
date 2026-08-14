@@ -98,7 +98,7 @@ def _increment_daily_count(key: str, day: str, count: int = 1) -> int:
     if count < 1:
         count = 1
 
-    redis_key = f"scrapeflow:daily:{day}:{key}"
+    redis_key = f"bidagent:daily:{day}:{key}"
     client = _get_redis_client()
     if client is not None:
         try:
@@ -180,7 +180,7 @@ async def check_and_increment_rate_limit(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=(
                 f"Daily limit ({limit}) exceeded for free plan. "
-                f"Upgrade at https://scrapeflow.dev/pricing"
+                f"Upgrade at https://bidagent.dev/pricing"
             ),
         )
 

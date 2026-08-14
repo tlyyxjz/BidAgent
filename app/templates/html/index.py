@@ -4,7 +4,7 @@ INDEX_HTML = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>ScrapeFlow · 招投标信息聚合工具</title>
+<title>标小智 · 可验证招投标数据引擎</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "Segoe UI", "PingFang SC", sans-serif;
@@ -40,11 +40,11 @@ h1 { color: #1a1a2e; font-size: 32px; margin-bottom: 8px; }
 <div class="container">
   <div class="card">
     <div>
-      <span class="badge">2026 AI 先锋未来人才大赛</span>
-      <span class="badge">超聚变命题</span>
-      <span class="badge">队伍：智汇标讯</span>
+      <span class="badge">GOAI 2026</span>
+      <span class="badge">无界应用赛道 · AI+金融</span>
+      <span class="badge">队伍：标小智</span>
     </div>
-    <h1>ScrapeFlow · 招投标信息聚合工具</h1>
+    <h1>标小智 · 可验证招投标数据引擎</h1>
     <p class="subtitle">自然语言驱动 · 多源聚合 · 增量推送 · Word 报告</p>
 
     <div style="margin: 24px 0;">
@@ -104,7 +104,7 @@ h1 { color: #1a1a2e; font-size: 32px; margin-bottom: 8px; }
   </div>
 
   <div class="footer">
-    ScrapeFlow · 2026 AI 先锋未来人才大赛 · 智汇标讯 · 超聚变命题
+    标小智 · GOAI 2026 · 标小智 · 无界应用赛道 · AI+金融
   </div>
 </div>
 </body>

@@ -13,7 +13,7 @@ loguru
 sentry-sdk
 pytest
 pytest-asyncio
-# 超聚变命题新增
+# GOAI 命题新增
 python-docx
 APScheduler
 python-multipart

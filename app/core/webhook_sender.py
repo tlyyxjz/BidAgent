@@ -71,8 +71,8 @@ class WebhookSender:
         timestamp = str(int(time.time()))
         headers = {
             "Content-Type": "application/json",
-            "X-ScrapeFlow-Timestamp": timestamp,
-            "X-ScrapeFlow-Signature": self._signature(
+            "X-BidAgent-Timestamp": timestamp,
+            "X-BidAgent-Signature": self._signature(
                 body,
                 timestamp,
             ),
