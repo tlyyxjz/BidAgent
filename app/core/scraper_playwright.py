@@ -17,6 +17,7 @@ from playwright.async_api import (
     TimeoutError as PlaywrightTimeoutError,
 )
 
+from app.core.rate_limiter import domain_rate_limiter
 from app.core.scraper_errors import HttpForbiddenError
 from app.core.scraper_extract import click_next, extract_page
 from app.core.snapshot_manager import snapshot_manager
@@ -174,6 +175,8 @@ async def scrape_with_playwright(
 
                 # 翻页
                 if next_page and page_num < max_pages:
+                    # 翻页前也遵守域名级限速（A 方案），防止连续快速请求触发反爬封禁
+                    await domain_rate_limiter.wait(url)
                     clicked = await click_next(page, next_page)
                     if not clicked:
                         logger.info("没有下一页，停止翻页 url=%s at_page=%d", url, page_num)

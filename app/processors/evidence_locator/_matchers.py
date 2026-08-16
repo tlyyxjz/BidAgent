@@ -10,6 +10,11 @@ from app.processors.evidence_locator._models import (
     SupportLevel,
 )
 
+# 金额形态识别：数字+货币单位（与 _coordinate_mapping 的 amount_pattern 同口径）。
+# 硬伤③修复（修法 X）：金额类候选禁止走 L4 子串猜测——原文出现多个金额时，
+# 核心子串（如 "331"）可能锚到错误金额。宁可标"无依据"，不硬猜。
+_AMOUNT_PATTERN = re.compile(r"\d+(?:\.\d+)?\s*(?:万元|亿元|元|万|亿)")
+
 
 class _MatchersMixin:
     """Mixin: 5-level degradation matchers used by EvidenceLocator.
@@ -205,7 +210,15 @@ class _MatchersMixin:
         2. 对每个子串尝试 L1 精确匹配
         3. 取第一个匹配成功的子串作为证据位置
         4. 证据范围扩展到包含该子串的原文片段
+
+        硬伤③修复（修法 X，宁可少给不可编造）：
+        金额类候选（数字+货币单位）不走 L4 子串猜测。
+        原文含多个金额时，子串匹配可能锚到错误金额；
+        金额证据只接受 L1/L2/L3 整串级匹配，否则降级为"无依据"。
         """
+        if _AMOUNT_PATTERN.search(candidate):
+            return None
+
         core_subs = self._extract_core_substrings(candidate)
         if not core_subs:
             return None

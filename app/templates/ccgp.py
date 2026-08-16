@@ -22,5 +22,5 @@ CCGP_TEMPLATE = ScrapeTemplate(
     list_selector="ul.vT-srch-result-list-bid li",  # 2026-08-02 实测验证
     wait_for_selector="ul.vT-srch-result-list-bid li",
     next_page_selector="a.next",
-    max_pages=1,
+    max_pages=5,
 )
