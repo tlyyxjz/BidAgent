@@ -345,56 +345,43 @@ async def _collect_pages(fetch_page, pages: int, limit: int) -> list[dict]:
     return items
 
 
-async def _main_async(args) -> None:
-    if not await robots_checker.is_allowed(SITE_URL, UA):
-        raise SystemExit("robots 禁止采集，已停止")
+def filter_result_items(items: list[dict], all_types: bool = False) -> list[dict]:
+    """默认仅保留中标/成交/结果类公告；all_types=True 时不过滤（纯函数便于测试）。"""
+    if all_types:
+        return items
+    return [it for it in items
+            if any(k in it["title"] for k in ("中标", "成交", "结果"))]
 
-    domain_rate_limiter.set_interval("www.ccgp-shandong.gov.cn", args.interval)
-    async with httpx.AsyncClient(
-        headers={"User-Agent": UA}, follow_redirects=True, timeout=25.0,
-        trust_env=False, verify=False,  # 不走本机代理；:8087 证书链对 www 域不可验证
-    ) as client:
-        items = await _collect_pages(
-            lambda pg: _fetch_list(client, page=pg, page_size=max(args.limit, 20)),
-            pages=args.pages, limit=args.limit)
-        print(f"列表解析 {len(items)} 条")
-        if not items:
-            print("[警告] 列表为空：契约响应形态可能变化（待实机核对），已停止")
-            return
-        if not args.all_types:
-            kept = [it for it in items
-                    if any(k in it["title"] for k in ("中标", "成交", "结果"))]
-            print(f"过滤中标/成交/结果后 {len(kept)} 条（跳过 {len(items) - len(kept)} 条）")
-            items = kept
-        items = items[: args.limit]
 
-        results = []
-        for it in items:
-            url = API_BASE + DETAIL_API.format(id=it["id"], code=it["col_code"])
-            try:
-                detail_html = parse_detail_html(await _fetch(client, url))
-            except httpx.TransportError as exc:
-                print(f"  [跳过] {it['title'][:40]} 抓取失败: {exc}")
-                continue
-            except RuntimeError as exc:
-                # 接口偶发 code=999/5xx（限流抖动）：跳过该条，不阻断整体
-                print(f"  [跳过] {it['title'][:40]} 详情接口异常: {exc}")
-                continue
-            if "<" not in detail_html:
-                print(f"  [跳过] {it['title'][:40]} 无正文（接口抖动或形态变化）")
-                continue
-            payload = build_payload(it, detail_html)
-            results.append(payload)
-            print(
-                f"  [{payload['notice_type']}] {payload['project_name'][:40]}"
-                f" | 编号 {payload['bid_number']} | 金额 {payload['win_amount']}"
-                f" | 中标人 {payload['win_company']} | {payload['publish_time']}"
-            )
+async def collect_detail_payloads(client, items: list[dict]) -> list[dict]:
+    """逐条抓详情并构建入库 payload；抓取失败/接口异常/无正文的条目跳过不阻断（注入 client 便于测试）。"""
+    results: list[dict] = []
+    for it in items:
+        url = API_BASE + DETAIL_API.format(id=it["id"], code=it["col_code"])
+        try:
+            detail_html = parse_detail_html(await _fetch(client, url))
+        except httpx.TransportError as exc:
+            print(f"  [跳过] {it['title'][:40]} 抓取失败: {exc}")
+            continue
+        except RuntimeError as exc:
+            # 接口偶发 code=999/5xx（限流抖动）：跳过该条，不阻断整体
+            print(f"  [跳过] {it['title'][:40]} 详情接口异常: {exc}")
+            continue
+        if "<" not in detail_html:
+            print(f"  [跳过] {it['title'][:40]} 无正文（接口抖动或形态变化）")
+            continue
+        payload = build_payload(it, detail_html)
+        results.append(payload)
+        print(
+            f"  [{payload['notice_type']}] {payload['project_name'][:40]}"
+            f" | 编号 {payload['bid_number']} | 金额 {payload['win_amount']}"
+            f" | 中标人 {payload['win_company']} | {payload['publish_time']}"
+        )
+    return results
 
-    if args.dry_run:
-        print("dry-run：未入库")
-        return
 
+async def persist_results(results: list[dict]) -> tuple[int, int]:
+    """按 source_url 去重入库，返回 (新增, 跳过)。"""
     from app.models.database import AsyncSessionLocal
     from app.models.tender import Tender
     from sqlalchemy import select
@@ -411,6 +398,35 @@ async def _main_async(args) -> None:
             db.add(Tender(**p))
             added += 1
         await db.commit()
+    return added, skipped
+
+
+async def _main_async(args) -> None:
+    if not await robots_checker.is_allowed(SITE_URL, UA):
+        raise SystemExit("robots 禁止采集，已停止")
+
+    domain_rate_limiter.set_interval("www.ccgp-shandong.gov.cn", args.interval)
+    async with httpx.AsyncClient(
+        headers={"User-Agent": UA}, follow_redirects=True, timeout=25.0,
+        trust_env=False, verify=False,  # 不走本机代理；:8087 证书链对 www 域不可验证
+    ) as client:
+        items = await _collect_pages(
+            lambda pg: _fetch_list(client, page=pg, page_size=max(args.limit, 20)),
+            pages=args.pages, limit=args.limit)
+        print(f"列表解析 {len(items)} 条")
+        if not items:
+            print("[警告] 列表为空：契约响应形态可能变化（待实机核对），已停止")
+            return
+        items = filter_result_items(items, all_types=args.all_types)
+        print(f"标题过滤后 {len(items)} 条")
+        items = items[: args.limit]
+        results = await collect_detail_payloads(client, items)
+
+    if args.dry_run:
+        print("dry-run：未入库")
+        return
+
+    added, skipped = await persist_results(results)
     print(f"入库完成：新增 {added} / 跳过(已存在) {skipped}")
 
 

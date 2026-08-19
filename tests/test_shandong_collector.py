@@ -6,12 +6,15 @@
 - 详情：GET getDetail → 双层包装内 base64 body（实机）；兼容 {"noticeBody":html} /
   {"data":{...}} / 裸 HTML 旧形态
 """
+import base64
 import json
 import sys
+import types
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
+import httpx
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
@@ -356,3 +359,217 @@ async def test_fetch_list_non_json_returns_empty():
             return _FakeResp(200, "<!doctype html><html>spa shell</html>")
 
     assert await cs._fetch_list(_HtmlClient(200)) == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_list_non200_raises_runtimeerror():
+    """列表接口非 200 非 403 → RuntimeError，由调用方停止而非崩溃。"""
+    from app.core.rate_limiter import domain_rate_limiter
+
+    domain_rate_limiter.set_interval("www.ccgp-shandong.gov.cn", 0)
+    with pytest.raises(RuntimeError):
+        await cs._fetch_list(_FakeClient(500))
+
+
+def test_main_collect403_exits_one(monkeypatch):
+    """CLI 入口：采集过程触发 403 合规停止 → exit code 1。"""
+
+    async def _raise403(args):
+        raise cs.Collect403("403 即停")
+
+    monkeypatch.setattr(sys, "argv", ["collect_shandong.py", "--limit", "1"])
+    monkeypatch.setattr(cs, "_main_async", _raise403)
+    with pytest.raises(SystemExit) as ei:
+        cs.main()
+    assert ei.value.code == 1
+
+
+def test_main_parses_args_and_runs(monkeypatch):
+    """CLI 入口：参数解析后正常调用 _main_async（含 --pages/--dry-run）。"""
+    seen = {}
+
+    async def _record(args):
+        seen["args"] = args
+
+    monkeypatch.setattr(sys, "argv", ["collect_shandong.py", "--limit", "3",
+                                       "--pages", "2", "--dry-run", "--all-types"])
+    monkeypatch.setattr(cs, "_main_async", _record)
+    cs.main()
+    a = seen["args"]
+    assert (a.limit, a.pages, a.dry_run, a.all_types) == (3, 2, True, True)
+    assert a.interval == 8.0  # 合规默认间隔
+
+
+# ---------------------------------------------------------------- 主流程拆分函数（D7 覆盖率整改）
+
+def test_filter_result_items_default_and_all_types():
+    """标题过滤：默认只留中标/成交/结果；all_types 不过滤。"""
+    items = [
+        {"id": "1", "col_code": "0302", "title": "某项目中标公告"},
+        {"id": "2", "col_code": "0302", "title": "某项目采购需求征求意见"},
+        {"id": "3", "col_code": "0302", "title": "某项目成交公告"},
+    ]
+    assert [it["id"] for it in cs.filter_result_items(items)] == ["1", "3"]
+    assert len(cs.filter_result_items(items, all_types=True)) == 3
+
+
+def _mk_item(nid: str, title: str = "某项目中标公告") -> dict:
+    return {"id": nid, "col_code": "0302", "title": title,
+            "date": "2026-08-15", "publish_dt": None}
+
+
+class _DetailRouter:
+    """按详情 URL 中 id 返回不同响应的假 client（覆盖四类分支）。"""
+
+    def __init__(self):
+        self.ok_json = json.dumps({"noticeBody": DETAIL_BODY_HTML}, ensure_ascii=False)
+        self.empty_json = json.dumps({"noticeBody": ""}, ensure_ascii=False)
+
+    async def get(self, url):
+        if "id=transport" in url:
+            raise httpx.ConnectError("boom")
+        if "id=server500" in url:
+            return _FakeResp(500)
+        if "id=emptybody" in url:
+            return _FakeResp(200, self.empty_json)
+        return _FakeResp(200, self.ok_json)
+
+
+@pytest.mark.asyncio
+async def test_collect_detail_payloads_skip_branches():
+    """详情循环四类分支：成功入库 + 连接失败/非200/无正文均跳过不阻断。"""
+    from app.core.rate_limiter import domain_rate_limiter
+
+    domain_rate_limiter.set_interval("www.ccgp-shandong.gov.cn", 0)
+    domain_rate_limiter.set_interval("www.ccgp-shandong.gov.cn:8087", 0)
+    items = [_mk_item("ok"), _mk_item("transport"),
+             _mk_item("server500"), _mk_item("emptybody")]
+    results = await cs.collect_detail_payloads(_DetailRouter(), items)
+    assert len(results) == 1
+    assert results[0]["project_name"] == "某项目中标公告"
+    assert results[0]["source_platform"] == "shandong"
+
+
+@pytest.mark.asyncio
+async def test_main_async_robots_forbidden_exits(monkeypatch):
+    """robots 禁止采集 → SystemExit（合规硬闸门）。"""
+
+    async def _forbidden(url, ua):
+        return False
+
+    monkeypatch.setattr(cs.robots_checker, "is_allowed", _forbidden)
+    args = types.SimpleNamespace(limit=1, pages=1, interval=0,
+                                 dry_run=True, all_types=False)
+    with pytest.raises(SystemExit):
+        await cs._main_async(args)
+
+
+@pytest.mark.asyncio
+async def test_main_async_empty_list_stops(monkeypatch):
+    """列表为空 → 打印契约变化警告并停止，不进详情环节。"""
+
+    async def _allowed(url, ua):
+        return True
+
+    async def _empty_list(client, page=1, page_size=20):
+        return []
+
+    monkeypatch.setattr(cs.robots_checker, "is_allowed", _allowed)
+    monkeypatch.setattr(cs, "_fetch_list", _empty_list)
+    args = types.SimpleNamespace(limit=1, pages=1, interval=0,
+                                 dry_run=True, all_types=False)
+    await cs._main_async(args)  # 不抛异常即通过
+
+
+@pytest.mark.asyncio
+async def test_main_async_dry_run_full_flow(monkeypatch):
+    """dry-run 全链路：列表→标题过滤→详情→不入库（注入假拉取层）。"""
+    called = {}
+
+    async def _allowed(url, ua):
+        return True
+
+    async def _fake_list(client, page=1, page_size=20):
+        return [_mk_item("a", "某设备中标公告"),
+                _mk_item("b", "征求意见公告")]
+
+    async def _fake_details(client, items):
+        called["items"] = items
+        return [{"source_url": "u1"}]
+
+    monkeypatch.setattr(cs.robots_checker, "is_allowed", _allowed)
+    monkeypatch.setattr(cs, "_fetch_list", _fake_list)
+    monkeypatch.setattr(cs, "collect_detail_payloads", _fake_details)
+    args = types.SimpleNamespace(limit=5, pages=1, interval=0,
+                                 dry_run=True, all_types=False)
+    await cs._main_async(args)
+    # 征求意见被标题过滤，仅中标公告进详情环节
+    assert [it["id"] for it in called["items"]] == ["a"]
+
+
+@pytest.mark.asyncio
+async def test_persist_results_add_then_skip_duplicate():
+    """入库去重：首次新增，同 source_url 二次入库全部跳过。"""
+    payload = cs.build_payload(_mk_item("dup1"), DETAIL_BODY_HTML)
+    added, skipped = await cs.persist_results([payload])
+    assert (added, skipped) == (1, 0)
+    added2, skipped2 = await cs.persist_results([payload])
+    assert (added2, skipped2) == (0, 1)
+
+
+# ---------------------------------------------------------------- 边界用例（D7 补全）
+
+def test_maybe_b64_decode_invalid_base64_returns_original():
+    """形似 base64 但长度非法（decode 抛错）→ 原样返回不崩溃。"""
+    v = "A" * 17  # 非 4 的倍数，validate=True 会抛 binascii.Error
+    assert cs._maybe_b64_decode(v) == v
+
+
+def test_maybe_b64_decode_gb18030_fallback_for_gbk_bytes():
+    """无 charset 声明的 GBK 字节：utf-8 严格解失败 → gb18030 兑底解出中文。
+
+    注：gb18030 可严格解任意字节序列，第 188 行 replace 兑底为防御性死代码
+    （仅理论上的 LookupError 双发才可达），不强测。
+    """
+    import base64 as b64
+    raw = "<p>中标供应商</p>".encode("gbk")
+    v = b64.b64encode(raw).decode("ascii")
+    out = cs._maybe_b64_decode(v)
+    assert "中标供应商" in out
+
+
+def test_maybe_b64_decode_unknown_charset_declared():
+    """声明了未知 codec（LookupError）→ 跳过该声明，回退 utf-8/gb18030 链。"""
+    import base64 as b64
+    raw = '<meta charset="no-such-codec-xyz"><p>ok</p>'.encode("utf-8")
+    v = b64.b64encode(raw).decode("ascii")
+    out = cs._maybe_b64_decode(v)
+    assert "<p>ok</p>" in out
+
+
+def test_parse_detail_html_json_non_dict_returns_text():
+    """JSON 但非 dict（如纯数字）→ 原样返回，不抛错。"""
+    assert cs.parse_detail_html("123") == "123"
+
+
+def test_parse_detail_html_content_result_extra_nodes():
+    """content/result 额外候选节点也能取到正文。"""
+    text = json.dumps({"content": {"body": "<p>x</p>"}}, ensure_ascii=False)
+    assert cs.parse_detail_html(text) == "<p>x</p>"
+
+
+def test_sd_amount_wan_and_yi_units():
+    """山东 fallback 金额：万元/亿元单位换算。"""
+    assert cs.sd_extract_win_amount("中标（成交）金额 1.5 万元") == Decimal("15000")
+    assert cs.sd_extract_win_amount("中标（成交）金额 2 亿元") == Decimal("200000000")
+
+
+def test_sd_amount_invalid_number_returns_none():
+    """金额串去千分位后非合法 Decimal → 返回 None（宁缺勿造）。"""
+    assert cs.sd_extract_win_amount("中标（成交）金额 ,,, 元") is None
+
+
+def test_parse_date_invalid_date_returns_none():
+    """形似日期但月日非法（strptime 全失败）→ None。"""
+    assert cs._parse_date("2026-13-45") is None
+    assert cs._parse_date("无日期文本") is None
