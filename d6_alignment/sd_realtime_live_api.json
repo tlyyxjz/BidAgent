@@ -1,0 +1,70 @@
+{
+  "sources": [
+    {
+      "source": "hubei",
+      "display_name": "湖北政府采购网",
+      "status": "ok",
+      "status_text": "成功",
+      "ok": true,
+      "fetched": 1,
+      "elapsed_ms": 18033,
+      "error": null,
+      "ingest": {
+        "total": 1,
+        "inserted": 0,
+        "duplicates": 1,
+        "errors": 0,
+        "inserted_ids": []
+      }
+    },
+    {
+      "source": "jiangsu",
+      "display_name": "江苏政府采购网",
+      "status": "empty",
+      "status_text": "本次无新公告",
+      "ok": true,
+      "fetched": 0,
+      "elapsed_ms": 28709,
+      "error": null,
+      "ingest": null
+    },
+    {
+      "source": "yunnan",
+      "display_name": "云南政府采购网",
+      "status": "ok",
+      "status_text": "成功",
+      "ok": true,
+      "fetched": 1,
+      "elapsed_ms": 18933,
+      "error": null,
+      "ingest": {
+        "total": 1,
+        "inserted": 0,
+        "duplicates": 1,
+        "errors": 0,
+        "inserted_ids": []
+      }
+    },
+    {
+      "source": "shandong",
+      "display_name": "山东政府采购网",
+      "status": "ok",
+      "status_text": "成功",
+      "ok": true,
+      "fetched": 1,
+      "elapsed_ms": 11190,
+      "error": null,
+      "ingest": {
+        "total": 1,
+        "inserted": 0,
+        "duplicates": 1,
+        "errors": 0,
+        "inserted_ids": []
+      }
+    }
+  ],
+  "total_inserted": 0,
+  "ok_count": 4,
+  "elapsed_ms": 31415,
+  "limit": 1
+}

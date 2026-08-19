@@ -12,6 +12,7 @@ from app.templates.base import (
 from app.templates.ccgp import CCGP_TEMPLATE
 from app.templates.chinabidding import CHINABIDDING_TEMPLATE
 from app.templates.ggzy import GGZY_TEMPLATE
+from app.templates.hubei import HUBEI_TEMPLATE
 from app.templates.news import NEWS_TEMPLATE
 from app.templates.qianlima import register_qianlima_template
 from app.templates.reddit import REDDIT_TEMPLATE
@@ -23,6 +24,7 @@ register_template(NEWS_TEMPLATE)
 register_template(CCGP_TEMPLATE)
 register_template(CHINABIDDING_TEMPLATE)
 register_template(GGZY_TEMPLATE)
+register_template(HUBEI_TEMPLATE)
 # 千里马登录态采集模板（命题硬要求：≥1 登录态网站）
 register_qianlima_template()
 
@@ -37,4 +39,5 @@ __all__ = [
     "CCGP_TEMPLATE",
     "CHINABIDDING_TEMPLATE",
     "GGZY_TEMPLATE",
+    "HUBEI_TEMPLATE",
 ]

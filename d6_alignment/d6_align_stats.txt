@@ -1,0 +1,39 @@
+# D6 名单对齐底稿（对库日：2026-08-19）
+
+库总条数：795
+
+## 五源分布与今日新增
+| 源 | 库内条数 | 今日新增 | 最新发布日 |
+|---|---|---|---|
+| ccgp | 708 | 10 | 2026-09-08 |
+| hubei | 35 | 12 | 2026-08-19 |
+| jiangsu | 25 | 25 | 2026-08-19 |
+| shandong | 20 | 20 | 2026-08-19 |
+| yunnan | 7 | 7 | 2026-08-19 |
+
+## 各源最新 3 条（与官网列表逐条对照用）
+
+### ccgp
+- 2026-09-08 | 赣州市百诚工程咨询有限公司关于全南县教育体育局全南县高级职业技术学校整体迁建南校区实训基地项目二次装 | 中标人:- | 金额:- | http://www.ccgp.gov.cn/cggg/dfgg/jzxtpgg/202608/t20260807_27089401.htm
+- 2026-09-08 | 赣州市百诚工程咨询有限公司关于全南县教育体育局全南县高级职业技术学校整体迁建南校区实训基地项目二次装 | 中标人:- | 金额:- | http://www.ccgp.gov.cn/cggg/dfgg/jzxtpgg/202608/t20260807_27089406.htm
+- 2026-09-08 | ［江西省公共资源交易平台］赣州市百诚工程咨询有限公司关于全南县教育体育局全南县高级职业技术学校整体迁 | 中标人:- | 金额:- | http://www.ccgp.gov.cn/cggg/dfgg/xjgg/202608/t20260807_27089353.htm
+
+### hubei
+- 2026-08-19 | 湖北大学食堂饮食大宗生活物资配送服务采购项目（第二次）成交结果公告 | 中标人:湖北中膳智链食品有限公司、武汉硚运供应链管理有限责任公司 | 金额:- | https://www.ccgp-hubei.gov.cn/notice/202608/notice_17dd4343e030963db4416a101b5ca423.html
+- 2026-08-19 | 2026年多彩旅游路道路安全整治工程中标结果公告 | 中标人:湖北通兴建工集团有限公司 | 金额:1020659.04 | https://www.ccgp-hubei.gov.cn/notice/202608/notice_8459ee60ef46476dbbc71b2fc50901d3.html
+- 2026-08-19 | 仙桃市公安局本级2026年新一代移动警务通采购项目中标(成交)结果公告 | 中标人:中国移动通信集团湖北有限公司江汉分公司 | 金额:8389750 | https://www.ccgp-hubei.gov.cn/notice/202608/notice_c23fb032b29549429ee5888f4954c9b5.html
+
+### jiangsu
+- 2026-08-19 | 沛县园林服务中心城区市政道路绿化及城市绿道建设(汉水路等)成交结果公告 | 中标人:- | 金额:- | http://www.ccgp-jiangsu.gov.cn/jiangsu/js_cggg/details.html?gglb=cjgg&ggid=412c039da8b54d5cbbb122302ae079d0
+- 2026-08-19 | 骆马湖片区棋盘镇毛林渔市人居环境综合提升项目成交公告 | 中标人:- | 金额:- | http://www.ccgp-jiangsu.gov.cn/jiangsu/js_cggg/details.html?gglb=cjgg&ggid=43b4823e3d0f4fb7ae6bba2a62b36745
+- 2026-08-19 | 淮安区人民法院科技法庭流媒体一体机服务器采购项目成交公告 | 中标人:- | 金额:- | http://www.ccgp-jiangsu.gov.cn/jiangsu/js_cggg/details.html?gglb=cjgg&ggid=71fdcaafed0e48f6ae505865d9e75d26
+
+### shandong
+- 2026-08-19 | 山东科技大学机电学院屏风工作位采购项目成交公告 | 中标人:- | 金额:- | https://www.ccgp-shandong.gov.cn/detail?id=BFAPGgv4mhpg3Nal82J5ILfr6EVJ867_Wc4_SEnqCb_i14jE48im7QJZXFojM3HBeiPXuICn65iJpw84GUZ2yjxP9DG9Nqx0IB8E8JCvXikkxuiUwWfxh7Qn1R8oFNOsyZ17XgESv7GwLQ==&colCode=0302
+- 2026-08-19 | 康复大学智能医学工程专业数智化设备采购项目（led屏）成交公告 | 中标人:- | 金额:- | https://www.ccgp-shandong.gov.cn/detail?id=BCJJAIz_cH9rsVqjXsDtcVCqOqXyystEHzWVa7akX66v6SCebJybDOim7g1Y9DM6_dPEPdXKdJR60aAKe3k5r33x3WAAoB-UcRWzrtzK45RilD58NGoxJ1pYETbGDt1L0-EgFxakqFf9Pg==&colCode=0302
+- 2026-08-19 | 山东省工商业联合会机关车辆保险成交公告 | 中标人:- | 金额:- | https://www.ccgp-shandong.gov.cn/detail?id=BAIPGzX3DjGvcPrqlqCDJlMuhVedaOiNxy5a42dtfZu9Ph8buRic3phr0ZusuzbiKelF6Dp1ysqRqA2UK6Oj_T4AQVsDgvtT2QWHAE090BF5FbyDbvqMtZB5nX9-AA9S_PuLMsWU-lYyLQ==&colCode=0302
+
+### yunnan
+- 2026-08-19 | YNZC2026-G3-04146-YNJH-0097:云南公安民警综合训练基地2026年7月—20 | 中标人:云南昆仑保安服务有限公司 | 金额:1272912 | http://www.ccgp-yunnan.gov.cn/ggInfo.html?bulletin_id=-67668ce6.1a019097211.-6467
+- 2026-08-19 | YNZC2026-C2-04640-GNZB-0009:云南省水利水电勘测设计研究院办公区配电室增容 | 中标人:牵头供应商：云南东熔建设工程有限公司 投标联合体：云南东熔建设工程有限公司、河北泓融工程设计有限公司 | 金额:- | http://www.ccgp-yunnan.gov.cn/ggInfo.html?bulletin_id=-67668ce6.1a00e7bb429.30d7
+- 2026-08-19 | YNZC2026-G1-04522-BJDF-0044:云南大学本科生院学院智慧教学环境改造项目采购 | 中标人:云南佳宜科技有限公司 | 金额:1242600 | http://www.ccgp-yunnan.gov.cn/ggInfo.html?bulletin_id=-67668ce6.1a00e7bb429.42eb

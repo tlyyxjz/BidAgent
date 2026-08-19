@@ -45,6 +45,12 @@ dependencies = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=40"
+# 第三方库 warning 显式过滤（按《AI协作执行标准 v1.1》第 4.5 条注明原因）：
+# jieba 内部仍 import 已废弃的 pkg_resources（上游未修复，与本项目代码无关）；
+# 本项目自身代码产生的 warning 要求保持为 0。
+filterwarnings = [
+    "ignore:pkg_resources is deprecated as an API:UserWarning",
+]
 
 [tool.coverage.run]
 source = ["app"]

@@ -135,10 +135,12 @@ def _build_tender(
         project_name / title / 标题
         bid_number / 招标编号
         budget_amount / budget / 预算
+        win_amount / 中标金额
         location / region / 地区
         publish_time / publish_date / 发布时间
         deadline / 截止时间
         tender_org / 招标人
+        win_company / 中标供应商 / 中标人
         agency / 代理机构
         contact_name / 联系人
         contact_phone / phone / 联系电话
@@ -157,6 +159,10 @@ def _build_tender(
         project_name=str(pick("project_name", "title", "标题") or "")[:500] or "未命名",
         bid_number=str(pick("bid_number", "招标编号") or "")[:100] or None,
         budget_amount=_parse_decimal(pick("budget_amount", "budget", "预算")),
+        # D2 修复：分站 build_payload 输出中标金额/中标企业，
+        # 原 pick 链缺失导致静默丢弃（湖北/江苏/云南/山东四源受影响）
+        win_amount=_parse_decimal(pick("win_amount", "中标金额")),
+        win_company=str(pick("win_company", "中标供应商", "中标人") or "")[:300] or None,
         location=str(pick("location", "region", "地区") or "")[:200] or None,
         publish_time=_parse_datetime(pick("publish_time", "publish_date", "发布时间")),
         deadline=_parse_datetime(pick("deadline", "截止时间")),

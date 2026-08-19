@@ -132,9 +132,10 @@ def build_chat_payload(
 
 
 def chat_endpoint(provider: ProviderInfo) -> str:
-    """返回 chat/completions 完整 URL（base_url 已含 /v1 时不重复拼接）。"""
+    """返回 chat/completions 完整 URL（base_url 已含版本路径时不重复拼接）。"""
+    import re
     base = provider.base_url
-    if base.endswith("/v1"):
+    if re.search(r"/v\d+$", base):
         return f"{base}/chat/completions"
     return f"{base}/v1/chat/completions"
 

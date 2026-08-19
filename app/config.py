@@ -7,10 +7,26 @@
 
 from __future__ import annotations
 
+import re
 import sys
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# 密钥类值的脱敏正则（用于配置错误输出，防止真实密钥打进日志/终端）
+_SECRET_PATTERNS = [
+    re.compile(r"sk-[A-Za-z0-9_\-]{8,}"),   # sk- 开头的 API key（OpenAI/DeepSeek/GLM 等）
+    re.compile(r"ghp_[A-Za-z0-9]{16,}"),     # GitHub token
+    re.compile(r"AKIA[A-Z0-9]{16}"),         # AWS Access Key
+]
+
+
+def _mask_secrets(text: str) -> str:
+    """把文本中疑似密钥的内容替换为 ***（配置报错回显时用，防止泄露）。"""
+    masked = text
+    for pattern in _SECRET_PATTERNS:
+        masked = pattern.sub("***", masked)
+    return masked
 
 
 class Settings(BaseSettings):
@@ -176,11 +192,14 @@ class Settings(BaseSettings):
 
 
 def _load_settings_or_exit() -> Settings:
-    """加载配置；缺少必需变量时打印清晰提示并退出。"""
+    """加载配置；缺少必需变量时打印清晰提示并退出。
+
+    注意：错误信息中的配置值可能含密钥，打印前先脱敏。
+    """
     try:
         return Settings()
     except Exception as exc:  # noqa: BLE001
-        print(f"\n[CONFIG ERROR] 配置加载失败:\n  {exc}\n", file=sys.stderr)
+        print(f"\n[CONFIG ERROR] 配置加载失败:\n  {_mask_secrets(str(exc))}\n", file=sys.stderr)
         print(
             "请检查 .env 文件或环境变量。必需变量:\n"
             "  SECRET_KEY      64字符hex (用 python -c \"import secrets; print(secrets.token_hex(32))\" 生成)\n"
