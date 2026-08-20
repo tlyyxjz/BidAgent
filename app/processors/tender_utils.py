@@ -176,6 +176,17 @@ def _build_tender(
         if _hit_amt:
             win_amount = _hit_amt.value
 
+    # 大件五：入库即存证——core_content / source_raw_text 的 SHA-256
+    # 指纹 + created_at 入库时间戳，构成可重放核验的证据快照
+    _core = pick("core_content", "content", "核心内容") or ""
+    _raw = pick("source_raw_text", "raw_text", "source_text") or ""
+    _content_sha = (
+        hashlib.sha256(str(_core).encode("utf-8")).hexdigest() if _core else None
+    )
+    _raw_sha = (
+        hashlib.sha256(str(_raw).encode("utf-8")).hexdigest() if _raw else None
+    )
+
     return Tender(
         project_name=str(pick("project_name", "title", "标题") or "")[:500] or "未命名",
         bid_number=str(pick("bid_number", "招标编号") or "")[:100] or None,
@@ -200,6 +211,8 @@ def _build_tender(
         source_raw_text=pick("source_raw_text", "raw_text", "source_text") or "",
         attachment_url=pick("attachment_url", "attachment", "附件链接"),
         simhash=simhash_value,
+        content_sha256=_content_sha,
+        raw_text_sha256=_raw_sha,
     )
 
 
