@@ -242,4 +242,4 @@ def test_resolve_adapters_default_sources_registered():
     from app.services.realtime_sources import DEFAULT_SOURCES
     adapters = resolve_adapters()
     assert [a.source for a in adapters] == list(DEFAULT_SOURCES)
-    assert len(adapters) == 5  # 天津接入后默认五源
+    assert len(adapters) == 6  # 天津+青岛接入后默认六源

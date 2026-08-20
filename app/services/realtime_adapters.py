@@ -284,3 +284,40 @@ class TianjinAdapter(BaseSourceAdapter):
                 return payloads
         except ct.Collect403 as exc:
             raise SourceBlockedError(str(exc)) from exc
+
+
+class QingdaoAdapter(BaseSourceAdapter):
+    """青岛站：列表 API（site-info/page，colCode=0304 结果公告）元数据模式。
+
+    详情正文走交易系统附件渠道不对公网开放，列表接口提供标题/编号/
+    发布时间/区域等元数据，如实入库并在 core_content 注明口径。
+    """
+
+    source = "qingdao"
+    display_name = "青岛市政府采购网"
+    domain = "zfcg.qingdao.gov.cn"
+    list_url = "http://www.ccgp-qingdao.gov.cn/"
+    robots_entry_url = list_url
+    timeout_seconds = 120.0
+
+    async def _fetch_and_build(self, limit: int) -> list[dict[str, Any]]:
+        cq = _load_script_module("collect_qingdao")
+        try:
+            async with httpx.AsyncClient(
+                headers={"User-Agent": UA}, follow_redirects=True,
+                # 与既有适配器一致：禁用系统代理（间歇性 ReadTimeout）
+                trust_env=False,
+                timeout=20.0,
+            ) as client:
+                records = await cq.fetch_records(client, page=1,
+                                                 limit=max(limit, 10))
+                items = cq.filter_result_items(records)
+                payloads: list[dict[str, Any]] = []
+                for rec in items[:limit]:
+                    # 诚实原则：列表无编号且无正文渠道的不入中标库
+                    if not rec.get("project_code"):
+                        continue
+                    payloads.append(cq.build_payload(rec))
+                return payloads
+        except cq.Collect403 as exc:
+            raise SourceBlockedError(str(exc)) from exc
