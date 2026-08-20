@@ -219,6 +219,38 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .collector-error{padding:30px 20px;text-align:center;color:var(--text-3);font-size:13px;grid-column:1/-1}
 .collector-error i{font-size:32px;color:var(--error);display:block;margin-bottom:8px}
 
+/* ===== Realtime Network Panel（省级组网·实时采集网络） ===== */
+.rt-net{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.rt-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.rt-head h2{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.rt-head h2 i{color:var(--primary);font-size:17px}
+.rt-head .desc{font-size:11px;color:var(--text-3);font-weight:400;margin-left:6px}
+.rt-actions{display:flex;align-items:center;gap:10px}
+.rt-total{font-size:11px;color:var(--text-3)}
+.rt-total b{color:var(--primary);font-size:13px}
+.rt-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;border:none;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.rt-btn:hover{background:var(--primary-hover)}
+.rt-btn:disabled{opacity:.55;cursor:not-allowed}
+.rt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+.rt-card{border:1px solid var(--border);border-radius:8px;padding:12px 14px;background:var(--bg);transition:all .2s}
+.rt-card:hover{border-color:var(--primary)}
+.rt-card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rt-dot{width:9px;height:9px;border-radius:50%;background:var(--border-2);flex-shrink:0}
+.rt-dot.ok{background:var(--success);box-shadow:0 0 0 3px var(--success-bg)}
+.rt-dot.warn{background:var(--warning);box-shadow:0 0 0 3px var(--warning-bg)}
+.rt-dot.err{background:var(--error);box-shadow:0 0 0 3px var(--error-bg)}
+.rt-dot.loading{background:var(--primary);animation:cpulse 1.2s infinite}
+.rt-name{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-status{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--bg);color:var(--text-3);border:1px solid var(--border);white-space:nowrap}
+.rt-status.ok{background:var(--success-bg);color:var(--success);border-color:transparent}
+.rt-status.warn{background:var(--warning-bg);color:var(--warning);border-color:transparent}
+.rt-status.err{background:var(--error-bg);color:var(--error);border-color:transparent}
+.rt-num{font-size:20px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.2}
+.rt-num .unit{font-size:11px;font-weight:500;color:var(--text-3);margin-left:2px}
+.rt-meta{font-size:11px;color:var(--text-3);margin-top:3px;word-break:break-all}
+.rt-note{font-size:11px;color:var(--text-3);margin-top:12px;display:flex;align-items:center;gap:5px}
+.rt-note i{color:var(--warning)}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="stylesheet" href="/static/css/bidagent.css?v=3">
@@ -547,6 +579,21 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       </div>
     </div>
 
+
+    <!-- ===== Realtime Network（省级组网·实时采集网络） ===== -->
+    <div class="section-title"><i class="ph-bold ph-globe-hemisphere-east"></i>实时采集网络<span class="desc">省级组网 · robots 先行 · 域内 8s 限流 · 403 即停熔断 · 单源失败降级</span></div>
+    <div class="rt-net">
+      <div class="rt-head">
+        <h2><i class="ph-bold ph-broadcast"></i>全国真实源组网<span class="desc" id="rtDesc">加载中…</span></h2>
+        <div class="rt-actions">
+          <span class="rt-total">组网库内 <b id="rtTotal">--</b> 条</span>
+          <button class="rt-btn" id="rtRunBtn"><i class="ph-bold ph-lightning"></i>开始实时采集</button>
+        </div>
+      </div>
+      <div class="rt-grid" id="rtGrid"></div>
+      <div class="rt-note"><i class="ph ph-shield-check"></i>合规纪律硬编码在适配器基类：robots 禁止即不发请求；被 403 拦截的源本次会话熔断不再重试；任何一源失败不影响其他源。</div>
+    </div>
+
     <!-- ===== Footer ===== -->
     <div class="footer">
       <span class="real">● 真实数据</span> · 107 篇真实公告（W3 评测集 + 实时采集） · 321 条证据（IoU ≥ 0.5） ·
@@ -768,6 +815,70 @@ async function loadRecentMeta(){
 }
 loadRecentMeta();
 </script>
+<script>
+/* ===== 实时采集网络面板（/api/real/realtime/*） ===== */
+(function(){
+  var STATUS_LABEL={ok:'成功',empty:'成功·无新增',robots_denied:'robots 拒绝',blocked_403:'403 熔断',timeout:'超时',error:'失败',idle:'已组网',loading:'采集中'};
+  var STATUS_CLS={ok:'ok',empty:'ok',robots_denied:'err',blocked_403:'err',timeout:'warn',error:'err',idle:'',loading:'loading'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function fmtTs(iso){if(!iso)return'—';try{var d=new Date(iso);function p(n){return String(n).padStart(2,'0')}return p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())}catch(e){return iso}}
+  function cardHtml(s){
+    var st=s._rt||'idle';
+    var label=STATUS_LABEL[st]||st;
+    var cls=STATUS_CLS[st]||'';
+    var meta=s.domain||'';
+    if(s._elapsed!=null){meta='耗时 '+(s._elapsed/1000).toFixed(1)+'s · 域 '+esc(s.domain||'')}
+    if(s._error){meta=esc(s._error)}
+    else if(st==='ok'){meta='本轮入库 '+s._ingested+' 条（去重跳过 '+s._skipped+'）· 域 '+esc(s.domain||'')}
+    else if(st==='idle'&&s.last_created){meta='最近入库 '+fmtTs(s.last_created)+' · 域 '+esc(s.domain||'')}
+    var num=(st==='ok'||st==='empty')?(s._ingested!=null?s._ingested:(s.db_count||0)):(s.db_count||0);
+    var unit=(st==='ok'||st==='empty')?'条·本轮新增':'条·库内';
+    return '<div class="rt-card">'
+      +'<div class="rt-card-top"><span class="rt-dot '+cls+'"></span><span class="rt-name" title="'+esc(s.display_name)+'">'+esc(s.display_name)+'</span>'
+      +'<span class="rt-status '+cls+'">'+esc(label)+'</span></div>'
+      +'<div class="rt-num">'+esc(num)+'<span class="unit">'+esc(unit)+'</span></div>'
+      +'<div class="rt-meta">'+meta+'</div></div>';
+  }
+  var sources=[];
+  function render(){
+    document.getElementById('rtGrid').innerHTML=sources.map(cardHtml).join('');
+    document.getElementById('rtTotal').textContent=sources.reduce(function(a,s){return a+(s.db_count||0)},0);
+    document.getElementById('rtDesc').textContent=sources.length+' 个真实源已注册';
+  }
+  async function loadSources(){
+    try{
+      var r=await fetch('/api/real/realtime/sources',{signal:AbortSignal.timeout(15000)});
+      var d=await r.json();
+      if((d.code===0||d.code===200)&&d.data){sources=d.data.sources||[];render()}
+    }catch(e){document.getElementById('rtDesc').textContent='源清单加载失败（服务未启动？）'}
+  }
+  var btn=document.getElementById('rtRunBtn');
+  btn.addEventListener('click',async function(){
+    btn.disabled=true;
+    sources.forEach(function(s){s._rt='loading';s._error=null;s._elapsed=null});
+    render();
+    try{
+      var r=await fetch('/api/real/realtime/collect?limit=3',{method:'POST',signal:AbortSignal.timeout(420000)});
+      var d=await r.json();
+      if((d.code===0||d.code===200)&&d.data){
+        var map={};(d.data.results||[]).forEach(function(x){map[x.source]=x});
+        sources.forEach(function(s){
+          var x=map[s.source];
+          if(!x){s._rt='error';s._error='无结果';return}
+          s._rt=x.status;s._error=x.error||null;s._elapsed=x.elapsed_ms;
+          s._ingested=x.ingested;s._skipped=x.skipped;
+          s.db_count=(s.db_count||0)+(x.ingested||0);
+        });
+      }else{sources.forEach(function(s){s._rt='error';s._error=(d.msg||d.message||'接口异常')})}
+    }catch(e){sources.forEach(function(s){s._rt='error';s._error=String(e&&e.name==='TimeoutError'?'采集超时（>420s）':(e&&e.message||e))})}
+    btn.disabled=false;
+    render();
+    loadSources();
+  });
+  loadSources();
+})();
+</script>
+
 
 
 </body>

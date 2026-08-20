@@ -321,3 +321,39 @@ class QingdaoAdapter(BaseSourceAdapter):
                 return payloads
         except cq.Collect403 as exc:
             raise SourceBlockedError(str(exc)) from exc
+
+
+class HenanAdapter(BaseSourceAdapter):
+    """河南省站：首页 SSR 公告区块 → 详情页核验（省级批量·第一站）。
+
+    公告正文为 PDF 附件渠道，公开页面仅提供元数据 → 列表元数据模式：
+    win_amount/win_company/tender_org 置 None，core_content 注明口径。
+    同域 8s 限流下每条需列表+详情两次请求，超时放宽到 300s。
+    """
+
+    source = "henan"
+    display_name = "河南省政府采购网"
+    domain = "www.ccgp-henan.gov.cn"
+    list_url = "http://www.ccgp-henan.gov.cn/"
+    robots_entry_url = list_url
+    timeout_seconds = 300.0
+
+    async def _fetch_and_build(self, limit: int) -> list[dict[str, Any]]:
+        ch = _load_script_module("collect_henan")
+        try:
+            async with httpx.AsyncClient(
+                headers={"User-Agent": UA}, follow_redirects=True,
+                # 与既有适配器一致：禁用系统代理（间歇性 ReadTimeout）
+                trust_env=False,
+                timeout=20.0,
+            ) as client:
+                home_html = await ch.fetch_home(client)
+                items = ch.filter_result_items(ch.parse_list(home_html))
+                payloads: list[dict[str, Any]] = []
+                for it in items[:limit]:
+                    detail_html = await ch.fetch_detail(client, it["url"])
+                    detail = ch.parse_detail(detail_html) if detail_html else None
+                    payloads.append(ch.build_payload(it, detail))
+                return payloads
+        except ch.Collect403 as exc:
+            raise SourceBlockedError(str(exc)) from exc

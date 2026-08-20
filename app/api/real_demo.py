@@ -275,6 +275,7 @@ async def list_tenders(db: AsyncSession = Depends(get_db)):
 # 顺序：版本历史 → 组织画像（与原 real_demo.py 中的路由顺序保持一致）。
 from app.api import real_demo_versions  # noqa: E402,F401
 from app.api import real_demo_organization  # noqa: E402,F401
+from app.api import realtime_panel  # noqa: E402,F401
 
 # ==== re-export：保持原有公开接口不变 ====
 # 以下函数已拆到子模块实现，但原有 import 路径（from app.api.real_demo import ...）
