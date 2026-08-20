@@ -1,0 +1,35 @@
+{"id": 16, "status": "ok", "proposed_company": "呼和浩特市回民区嘿马食品商行", "proposed_amount": "￥0.000000 万元（人民币）", "accepted_company": null, "accepted_amount": null, "reasons": ["company_not_exact_substring_or_no_org_tail", "amount_non_positive"]}
+{"id": 36, "status": "ok", "proposed_company": "商务部外贸发展事务局", "proposed_amount": "3055.0000000（万元）", "accepted_company": null, "accepted_amount": null, "reasons": ["company_not_exact_substring_or_no_org_tail", "amount_evidence_not_locatable"]}
+{"id": 836, "status": "ok", "proposed_company": "牵头供应商：云南东熔建设工程有限公司 投标联合体：云南东熔建设工程有限公司、河北泓融工程设计有限公司", "proposed_amount": "￥281.55368 万元（人民币）", "accepted_company": "云南东熔建设工程有限公司", "accepted_amount": "2815536.80000", "reasons": []}
+{"id": 837, "status": "ok", "proposed_company": "江苏省水利科学研究院", "proposed_amount": null, "accepted_company": "江苏省水利科学研究院", "accepted_amount": null, "reasons": []}
+{"id": 838, "status": "ok", "proposed_company": "中邮建技术有限公司", "proposed_amount": null, "accepted_company": "中邮建技术有限公司", "accepted_amount": null, "reasons": []}
+{"id": 839, "status": "ok", "proposed_company": "江苏天源试验设备有限公司", "proposed_amount": null, "accepted_company": "江苏天源试验设备有限公司", "accepted_amount": null, "reasons": []}
+{"id": 840, "status": "ok", "proposed_company": "南京藏龙建设有限公司", "proposed_amount": null, "accepted_company": "南京藏龙建设有限公司", "accepted_amount": null, "reasons": []}
+{"id": 841, "status": "ok", "proposed_company": "南京集成电路产业服务中心有限公司", "proposed_amount": null, "accepted_company": "南京集成电路产业服务中心有限公司", "accepted_amount": null, "reasons": []}
+{"id": 842, "status": "ok", "proposed_company": "南京盛佳建业科技有限责任公司", "proposed_amount": null, "accepted_company": "南京盛佳建业科技有限责任公司", "accepted_amount": null, "reasons": []}
+{"id": 845, "status": "ok", "proposed_company": "江苏移动信息系统集成有限公司", "proposed_amount": null, "accepted_company": "江苏移动信息系统集成有限公司", "accepted_amount": null, "reasons": []}
+{"id": 844, "status": "ok", "proposed_company": "南京芳业医药有限公司", "proposed_amount": null, "accepted_company": "南京芳业医药有限公司", "accepted_amount": null, "reasons": []}
+{"id": 843, "status": "ok", "proposed_company": "江苏顺丰速运有限公司", "proposed_amount": null, "accepted_company": "江苏顺丰速运有限公司", "accepted_amount": null, "reasons": []}
+{"id": 847, "status": "ok", "proposed_company": "徐州润发建设工程有限公司", "proposed_amount": null, "accepted_company": "徐州润发建设工程有限公司", "accepted_amount": null, "reasons": []}
+{"id": 848, "status": "ok", "proposed_company": "江苏格莱木业有限公司", "proposed_amount": null, "accepted_company": "江苏格莱木业有限公司", "accepted_amount": null, "reasons": []}
+{"id": 846, "status": "ok", "proposed_company": "无锡数据运营有限公司", "proposed_amount": null, "accepted_company": "无锡数据运营有限公司", "accepted_amount": null, "reasons": []}
+{"id": 851, "status": "ok", "proposed_company": "江苏军刃企业管理咨询有限公司", "proposed_amount": null, "accepted_company": "江苏军刃企业管理咨询有限公司", "accepted_amount": null, "reasons": []}
+{"id": 849, "status": "ok", "proposed_company": "西门子医疗系统有限公司", "proposed_amount": null, "accepted_company": "西门子医疗系统有限公司", "accepted_amount": null, "reasons": []}
+{"id": 850, "status": "ok", "proposed_company": "国邦智联（苏州）城市运营服务有限公司", "proposed_amount": null, "accepted_company": "国邦智联（苏州）城市运营服务有限公司", "accepted_amount": null, "reasons": []}
+{"id": 854, "status": "ok", "proposed_company": "盐城市大丰区盛能新能源有限公司", "proposed_amount": null, "accepted_company": "盐城市大丰区盛能新能源有限公司", "accepted_amount": null, "reasons": []}
+{"id": 852, "status": "ok", "proposed_company": "淮安安东物业服务有限公司", "proposed_amount": null, "accepted_company": "淮安安东物业服务有限公司", "accepted_amount": null, "reasons": []}
+{"id": 853, "status": "ok", "proposed_company": "扬州春泉科技有限公司", "proposed_amount": null, "accepted_company": "扬州春泉科技有限公司", "accepted_amount": null, "reasons": []}
+{"id": 855, "status": "ok", "proposed_company": "邳州市人民医院", "proposed_amount": null, "accepted_company": "邳州市人民医院", "accepted_amount": null, "reasons": []}
+{"id": 856, "status": "ok", "proposed_company": "苏州天旷保安服务有限公司", "proposed_amount": null, "accepted_company": "苏州天旷保安服务有限公司", "accepted_amount": null, "reasons": []}
+{"id": 865, "status": "ok", "proposed_company": "湖北浩海环保设备有限公司", "proposed_amount": "0 (%)", "accepted_company": null, "accepted_amount": null, "reasons": ["company_evidence_not_locatable", "amount_evidence_not_locatable"]}
+{"id": 867, "status": "ok", "proposed_company": "江苏省土地开发整理中心", "proposed_amount": null, "accepted_company": "江苏省土地开发整理中心", "accepted_amount": null, "reasons": []}
+{"id": 868, "status": "ok", "proposed_company": "沛县园林绿化服务站", "proposed_amount": null, "accepted_company": "沛县园林绿化服务站", "accepted_amount": null, "reasons": []}
+{"id": 869, "status": "ok", "proposed_company": "江苏屹盛建设有限公司", "proposed_amount": null, "accepted_company": "江苏屹盛建设有限公司", "accepted_amount": null, "reasons": []}
+{"id": 870, "status": "ok", "proposed_company": "淮安开卓电子科技有限公司", "proposed_amount": null, "accepted_company": "淮安开卓电子科技有限公司", "accepted_amount": null, "reasons": []}
+{"id": 883, "status": "ok", "proposed_company": "济南中天振鑫家具有限公司", "proposed_amount": "8500.000000元", "accepted_company": "济南中天振鑫家具有限公司", "accepted_amount": "8500.000000", "reasons": []}
+{"id": 871, "status": "ok", "proposed_company": "江苏领航智惠城市服务集团有限公司", "proposed_amount": null, "accepted_company": "江苏领航智惠城市服务集团有限公司", "accepted_amount": null, "reasons": []}
+{"id": 884, "status": "ok", "proposed_company": "济南同业信息技术有限公司", "proposed_amount": "199300.000000元", "accepted_company": "济南同业信息技术有限公司", "accepted_amount": "199300.000000", "reasons": []}
+{"id": 886, "status": "ok", "proposed_company": "山东祥云世纪电子有限公司", "proposed_amount": "221448.000000元", "accepted_company": "山东祥云世纪电子有限公司", "accepted_amount": "221448.000000", "reasons": []}
+{"id": 885, "status": "ok", "proposed_company": "中国人民财产保险股份有限公司山东省分公司", "proposed_amount": "1106.140000元", "accepted_company": "中国人民财产保险股份有限公司山东省分公司", "accepted_amount": "1106.140000", "reasons": []}
+{"id": 896, "status": "ok", "proposed_company": "云南凌卓建设工程有限公司", "proposed_amount": "￥300 万元（人民币）", "accepted_company": "云南凌卓建设工程有限公司", "accepted_amount": "3000000", "reasons": []}
+{"id": 899, "status": "ok", "proposed_company": "山东康都城市服务有限公司", "proposed_amount": "47.130000万元", "accepted_company": "山东康都城市服务有限公司", "accepted_amount": null, "reasons": ["amount_evidence_not_locatable"]}

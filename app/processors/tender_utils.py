@@ -21,6 +21,8 @@ from typing import Any
 from urllib.parse import urlparse
 
 from app.models.tender import Tender
+from app.processors.award_company_parser import parse_win_company
+from app.processors.award_amount_parser import parse_win_amount
 
 
 def _hash_contact(value: str | None) -> str | None:
@@ -155,14 +157,33 @@ def _build_tender(
                 return item[k]
         return None
 
+    # 大件一-②：中标人确定性兜底——采集侧未给 win_company 时，
+    # 用 award_company_parser 锚点从正文抽取（机构后缀收尾+证据 span，宁缺毋滥）
+    _body = str(
+        pick("core_content", "content", "核心内容")
+        or pick("source_raw_text", "raw_text", "source_text")
+        or ""
+    )
+    win_company = str(pick("win_company", "中标供应商", "中标人") or "")[:300] or None
+    if not win_company:
+        _hit = parse_win_company(_body)
+        if _hit:
+            win_company = _hit.value[:300]
+    # 大件一-③：中标金额确定性兜底（锚点+冒号/单位括号，万/亿换算落元）
+    win_amount = _parse_decimal(pick("win_amount", "中标金额"))
+    if win_amount is None:
+        _hit_amt = parse_win_amount(_body)
+        if _hit_amt:
+            win_amount = _hit_amt.value
+
     return Tender(
         project_name=str(pick("project_name", "title", "标题") or "")[:500] or "未命名",
         bid_number=str(pick("bid_number", "招标编号") or "")[:100] or None,
         budget_amount=_parse_decimal(pick("budget_amount", "budget", "预算")),
         # D2 修复：分站 build_payload 输出中标金额/中标企业，
         # 原 pick 链缺失导致静默丢弃（湖北/江苏/云南/山东四源受影响）
-        win_amount=_parse_decimal(pick("win_amount", "中标金额")),
-        win_company=str(pick("win_company", "中标供应商", "中标人") or "")[:300] or None,
+        win_amount=win_amount,
+        win_company=win_company,
         location=str(pick("location", "region", "地区") or "")[:200] or None,
         publish_time=_parse_datetime(pick("publish_time", "publish_date", "发布时间")),
         deadline=_parse_datetime(pick("deadline", "截止时间")),
