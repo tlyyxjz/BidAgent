@@ -20,6 +20,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.demo_collector import router as demo_collector_router
+from app.api.demo_due_diligence import router as demo_due_diligence_router
 from app.api.demo_fields import router as demo_fields_router
 from app.api.demo_org_by_name import (
     demo_org_by_name,
@@ -34,6 +35,7 @@ router = APIRouter(prefix="/api/demo", tags=["demo"])
 
 # 合并所有子 router（sub-router 路径相对于 /api/demo 前缀）
 router.include_router(demo_collector_router)
+router.include_router(demo_due_diligence_router)
 router.include_router(demo_fields_router)
 router.include_router(demo_org_by_name_router)
 router.include_router(demo_org_profile_router)
