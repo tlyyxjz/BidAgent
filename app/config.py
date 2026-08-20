@@ -73,6 +73,9 @@ class Settings(BaseSettings):
     ZHIPU_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"
     OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+    # 本地自部署 provider（私有化交付形态，免 API Key；换模型只改 LLM_MODEL）
+    OLLAMA_BASE_URL: str = "http://localhost:11434/v1"
+    VLLM_BASE_URL: str = "http://localhost:8080/v1"
     # 报告输出目录（命题交付物）
     REPORT_OUTPUT_DIR: str = "data/reports"
     # 附件下载目录（命题第 4 项硬要求）

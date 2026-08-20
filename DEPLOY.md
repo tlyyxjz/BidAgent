@@ -372,3 +372,51 @@ psql $DATABASE_URL < backup.sql
 docker compose down -v       # 停止并删除容器 + 数据卷
 rm -rf data/                 # 删除本地数据
 ```
+
+## 10. 私有化部署（客户自部署模型）
+
+企业客户可自部署开源模型（千问 27B/32B 等，Ollama/vLLM），公告与尽调数据不出域；
+我们交付证据引擎+验证规则+采集器。**换模型只改 .env，不改代码，不需 API Key。**
+
+架构承诺：抽取走"LLM 提议、规则裁判"——模型只出候选值，证据定位不上原文即拒收。
+因此换任何更弱的模型，顶多覆盖略降（拒收变多），**精确率不破**。
+
+### 10.1 启动本地模型（Ollama 示例）
+
+```bash
+# 安装 Ollama 后拉取模型（32B 量化版约 20G 显存；7B 约 5G）
+ollama pull qwen2.5:32b
+ollama serve   # 默认监听 http://localhost:11434
+```
+
+### 10.2 配置 .env
+
+```bash
+LLM_PROVIDER=ollama
+LLM_MODEL=qwen2.5:32b
+# OLLAMA_BASE_URL=http://localhost:11434/v1   # 默认值，非本机改这里
+# LLM_JSON_MODE=false                          # 量化小模型不稳支持 json_object 时关闭
+```
+
+Docker 部署时容器访问宿主机 Ollama：`OLLAMA_BASE_URL=http://host.docker.internal:11434/v1`
+（compose 默认值已如此配置）。vLLM 同理：`LLM_PROVIDER=vllm` + `VLLM_BASE_URL`。
+
+### 10.3 模型上岗质检（换模型前必跑）
+
+```bash
+# 小样本快速质检（默认 20 篇金标，输出本地化率/字段 F1/证据命中率 + 上岗结论）
+python scripts/eval_model_readiness.py --limit 20
+# 全量 598 篇质检（约 30-60 分钟，视硬件）
+python scripts/eval_model_readiness.py
+```
+
+质检报告输出到 `_w3_outputs/model_readiness_report.json`。
+上岗门槛（默认）：字段 F1 ≥ 0.80 且证据命中率 ≥ 0.95；不达标会明确给出 FAIL 结论。
+
+### 10.4 验证本地链路
+
+```bash
+curl http://localhost:11434/v1/models   # 确认模型已加载
+python -c "from app.llm.provider import resolve_provider; p=resolve_provider(); print(p.name, p.model, p.base_url)"
+# 期望输出: ollama qwen2.5:32b http://localhost:11434/v1
+```

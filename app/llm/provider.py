@@ -7,6 +7,11 @@ v4.1 工程规范：所有 LLM 调用走 OpenAI 兼容协议（/v1/chat/completi
 - dashscope（通义千问）：DASHSCOPE_API_KEY / DASHSCOPE_BASE_URL
 - zhipu（智谱 GLM）：ZHIPU_API_KEY / ZHIPU_BASE_URL
 - openai：OPENAI_API_KEY / OPENAI_BASE_URL
+- ollama（本地自部署）：OLLAMA_BASE_URL（默认 http://localhost:11434/v1），**无需 API Key**
+- vllm（本地自部署）：VLLM_BASE_URL（默认 http://localhost:8080/v1），**无需 API Key**
+
+私有化交付形态：客户自部署开源模型（千问 27B/32B 等），LLM_PROVIDER=ollama/vllm
++ LLM_MODEL=<模型名> 即可，换模型只改配置，不改代码。
 
 覆盖优先级：LLM_BASE_URL + LLM_API_KEY 显式配置 > provider 专属配置。
 抽取任务可用 LLM_EXTRACTION_MODEL 单独指定模型（默认回落 LLM_MODEL）。
@@ -38,6 +43,8 @@ _PROVIDER_DEFAULTS: dict[str, tuple[str, bool]] = {
     "dashscope": ("qwen-plus", True),
     "zhipu": ("glm-4-flash", False),  # GLM 旧版不稳支持 json_object，默认关
     "openai": ("gpt-4o-mini", True),
+    "ollama": ("qwen2.5:7b", True),  # Ollama ≥0.5 支持 json_object
+    "vllm": ("qwen2.5-32b-instruct", True),
 }
 
 _BASE_URL_DEFAULTS: dict[str, str] = {
@@ -45,7 +52,12 @@ _BASE_URL_DEFAULTS: dict[str, str] = {
     "dashscope": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "zhipu": "https://open.bigmodel.cn/api/paas/v4",
     "openai": "https://api.openai.com/v1",
+    "ollama": "http://localhost:11434/v1",
+    "vllm": "http://localhost:8080/v1",
 }
+
+# 本地自部署 provider：免 API Key（Ollama/vLLM 原生协议不校验 key）
+_LOCAL_PROVIDERS = frozenset({"ollama", "vllm"})
 
 
 def resolve_provider(purpose: str = "extraction") -> ProviderInfo:
@@ -59,7 +71,7 @@ def resolve_provider(purpose: str = "extraction") -> ProviderInfo:
         ProviderInfo
 
     Raises:
-        RuntimeError: provider 未配置 API Key
+        RuntimeError: provider 未配置 API Key（本地 ollama/vllm 免 key，不受此限）
     """
     name = (settings.LLM_PROVIDER or "deepseek").strip().lower()
     default_model, default_json = _PROVIDER_DEFAULTS.get(
@@ -80,7 +92,7 @@ def resolve_provider(purpose: str = "extraction") -> ProviderInfo:
     if override_url:
         base_url = override_url
 
-    if not api_key:
+    if not api_key and name not in _LOCAL_PROVIDERS:
         raise RuntimeError(
             f"LLM provider '{name}' API key not configured "
             f"(set {name.upper()}_API_KEY in .env)"
