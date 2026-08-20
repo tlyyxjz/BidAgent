@@ -200,10 +200,11 @@ _ADAPTER_REGISTRY: dict[str, tuple[str, str]] = {
     "jiangsu": ("app.services.realtime_adapters", "JiangsuAdapter"),
     "yunnan": ("app.services.realtime_adapters", "YunnanAdapter"),
     "shandong": ("app.services.realtime_adapters", "ShandongAdapter"),
+    "tianjin": ("app.services.realtime_adapters", "TianjinAdapter"),
 }
 
 # 四源冻结（D6 实机核对通过：shandong API 搬 :8087/api，colCode=0302，失败自动降级不阻断）
-DEFAULT_SOURCES: tuple[str, ...] = ("hubei", "jiangsu", "yunnan", "shandong")
+DEFAULT_SOURCES: tuple[str, ...] = ("hubei", "jiangsu", "yunnan", "shandong", "tianjin")
 
 
 def resolve_adapters(names: list[str] | None = None) -> list[SourceAdapter]:

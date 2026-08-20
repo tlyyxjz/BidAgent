@@ -236,3 +236,51 @@ class ShandongAdapter(BaseSourceAdapter):
                 return payloads
         except cs.Collect403 as exc:
             raise SourceBlockedError(str(exc)) from exc
+
+class TianjinAdapter(BaseSourceAdapter):
+    """天津站：首页 HTML 列表 → 详情 HTML → build_payload（15城·首城）。
+
+    首页即含中标类公告直链（SSR 门户），无需列表 API。
+    同域 8s 限流下每条约 16s（列表+详情），超时放宽到 300s。
+    """
+
+    source = "tianjin"
+    display_name = "天津市政府采购网"
+    domain = "www.ccgp-tianjin.gov.cn"
+    list_url = "https://www.ccgp-tianjin.gov.cn/"
+    robots_entry_url = list_url
+    timeout_seconds = 300.0
+
+    async def _fetch_and_build(self, limit: int) -> list[dict[str, Any]]:
+        ct = _load_script_module("collect_tianjin")
+        try:
+            async with httpx.AsyncClient(
+                headers={"User-Agent": UA}, follow_redirects=True,
+                # 与既有适配器一致：禁用系统代理（间歇性 ReadTimeout）
+                trust_env=False,
+                timeout=20.0,
+            ) as client:
+                home_html = await ct._fetch(client, self.list_url)
+                items = ct.parse_list(home_html)
+                items = ct.filter_result_items(items)
+                payloads: list[dict[str, Any]] = []
+                for it in items[:limit]:
+                    try:
+                        detail_html = await ct._fetch(client, it["url"])
+                    except httpx.TransportError as exc:
+                        logger.warning("tianjin detail failed id={} err={}",
+                                       it["id"], exc)
+                        continue
+                    except RuntimeError as exc:
+                        # 单条详情非 200：跳过不阻断整源（与山东/云南一致）
+                        logger.warning("tianjin detail http-error id={} err={}",
+                                       it["id"], exc)
+                        continue
+                    p = ct.build_payload(it, detail_html)
+                    # 诚实原则：编号与中标人都抽不到的不入中标库
+                    if not p["bid_number"] and not p["win_company"]:
+                        continue
+                    payloads.append(p)
+                return payloads
+        except ct.Collect403 as exc:
+            raise SourceBlockedError(str(exc)) from exc
