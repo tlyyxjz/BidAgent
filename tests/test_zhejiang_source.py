@@ -192,4 +192,4 @@ def test_registry_contains_zhejiang():
 def test_registry_adapter_count_guard():
     from app.services.realtime_sources import resolve_adapters
     adapters = resolve_adapters()
-    assert len(adapters) == 8
+    assert len(adapters) == 9

@@ -381,3 +381,28 @@ class ZhejiangAdapter(BaseSourceAdapter):
             return await ch.collect_payloads(limit=limit, interval=2.0)
         except ch.CollectBlocked as exc:
             raise SourceBlockedError(str(exc)) from exc
+
+
+class GuangdongAdapter(BaseSourceAdapter):
+    """广东省站：gpcms REST 接口 + 浏览器通道（WAF 拒非浏览器 UA）。
+
+    壳页纯 JS SPA，数据走 selectInfoMoreChannel（noticeType=00102
+    结果公告）+ getInfoById（正文含"三、采购结果"表，中标人/金额
+    完整可抽）——完整抽取模式。WAF 对自报爬虫 UA 返 403，故与浙江
+    同走 Playwright 浏览器通道（正常浏览器标识 = 真人正常浏览）。
+    浏览器启动+逐条详情耗时较长，超时放宽到 360s。
+    """
+
+    source = "guangdong"
+    display_name = "广东省政府采购网"
+    domain = "gdgpo.czt.gd.gov.cn"
+    list_url = "https://gdgpo.czt.gd.gov.cn/"
+    robots_entry_url = list_url
+    timeout_seconds = 360.0
+
+    async def _fetch_and_build(self, limit: int) -> list[dict[str, Any]]:
+        cg = _load_script_module("collect_guangdong")
+        try:
+            return await cg.collect_payloads(limit=limit)
+        except cg.Collect403 as exc:
+            raise SourceBlockedError(str(exc)) from exc

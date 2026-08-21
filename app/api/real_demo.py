@@ -276,6 +276,7 @@ async def list_tenders(db: AsyncSession = Depends(get_db)):
 from app.api import real_demo_versions  # noqa: E402,F401
 from app.api import real_demo_organization  # noqa: E402,F401
 from app.api import realtime_panel  # noqa: E402,F401
+from app.api import cross_validation_api  # noqa: E402,F401
 
 # ==== re-export：保持原有公开接口不变 ====
 # 以下函数已拆到子模块实现，但原有 import 路径（from app.api.real_demo import ...）

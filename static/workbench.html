@@ -592,6 +592,15 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       </div>
       <div class="rt-grid" id="rtGrid"></div>
       <div class="rt-note"><i class="ph ph-shield-check"></i>合规纪律硬编码在适配器基类：robots 禁止即不发请求；被 403 拦截的源本次会话熔断不再重试；任何一源失败不影响其他源。</div>
+      <div class="rt-xv" id="rtXv" style="margin-top:10px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card-2,rgba(0,0,0,.02))">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <i class="ph-bold ph-tree-structure" style="color:var(--blue,#3b82f6)"></i>
+          <b>多源交叉验证</b>
+          <span id="rtXvStat" style="color:var(--text-2)">加载中…</span>
+        </div>
+        <div id="rtXvMatches" style="margin-top:6px;font-size:12px;color:var(--text-2);line-height:1.8"></div>
+        <div style="margin-top:4px;font-size:11px;color:var(--text-3)"><i class="ph ph-info"></i>编号严格一致/标题相似度≥0.80 才计佐证；无跨源匹配的公告如实标注孤证，宁可少给、不可编造。</div>
+      </div>
     </div>
 
     <!-- ===== Footer ===== -->
@@ -876,6 +885,21 @@ loadRecentMeta();
     loadSources();
   });
   loadSources();
+  async function loadXv(){
+    try{
+      var r=await fetch('/api/real/realtime/cross-validation',{signal:AbortSignal.timeout(30000)});
+      var d=await r.json();
+      if((d.code===0||d.code===200)&&d.data){
+        var x=d.data;
+        document.getElementById('rtXvStat').textContent='库内 '+x.total+' 条 · 跨源佐证 '+x.corroborated+' 条 · 孤证 '+x.single_source+' 条（如实标注）';
+        var uniq={};(x.matches||[]).forEach(function(m){var k=[m.target_tender_id,m.match_tender_id].sort().join('-');uniq[k]=m});
+        var lines=Object.keys(uniq).slice(0,6).map(function(k){var m=uniq[k];
+          return '· #'+m.target_tender_id+'（'+esc(m.target_platform)+'） ↔ #'+m.match_tender_id+'（'+esc(m.match_platform)+'）｜'+esc(m.level==='bid_number_strict'?'项目编号严格一致':'标题强匹配')+'｜'+esc(m.reason)});
+        document.getElementById('rtXvMatches').innerHTML=lines.length?lines.join('<br>'):'暂无跨源佐证对（各源采集窗口未重叠时如实为 0）';
+      }
+    }catch(e){document.getElementById('rtXvStat').textContent='佐证报告加载失败（服务未启动？）'}
+  }
+  loadXv();
 })();
 </script>
 
