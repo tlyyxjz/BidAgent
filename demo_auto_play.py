@@ -72,7 +72,7 @@ async def scene_04_dedup(page):
 
 async def scene_05_evidence(page):
     print("\n[场景5] 证据验证（核心）")
-    await page.goto(f"{BASE}/ui/detail?id=1", wait_until="networkidle")
+    await page.goto(f"{BASE}/ui/detail?id=114", wait_until="networkidle")
     await wait("页面加载", 4)
     print("  → 等待字段加载")
     await wait("字段加载", 3)
@@ -128,7 +128,7 @@ async def scene_07_quality(page):
 
 async def scene_08_versions(page):
     print("\n[场景8] 版本历史")
-    await page.goto(f"{BASE}/ui/versions?id=1", wait_until="networkidle")
+    await page.goto(f"{BASE}/ui/versions?id=114", wait_until="networkidle")
     await wait("页面加载", 3)
     print("  → 等待谱系加载")
     await wait("谱系加载", 4)
