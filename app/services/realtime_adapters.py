@@ -357,3 +357,27 @@ class HenanAdapter(BaseSourceAdapter):
                 return payloads
         except ch.Collect403 as exc:
             raise SourceBlockedError(str(exc)) from exc
+
+
+class ZhejiangAdapter(BaseSourceAdapter):
+    """浙江省站：阿里云 WAF JS 挑战 → 真实浏览器通道（Playwright）。
+
+    httpx 直连只拿到挑战页，必须浏览器过挑战后在页面上下文调
+    /portal/category（采购结果公告）与 /portal/detail（结构化模板 HTML，
+    class 标记精确抽取中标人/金额）——完整抽取模式，非元数据降级。
+    浏览器启动+挑战+逐条详情耗时较长，超时放宽到 360s。
+    """
+
+    source = "zhejiang"
+    display_name = "浙江省政府采购网"
+    domain = "www.ccgp-zhejiang.gov.cn"
+    list_url = "http://www.ccgp-zhejiang.gov.cn/"
+    robots_entry_url = list_url
+    timeout_seconds = 360.0
+
+    async def _fetch_and_build(self, limit: int) -> list[dict[str, Any]]:
+        ch = _load_script_module("collect_zhejiang")
+        try:
+            return await ch.collect_payloads(limit=limit, interval=2.0)
+        except ch.CollectBlocked as exc:
+            raise SourceBlockedError(str(exc)) from exc
