@@ -157,6 +157,15 @@ a{color:inherit;text-decoration:none}
 .ev-coords .cr{color:var(--primary)}
 .ev-coords .cn{color:var(--purple)}
 .ev-coords .os-tag{display:inline-block;padding:0 5px;background:#F8F6F0;border:1px solid var(--border-2);border-radius:3px;color:var(--text-2);font-family:-apple-system,sans-serif;font-size:9px;margin-left:4px}
+/* 置信度条：证据可信度可视化 */
+.ev-conf{display:flex;align-items:center;gap:6px;margin-top:6px}
+.ev-conf-bar{flex:1;height:5px;background:var(--border-2);border-radius:3px;overflow:hidden}
+.ev-conf-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--primary),var(--success));transition:width .35s ease}
+.ev-conf-val{font-size:10px;color:var(--text-2);font-weight:700;font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+/* 可重放脚注 */
+.replay-note{margin:10px;padding:9px 11px;background:var(--success-bg);border:1px solid rgba(63,115,85,.22);border-radius:6px;font-size:11px;color:var(--text-2);line-height:1.7;flex-shrink:0}
+.replay-note strong{color:var(--success)}
+.replay-note code{font-family:"SFMono-Regular",Consolas,monospace;font-size:10px;background:rgba(63,115,85,.1);padding:1px 5px;border-radius:3px;color:var(--success)}
 .no-evidence{color:var(--error);font-size:12px;padding:6px 0}
 .no-evidence i{margin-right:3px}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px}
@@ -207,8 +216,8 @@ a{color:inherit;text-decoration:none}
   </nav>
   <div class="sidebar-footer">
     <div><span class="comp-tag">标小智</span> v4.1</div>
-    <div>GOAI 2026 初赛</div>
-    <div>W3 · 100 篇评测集</div>
+    <div>GOAI 2026 复赛</div>
+    <div>金标 620 篇 · 十源</div>
   </div>
 </aside>
 
@@ -221,8 +230,8 @@ a{color:inherit;text-decoration:none}
     <div class="header-right">
       <input class="global-search" type="text" placeholder="搜索项目/组织/公告..." />
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
-      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
-      <div class="h-badge vers">v4.1 · 107篇</div>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · 十源</div>
+      <div class="h-badge vers">v4.1 · 金标620篇</div>
     </div>
   </header>
 
@@ -270,10 +279,11 @@ a{color:inherit;text-decoration:none}
       <div class="source-box" id="sourceBox"><span style="color:var(--text-3)">来源谱系加载中...</span></div>
       <nav class="fields-nav" id="fieldsNav"></nav>
       <div class="fields-container" id="fieldsContainer"><div class="empty-state">加载中...</div></div>
+      <div class="replay-note"><i class="ph ph-arrows-counter-clockwise"></i> <strong>证据可重放</strong>：每条证据均在浏览器内验证 <code>clean_raw_text[start:end) ≡ 证据文本</code>，切片不符即拒绝高亮（宁可少给、不可编造）；全量金标审计 <code>python scripts/audit_gold_replayable.py</code>（620 篇 2328 字段 0 问题）。</div>
     </section>
   </div>
 
-  <div class="footer"><span class="real">● 真实数据</span> · W3 · 100 篇评测集 · 标小智 v4.1 · GOAI 2026 初赛</div>
+  <div class="footer"><span class="real">● 真实数据</span> · 金标 620 篇十源 · 证据可重放 · 标小智 v4.1 · GOAI 2026 复赛</div>
       <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-size:11px;color:var(--text-3);line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
 </div>
 
@@ -612,13 +622,17 @@ function renderCards(){
         var ac = evHas(eid) ? " active" : "";
         var normStr = (ns!=null && ne!=null) ? ("["+ns+", "+ne+")") : "—（未规范化）";
         var os = (rs!=null && re!=null) ? ("["+rs+", "+re+")") : "—";
+        var conf = (e.confidence!=null && !isNaN(e.confidence)) ? Math.max(0, Math.min(1, Number(e.confidence))) : null;
+        var confHtml = conf!=null
+          ? '<div class="ev-conf"><span style="font-size:10px;color:var(--text-3)">置信度</span><div class="ev-conf-bar"><div class="ev-conf-fill" style="width:'+Math.round(conf*100)+'%"></div></div><span class="ev-conf-val">'+(conf*100).toFixed(0)+'%</span></div>'
+          : '';
         return '<div class="ev-item'+ac+'" onclick="hlEv(\''+eid+'\','+(rs==null?-1:rs)+','+(re==null?-1:re)+')">'+
           '<span class="ev-role '+roleClass(role)+'">'+(ROLE_LABEL[role]||role)+'</span>'+
-          '<div class="ev-text">'+esc(e.text||"")+'</div>'+
+          '<div class="ev-text">'+esc(e.text||"")+'</div>'+confHtml+
           '<div class="ev-coords">'+
             '<span class="cr">raw: '+os+'</span> · <span class="cn">normalized: '+normStr+'</span>'+
             '<span class="os-tag">offset_space: '+OFFSET_SPACE+'</span>'+
-            '<div style="margin-top:2px;color:var(--text-3)">match: '+esc(e.match_method||"exact")+' · confidence: '+(e.confidence!=null?e.confidence:"—")+' · verified: '+(e.verified!=null?e.verified:"—")+'</div>'+
+            '<div style="margin-top:2px;color:var(--text-3)">match: '+esc(e.match_method||"exact")+' · verified: '+(e.verified!=null?e.verified:"—")+'</div>'+
           '</div>'+
         '</div>';
       }).join("");
