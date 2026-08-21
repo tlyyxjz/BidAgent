@@ -1,0 +1,2724 @@
+[
+ {
+  "document_id": "w6_hubei_award_000",
+  "file": "w6_hubei_award_000.txt",
+  "title": "宜昌市教师发展中心宜昌市&quot;国培计划（2026）&quot;中西部骨干项目9包中标结果公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-hubei.gov.cn/notice/202608/notice_8dff6d8ba8af497b826052bd36716120.html",
+  "source_platform": "hubei",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "420501202601000533",
+      "acceptable_evidence_spans": [
+       {
+        "start": 366,
+        "end": 384,
+        "text": "420501202601000533"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 366,
+      "end": 384,
+      "text": "420501202601000533"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "宜昌市教师发展中心",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 11,
+        "text": "宜昌市教师发展中心"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 11,
+      "text": "宜昌市教师发展中心"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "武汉淘师湾网络教育科技股份有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 471,
+        "end": 488,
+        "text": "武汉淘师湾网络教育科技股份有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 471,
+      "end": 488,
+      "text": "武汉淘师湾网络教育科技股份有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "99.7 (%)",
+      "acceptable_evidence_spans": [
+       {
+        "start": 546,
+        "end": 554,
+        "text": "99.7 (%)"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 546,
+      "end": 554,
+      "text": "99.7 (%)"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-18 12:44",
+      "acceptable_evidence_spans": [
+       {
+        "start": 301,
+        "end": 317,
+        "text": "2026-08-18 12:44"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 301,
+      "end": 317,
+      "text": "2026-08-18 12:44"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_hubei_award_001",
+  "file": "w6_hubei_award_001.txt",
+  "title": "宜昌市教师发展中心宜昌市&quot;国培计划（2026）&quot;中西部骨干项目19包中标结果公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-hubei.gov.cn/notice/202608/notice_d01c7162b1a4461cb3de2434d5640595.html",
+  "source_platform": "hubei",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "420501202601000533",
+      "acceptable_evidence_spans": [
+       {
+        "start": 368,
+        "end": 386,
+        "text": "420501202601000533"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 368,
+      "end": 386,
+      "text": "420501202601000533"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "宜昌市教师发展中心",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 11,
+        "text": "宜昌市教师发展中心"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 11,
+      "text": "宜昌市教师发展中心"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "湖北阳光教育研究院",
+      "acceptable_evidence_spans": [
+       {
+        "start": 473,
+        "end": 482,
+        "text": "湖北阳光教育研究院"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 473,
+      "end": 482,
+      "text": "湖北阳光教育研究院"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "100.0 (%)",
+      "acceptable_evidence_spans": [
+       {
+        "start": 533,
+        "end": 542,
+        "text": "100.0 (%)"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 533,
+      "end": 542,
+      "text": "100.0 (%)"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-18 12:46",
+      "acceptable_evidence_spans": [
+       {
+        "start": 303,
+        "end": 319,
+        "text": "2026-08-18 12:46"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 303,
+      "end": 319,
+      "text": "2026-08-18 12:46"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_hubei_award_003",
+  "file": "w6_hubei_award_003.txt",
+  "title": "宜昌市教师发展中心宜昌市&quot;国培计划（2026）&quot;中西部骨干项目7包中标结果公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-hubei.gov.cn/notice/202608/notice_d109772c642d473f81b15e2e457be24c.html",
+  "source_platform": "hubei",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "420501202601000533",
+      "acceptable_evidence_spans": [
+       {
+        "start": 366,
+        "end": 384,
+        "text": "420501202601000533"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 366,
+      "end": 384,
+      "text": "420501202601000533"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "宜昌市教师发展中心",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 11,
+        "text": "宜昌市教师发展中心"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 11,
+      "text": "宜昌市教师发展中心"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "湖北第二师范学院",
+      "acceptable_evidence_spans": [
+       {
+        "start": 471,
+        "end": 479,
+        "text": "湖北第二师范学院"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 471,
+      "end": 479,
+      "text": "湖北第二师范学院"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "100.0 (%)",
+      "acceptable_evidence_spans": [
+       {
+        "start": 520,
+        "end": 529,
+        "text": "100.0 (%)"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 520,
+      "end": 529,
+      "text": "100.0 (%)"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-18 12:44",
+      "acceptable_evidence_spans": [
+       {
+        "start": 301,
+        "end": 317,
+        "text": "2026-08-18 12:44"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 301,
+      "end": 317,
+      "text": "2026-08-18 12:44"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_hubei_award_002",
+  "file": "w6_hubei_award_002.txt",
+  "title": "宜昌市教师发展中心宜昌市&quot;国培计划（2026）&quot;中西部骨干项目21包中标结果公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-hubei.gov.cn/notice/202608/notice_9b1f617860b14e4d9fcd0fb0accd3423.html",
+  "source_platform": "hubei",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "420501202601000533",
+      "acceptable_evidence_spans": [
+       {
+        "start": 368,
+        "end": 386,
+        "text": "420501202601000533"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 368,
+      "end": 386,
+      "text": "420501202601000533"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "宜昌市教师发展中心",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 11,
+        "text": "宜昌市教师发展中心"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 11,
+      "text": "宜昌市教师发展中心"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "北京继教网教育科技发展有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 473,
+        "end": 488,
+        "text": "北京继教网教育科技发展有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 473,
+      "end": 488,
+      "text": "北京继教网教育科技发展有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "100.0 (%)",
+      "acceptable_evidence_spans": [
+       {
+        "start": 530,
+        "end": 539,
+        "text": "100.0 (%)"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 530,
+      "end": 539,
+      "text": "100.0 (%)"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-18 12:46",
+      "acceptable_evidence_spans": [
+       {
+        "start": 303,
+        "end": 319,
+        "text": "2026-08-18 12:46"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 303,
+      "end": 319,
+      "text": "2026-08-18 12:46"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_shandong_award_006",
+  "file": "w6_shandong_award_006.txt",
+  "title": "山东艺术学院长清、文东两校区餐厅餐饮服务项目中标结果公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-shandong.gov.cn/detail?id=BLfEYHk8mwtfV4BncNbwHnbTxkJOhOn5dPB5vOcWrbmHTBCC0ILe3uEPR2DT4G73wRh8eNDt5owkU_GzCkupnyjC86qLZBYx-hchWQnqfDx9BcKs-lO-WjBiD2qruz6NMW-LwTQ3YHcJGw==&colCode=0302",
+  "source_platform": "shandong",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "SDGP370000000202602007075",
+      "acceptable_evidence_spans": [
+       {
+        "start": 311,
+        "end": 336,
+        "text": "SDGP370000000202602007075"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 311,
+      "end": 336,
+      "text": "SDGP370000000202602007075"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "山东艺术学院",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 8,
+        "text": "山东艺术学院"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 8,
+      "text": "山东艺术学院"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "山东兴顺餐饮管理有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 417,
+        "end": 429,
+        "text": "山东兴顺餐饮管理有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 417,
+      "end": 429,
+      "text": "山东兴顺餐饮管理有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "9,500,000.00元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 454,
+        "end": 467,
+        "text": "9,500,000.00元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 454,
+      "end": 467,
+      "text": "9,500,000.00元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026年08月20日",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2589,
+        "end": 2600,
+        "text": "2026年08月20日"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2589,
+      "end": 2600,
+      "text": "2026年08月20日"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_shandong_award_007",
+  "file": "w6_shandong_award_007.txt",
+  "title": "菏泽医学专科学校实训实验室建设项（二）(二次)结果公告（采购包1）",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-shandong.gov.cn/detail?id=BJiTJFhMPoPGW7cUTVwcGkjvaGnyhiZtfcm-fZxoYeDVD0T9u-MaIXqoRUce6Y9pe2eCqNoeJp2YY8E_grNPnJq4JR6jGJX09o7YcGwczGro5JgBHqB59wTefY1MgOBYNyNAJc2Utoty3w==&colCode=0302",
+  "source_platform": "shandong",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "SDGP370000000202602005145-1",
+      "acceptable_evidence_spans": [
+       {
+        "start": 316,
+        "end": 343,
+        "text": "SDGP370000000202602005145-1"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 316,
+      "end": 343,
+      "text": "SDGP370000000202602005145-1"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "菏泽医学专科学校",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 10,
+        "text": "菏泽医学专科学校"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 10,
+      "text": "菏泽医学专科学校"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "济南三批医疗器械有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 415,
+        "end": 427,
+        "text": "济南三批医疗器械有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 415,
+      "end": 427,
+      "text": "济南三批医疗器械有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "1,428,000.00元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 456,
+        "end": 469,
+        "text": "1,428,000.00元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 456,
+      "end": 469,
+      "text": "1,428,000.00元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026年08月19日",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2534,
+        "end": 2545,
+        "text": "2026年08月19日"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2534,
+      "end": 2545,
+      "text": "2026年08月19日"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_shandong_award_004",
+  "file": "w6_shandong_award_004.txt",
+  "title": "山东医学高等专科学校济南校区口腔系实训室建设项目(二次)结果公告（采购包1）",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-shandong.gov.cn/detail?id=BOnqpJhFW5ZbSUo7Qfq5r2OIih3tNrPv8KEHVYM8HNnKWL03llePvf_ZQn8yGdIWMYoY3YZ45R7OUxZbu2WrA_YHiSVZzu4AJErJzQ1aM1fbk4qMwPV9QT09wGfiIQU9dA2S33ptDYChjw==&colCode=0302",
+  "source_platform": "shandong",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "SDGP370000000202602004940-1",
+      "acceptable_evidence_spans": [
+       {
+        "start": 321,
+        "end": 348,
+        "text": "SDGP370000000202602004940-1"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 321,
+      "end": 348,
+      "text": "SDGP370000000202602004940-1"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "山东医学高等专科学校",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 12,
+        "text": "山东医学高等专科学校"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 12,
+      "text": "山东医学高等专科学校"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "山东精雕智能科技集团有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 425,
+        "end": 439,
+        "text": "山东精雕智能科技集团有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 425,
+      "end": 439,
+      "text": "山东精雕智能科技集团有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2,678,790.00元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 485,
+        "end": 498,
+        "text": "2,678,790.00元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 485,
+      "end": 498,
+      "text": "2,678,790.00元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026年08月19日",
+      "acceptable_evidence_spans": [
+       {
+        "start": 12406,
+        "end": 12417,
+        "text": "2026年08月19日"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 12406,
+      "end": 12417,
+      "text": "2026年08月19日"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_shandong_award_005",
+  "file": "w6_shandong_award_005.txt",
+  "title": "烟台大学“十强+未来”生命学院仪器设备采购项目结果公告（采购包1、2、3、4、5）",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-shandong.gov.cn/detail?id=BKoqlnwRq9gXyVOtt7K1QFWgOGGSfE4mBfVDsMoZ0ZlqmYO-ZbpuwVBTPFvD727-2e4ML_3Wf1DQKsqOe2h4wI_clxH1cNiUSqS_wnCE0jhhhqK9iue1B3hvR-6Y4lWkEVJ_WUCQhugzAg==&colCode=0302",
+  "source_platform": "shandong",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "SDGP370000000202602006180",
+      "acceptable_evidence_spans": [
+       {
+        "start": 324,
+        "end": 349,
+        "text": "SDGP370000000202602006180"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 324,
+      "end": 349,
+      "text": "SDGP370000000202602006180"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "烟台大学",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 6,
+        "text": "烟台大学"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 6,
+      "text": "烟台大学"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "[\"1,815,000.00元\", \"569,000.00元\", \"1,300,000.00元\", \"289,000.00元\", \"818,000.00元\"]",
+      "acceptable_evidence_spans": []
+     }
+    ],
+    "acceptable_evidence_spans": []
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026年08月20日",
+      "acceptable_evidence_spans": [
+       {
+        "start": 4439,
+        "end": 4450,
+        "text": "2026年08月20日"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 4439,
+      "end": 4450,
+      "text": "2026年08月20日"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_yunnan_award_008",
+  "file": "w6_yunnan_award_008.txt",
+  "title": "YNZC2026-G3-04146-YNJH-0097:云南公安民警综合训练基地2026年7月—2029年7月安保服务采购项目中标公告",
+  "notice_type": "award",
+  "source_url": "http://www.ccgp-yunnan.gov.cn/ggInfo.html?bulletin_id=-67668ce6.1a019097211.-6467",
+  "source_platform": "yunnan",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "YNZC2026-G3-04146-YNJH-0097",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 29,
+        "text": "YNZC2026-G3-04146-YNJH-0097"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 29,
+      "text": "YNZC2026-G3-04146-YNJH-0097"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "云南公安民警综合训练基地",
+      "acceptable_evidence_spans": [
+       {
+        "start": 30,
+        "end": 42,
+        "text": "云南公安民警综合训练基地"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 30,
+      "end": 42,
+      "text": "云南公安民警综合训练基地"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "云南昆仑保安服务有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 443,
+        "end": 455,
+        "text": "云南昆仑保安服务有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 443,
+      "end": 455,
+      "text": "云南昆仑保安服务有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "127.2912 万元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 464,
+        "end": 475,
+        "text": "127.2912 万元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 464,
+      "end": 475,
+      "text": "127.2912 万元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-19",
+      "acceptable_evidence_spans": [
+       {
+        "start": 262,
+        "end": 272,
+        "text": "2026-08-19"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 262,
+      "end": 272,
+      "text": "2026-08-19"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_yunnan_award_009",
+  "file": "w6_yunnan_award_009.txt",
+  "title": "YNZC2026-G1-04355-YZGF-0996:云南省阜外心血管病医院网络安全设备购置项目中标公告",
+  "notice_type": "award",
+  "source_url": "http://www.ccgp-yunnan.gov.cn/ggInfo.html?bulletin_id=-67668ce6.1a00e7bb429.5481",
+  "source_platform": "yunnan",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "YNZC2026-G1-04355-YZGF-0996",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 29,
+        "text": "YNZC2026-G1-04355-YZGF-0996"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 29,
+      "text": "YNZC2026-G1-04355-YZGF-0996"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "云南省阜外心血管病医院",
+      "acceptable_evidence_spans": [
+       {
+        "start": 30,
+        "end": 41,
+        "text": "云南省阜外心血管病医院"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 30,
+      "end": 41,
+      "text": "云南省阜外心血管病医院"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "云南南天电子信息产业股份有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 399,
+        "end": 415,
+        "text": "云南南天电子信息产业股份有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 399,
+      "end": 415,
+      "text": "云南南天电子信息产业股份有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "288 万元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 424,
+        "end": 430,
+        "text": "288 万元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 424,
+      "end": 430,
+      "text": "288 万元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-19",
+      "acceptable_evidence_spans": [
+       {
+        "start": 233,
+        "end": 243,
+        "text": "2026-08-19"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 233,
+      "end": 243,
+      "text": "2026-08-19"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_yunnan_award_010",
+  "file": "w6_yunnan_award_010.txt",
+  "title": "YNZC2026-C2-04640-GNZB-0009:云南省水利水电勘测设计研究院办公区配电室增容改造（变压器配电工程）总承包项目成交公告",
+  "notice_type": "award",
+  "source_url": "http://www.ccgp-yunnan.gov.cn/ggInfo.html?bulletin_id=-67668ce6.1a00e7bb429.30d7",
+  "source_platform": "yunnan",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "YNZC2026-C2-04640-GNZB-0009",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 29,
+        "text": "YNZC2026-C2-04640-GNZB-0009"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 29,
+      "text": "YNZC2026-C2-04640-GNZB-0009"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "云南省水利水电勘测设计研究院",
+      "acceptable_evidence_spans": [
+       {
+        "start": 30,
+        "end": 44,
+        "text": "云南省水利水电勘测设计研究院"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 30,
+      "end": 44,
+      "text": "云南省水利水电勘测设计研究院"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "牵头供应商：云南东熔建设工程有限公司 投标联合体：云南东熔建设工程有限公司、河北泓融工程设计有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 453,
+        "end": 503,
+        "text": "牵头供应商：云南东熔建设工程有限公司 投标联合体：云南东熔建设工程有限公司、河北泓融工程设计有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 453,
+      "end": 503,
+      "text": "牵头供应商：云南东熔建设工程有限公司 投标联合体：云南东熔建设工程有限公司、河北泓融工程设计有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "￥281.55368 万元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 511,
+        "end": 524,
+        "text": "￥281.55368 万元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 511,
+      "end": 524,
+      "text": "￥281.55368 万元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-19",
+      "acceptable_evidence_spans": [
+       {
+        "start": 267,
+        "end": 277,
+        "text": "2026-08-19"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 267,
+      "end": 277,
+      "text": "2026-08-19"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_yunnan_award_011",
+  "file": "w6_yunnan_award_011.txt",
+  "title": "YNZC2026-G1-04292-YZGF-0979:云南省阜外心血管病医院手术器械购置项目中标公告",
+  "notice_type": "award",
+  "source_url": "http://www.ccgp-yunnan.gov.cn/ggInfo.html?bulletin_id=-67668ce6.1a00e7bb429.5784",
+  "source_platform": "yunnan",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "YNZC2026-G1-04292-YZGF-0979",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 29,
+        "text": "YNZC2026-G1-04292-YZGF-0979"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 29,
+      "text": "YNZC2026-G1-04292-YZGF-0979"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "云南省阜外心血管病医院",
+      "acceptable_evidence_spans": [
+       {
+        "start": 30,
+        "end": 41,
+        "text": "云南省阜外心血管病医院"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 30,
+      "end": 41,
+      "text": "云南省阜外心血管病医院"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "116.65 万元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 425,
+        "end": 434,
+        "text": "116.65 万元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 425,
+      "end": 434,
+      "text": "116.65 万元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-19",
+      "acceptable_evidence_spans": [
+       {
+        "start": 229,
+        "end": 239,
+        "text": "2026-08-19"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 229,
+      "end": 239,
+      "text": "2026-08-19"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_tianjin_award_012",
+  "file": "w6_tianjin_award_012.txt",
+  "title": "天津市天津中学  天津市天津中学食堂服务项目  (项目编号:XCSD-2026-A-617)中标公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-tianjin.gov.cn/viewer.do?id=1093822605&ver=2",
+  "source_platform": "tianjin",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "XCSD-2026-A-617",
+      "acceptable_evidence_spans": [
+       {
+        "start": 32,
+        "end": 47,
+        "text": "XCSD-2026-A-617"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 32,
+      "end": 47,
+      "text": "XCSD-2026-A-617"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "天津市天津中学",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 9,
+        "text": "天津市天津中学"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 9,
+      "text": "天津市天津中学"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "天津市星阔餐饮管理服务有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 821,
+        "end": 836,
+        "text": "天津市星阔餐饮管理服务有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 821,
+      "end": 836,
+      "text": "天津市星阔餐饮管理服务有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "268.9449万元",
+      "acceptable_evidence_spans": []
+     }
+    ],
+    "acceptable_evidence_spans": []
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026年08月20日",
+      "acceptable_evidence_spans": [
+       {
+        "start": 613,
+        "end": 624,
+        "text": "2026年08月20日"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 613,
+      "end": 624,
+      "text": "2026年08月20日"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_tianjin_award_013",
+  "file": "w6_tianjin_award_013.txt",
+  "title": "天津海河传媒中心（本部） 2026年天津海河传媒中心制播系统设备更新项目【播出系统】—画分单元项目 (项目编号:SHGP-2026-A347)中标公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-tianjin.gov.cn/viewer.do?id=1093823549&ver=2",
+  "source_platform": "tianjin",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "SHGP-2026-A347",
+      "acceptable_evidence_spans": [
+       {
+        "start": 58,
+        "end": 72,
+        "text": "SHGP-2026-A347"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 58,
+      "end": 72,
+      "text": "SHGP-2026-A347"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "天津海河传媒中心（本部）",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 14,
+        "text": "天津海河传媒中心（本部）"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 14,
+      "text": "天津海河传媒中心（本部）"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "北京格非科技股份有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 926,
+        "end": 938,
+        "text": "北京格非科技股份有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 926,
+      "end": 938,
+      "text": "北京格非科技股份有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026年08月20日",
+      "acceptable_evidence_spans": [
+       {
+        "start": 692,
+        "end": 703,
+        "text": "2026年08月20日"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 692,
+      "end": 703,
+      "text": "2026年08月20日"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_tianjin_award_014",
+  "file": "w6_tianjin_award_014.txt",
+  "title": "天津市农业发展服务中心 天津市2026年“虫口夺粮”保丰收行动专用材料采购 (项目编号:HCLHZB-GK-2026161)中标公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-tianjin.gov.cn/viewer.do?id=1093822381&ver=2",
+  "source_platform": "tianjin",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "HCLHZB-GK-2026161",
+      "acceptable_evidence_spans": [
+       {
+        "start": 46,
+        "end": 63,
+        "text": "HCLHZB-GK-2026161"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 46,
+      "end": 63,
+      "text": "HCLHZB-GK-2026161"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "天津市农业发展服务中心",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 13,
+        "text": "天津市农业发展服务中心"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 13,
+      "text": "天津市农业发展服务中心"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "山东保农仓农业科技有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 890,
+        "end": 903,
+        "text": "山东保农仓农业科技有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 890,
+      "end": 903,
+      "text": "山东保农仓农业科技有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "124.06646万元",
+      "acceptable_evidence_spans": []
+     }
+    ],
+    "acceptable_evidence_spans": []
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026年08月20日",
+      "acceptable_evidence_spans": [
+       {
+        "start": 665,
+        "end": 676,
+        "text": "2026年08月20日"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 665,
+      "end": 676,
+      "text": "2026年08月20日"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_tianjin_award_015",
+  "file": "w6_tianjin_award_015.txt",
+  "title": "天津理工大学 天津理工大学数字孪生与机器学习开发系统采购项目 (项目编号:0615-2641060970672)中标公告",
+  "notice_type": "award",
+  "source_url": "https://www.ccgp-tianjin.gov.cn/viewer.do?id=1093822394&ver=2",
+  "source_platform": "tianjin",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "0615-2641060970672",
+      "acceptable_evidence_spans": [
+       {
+        "start": 39,
+        "end": 57,
+        "text": "0615-2641060970672"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 39,
+      "end": 57,
+      "text": "0615-2641060970672"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "天津理工大学",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 8,
+        "text": "天津理工大学"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 8,
+      "text": "天津理工大学"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "天津市中恒凯诚信息技术有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 866,
+        "end": 881,
+        "text": "天津市中恒凯诚信息技术有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 866,
+      "end": 881,
+      "text": "天津市中恒凯诚信息技术有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "149.8",
+      "acceptable_evidence_spans": [
+       {
+        "start": 959,
+        "end": 964,
+        "text": "149.8"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 959,
+      "end": 964,
+      "text": "149.8"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026年08月20日",
+      "acceptable_evidence_spans": [
+       {
+        "start": 647,
+        "end": 658,
+        "text": "2026年08月20日"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 647,
+      "end": 658,
+      "text": "2026年08月20日"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_zhejiang_award_016",
+  "file": "w6_zhejiang_award_016.txt",
+  "title": "浙江省绍兴市2026年中央财政国土绿化项目（新昌县）成效监测样地服务",
+  "notice_type": "award",
+  "source_url": "http://www.ccgp-zhejiang.gov.cn/site/detail?articleId=akWoed4EJjUvFd4aIN7l4A%3D%3D",
+  "source_platform": "zhejiang",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "330624262010010000031-XCZX2026012ZC",
+      "acceptable_evidence_spans": [
+       {
+        "start": 304,
+        "end": 339,
+        "text": "330624262010010000031-XCZX2026012ZC"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 304,
+      "end": 339,
+      "text": "330624262010010000031-XCZX2026012ZC"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "新昌县自然资源和规划局",
+      "acceptable_evidence_spans": [
+       {
+        "start": 345,
+        "end": 356,
+        "text": "新昌县自然资源和规划局"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 345,
+      "end": 356,
+      "text": "新昌县自然资源和规划局"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "国家林业和草原局华东调查规划院（联合体牵头人）、杭州探碳科技有限公司（联合体成员）",
+      "acceptable_evidence_spans": [
+       {
+        "start": 367,
+        "end": 408,
+        "text": "国家林业和草原局华东调查规划院（联合体牵头人）、杭州探碳科技有限公司（联合体成员）"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 367,
+      "end": 408,
+      "text": "国家林业和草原局华东调查规划院（联合体牵头人）、杭州探碳科技有限公司（联合体成员）"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "1642000元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 418,
+        "end": 426,
+        "text": "1642000元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 418,
+      "end": 426,
+      "text": "1642000元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-21 11:44",
+      "acceptable_evidence_spans": [
+       {
+        "start": 458,
+        "end": 474,
+        "text": "2026-08-21 11:44"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 458,
+      "end": 474,
+      "text": "2026-08-21 11:44"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_zhejiang_award_017",
+  "file": "w6_zhejiang_award_017.txt",
+  "title": "婺江新村未来社区创建项目设备购置项目",
+  "notice_type": "award",
+  "source_url": "http://www.ccgp-zhejiang.gov.cn/site/detail?articleId=FYzQR3LrpwpbTUYg63SAdA%3D%3D",
+  "source_platform": "zhejiang",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "330718262700010000002-YG2026-HW7000-ZFCG053",
+      "acceptable_evidence_spans": [
+       {
+        "start": 257,
+        "end": 300,
+        "text": "330718262700010000002-YG2026-HW7000-ZFCG053"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 257,
+      "end": 300,
+      "text": "330718262700010000002-YG2026-HW7000-ZFCG053"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "金华市婺城区人民政府三江街道办事处",
+      "acceptable_evidence_spans": [
+       {
+        "start": 306,
+        "end": 323,
+        "text": "金华市婺城区人民政府三江街道办事处"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 306,
+      "end": 323,
+      "text": "金华市婺城区人民政府三江街道办事处"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "金华华数广电网络有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 334,
+        "end": 346,
+        "text": "金华华数广电网络有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 334,
+      "end": 346,
+      "text": "金华华数广电网络有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "97元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 356,
+        "end": 359,
+        "text": "97元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 356,
+      "end": 359,
+      "text": "97元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-21 11:53",
+      "acceptable_evidence_spans": [
+       {
+        "start": 386,
+        "end": 402,
+        "text": "2026-08-21 11:53"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 386,
+      "end": 402,
+      "text": "2026-08-21 11:53"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_zhejiang_award_018",
+  "file": "w6_zhejiang_award_018.txt",
+  "title": "科普阵地体系化建设采购项目",
+  "notice_type": "award",
+  "source_url": "http://www.ccgp-zhejiang.gov.cn/site/detail?articleId=Rexcj3vrjfes4IwkApIoYA%3D%3D",
+  "source_platform": "zhejiang",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "330000266050010000093-CTZB-2026080124",
+      "acceptable_evidence_spans": [
+       {
+        "start": 246,
+        "end": 283,
+        "text": "330000266050010000093-CTZB-2026080124"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 246,
+      "end": 283,
+      "text": "330000266050010000093-CTZB-2026080124"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "浙江省科学技术协会（本级）",
+      "acceptable_evidence_spans": [
+       {
+        "start": 289,
+        "end": 302,
+        "text": "浙江省科学技术协会（本级）"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 289,
+      "end": 302,
+      "text": "浙江省科学技术协会（本级）"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "新航海（杭州）科技有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 313,
+        "end": 326,
+        "text": "新航海（杭州）科技有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 313,
+      "end": 326,
+      "text": "新航海（杭州）科技有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "694550元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 336,
+        "end": 343,
+        "text": "694550元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 336,
+      "end": 343,
+      "text": "694550元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-21 11:44",
+      "acceptable_evidence_spans": [
+       {
+        "start": 368,
+        "end": 384,
+        "text": "2026-08-21 11:44"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 368,
+      "end": 384,
+      "text": "2026-08-21 11:44"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_guangdong_award_020",
+  "file": "w6_guangdong_award_020.txt",
+  "title": "2026-2027年广东省西江流域陆海统筹与重点水库水华水质风险监测预警(二次)",
+  "notice_type": "award",
+  "source_url": "https://gdgpo.czt.gd.gov.cn/gpcms/rest/web/v2/info/getInfoById?id=3fb44fad-9885-4e1d-ae9f-eba0e2cf88ac",
+  "source_platform": "guangdong",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "GPCGD261115FG166F",
+      "acceptable_evidence_spans": [
+       {
+        "start": 320,
+        "end": 337,
+        "text": "GPCGD261115FG166F"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 320,
+      "end": 337,
+      "text": "GPCGD261115FG166F"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "广东省生态环境监测中心（省中心本部）",
+      "acceptable_evidence_spans": [
+       {
+        "start": 343,
+        "end": 361,
+        "text": "广东省生态环境监测中心（省中心本部）"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 343,
+      "end": 361,
+      "text": "广东省生态环境监测中心（省中心本部）"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "广州中科云图智能科技有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 372,
+        "end": 386,
+        "text": "广州中科云图智能科技有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 372,
+      "end": 386,
+      "text": "广州中科云图智能科技有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2200000.00元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 396,
+        "end": 407,
+        "text": "2200000.00元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 396,
+      "end": 407,
+      "text": "2200000.00元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-21 14:19",
+      "acceptable_evidence_spans": [
+       {
+        "start": 432,
+        "end": 448,
+        "text": "2026-08-21 14:19"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 432,
+      "end": 448,
+      "text": "2026-08-21 14:19"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_guangdong_award_019",
+  "file": "w6_guangdong_award_019.txt",
+  "title": "广东省医疗保障局2026年度第三方机构辅助监督检查服务采购项目",
+  "notice_type": "award",
+  "source_url": "https://gdgpo.czt.gd.gov.cn/gpcms/rest/web/v2/info/getInfoById?id=2aaf2dbe-da51-412b-8438-778b1f051468",
+  "source_platform": "guangdong",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "GZYL26FC073463",
+      "acceptable_evidence_spans": [
+       {
+        "start": 293,
+        "end": 307,
+        "text": "GZYL26FC073463"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 293,
+      "end": 307,
+      "text": "GZYL26FC073463"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "广东省医疗保障局",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 10,
+        "text": "广东省医疗保障局"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 10,
+      "text": "广东省医疗保障局"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "[\"540,000.00元\", \"450,000.00元\", \"450,000.00元\", \"450,000.00元\"]",
+      "acceptable_evidence_spans": []
+     }
+    ],
+    "acceptable_evidence_spans": []
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-21 12:23",
+      "acceptable_evidence_spans": [
+       {
+        "start": 450,
+        "end": 466,
+        "text": "2026-08-21 12:23"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 450,
+      "end": 466,
+      "text": "2026-08-21 12:23"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ },
+ {
+  "document_id": "w6_guangdong_award_021",
+  "file": "w6_guangdong_award_021.txt",
+  "title": "广东省江门监狱信息化机房设备购置及改造项目（三次）",
+  "notice_type": "award",
+  "source_url": "https://gdgpo.czt.gd.gov.cn/gpcms/rest/web/v2/info/getInfoById?id=0cc08007-01dd-4476-86ba-74d40b5a1831",
+  "source_platform": "guangdong",
+  "split": "dev",
+  "annotator": "w6-pipeline",
+  "annotation_version": "1.0",
+  "audit_note": "nv2-expand-2026-08-05: LLM初标+可重放审计（值均原文可定位）",
+  "fields": {
+   "project_identifier": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "GZSW26201GC2183A",
+      "acceptable_evidence_spans": [
+       {
+        "start": 235,
+        "end": 251,
+        "text": "GZSW26201GC2183A"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 235,
+      "end": 251,
+      "text": "GZSW26201GC2183A"
+     }
+    ]
+   },
+   "purchaser_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "广东省江门监狱",
+      "acceptable_evidence_spans": [
+       {
+        "start": 2,
+        "end": 9,
+        "text": "广东省江门监狱"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 2,
+      "end": 9,
+      "text": "广东省江门监狱"
+     }
+    ]
+   },
+   "winner_name": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "联通（广东）产业互联网有限公司",
+      "acceptable_evidence_spans": [
+       {
+        "start": 333,
+        "end": 348,
+        "text": "联通（广东）产业互联网有限公司"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 333,
+      "end": 348,
+      "text": "联通（广东）产业互联网有限公司"
+     }
+    ]
+   },
+   "amount": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "1010506.53元",
+      "acceptable_evidence_spans": [
+       {
+        "start": 358,
+        "end": 369,
+        "text": "1010506.53元"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 358,
+      "end": 369,
+      "text": "1010506.53元"
+     }
+    ]
+   },
+   "publish_date": {
+    "status": "present",
+    "values": [
+     {
+      "raw_value": "2026-08-21 14:19",
+      "acceptable_evidence_spans": [
+       {
+        "start": 394,
+        "end": 410,
+        "text": "2026-08-21 14:19"
+       }
+      ]
+     }
+    ],
+    "acceptable_evidence_spans": [
+     {
+      "start": 394,
+      "end": 410,
+      "text": "2026-08-21 14:19"
+     }
+    ]
+   },
+   "bid_deadline": {
+    "status": "absent",
+    "values": [],
+    "acceptable_evidence_spans": []
+   }
+  }
+ }
+]
