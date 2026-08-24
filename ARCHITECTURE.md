@@ -114,7 +114,7 @@ BidAgent/
 │       ├── aes_crypto.py    #   AES-GCM 加密
 │       ├── url_safety.py    #   SSRF 防护
 │       └── logger.py        #   结构化日志
-├── tests/                   # 测试（2031 passed）
+├── tests/                   # 测试（2435 passed）
 ├── examples/                # 示例输入输出（3 条真实公告）
 ├── static/                  # Web Demo 静态资源
 ├── data/bidagent.db         # SQLite 数据库
@@ -221,7 +221,7 @@ TenderProject（采购项目）
 
 ### 辅助实体
 
-- `Organization`（组织机构）：113 条
+- `Organization`（组织机构）：143 条
 - `NoticeParticipant`（参与关系）
 - `ProjectIdentifier`（项目标识）
 - `FactAssertionKey`（事实断言键）：跨源比较前确保双方表达同一业务事实
@@ -230,18 +230,20 @@ TenderProject（采购项目）
 
 所有核心实体使用无业务含义的内部稳定主键（ULID，`ulid-py` 库），不使用业务编号作主键。
 
-### 数据库真实数字（2026-08-11 实测）
+### 数据库真实数字（2026-08-24 实测）
 
 | 表 | 行数 | 说明 |
 |---|---|---|
-| tenders | 701 | 公告总数（全部 ccgp）|
+| tenders | 829 | 公告总数（十源采集）|
+| tender_projects | 746 | 采购项目 |
 | extracted_fields | 582 | 抽取字段总数 |
 | evidence | 586 | 证据总数 |
-| notice_sources | 721 | 来源页面 |
-| notice_versions | 721 | 页面版本 |
-| organizations | 113 | 组织机构 |
+| notice_sources | 746 | 来源页面 |
+| notice_versions | 746 | 页面版本 |
+| organizations | 143 | 组织机构 |
+| notice_tags | 50 | 公告标签 |
 
-按 `notice_type` 分组：tender 516 / award 104 / correction 79 / 未分类 2。
+按来源分组：ccgp 中央 + ggzy 全国 + 粤/苏/滇/鲁/津/青岛/豫/浙/粤九省。
 有抽取字段的公告数：154。
 
 ---
@@ -326,9 +328,9 @@ Playwright / httpx 抓取
 
 ### 金标集
 
-- `tests/fixtures/gold/gold_dataset_v4.json`：598 篇全量金标
+- `tests/fixtures/gold/gold_dataset_v4.json`：620 篇全量金标（十源扩标）
 - document_id 双口径唯一
-- 2026-08-06 全量复测：D 组 field_precision 96.44%、unjustified_rate 0.00%
+- 2026-08-21 全量复测：D 组 field_precision 97.60%、unjustified_rate 0.00%、evidence_precision 99.91%、null_false_positive_rate 0.57%
 
 ---
 
@@ -382,8 +384,8 @@ services:
 
 ## 10. 已知限制
 
-1. **2 个官方来源适配器**：MVP 冻结范围 ccgp + ggzy_national，商业平台暂不接入
-2. **金标 598 篇**：已超 v4.1 推荐 300～350 篇，未划分开发集/校准集/测试集
+1. **10+ 个官方来源适配器**：ccgp 中央 + ggzy 全国 + 粤/苏/滇/鲁/津/青岛/豫/浙/粤九省，商业平台暂不接入
+2. **金标 620 篇**：已超 v4.1 推荐 300～350 篇，未划分开发集/校准集/测试集
 3. **temperature 记录口径**：记录 0.0，实际 0.1（不影响指标结论）
 4. **不输出信用评分**：6 个观察信号仅供人工尽调参考，不判断围标/授信
 5. **历史实验性代码**：BOQ 异常检测与废标风险预警为早期实验，v4.1 MVP 不包含

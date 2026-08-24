@@ -4,10 +4,10 @@
 
 # 标小智 — 可验证招投标数据引擎
 
-> 面向供应链金融贷前尽调的可验证招投标数据引擎 · GOAI 2026。单篇公告核验成本不足 1 分钱、端到端约 24 秒（598 篇金标实测），把供应商中标记录核验从人工约 1-2 人时压缩到分钟级——且每个数字都可回溯公告原文：LLM 只生成候选，确定性程序负责验证。
+> 面向供应链金融贷前尽调的可验证招投标数据引擎 · GOAI 2026。单篇公告核验成本不足 1 分钱、端到端约 24 秒（620 篇金标实测），把供应商中标记录核验从人工约 1-2 人时压缩到分钟级——且每个数字都可回溯公告原文：LLM 只生成候选，确定性程序负责验证。
 
 **当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
-**测试**：2031 passed · **评测数据**：162 篇真实公告 · 金标 598 篇 · **分支**：main
+**测试**：2435 passed · **评测数据**：829 篇真实公告 · 金标 620 篇 · **数据源**：10+ 个省级平台 · **分支**：feature/qoder-sprint-realtime-quality（复赛）
 
 ---
 
@@ -15,12 +15,12 @@
 
 | 想看什么 | 去哪里 |
 |---|---|
-| **一键跑起来** | `python run_demo.py`——已预置 708 条真实公告 / 113 家组织画像 / 586 条证据，**启动即见活系统**；浏览存量数据无需任何 LLM key（仅新公告采集需配置） |
+| **一键跑起来** | `python run_demo.py`——已预置 829 条真实公告 / 143 家组织画像 / 586 条证据，**启动即见活系统**；浏览存量数据无需任何 LLM key（仅新公告采集需配置） |
 | **演示页面** | 启动后访问 `http://localhost:8000/ui`：工作台 / 智能查询 / 组织画像 / 质量看板 |
 | **3 分钟 Demo 视频** | 包内 `标小智_Demo视频.webm`（附字幕 `标小智_Demo字幕.srt`） |
 | **路演 PPT** | 包内 `标小智_初赛路演_v2.pptx` |
 | **项目简介** | 包内 `introduction_500.md`（419 字，8 要素） |
-| **关键数字** | 2031 测试通过 · 覆盖率 88.85% · 金标 598 篇 · 单篇核验成本 <1 分钱 |
+| **关键数字** | 2435 测试通过 · 覆盖率 88.85% · 金标 620 篇 · 单篇核验成本 <1 分钱 · 10+ 省级数据源 |
 
 ---
 
@@ -78,6 +78,26 @@ TenderProject（采购项目）
 - 同源转载识别（SimHash 汉明距离 ≤ 3），避免将转载数量误判为独立交叉验证
 - 事实断言键（FactAssertionKey）：跨源比较前确保双方表达同一业务事实
 - 页面版本追踪，历史版本不被新版本覆盖
+
+### 多源实时采集（复赛新增）
+
+- 10+ 个省级官方来源统一接入 SourceAdapter 实时层（ccgp 中央 + ggzy 全国 + 粤/苏/滇/鲁/津/青岛/豫/浙/粤）
+- 省级批量组网：按域名分桶调度，域名级 8 秒频率限制 + 403 即停不重试
+- 实时交叉验证：多源佐证链 900↔927 条跨源对应，库内 829 条十源公告
+- 实时采集面板：Web Demo 内可视化采集进度、来源状态和交叉验证结果
+
+### 证据 SHA-256 存证（复赛新增）
+
+- 入库即存：每条证据入库时计算 SHA-256 哈希，801/801 全量存证
+- 重放核验：篡改可检出，重放命令一键验证证据完整性
+- 生命周期链：采集→抽取→验证→存储 每环节哈希串联，可追溯
+- 尽调单证据链存证版：金融尽调单的每条证据可独立核验来源
+
+### 金融尽调（复赛新增）
+
+- 中标应收账款放款前核验：复用 verify_award 内核 + 无编号反查
+- 超额融资 CRITICAL 预警：中标金额 vs 融资金额比对，超额自动标记
+- 一页尽调单 API 端点：输出结构化尽调报告，每个数字带证据回溯
 
 ### 展示等级与选择性输出
 
@@ -157,12 +177,12 @@ TenderProject（采购项目）
 
 | 项目 | 数值 |
 |---|---|
-| 数据库公告总数 | 162 篇（2026-08 恢复灌库，SimHash 去重）|
-| 金标集 | 598 篇（`tests/fixtures/gold/gold_dataset_v4.json`，document_id 双口径唯一）|
+| 数据库公告总数 | 829 篇（2026-08 多源实时采集灌库，SimHash 去重）|
+| 金标集 | 620 篇（`tests/fixtures/gold/gold_dataset_v4.json`，document_id 双口径唯一，十源扩标）|
 | W3 评测集 | 100 篇（ccgp_w3）|
-| 实时采集 | 7 篇（ccgp）|
-| 公告类型覆盖 | tender 34 / award 35 / correction 33 / 其他 5 |
-| 金标字段总数（99 篇全量）| 594 |
+| 数据源 | 10+ 个省级平台（ccgp 中央 + ggzy 全国 + 粤/苏/滇/鲁/津/青岛/豫/浙/粤）|
+| 公告类型覆盖 | tender / award / correction / 其他 |
+| 金标字段总数（620 篇全量）| 3720 |
 
 ### 4 组消融实验（99 篇全量，final5 实测，详见 `_w3_outputs/端到端评测报告.md`）
 
@@ -180,23 +200,23 @@ TenderProject（采购项目）
 
 仅剩 1 个空值误报（w3_correction_043），经核对为金标标注矛盾。
 
-### 金标 v4 合集 598 篇全量复测（2026-08-06 实测，`scripts/eval_gold598_retest.py`）
+### 金标 v4 合集 620 篇全量复测（2026-08-21 实测，code_commit `93c5ada`，`scripts/eval_gold598_retest.py`）
 
 | 指标 | A 组（Direct LLM）| B 组（LLM+候选证据）| C 组（LLM+程序验证）| D 组（完整 BidAgent）|
 |---|---|---|---|---|
-| field_precision | 87.21% | 95.46% | 95.32% | **96.44%** |
-| unjustified_rate | **100.00%** | 0.00% | 3.89% | **0.00%** |
-| evidence_precision | N/A | N/A | 100.00% | **100.00%** |
-| null_false_positive_rate | 24.48% | 2.23% | 2.15% | **2.15%** |
-| multi_value_f1_avg | 0.7729 | 0.8466 | 0.8505 | **0.8505** |
+| field_precision | 88.04% | 96.16% | 96.13% | **97.60%** |
+| unjustified_rate | **100.00%** | 0.00% | 4.05% | **0.00%** |
+| evidence_precision | N/A | N/A | 99.91% | **99.91%** |
+| null_false_positive_rate | 22.99% | 0.79% | 0.57% | **0.57%** |
+| multi_value_f1_avg | 0.7797 | 0.8537 | 0.8574 | **0.8574** |
 
-口径说明：598 篇全覆盖（fields_total=3588），与 99 篇消融同一套 run_group/summarize 口径；D 组选择性输出拒绝低置信字段后 fields_evaluable=2133（不确定的不输出）。按来源分组 D 组精确率：w3 98.13% / w4 97.50% / w5 96.03% / frozen93 80.22%（早期冻结标注 22 篇，值匹配口径更严）。产物：`_w3_outputs/gold598_retest.json`，断点 checkpoint 去重后 598 唯一（双进程并发写入已用 `scripts/finalize_gold598_retest.py` 归一）。
+口径说明：620 篇全覆盖（fields_total=3720，十源金标扩标），与 99 篇消融同一套 run_group/summarize 口径；D 组选择性输出拒绝低置信字段后 fields_evaluable=2246（不确定的不输出）。产物：`_w3_outputs/gold598_retest.json`，model_id=deepseek-v4-flash，temperature=0.0。
 
 ### 测试
 
-- 2031 passed · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
+- 2435 passed · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
 - 0 warnings（已清理 asyncio mark 误标与 datetime.utcnow() 弃用告警）
-- 测试覆盖率 88.85%（pyproject.toml 阈值 40%，2031 用例全量实测）
+- 测试覆盖率 88.85%（pyproject.toml 阈值 40%，2435 用例全量实测）
 
 ---
 
@@ -204,7 +224,7 @@ TenderProject（采购项目）
 
 ### MVP 必做（已实现）
 
-- 两个已冻结页面体系的官方来源适配器（ccgp + ggzy_national）
+- 10+ 个省级官方来源适配器（ccgp 中央 + ggzy 全国 + 粤/苏/滇/鲁/津/青岛/豫/浙/粤九省）
 - 招标公告、中标公告和更正公告
 - 六类核心结构化字段（项目编号、采购人名称、中标人名称、金额及金额类型、发布日期、投标截止日期）
 - 字段级多证据验证
@@ -214,6 +234,10 @@ TenderProject（采购项目）
 - 独立金标评测（含消融实验）
 - Web Demo + REST API
 - 基础组织实体公开活动画像
+- 证据 SHA-256 存证（入库即存哈希，篡改可检出，重放核验 801/801 通过）
+- 金融尽调单（中标应收账款放款前核验 + 超额融资 CRITICAL 预警）
+- 中标人覆盖率 31% → 81.1%（确定性解析器 + LLM 提议规则裁判）
+- 多源实时采集面板（省级批量组网 + 实时交叉验证）
 
 ### MVP 暂不实施
 
@@ -404,8 +428,17 @@ pytest --cov=app --cov-report=term-missing
 
 | 数据源 | 类型 | 说明 |
 |---|---|---|
-| ccgp.gov.cn | 官方公开 | 中国政府采购网（MVP 适配器）|
+| ccgp.gov.cn | 官方公开 | 中国政府采购网（中央，MVP 适配器）|
 | ggzy.gov.cn | 官方公开 | 全国公共资源交易平台（MVP 适配器）|
+| ccgp-hubei.gov.cn | 官方公开 | 湖北省政府采购网（实时适配器）|
+| ccgp-jiangsu.gov.cn | 官方公开 | 江苏省政府采购网（实时适配器）|
+| ccgp-yunnan.gov.cn | 官方公开 | 云南省政府采购网（实时适配器）|
+| ccgp-shandong.gov.cn | 官方公开 | 山东省政府采购网（实时适配器）|
+| ccgp-tianjin.gov.cn | 官方公开 | 天津市政府采购网（实时适配器）|
+| ccgp-qingdao.gov.cn | 官方公开 | 青岛市政府采购网（实时适配器）|
+| ccgp-henan.gov.cn | 官方公开 | 河南省政府采购网（实时适配器）|
+| ccgp-zhejiang.gov.cn | 官方公开 | 浙江省政府采购网（实时适配器）|
+| ccgp-guangdong.gov.cn | 官方公开 | 广东省政府采购网（实时适配器）|
 
 采集行为：域名级 8 秒频率限制 + robots.txt 合规检查 + 来源白名单 + 403 不重试。不绕过登录墙、不抓取付费内容。
 
@@ -438,18 +471,18 @@ pytest --cov=app --cov-report=term-missing
 | 99 篇全量消融 | `_w3_outputs/w3_ablation_full_99.json` | 4 组 A/B/C/D |
 | Bootstrap CI | `_w3_outputs/w3_bootstrap_ci_full_99.json` | 99 篇置信区间 |
 | 金标冻结 | `tests/fixtures/gold/gold_frozen_v1.json` | 金标标注冻结 |
-| 金标合集（598 篇）| `tests/fixtures/gold/gold_dataset_v4.json` | w4/w5 补标合并，document_id 唯一 |
+| 金标合集（620 篇）| `tests/fixtures/gold/gold_dataset_v4.json` | w4/w5/w6 十源扩标合并，document_id 唯一 |
 | 验证规则清单 | `docs/验证规则清单_v1.0.md` | 验证引擎 34 条规则显性化（G/A/T/D/I/E/M 七族，含变更流程与测试映射）|
 
 ---
 
 ## 当前已知限制
 
-1. **金标数量 598 篇**（2026-08 补标收官，合集 `tests/fixtures/gold/gold_dataset_v4.json`），已超 v4.1 推荐 300～350 篇；全量 598 篇复测已完成（2026-08-06）：D 组 field_precision 96.44%、unjustified_rate 0.00%、evidence_precision 100%、null_false_positive_rate 2.15%（详见上文复测小节）
+1. **金标数量 620 篇**（2026-08-21 十源扩标收官，合集 `tests/fixtures/gold/gold_dataset_v4.json`），已超 v4.1 推荐 300～350 篇；全量 620 篇复测已完成（2026-08-21）：D 组 field_precision 97.60%、unjustified_rate 0.00%、evidence_precision 99.91%、null_false_positive_rate 0.57%（详见上文复测小节）
 2. **未划分开发集/校准集/测试集**：当前为统一金标集
 3. **temperature 记录口径**：记录 0.0，实际 0.1，不影响指标结论，后续修复
-4. **Demo 视频降级处理**：初赛阶段以代码仓库 + Web Demo 8 页作为等价可验证材料，视频待复赛补录
-5. **2 个官方来源适配器**：MVP 冻结范围 ccgp + ggzy_national，商业平台暂不接入
+4. **Demo 视频**：复赛阶段已有录屏演示脚本（`scripts/record_demo.py`），场景 5/8 使用 id=114 东南大学主线（证据可重放），正式视频待录制
+5. **10+ 个官方来源适配器**：ccgp 中央 + ggzy 全国 + 粤/苏/滇/鲁/津/青岛/豫/浙/粤九省，商业平台暂不接入
 
 ---
 
@@ -460,12 +493,14 @@ pytest --cov=app --cov-report=term-missing
 | 后端框架 | Python 3.11+ / FastAPI |
 | Agent 框架 | 纯 Python 轻量级实现（不依赖 langgraph）|
 | 抓取引擎 | Playwright (async API) + httpx AsyncClient |
-| LLM | DeepSeek |
+| LLM | DeepSeek（默认）/ Ollama / vLLM（私有化部署 keyless 模式）|
 | 任务调度 | APScheduler + croniter |
 | 去重算法 | jieba 分词 + 64 位 SimHash |
+| 证据存证 | SHA-256 入库哈希 + 重放核验 + 生命周期链 |
 | 数据库 | SQLite (MVP) → PostgreSQL (生产) |
 | ORM | SQLAlchemy 2.0 async + aiosqlite |
 | 部署 | Docker 多阶段构建 + non-root 用户 + healthcheck |
+| 私有化部署 | 本地 Ollama / vLLM 无 key 模式 + 模型就绪检查器 |
 
 ## 工程规范
 
@@ -477,7 +512,7 @@ pytest --cov=app --cov-report=term-missing
 - 结构化日志带 request_id 上下文，不记录凭证
 - 统一错误响应 `{code, data, msg}`
 - Docker 多阶段构建 + non-root 用户 + healthcheck
-- GitHub Actions CI：pytest 稳定子集（排除 4 个时序敏感/E2E 文件，单测 180s 超时兜底、偶发失败自动重跑）+ 覆盖率 40% 阈值 + pip-audit 依赖漏洞扫描（.github/workflows/ci.yml）；全量 2031 用例在开发机本地执行
+- GitHub Actions CI：pytest 稳定子集（排除 4 个时序敏感/E2E 文件，单测 180s 超时兜底、偶发失败自动重跑）+ 覆盖率 40% 阈值 + pip-audit 依赖漏洞扫描（.github/workflows/ci.yml）；全量 2435 用例在开发机本地执行
 
 ## 许可证
 
