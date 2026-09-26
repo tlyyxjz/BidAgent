@@ -85,14 +85,49 @@ def extract_fields(ocr_text: str) -> dict:
     }
 
 
+def _load_image(image_path: str):
+    """把图片读成 ndarray；读不到返回 None。
+
+    刻意**不用 cv2.imread**：OpenCV 在 Windows 上走窄字符 API，**路径（含父目录）
+    里只要有中文就静默返回 None，且不抛异常**，往上抛给 easyocr 后变成一句
+    语焉不详的 AttributeError，最终表现成"识别不出来"——看着像精度问题，其实是
+    根本没读到图。np.fromfile 走 Python 的 open（宽字符安全），cv2.imdecode 只吃
+    内存缓冲，绕开 cv2 的路径处理。
+    """
+    import cv2
+    import numpy as np
+
+    try:
+        raw = np.fromfile(image_path, dtype=np.uint8)
+    except OSError as exc:  # 路径不存在 / 无权限
+        raise FileNotFoundError(f"图片读不到：{image_path}") from exc
+    if raw.size == 0:
+        return None
+    return cv2.imdecode(raw, cv2.IMREAD_COLOR)
+
+
 def verify_image(image_path: str, db_path=None) -> dict:
     """图片核验全流程。返回 {fields, ocr_text, ocr_bboxes, result, warnings}。"""
     import easyocr
 
     warnings = []
+    try:
+        image = _load_image(image_path)
+    except Exception as exc:  # noqa: BLE001 —— 文件缺失/不可读
+        return {
+            "fields": {}, "ocr_text": "", "ocr_bboxes": [],
+            "result": {"verdict": "suspicious", "reason": f"图片读取或识别失败：{type(exc).__name__}"},
+            "warnings": [f"OCR 异常：{type(exc).__name__}"],
+        }
+    if image is None:
+        return {
+            "fields": {}, "ocr_text": "", "ocr_bboxes": [],
+            "result": {"verdict": "suspicious", "reason": "图片无法解码（文件损坏或非图片格式）"},
+            "warnings": ["OCR 无结果"],
+        }
     reader = easyocr.Reader(["ch_sim", "en"], gpu=True, verbose=False)
     try:
-        detail = reader.readtext(image_path, detail=1)
+        detail = reader.readtext(image, detail=1)
     except Exception as exc:  # noqa: BLE001 —— 文件缺失/损坏/OCR 引擎异常
         return {
             "fields": {}, "ocr_text": "", "ocr_bboxes": [],
