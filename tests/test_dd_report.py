@@ -104,6 +104,14 @@ def test_build_report_unknown_company_empty():
 
 @requires_db
 def test_render_html_contains_charts():
+    """图表是**可选增强**：装了 matplotlib 就必须真出图。
+
+    dd_report.render_html 里图表生成被 try/except 包着（失败不阻塞报告），
+    所以 matplotlib 属于可选依赖 —— 缺它不该让本测试变成 error，故用
+    importorskip。CI 显式装 matplotlib（requirements-report.txt）后本用例会
+    **真跑**而非跳过。
+    """
+    pytest.importorskip("matplotlib", reason="matplotlib 为可选图表依赖")
     data = dr.build_report_data("湖南创益蔚来进出口有限公司", DB)
     h = dr.render_html(data)
     assert "data:image/png;base64," in h
@@ -111,11 +119,31 @@ def test_render_html_contains_charts():
 
 
 @requires_db
-def test_render_pdf_generates_file():
+def test_render_html_survives_chart_failure(monkeypatch):
+    """降级契约：图表后端挂掉时，报告主体仍必须完整。
+
+    与上一条互补 —— 上一条只在装了 matplotlib 时验「有图」，这一条不依赖任何
+    可选依赖，任何环境都跑，专门守住 render_html 的 try/except 降级行为。
+    """
+    data = dr.build_report_data("湖南创益蔚来进出口有限公司", DB)
+
+    def _boom(_data):
+        raise RuntimeError("chart backend unavailable")
+
+    monkeypatch.setattr(dr, "chart_images", _boom)
+    h = dr.render_html(data)
+    assert "尽调数据包" in h                    # 报告主体仍在
+    assert "data:image/png;base64," not in h   # 图确实缺席
+
+
+@requires_db
+def test_render_pdf_generates_file(tmp_path):
+    """PDF 导出（reportlab 为可选依赖，CI 装了故真跑）；输出走 tmp_path 而非写死本机路径。"""
+    pytest.importorskip("reportlab", reason="reportlab 为可选 PDF 导出依赖")
     from dd_pdf import render_pdf
 
     data = dr.build_report_data("湖南创益蔚来进出口有限公司", DB)
-    out = render_pdf(data, str(Path(r"D:\Lenovo\Documents") / "_dd_test.pdf"))
+    out = render_pdf(data, tmp_path / "_dd_test.pdf")
     try:
         head = out.read_bytes()[:5]
         assert head == b"%PDF-"

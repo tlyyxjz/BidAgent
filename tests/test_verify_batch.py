@@ -49,11 +49,15 @@ def test_process_rows_missing_bid_number_is_fake():
     assert out[0]["结论"] == "伪造"
 
 
-def test_csv_roundtrip():
-    """表头映射 + 读写 CSV（用 monkeypatch 掉 verify 避免依赖 DB）。"""
+def test_csv_roundtrip(tmp_path):
+    """表头映射 + 读写 CSV（用 monkeypatch 掉 verify 避免依赖 DB）。
+
+    用 pytest 的 tmp_path 而非硬编码本机路径：原先写死 D:\\Lenovo\\Documents，
+    在 CI（ubuntu）上父目录不存在，write_text 直接 FileNotFoundError。
+    """
     import verify_batch as vb_mod
 
-    csv_in = Path(r"D:\Lenovo\Documents") / "_tmp_batch.csv"
+    csv_in = tmp_path / "_tmp_batch.csv"
     csv_in.write_text(
         "项目编号,中标金额,中标人,采购人\nGHHX2026000062,22.532万元,某公司,某单位\n",
         encoding="utf-8-sig",

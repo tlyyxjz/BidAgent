@@ -23,9 +23,11 @@ def api_client():
 
     app = FastAPI()
     app.include_router(router)
-    assert any(
-        r.path == "/api/demo/due-diligence" for r in app.routes
-    ), "demo_api 未挂接 due-diligence 端点"
+    # 跨 FastAPI 版本查已注册路径：0.14x 起 app.routes 里只剩 _IncludedRouter
+    # 占位对象（无 .path），得靠 openapi()["paths"]；并集写法兼容 0.13x/0.14x。
+    registered = {getattr(r, "path", None) for r in app.routes}
+    registered |= set(app.openapi().get("paths", {}) or {})
+    assert "/api/demo/due-diligence" in registered, "demo_api 未挂接 due-diligence 端点"
     return TestClient(app)
 
 

@@ -24,6 +24,14 @@ jobs:
           pip install -r requirements.txt
           pip install pip-audit pytest-cov pytest-timeout pytest-rerunfailures
 
+      - name: Install optional report deps
+        # reportlab / matplotlib 是 scripts/ 报告导出的可选依赖（不进主依赖树）。
+        # 必须**真装上**：否则 tests/test_dd_report.py 里两个用例会被 importorskip
+        # 静默跳过，变成「CI 绿了但用例根本没跑」的假绿。装后断言导入成功。
+        run: |
+          pip install -r requirements-report.txt
+          python -c "import reportlab, matplotlib; print('report deps ready')"
+
       - name: Install Playwright Chromium
         run: python -m playwright install chromium --with-deps
 

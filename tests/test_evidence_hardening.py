@@ -232,9 +232,13 @@ def api_client():
 
     app = FastAPI()
     app.include_router(router)
-    assert any(
-        r.path == "/api/demo/lifecycle-chain" for r in app.routes
-    ), "demo_api 未挂接 lifecycle-chain 端点"
+    # 跨 FastAPI 版本查已注册路径。0.14x 起 app.routes 里 include_router 只留
+    # 一个 _IncludedRouter 占位对象（无 .path/.routes/.router/.prefix，四个属性
+    # 全无），遍历 app.routes 已拿不到子路由；openapi()["paths"] 才是稳定判据。
+    # 并集写法同时兼容 0.13x（routes 直接展开）与 0.14x，避免依赖版本漂移即红。
+    registered = {getattr(r, "path", None) for r in app.routes}
+    registered |= set(app.openapi().get("paths", {}) or {})
+    assert "/api/demo/lifecycle-chain" in registered, "demo_api 未挂接 lifecycle-chain 端点"
     return TestClient(app)
 
 
