@@ -30,7 +30,7 @@ BidAgent/
 ├── app/templates/     # 采集器模板
 ├── app/scheduler/     # 定时调度器
 ├── static/            # 前端页面
-├── tests/             # 测试用例（2031 项，含 parametrize 展开，覆盖率 88.85%）
+├── tests/             # 测试用例（2435 项，含 parametrize 展开，覆盖率 88.31%）
 ├── docs/              # 文档
 └── scripts/           # 工具脚本
 ```
