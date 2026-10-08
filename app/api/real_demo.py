@@ -26,6 +26,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.evidence_span import resolve_evidence_span, summarize
 from app.models.database import get_db
 from app.models.tender import Tender
 from app.models.evidence import ExtractedField, Evidence, FieldEvidenceLink
@@ -163,6 +164,7 @@ async def get_tender_detail(tender_id: int, db: AsyncSession = Depends(get_db)):
 
     # 构造响应（按 FIELD_ORDER 排序）
     resp_fields = []
+    span_results: list = []  # 每条证据的解析结论，末尾汇总为 evidence_stats
     for fname in FIELD_ORDER:
         if fname not in fields_by_name:
             # 该字段不存在，标记 absent
@@ -188,14 +190,24 @@ async def get_tender_detail(tender_id: int, db: AsyncSession = Depends(get_db)):
             )
             evidences = []
             for link, ev in links_result:
+                # 偏移基准是 raw_text(=core_content=clean_raw_text)，不是 source_raw_text。
+                # 由服务端解析出可信区间并给出 locatable 结论，前端不再自行 indexOf 猜测
+                # （全文 indexOf 会把短证据挪到文档里另一处相同文本上）。见 evidence_span.py。
+                s, e, slice_ok, relocated, locatable = resolve_evidence_span(
+                    raw_text, ev.raw_start, ev.raw_end, ev.evidence_text
+                )
+                span_results.append((s, e, slice_ok, relocated, locatable))
                 evidences.append({
                     "id": f"{f.field_name}_{vi}_{link.sequence}",
                     "text": ev.evidence_text,
-                    "start": ev.raw_start,
-                    "end": ev.raw_end,
+                    "start": s,
+                    "end": e,
                     "role": link.evidence_role,
                     "match_method": ev.match_method,
                     "confidence": 0.95 if ev.verified else 0.5,
+                    "slice_ok": slice_ok,
+                    "relocated": relocated,
+                    "locatable": locatable,
                 })
 
             values.append({
@@ -219,9 +231,14 @@ async def get_tender_detail(tender_id: int, db: AsyncSession = Depends(get_db)):
 
     data = {
         "clean_raw_text": raw_text,
+        # 显式声明偏移基准，避免消费方按字段名 raw_start 误用 source_raw_text。
+        "offset_space": "clean_raw_text",
+        "clean_raw_len": len(raw_text),
         "tender_id": tender.id,
         "project_name": tender.project_name,
         "fields": resp_fields,
+        # ok/relocated/orphan 三分类，orphan>0 表示该公告存在孤儿证据（原文已不含该文本）。
+        "evidence_stats": summarize(span_results),
     }
     return _ok(data)
 

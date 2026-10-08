@@ -279,7 +279,7 @@ a{color:inherit;text-decoration:none}
       <div class="source-box" id="sourceBox"><span style="color:var(--text-3)">来源谱系加载中...</span></div>
       <nav class="fields-nav" id="fieldsNav"></nav>
       <div class="fields-container" id="fieldsContainer"><div class="empty-state">加载中...</div></div>
-      <div class="replay-note"><i class="ph ph-arrows-counter-clockwise"></i> <strong>证据可重放</strong>：每条证据均在浏览器内验证 <code>clean_raw_text[start:end) ≡ 证据文本</code>，切片不符即拒绝高亮（宁可少给、不可编造）；全量金标审计 <code>python scripts/audit_gold_replayable.py</code>（620 篇 2328 字段 0 问题）。</div>
+      <div class="replay-note"><i class="ph ph-arrows-counter-clockwise"></i> <strong>证据可重放</strong>：每条证据均在浏览器内验证 <code>clean_raw_text[start:end) ≡ 证据文本</code>，切片不符即拒绝高亮（宁可少给、不可编造）。偏移完整性门禁 <code>python scripts/check_evidence_offsets.py</code>（逐条断言切片，非「子串包含」）；值可定位审计 <code>python scripts/audit_gold_replayable.py</code>（620 篇 2328 字段 0 问题）。</div>
     </section>
   </div>
 
@@ -522,27 +522,37 @@ function findField(ids){
 }
 
 // ===== 原文高亮（<mark>，按 evidence_role 着色） =====
+// 证据位置由服务端解析（app/api/evidence_span.py）：locatable=false 为孤儿证据，直接跳过；
+// 旧响应无该字段时退化为「就近重定位」——只接受期望位置附近的命中，或全文唯一命中。
+// 绝不使用全文 indexOf 的首次命中：日期/金额/地区等短证据在原文里常出现多次，
+// 那样会把高亮挪到文档里另一处，看起来就是"高亮乱飘"。
+function safeRelocate(s){
+  if(!s.text) return -1;
+  if(s.start!=null && s.end!=null && rawText.slice(s.start,s.end)===s.text) return s.start;
+  var lo = Math.max(0,(s.start||0)-400), hi = Math.min(rawText.length,(s.end||0)+400);
+  if(hi > lo){
+    var at = rawText.indexOf(s.text, lo);
+    if(at >= 0 && at + s.text.length <= hi) return at;
+  }
+  var f = rawText.indexOf(s.text);
+  if(f < 0) return -1;
+  return rawText.indexOf(s.text, f + s.text.length) >= 0 ? -1 : f;  // 多处命中 → 不猜
+}
 function renderText(evList){
   var rt = _hc("rawText"); var cc = _hc("charCount");
   if(!rt) return;
   if(!rawText){ rt.textContent = "（无原文）"; if(cc) cc.textContent = "0 字符"; return; }
-  var spans = [];
+  var spans = [], skipped = 0;
   for(var i=0;i<evList.length;i++){
     var s = evList[i];
-    if(s.start==null || s.end==null || s.start<0 || s.end>rawText.length || s.start>=s.end) continue;
-    // K3 修复(2026-08-11): offset 内容校验——切片与证据文本不一致时先全文重定位,
-    // 仍找不到则放弃该条高亮(不错误高亮、不露 UI 痕迹)。背景: id 1-5 跨公告挂靠错位。
-    if(s.text && rawText.slice(s.start, s.end) !== s.text){
-      var rel = rawText.indexOf(s.text);
-      if(rel >= 0){
-        spans.push({start:rel, end:rel+s.text.length, role:s.role, id:s.id});
-      } else {
-        console.warn("[evidence] 证据文本不在原文中, 跳过高亮:", s.id);
-      }
-      continue;
-    }
-    spans.push({start:s.start,end:s.end,role:s.role,id:s.id});
+    if(s.locatable === false){ skipped++; continue; }
+    var st = (s.locatable === true && s.start!=null) ? s.start : safeRelocate(s);
+    if(st==null || st<0){ skipped++; continue; }
+    var en = st + (s.text ? s.text.length : (s.end - s.start));
+    if(st>=en || en>rawText.length) { skipped++; continue; }
+    spans.push({start:st, end:en, role:s.role, id:s.id});
   }
+  if(skipped) console.warn("[evidence] 本公告有 " + skipped + " 条证据位置失效（原文已不含该文本），已跳过高亮。");
   spans.sort(function(a,b){ return a.start - b.start; });
   var merged = [];
   for(var j=0;j<spans.length;j++){
@@ -698,8 +708,10 @@ function clearHL(){ evClear(); renderEntityCrumb(); renderText(allEvidence()); r
   await loadNoticeList();
   var p = new URLSearchParams(location.search);
   var nid = p.get("id");
-  // K3 修复(2026-08-11): 默认展示叙事主线公告(东南大学 id=114);
-  // 兜底跳过已知错位公告(id 1-5), 避免评委首屏看到降级页。
+  // 默认展示叙事主线公告(东南大学 id=114)。
+  // 兜底跳过 id 1-5：这 5 篇正文于 2026-08-05 被重抓覆盖成别的公告，旧证据仍挂在同一
+  // tender_id 上且原文已不可恢复（详见 scripts/check_evidence_offsets.py 的 STALE 分类），
+  // 任何高亮都会失效，不作为首屏默认项。
   if(!nid && noticeList.length){
     var BROKEN = [1,2,3,4,5];
     var pref = noticeList.find(function(t){ return t.id===114; })

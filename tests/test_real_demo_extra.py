@@ -258,7 +258,9 @@ async def test_real_detail_with_evidences():
     await _seed_link(fid, eid, role="primary", sequence=0)
     async with _client() as ac:
         resp = await ac.get(f"/api/real/tenders/{tid}/detail")
-    fields = resp.json()["data"]["fields"]
+    data = resp.json()["data"]
+    raw = data["clean_raw_text"]
+    fields = data["fields"]
     pid_field = next(f for f in fields if f["field_name"] == "project_identifier")
     assert len(pid_field["values"]) == 1
     evidences = pid_field["values"][0]["evidences"]
@@ -266,7 +268,14 @@ async def test_real_detail_with_evidences():
     ev = evidences[0]
     assert ev["text"] == "BJGPC-2026-0042"
     assert ev["start"] == 5
-    assert ev["end"] == 21
+    # end 是**排他**上界：接口保证 raw[start:end] 恒等于证据文本、且 end-start == len(text)。
+    # 本夹具原断言 end == 21，而正文 "项目编号：BJGPC-2026-0042" 仅 20 字符 ⇒ 21 是越界值。
+    # 旧接口原样透传该越界值，靠 Python/JS 切片自动截断才"看起来对"；现由服务端解析纠正。
+    assert raw[ev["start"]:ev["end"]] == ev["text"]
+    assert ev["end"] - ev["start"] == len(ev["text"])
+    assert ev["slice_ok"] is False  # 库内偏移越界，未直接采信
+    assert ev["relocated"] is True  # 已就近重定位到正确区间
+    assert ev["locatable"] is True
     assert ev["role"] == "primary"
     assert ev["match_method"] == "exact"
     # verified=True → confidence=0.95
