@@ -105,6 +105,9 @@ _coverage_final.txt
 # 前端备份
 static_backup_*/
 
+# 演示页截图（本地无头浏览器验证用，不入库）
+_demo_shots/
+
 # 评测原始数据（按需取消注释）
 # _w2_annotations/
 # _w2_raw/
