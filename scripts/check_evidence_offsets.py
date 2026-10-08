@@ -1,22 +1,42 @@
 # -*- coding: utf-8 -*-
-"""证据偏移一致性回归门禁。
+"""证据偏移一致性回归门禁（双信号：字符切片 + 文本哈希）。
 
-背景（2026-10-08 实测）：
-    库中 evidence 的 [raw_start, raw_end) 以 tenders.core_content 为坐标基准。
-    对 154 篇有证据的公告做逐条切片比对，发现两类情况：
-      · 149 篇「文档与证据同源」：537/537 条切片逐字一致（100%）；
-      · 5 篇（id=1..5）的 core_content 在 2026-08-05 被重新抓取覆盖成了**别的公告**，
-        其 42 条证据的 evidence_text 已不在任何字段中 ⇒ 孤儿证据（重抓覆盖，非定位算法问题）。
-    注：不能用 evidence.raw_text_sha256 == tenders.raw_text_sha256 判断漂移 ——
-        实测两者口径不同，579 行**全部**不相等（含 537 行正确行），无区分力。
+坐标基准（2026-10-08 实测确认）：
+    evidence 的 [raw_start, raw_end) 以 **tenders.core_content** 为坐标基准，
+    不是 source_raw_text（后者顶着 `# 标题 / # URL:` 头部，两者长度不同）。
+
+两个判据（互补，缺一不可）：
+  ① 字符切片：core[raw_start:raw_end] == evidence_text
+     → 直接验证「偏移指向的正是那段文字」。
+  ② 文本哈希：evidence.raw_text_sha256 == sha256(tender.core_content)
+     → 验证「这条证据当初就是在**现在这份文本**上抽的」。
+     2026-10-08 实测：537 条正确行**全** True、42 条孤儿行**全** False —— 零误判。
+
+     ⚠️ 曾经写错过：不能拿 evidence.raw_text_sha256 去比 tenders.raw_text_sha256
+     （后者是 sha256(source_raw_text)，口径不同 ⇒ 579 行全不等、看似"无区分力"）。
+     **必须对标 sha256(core_content)**，因为 evidence 的偏移是在 core_content 上算的。
+
+行级分类：
+  HEALTHY       切片一致                      —— 正常
+  RELOCATABLE   切片不一致，但证据文本仍在 core —— 只是偏移漂移，**可自动重定位修复**
+  STALE         切片不一致，文本也不在 core，
+                且 evidence 哈希 ≠ sha256(core)  —— 证据属于**另一份文本**，不可恢复
+  SUSPECT       其余组合                      —— 需人工判读（规则没覆盖的不确定性）
+
+已知基线（2026-10-08，579 行 / 147 篇有证据的公告）：
+  537 HEALTHY · 42 STALE（集中在 tender_id=1..5）· 7 条悬空外键。
+根因：**tender_id 复用** —— 这 5 篇文档被整批替换成了别的公告（当前内容与证据
+的项目编号都对不上），旧证据仍挂在同一个 id 上；原文本在 data/snapshots/ 里也
+查不到 ⇒ 不可恢复，只能隔离或删除。
 
 用法：
-    python scripts/check_evidence_offsets.py              # 汇总 + 孤儿/部分失配文档清单
-    python scripts/check_evidence_offsets.py -v           # 额外打印前若干条反例明细
-退出码：0 = 无孤儿、无部分失配；1 = 检出问题（可挂 CI）
+    python scripts/check_evidence_offsets.py            # 汇总 + 问题文档清单
+    python scripts/check_evidence_offsets.py -v         # 额外打印反例明细
+退出码：0 = 只有 HEALTHY（无 RELOCATABLE / STALE / SUSPECT、无悬空外键）；1 = 检出问题
 """
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 import sys
 from collections import defaultdict
@@ -26,6 +46,12 @@ ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "data" / "bidagent.db"
 SHOW_BAD = 10
 
+HEALTHY, RELOCATABLE, STALE, SUSPECT = "HEALTHY", "RELOCATABLE", "STALE", "SUSPECT"
+
+
+def sha256(s: str | None) -> str:
+    return hashlib.sha256((s or "").encode("utf-8")).hexdigest()
+
 
 def main(argv: list[str]) -> int:
     verbose = "-v" in argv or "--verbose" in argv
@@ -33,66 +59,97 @@ def main(argv: list[str]) -> int:
     con = sqlite3.connect(DB)
     cur = con.cursor()
     cur.execute(
-        """select e.id, e.tender_id, e.raw_start, e.raw_end, e.evidence_text, t.core_content
+        """select e.id, e.tender_id, e.raw_start, e.raw_end, e.evidence_text,
+                  e.raw_text_sha256, t.core_content
            from evidence e join tenders t on t.id = e.tender_id
            order by e.tender_id, e.id"""
     )
     rows = cur.fetchall()
     cur.execute("select count(*) from evidence")
     ev_total = cur.fetchone()[0]
+    cur.execute(
+        """select e.tender_id, count(*) from evidence e
+           left join tenders t on t.id = e.tender_id
+           where t.id is null group by e.tender_id order by e.tender_id"""
+    )
+    dangling_fk = cur.fetchall()
     con.close()
     dangling = ev_total - len(rows)
 
-    ok = bad = missing = 0
-    per_doc: dict[int, list[int]] = defaultdict(lambda: [0, 0])  # tid -> [ok, bad]
-    orphans: dict[int, int] = defaultdict(int)
+    counts = defaultdict(int)
+    per_doc: dict[int, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     bads = []
+    core_hash_cache: dict[int, str] = {}
 
-    for eid, tid, s, en, txt, core in rows:
+    for eid, tid, s, en, txt, ev_hash, core in rows:
+        core = core or ""
+        if tid not in core_hash_cache:
+            core_hash_cache[tid] = sha256(core)
+        h_ok = ev_hash is not None and ev_hash == core_hash_cache[tid]
+
         if not core or txt is None or s is None or en is None:
-            missing += 1
-            continue
-        if core[s:en] == txt:
-            ok += 1
-            per_doc[tid][0] += 1
+            verdict = SUSPECT
         else:
-            bad += 1
-            per_doc[tid][1] += 1
-            if txt not in core:
-                orphans[tid] += 1
-            if len(bads) < SHOW_BAD:
-                bads.append((eid, tid, s, en, txt, core[s:en]))
+            slice_ok = core[s:en] == txt
+            if slice_ok:
+                verdict = HEALTHY
+            elif txt in core:
+                verdict = RELOCATABLE          # 文本还在 ⇒ 可重定位
+            elif not h_ok:
+                verdict = STALE                # 属于另一份文本 ⇒ 不可恢复
+            else:
+                verdict = SUSPECT
+        counts[verdict] += 1
+        per_doc[tid][verdict] += 1
+        if verdict != HEALTHY and len(bads) < SHOW_BAD:
+            bads.append((eid, tid, s, en, txt, core[s:en], verdict))
 
     docs_with_ev = len(per_doc)
-    clean_docs = sum(1 for v in per_doc.values() if v[1] == 0)
-    mixed_docs = sum(1 for v in per_doc.values() if v[0] and v[1])
-    orphan_docs = sorted(t for t, v in per_doc.items() if v[0] == 0 and v[1] > 0)
+    clean_docs = sum(1 for v in per_doc.values() if v[HEALTHY] and sum(v.values()) == v[HEALTHY])
+
+    def docs_of(kind: str) -> list[int]:
+        return sorted(t for t, v in per_doc.items() if v[kind])
+
+    stale_docs = docs_of(STALE)
 
     print("=" * 62)
-    print("证据偏移一致性回归检查")
+    print("证据偏移一致性回归检查（切片 + 哈希 双判据）")
     print("=" * 62)
-    print(f"evidence 行数        : {len(rows)}   （缺失字段 {missing}；悬空外键 {dangling} 条指向不存在的公告）")
-    print(f"切片逐字一致         : {ok}")
-    print(f"切片不一致           : {bad}")
-    print(f"有证据的公告数       : {docs_with_ev}")
-    print(f"  ├ 全对（同源干净） : {clean_docs}")
-    print(f"  ├ 部分失配         : {mixed_docs}")
-    print(f"  └ 全失配（孤儿）   : {len(orphan_docs)}")
-    if ok + bad:
-        print(f"同源文档精确率       : {ok / (ok + bad) * 100:.2f}%")
-    if orphan_docs:
-        print("\n⛔ 孤儿公告（core_content 已被重抓覆盖，证据文本不在任何字段中）：")
-        for t in orphan_docs:
-            print(f"    tender_id={t}  失配 {per_doc[t][1]} 条")
-        print("    处置建议：按 evidence_text 重新定位；定位不到则删除该文档证据并重跑抽取。")
+    print(f"evidence 行数        : {len(rows)}   （悬空外键 {dangling} 条指向不存在的公告）")
+    print(f"  ✔ HEALTHY  切片一致            : {counts[HEALTHY]}")
+    print(f"  ✎ RELOCATABLE 偏移漂移可重定位  : {counts[RELOCATABLE]}")
+    print(f"  ⛔ STALE    属于另一份文本       : {counts[STALE]}")
+    print(f"  ? SUSPECT  规则未覆盖           : {counts[SUSPECT]}")
+    print(f"有证据的公告数       : {docs_with_ev}   （全部 HEALTHY 的 {clean_docs} 篇）")
+    healthy = counts[HEALTHY]
+    if healthy + counts[STALE] + counts[RELOCATABLE]:
+        denom = healthy + counts[STALE] + counts[RELOCATABLE]
+        print(f"同源文档精确率       : {healthy / denom * 100:.2f}%")
+
+    if stale_docs:
+        print("\n⛔ STALE 公告（证据属于另一份文本，当前字段与快照里都查不到 ⇒ 不可恢复）：")
+        for t in stale_docs:
+            print(f"    tender_id={t}  {per_doc[t][STALE]} 条")
+        print("    处置建议：先隔离（导出 JSON）再从 evidence 表删除；不要试图重定位。")
+    rel_docs = docs_of(RELOCATABLE)
+    if rel_docs:
+        print(f"\n✎ RELOCATABLE 公告（文本仍在、偏移漂移，可自动重定位）：{rel_docs}")
+    sus_docs = docs_of(SUSPECT)
+    if sus_docs:
+        print(f"\n? SUSPECT 公告：{sus_docs}")
+    if dangling_fk:
+        ids = ", ".join(f"{t}({c}条)" for t, c in dangling_fk)
+        print(f"\n⛔ 悬空外键（证据指向不存在的公告）：{ids}")
+
     if verbose and bads:
         print(f"\n反例（前 {len(bads)} 条）：")
-        for eid, tid, s, en, txt, got in bads:
-            print(f"  ev#{eid} tender={tid} [{s},{en})")
+        for eid, tid, s, en, txt, got, verdict in bads:
+            print(f"  [{verdict}] ev#{eid} tender={tid} [{s},{en})")
             print(f"    expect: {txt!r}")
             print(f"    got   : {got!r}")
 
-    return 0 if (bad == 0 and missing == 0) else 1
+    problems = counts[RELOCATABLE] + counts[STALE] + counts[SUSPECT] + dangling
+    return 1 if problems else 0
 
 
 if __name__ == "__main__":
