@@ -44,6 +44,23 @@ DB = ROOT / "data" / "bidagent.db"
 DEFAULT_ALLOW_STALE = {1, 2, 3, 4, 5}
 DEFAULT_ALLOW_MISSING_TENDER = {115, 116, 117, 118, 120, 123, 128}
 
+# 已登记的「多值字段被标成 present 而被压平」（2026-10-08 核实）：
+#  写入端 evidence_writes.py:111-113 对 multi_value 有保护（不触发 _deprecate_old_versions），
+#  抽取规范 extractor_prompts.py:37/39 也要求多标段/多中标人输出 multi_value；
+#  但个别公告被标成 present ⇒ 每写一行把前一行 is_current 翻 0，真值被压平。
+#  全库仅 tid=39 的 amount / winner_name 两组命中（其余同场景组合均为 multi_value 且全保）。
+#  订正脚本：scripts/fix_multi_value_status.py。此处只做登记，对**新增**压平报警。
+DEFAULT_ALLOW_FLATTENED = {(39, "amount"), (39, "winner_name")}
+
+FLATTENED_SQL = """
+select f.tender_id, f.field_name, count(*) as n,
+       sum(case when f.field_status = 'present' then 1 else 0 end) as present_n,
+       sum(f.is_current) as cur
+  from extracted_fields f
+ group by f.tender_id, f.field_name
+having count(*) > 1
+"""
+
 CHAIN_SQL = """
 select l.id as link_id,
        f.id as field_id, f.tender_id as field_tender, f.field_name,
@@ -57,7 +74,7 @@ select l.id as link_id,
 """
 
 
-def audit(allow_stale, allow_missing):
+def audit(allow_stale, allow_missing, allow_flattened):
     con = sqlite3.connect(DB)
     cur = con.cursor()
 
@@ -85,6 +102,13 @@ def audit(allow_stale, allow_missing):
         " join evidence e on e.id=l.evidence_id"
         " where f.tender_id != e.tender_id"
     ).fetchone()[0]
+
+    # 多值字段被压平：同 (tender_id, field_name) 多行、组内全为 present、且 is_current 之和 < 行数
+    flattened = {
+        (tid, fname): {"n": n, "kept": int(cur_sum or 0)}
+        for (tid, fname, n, present_n, cur_sum) in cur.execute(FLATTENED_SQL).fetchall()
+        if present_n == n and (cur_sum or 0) < n
+    }
 
     rows = cur.execute(CHAIN_SQL).fetchall()
     con.close()
@@ -114,6 +138,12 @@ def audit(allow_stale, allow_missing):
         "orphan_evidence": orphan_evidence,
         "dangling_evidence": dangling_evidence,
         "cross_tender": cross_tender,
+        "flattened_by_group": {
+            f"{tid}/{fname}": v for (tid, fname), v in sorted(flattened.items())
+        },
+        "new_flattened": sorted(
+            f"{tid}/{fname}" for (tid, fname) in flattened if (tid, fname) not in allow_flattened
+        ),
         "bad_by_tender": {str(k): len(v) for k, v in sorted(bad_by_tender.items(), key=lambda kv: str(kv[0]))},
         "missing_tender_by_id": {str(k): len(v) for k, v in sorted(missing_tender.items(), key=lambda kv: str(kv[0]))},
         "new_bad_tenders": sorted(str(k) for k in new_bad),
@@ -138,6 +168,9 @@ def main():
                     help="已登记的历史失配公告 id，逗号分隔（默认 1,2,3,4,5）")
     ap.add_argument("--allow-missing-tender", default=None,
                     help="已登记的「字段挂在不存在公告上」id，逗号分隔（默认 115,116,117,118,120,123,128）")
+    ap.add_argument("--allow-flattened", default=None,
+                    help="已登记的「多值字段被压平」组，格式 tender_id:field_name 逗号分隔"
+                         "（默认 39:amount,39:winner_name）")
     args = ap.parse_args()
 
     allow = DEFAULT_ALLOW_STALE
@@ -146,8 +179,14 @@ def main():
     allow_missing = DEFAULT_ALLOW_MISSING_TENDER
     if args.allow_missing_tender is not None:
         allow_missing = {int(x) for x in args.allow_missing_tender.split(",") if x.strip()}
+    allow_flattened = DEFAULT_ALLOW_FLATTENED
+    if args.allow_flattened is not None:
+        allow_flattened = {
+            (int(x.split(":", 1)[0]), x.split(":", 1)[1])
+            for x in args.allow_flattened.split(",") if x.strip()
+        }
 
-    r = audit(allow, allow_missing)
+    r = audit(allow, allow_missing, allow_flattened)
     st = r["stats"]
     print(f"接口链路行数        : {r['rows']}")
     print(f"  切片逐字一致      : {st.get('ok', 0)}")
@@ -162,6 +201,8 @@ def main():
     print(f"挂空公告按 id 分布  : {r['missing_tender_by_id']}")
     print(f"已登记(A类STALE)    : {sorted(allow)}")
     print(f"已登记(B类无公告)   : {sorted(allow_missing)}")
+    print(f"多值被压平(登记)    : {r['flattened_by_group']}")
+    print(f"已登记(压平基线)    : {sorted(f'{t}/{f}' for t, f in allow_flattened)}")
 
     fail = False
     if r["dangling_link"] or r["cross_tender"]:
@@ -176,6 +217,11 @@ def main():
         print(f"\n[FAIL] 出现**新增**「字段挂在不存在的公告上」: {r['new_missing_tenders']}")
         for s in r["new_missing_samples"]:
             print(f"   t={s['tender']} {s['field']} {s['reason']} :: {s['text']!r}")
+        fail = True
+    if r["new_flattened"]:
+        print(f"\n[FAIL] 出现**新增**「多值字段被压平」（真值被 is_current 掩盖）: {r['new_flattened']}")
+        print("   成因：同 (tender_id, field_name) 多行却全标 present，绕过 multi_value 保护。")
+        print("   处置：核对原文后跑 python scripts/fix_multi_value_status.py 订正。")
         fail = True
 
     if args.json:
