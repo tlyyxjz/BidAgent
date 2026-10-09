@@ -28,7 +28,7 @@
 > 面向供应链金融贷前尽调与企业采购核验 · GOAI 2026。单篇公告核验成本不足 1 分钱、端到端约 24 秒（620 篇金标实测），把供应商中标记录核验从人工约 1-2 人时压缩到分钟级——LLM 只生成候选，确定性程序负责验证，找不到依据的字段一律不输出。
 
 **当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
-**测试**：2435 passed · **评测数据**：829 篇真实公告 · 金标 620 篇 · **数据源**：10+ 个省级平台 · **分支**：feature/qoder-sprint-realtime-quality（复赛）
+**测试**：2435 passed（本地全量）／CI 稳定子集 2335 passed, 3 skipped · **评测数据**：829 篇真实公告 · 金标 620 篇 · **数据源**：10+ 个省级平台 · **分支**：feature/qoder-sprint-realtime-quality（复赛）
 
 ---
 
@@ -41,7 +41,7 @@
 | **3 分钟 Demo 视频** | 包内 `标小智_Demo视频.webm`（附字幕 `标小智_Demo字幕.srt`） |
 | **路演 PPT** | 包内 `标小智_初赛路演_v2.pptx` |
 | **项目简介** | 包内 `introduction_500.md`（419 字，8 要素） |
-| **关键数字** | 2435 测试通过 · 覆盖率 88.31% · 金标 620 篇 · 单篇核验成本 <1 分钱 · 10+ 省级数据源 |
+| **关键数字** | 2435 测试通过（本地全量）· 覆盖率 88.31% · 金标 620 篇 · 单篇核验成本 <1 分钱 · 10+ 省级数据源 |
 
 ---
 
@@ -235,9 +235,10 @@ TenderProject（采购项目）
 
 ### 测试
 
-- 2435 passed · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
+- **2435 passed（本地全量口径）** · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
+- **CI 口径**（同一套测试，CI 排除 4 个时序敏感/E2E 文件共 98 个用例）：复赛分支 `2335 passed, 3 skipped`（10277 语句 / 1294 未覆盖）；main 分支 `1940 passed`（9298 语句 / 1209 未覆盖）
 - 0 warnings（已清理 asyncio mark 误标与 datetime.utcnow() 弃用告警）
-- 测试覆盖率 88.31%（pyproject.toml 阈值 40%，2435 用例全量实测）
+- 测试覆盖率：本地全量 **88.31%**；CI **87%**（pyproject.toml 阈值 40%）
 
 ---
 
@@ -533,7 +534,7 @@ pytest --cov=app --cov-report=term-missing
 - 结构化日志带 request_id 上下文，不记录凭证
 - 统一错误响应 `{code, data, msg}`
 - Docker 多阶段构建 + non-root 用户 + healthcheck
-- GitHub Actions CI：pytest 稳定子集（排除 4 个时序敏感/E2E 文件，单测 180s 超时兜底、偶发失败自动重跑）+ 覆盖率 40% 阈值 + pip-audit 依赖漏洞扫描（.github/workflows/ci.yml）；全量 2435 用例在开发机本地执行
+- GitHub Actions CI：pytest 稳定子集（排除 4 个时序敏感/E2E 文件，单测 180s 超时兜底、偶发失败自动重跑）+ 覆盖率 40% 阈值 + pip-audit 依赖漏洞扫描（.github/workflows/ci.yml）；**CI 实测**：复赛分支 2335 passed / 3 skipped、覆盖率 87%，main 分支 1940 passed、覆盖率 87%；全量 2435 用例在开发机本地执行
 
 ## 许可证
 
