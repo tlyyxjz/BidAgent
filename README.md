@@ -1,3 +1,12 @@
+# 标小智 BidAgent · 可验证招投标数据引擎
+
+[![CI](https://github.com/tlyyxjz/BidAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/tlyyxjz/BidAgent/actions/workflows/ci.yml)
+![license](https://img.shields.io/badge/license-Apache--2.0-blue)
+![tests](https://img.shields.io/badge/CI%20tests-2335%20passed%20%C2%B7%203%20skipped-brightgreen)
+
+
+---
+
 ## 这东西能帮你干什么
 
 你要确认一家公司自报的中标记录是真是假。以前的做法是打开政府采购网、搜公司名、翻公告、一条条对——一份公告要花 1 到 2 个人时。
@@ -22,7 +31,6 @@
 
 > **技术定位**：本项目的核心是「可验证文档抽取」——LLM 只生成候选，确定性程序验证，每个结果可回溯原文。该技术通用，可迁移到科研文献调研、实验数据提取等场景；招投标数据是它的首个落地验证场景。
 
-# 标小智 — 可验证招投标数据引擎
 
 > **给一份中标公告，24 秒告诉你它是不是真的，并且每个数字都能指回原文第几个字符。**
 > 面向供应链金融贷前尽调与企业采购核验 · GOAI 2026。单篇公告核验成本不足 1 分钱、端到端约 24 秒（620 篇金标实测），把供应商中标记录核验从人工约 1-2 人时压缩到分钟级——LLM 只生成候选，确定性程序负责验证，找不到依据的字段一律不输出。
