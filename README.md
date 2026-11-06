@@ -199,7 +199,7 @@ TenderProject（采购项目）
 | 项目 | 数值 |
 |---|---|
 | 数据库公告总数 | 829 篇（2026-08 多源实时采集灌库，SimHash 去重）|
-| 金标集 | 620 篇（`tests/fixtures/gold/gold_dataset_v4.json`，document_id 双口径唯一，十源扩标）|
+| 金标集 | 620 篇 = **92 篇人工标注测试集**（`annotator=human`, `split=test`）+ **506 篇模型预标注开发集**（K3 484 + w6-pipeline 22，`split=dev`）+ **22 篇仲裁集**（`annotator=arbitrator`）；构建方式见 `scripts/build_gold_from_k3.py` 文档串（开发集可 K3 预标注，测试集必须人工）。`tests/fixtures/gold/gold_dataset_v4.json`，document_id 双口径唯一，十源扩标 |
 | W3 评测集 | 100 篇（ccgp_w3）|
 | 数据源 | 10+ 个省级平台（ccgp 中央 + ggzy 全国 + 粤/苏/滇/鲁/津/青岛/豫/浙/粤）|
 | 公告类型覆盖 | tender / award / correction / 其他 |
@@ -231,7 +231,9 @@ TenderProject（采购项目）
 | null_false_positive_rate | 22.99% | 0.79% | 0.57% | **0.57%** |
 | multi_value_f1_avg | 0.7797 | 0.8537 | 0.8574 | **0.8574** |
 
-口径说明：620 篇全覆盖（fields_total=3720，十源金标扩标），与 99 篇消融同一套 run_group/summarize 口径；D 组选择性输出拒绝低置信字段后 fields_evaluable=2246（不确定的不输出）。产物：`_w3_outputs/gold598_retest.json`，model_id=deepseek-v4-flash，temperature=0.0。
+口径说明：620 篇全覆盖（fields_total=3720，十源金标扩标），与 99 篇消融同一套 run_group/summarize 口径；D 组选择性输出拒绝低置信字段后 fields_evaluable=2246（不确定的不输出）。
+
+⚠️ **分母不一致，上表 A/B/C 与 D 不可直接相减**：A/B/C 的 `fields_evaluable=3720`（全字段，且把「金标为空、输出也为空」记为正确），D 的 `fields_evaluable=2246`（只算它选择输出的字段，被拒绝的字段不进分母）。统一到「只算有输出字段」后：A `2203/2627 = 83.86%`、B `2196/2256 = 97.34%`、C `2192/2246 = 97.60%`、D `2192/2246 = 97.60%`。即同口径下 A→D 为 83.86%→97.60%（+13.74pp）；C 与 D 的 field_precision 完全相同，D 相对 C 的增益体现在 `unjustified_rate` 4.05%→0.00%。产物：`_w3_outputs/gold598_retest.json`，model_id=deepseek-v4-flash，temperature=0.0。
 
 ### 测试
 
@@ -500,7 +502,7 @@ pytest --cov=app --cov-report=term-missing
 ## 当前已知限制
 
 1. **金标数量 620 篇**（2026-08-21 十源扩标收官，合集 `tests/fixtures/gold/gold_dataset_v4.json`），已超 v4.1 推荐 300～350 篇；全量 620 篇复测已完成（2026-08-21）：D 组 field_precision 97.60%、unjustified_rate 0.00%、evidence_precision 99.91%、null_false_positive_rate 0.57%（详见上文复测小节）
-2. **未划分开发集/校准集/测试集**：当前为统一金标集
+2. **测试集仅 92 篇且单一来源**：已按 `annotator`/`split` 划分为 test 92 / dev 506 / arbitration 22，但 test 全部出自 ccgp_w3 一批，跨省泛化未验证；6 个字段同源一篇文档（聚类），有效样本量≈92 而非 350
 3. **temperature 记录口径**：记录 0.0，实际 0.1，不影响指标结论，后续修复
 4. **Demo 视频**：复赛阶段已有录屏演示脚本（`scripts/record_demo.py`），场景 5/8 使用 id=114 东南大学主线（证据可重放），正式视频待录制
 5. **10+ 个官方来源适配器**：ccgp 中央 + ggzy 全国 + 粤/苏/滇/鲁/津/青岛/豫/浙/粤九省，商业平台暂不接入
@@ -557,6 +559,6 @@ Apache License 2.0
 
 **这一步是免费的。** 你不需要告诉我你是谁，也不需要开放任何数据——一份公告文本就够了。
 
-我现在最想验证的，是它在**别人手上的真实公告**上跑得怎么样。金标集是我自己标的，
+我现在最想验证的，是它在**别人手上的真实公告**上跑得怎么样。测试集那 92 篇是我自己标的（开发集的 506 篇是模型预标注后扩出来的），
 真实业务里那些格式不规整、来源混乱、字段缺失的公告，才是它真正要面对的东西。
 所以如果你手上正好有要核的公告，发我——跑得不好也尽管说，那对我更有用。
