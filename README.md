@@ -239,7 +239,7 @@ TenderProject（采购项目）
 
 - **2447 passed（本地全量口径）** · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
 - **CI 口径**（同一套测试，CI 排除 4 个时序敏感/E2E 文件共 98 个用例）：复赛分支 `2346 passed, 3 skipped`（10330 语句 / 1304 未覆盖 = 87.38%）；main 分支 `1940 passed`（9298 语句 / 1211 未覆盖 = 86.98%）。三处数字均可复现：本地跑 `pytest -q --cov=app`，CI 数取自 Actions 日志的 `passed` 行与 coverage `TOTAL` 行
-- 告警：全量跑汇总 **1 条** `ResourceWarning: unclosed database`——Python 3.13 在 `test_api_lifecycle_chain_requires_number` 处 GC 掉某历史用例遗留的 sqlite 连接（**仅告警、不影响结果、0 failed**）。已把该文件的 module 级 `TestClient` 改为 yield + `close()`，但 2026-11-06 全量复跑仍复现 ⇒ **来源未定位，不要对外说"0 warnings"**；`asyncio` mark 误标与 `datetime.utcnow()` 弃用告警确已清零
+- 告警：**带 `--cov` 跑时汇总 1 条** `ResourceWarning: unclosed database`（GC 落在 `test_api_lifecycle_chain_requires_number`）；**不带 coverage 跑同样 2447 用例是 0 warning**，两者唯一差别是 coverage 的追踪改变了 GC 时机。2026-11-06 用连接探针（包住 `sqlite3.connect` 注入记录用的 `Connection` 子类，`close()` 出表、GC 未关则打印创建栈）全量跑：`2447 passed`，**0 条泄漏**，即经默认 factory 创建的连接全部正常关闭 ⇒ 残留者来自不经该路径的连接（AIOSQLite 包装层最可疑）。结论：**仅告警、0 failed、不影响结果，来源仍未钉死，不要对外说"0 warnings"**；`asyncio` mark 误标与 `datetime.utcnow()` 弃用告警确已清零
 - 测试覆盖率：本地全量 **88.28%**（10330 语句 / 1211 未覆盖）；CI **87%**（阈值见 pyproject.toml，`fail_under=40`）
 
 ---
