@@ -239,7 +239,13 @@ def api_client():
     registered = {getattr(r, "path", None) for r in app.routes}
     registered |= set(app.openapi().get("paths", {}) or {})
     assert "/api/demo/lifecycle-chain" in registered, "demo_api 未挂接 lifecycle-chain 端点"
-    return TestClient(app)
+    # 必须显式关闭：否则 module 结束时 TestClient 内的连接被 GC 回收，
+    # 在 Python 3.13 上触发 ResourceWarning（unclosed database），破坏"0 warnings"门禁。
+    client = TestClient(app)
+    try:
+        yield client
+    finally:
+        client.close()
 
 
 def test_api_lifecycle_chain_requires_number(api_client):
