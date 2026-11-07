@@ -28,7 +28,7 @@
 > 面向供应链金融贷前尽调与企业采购核验 · GOAI 2026。单篇公告核验成本不足 1 分钱、端到端约 24 秒（620 篇金标实测），把供应商中标记录核验从人工约 1-2 人时压缩到分钟级——LLM 只生成候选，确定性程序负责验证，找不到依据的字段一律不输出。
 
 **当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
-**测试**：2447 passed（本地全量）／CI 稳定子集 2346 passed, 3 skipped · **评测数据**：829 篇真实公告 · 金标 620 篇 · **数据源**：10+ 个省级平台 · **分支**：feature/qoder-sprint-realtime-quality（复赛）
+**测试**：2452 passed（本地全量，含新增 5 条列表接口等价用例）／CI 稳定子集 2346 passed, 3 skipped · **评测数据**：829 篇真实公告 · 金标 620 篇 · **数据源**：10+ 个省级平台 · **分支**：feature/qoder-sprint-realtime-quality（复赛）
 
 ---
 
@@ -41,7 +41,7 @@
 | **3 分钟 Demo 视频** | 包内 `标小智_Demo视频.webm`（附字幕 `标小智_Demo字幕.srt`） |
 | **路演 PPT** | 包内 `标小智_初赛路演_v2.pptx` |
 | **项目简介** | 包内 `introduction_500.md`（419 字，8 要素） |
-| **关键数字** | 2447 测试通过（本地全量）· 覆盖率 88.28% · 金标 620 篇 · 单篇核验成本 <1 分钱 · 10+ 省级数据源 |
+| **关键数字** | 2452 测试通过（本地全量）· 覆盖率 88.28% · 金标 620 篇 · 单篇核验成本 <1 分钱 · 10+ 省级数据源 |
 
 ---
 
@@ -237,7 +237,7 @@ TenderProject（采购项目）
 
 ### 测试
 
-- **2447 passed（本地全量口径）** · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）
+- **2452 passed（本地全量口径，2026-11-07 实测 26 分 31 秒，exit=0）** · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）。其中 5 条为列表接口等价用例（3 条随 W3A 新增，2 条为 2026-11-07 自查补充）
 - **CI 口径**（同一套测试，CI 排除 4 个时序敏感/E2E 文件共 98 个用例）：复赛分支 `2346 passed, 3 skipped`（10330 语句 / 1304 未覆盖 = 87.38%）；main 分支 `1940 passed`（9298 语句 / 1211 未覆盖 = 86.98%）。三处数字均可复现：本地跑 `pytest -q --cov=app`，CI 数取自 Actions 日志的 `passed` 行与 coverage `TOTAL` 行
 - 告警：**带 `--cov` 跑时汇总 1 条** `ResourceWarning: unclosed database`（GC 落在 `test_api_lifecycle_chain_requires_number`）；**不带 coverage 跑同样 2447 用例是 0 warning**，两者唯一差别是 coverage 的追踪改变了 GC 时机。2026-11-06 用连接探针（包住 `sqlite3.connect` 注入记录用的 `Connection` 子类，`close()` 出表、GC 未关则打印创建栈）全量跑：`2447 passed`，**0 条泄漏**，即经默认 factory 创建的连接全部正常关闭 ⇒ 残留者来自不经该路径的连接（AIOSQLite 包装层最可疑）。结论：**仅告警、0 failed、不影响结果，来源仍未钉死，不要对外说"0 warnings"**；`asyncio` mark 误标与 `datetime.utcnow()` 弃用告警确已清零
 - 测试覆盖率：本地全量 **88.28%**（10330 语句 / 1211 未覆盖）；CI **87%**（阈值见 pyproject.toml，`fail_under=40`）

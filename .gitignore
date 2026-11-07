@@ -127,3 +127,6 @@ commit_msg.txt
 _ppt_unpacked/
 _tmp_pytest/
 *.bak8
+
+# 压测输出（ladder/harness 生成的 CSV，不入库，只留脚本）
+_perf/out/

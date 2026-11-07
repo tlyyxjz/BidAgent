@@ -34,7 +34,7 @@ set FREE_TIER_DAILY_LIMIT=1000000
 
 | 接口 | 响应体 | 单发延迟 | 说明 |
 |---|---|---|---|
-| `GET /api/real/tenders` | **187 KB** | 37 ms | 829 条全量 + 360 行字段拼装（三列；全表 582 行），**无分页** ← 主战场 |
+| `GET /api/real/tenders` | **186.6 KB** | 37 ms | 829 条全量 + 360 行字段拼装（三列；全表 582 行），**无分页** ← 主战场 |
 | `GET /api/real/tenders/{id}/detail` | 5.8 KB | 18 ms | 点查，作对照 |
 
 ⛔ **不要压 `POST /extract/tasks` / `POST /due-diligence` / `/pipeline/start`**：
@@ -100,7 +100,7 @@ C:/Users/Lenovo/.workbuddy/binaries/python/envs/locust/Scripts/locust.exe \
 ⚠️ 服务实际端口是 **8011**，但 `scripts/demo_web.py:177` 里写的是 8001。压测前先确认：
 ```bash
 curl.exe -o NUL -s -w "%{http_code} %{size_download}\n" http://127.0.0.1:8011/api/real/tenders
-# 期望 200 191488 左右；拿到 000 就是服务没起在 8011
+# 期望 200 191064（= 186.6 KB）；拿到 000 就是服务没起在 8011
 ```
 
 每次压测前**重启服务**，否则连接池/进程内缓存会带着上一轮的状态。
@@ -139,5 +139,5 @@ curl.exe -o NUL -s -w "%{http_code} %{size_download}\n" http://127.0.0.1:8011/ap
 |---|---|---|
 | `FREE_TIER_DAILY_LIMIT=5` | 第 6 个请求起 429，曲线是假的 | 先调环境变量并重启 |
 | `_EXTRACT_TASKS` 惰性清理（`_TASK_TTL=3600`，只在**创建新任务时**触发） | 压 POST 接口时字典随请求增长；压 GET 不受影响 | 压读接口无此问题；若真压 POST，同时采 `len(_EXTRACT_TASKS)` |
-| 响应体 187 KB × 32 RPS ≈ **6.1 MB/s** | 高并发时会先打满本机回环/序列化，而不是数据库 | 报告里必须把「带宽」和「CPU」分开，别把带宽瓶颈记成业务瓶颈 |
+| 响应体 186.6 KB × 32 RPS ≈ **6.1 MB/s** | 高并发时会先打满本机回环/序列化，而不是数据库 | 报告里必须把「带宽」和「CPU」分开，别把带宽瓶颈记成业务瓶颈 |
 | 首次请求 111 ms vs 稳定态 37 ms | 冷启动样本会污染 P99 | 每档先预热 5 个请求，再开始计时 |
