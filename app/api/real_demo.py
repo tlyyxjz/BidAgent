@@ -23,7 +23,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy import select, func
+from sqlalchemy import and_, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.evidence_span import resolve_evidence_span, summarize
@@ -247,43 +247,70 @@ async def get_tender_detail(tender_id: int, db: AsyncSession = Depends(get_db)):
 async def list_tenders(db: AsyncSession = Depends(get_db)):
     """列出所有公告（含 amount/purchaser/publish_date/platform 供检索页展示）.
 
-    批量查询字段避免 N+1，供 search.html 真实数据源使用.
+    W3A（2026-11-07）：两条查询合并成一条 LEFT JOIN。
+    依据压测 W1 实测：aiosqlite 每次 `await db.execute` 都要跨线程一次，
+    两次往返约 9.4ms，占单请求 23.4ms 的 40%；10 并发时进程烧到 3 个核、每请求 121ms CPU。
+    合并后每请求只跨一次线程。
+
+    取值口径与旧实现逐字一致（否则响应会变）：
+      同一 tender 下同名字段，取 id 最小且 raw_value 非空的那个；
+      没有则空串；publish_date 再回落到 created_at 的 YYYY-MM-DD。
+    `order_by(Tender.id, ExtractedField.id)` 是口径的一部分，不是排序偏好。
     """
     result = await db.execute(
-        select(Tender.id, Tender.project_name, Tender.notice_type,
-               Tender.created_at, Tender.source_platform)
-        .order_by(Tender.id)
-    )
-    rows = result.all()
-    tender_ids = [r.id for r in rows]
-
-    # 批量查 amount/purchaser_name/publish_date（避免 N+1）
-    field_map: dict[int, dict] = {}
-    if tender_ids:
-        flds = await db.execute(
-            select(ExtractedField)
-            .where(ExtractedField.tender_id.in_(tender_ids))
-            .where(ExtractedField.field_name.in_(["amount", "purchaser_name", "publish_date"]))
-            .order_by(ExtractedField.id)
+        select(
+            Tender.id,
+            Tender.project_name,
+            Tender.notice_type,
+            Tender.created_at,
+            Tender.source_platform,
+            ExtractedField.field_name,
+            ExtractedField.raw_value,
         )
-        for f in flds.scalars().all():
-            d = field_map.setdefault(f.tender_id, {})
-            if f.field_name not in d and f.raw_value:
-                d[f.field_name] = f.raw_value
+        .outerjoin(
+            ExtractedField,
+            and_(
+                ExtractedField.tender_id == Tender.id,
+                ExtractedField.field_name.in_(
+                    ["amount", "purchaser_name", "publish_date"]
+                ),
+            ),
+        )
+        .order_by(Tender.id, ExtractedField.id)
+    )
 
-    tenders = []
-    for r in rows:
-        fm = field_map.get(r.id, {})
-        tenders.append({
-            "id": r.id,
-            "name": r.project_name,
-            "type": r.notice_type,
-            "amount": fm.get("amount", ""),
-            "purchaser": fm.get("purchaser_name", ""),
-            "publish_date": fm.get("publish_date", "")
-            or (r.created_at.strftime("%Y-%m-%d") if r.created_at else ""),
-            "platform": r.source_platform or "",
-        })
+    # 字段名 → 响应键。保持插入顺序，保证 JSON 键序与旧实现相同。
+    field_keys = ("amount", "purchaser_name", "publish_date")
+    by_id: dict[int, dict] = {}
+    created_map: dict[int, object] = {}
+    tenders: list[dict] = []
+    for r in result.all():
+        item = by_id.get(r.id)
+        if item is None:
+            item = {
+                "id": r.id,
+                "name": r.project_name,
+                "type": r.notice_type,
+                "amount": "",
+                "purchaser": "",
+                "publish_date": "",
+                "platform": r.source_platform or "",
+            }
+            by_id[r.id] = item
+            # created_at 单独存：不能塞进 item，否则会改动 JSON 键序
+            created_map[r.id] = r.created_at
+            tenders.append(item)
+        name = r.field_name
+        if name in field_keys and r.raw_value:
+            key = "purchaser" if name == "purchaser_name" else name
+            if not item[key]:
+                item[key] = r.raw_value
+
+    # publish_date 为空时才回落到 created_at（与旧实现同义）
+    for item in tenders:
+        if not item["publish_date"]:
+            ca = created_map.get(item["id"])
+            item["publish_date"] = ca.strftime("%Y-%m-%d") if ca else ""
     return _ok({"tenders": tenders})
 
 
