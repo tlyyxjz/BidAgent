@@ -103,8 +103,11 @@ API/Demo 相关全部 20 个文件：
 全量：
 
 ```
-（见下方「全量回归」）
+$ CODEBUDDY_SAFE_DELETE_ENABLED=0 python -m pytest -q --no-cov --tb=line -p no:cacheprovider
+2450 passed in 1550.69s (0:25:50)     exit=0
 ```
+
+核对：W3A 基线全量 2450，本次**未新增用例** ⇒ 期望仍是 2450，**实测正是 2450，0 failed / 0 error**。
 
 ## 探针数据（本次新增的两个脚本，可复现）
 
