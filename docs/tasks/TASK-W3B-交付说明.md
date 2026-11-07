@@ -242,7 +242,7 @@ $ CODEBUDDY_SAFE_DELETE_ENABLED=0 python -m pytest -q --no-cov --tb=line -p no:c
 
 核对：W3A 基线全量 2450，本次**未新增用例** ⇒ 期望仍是 2450，**实测正是 2450，0 failed / 0 error**。
 
-## 探针数据（本次新增的两个脚本，可复现）
+## 探针数据（本次新增的三个脚本，可复现）
 
 `_perf/thread_hop_probe.py`（同一段 SQL 只换执行通道，两通道各复用同一条连接，n=150）：
 
@@ -307,9 +307,10 @@ CODEBUDDY_SAFE_DELETE_ENABLED=0 python _perf/thread_hop_probe.py -n 150
 # 3 拼装写法对比（应看到 tuple 比 attr 快 50%+ 且 json 全等）
 CODEBUDDY_SAFE_DELETE_ENABLED=0 python _perf/assembly_probe.py -n 40
 
-# 4 响应比对（旧码在 8011，新码在 8013）
-curl.exe -s http://127.0.0.1:8011/api/real/tenders | sha256sum
-curl.exe -s http://127.0.0.1:8013/api/real/tenders | sha256sum   # 两值必须相同
+# 4 响应比对（旧码 = d721fcc 检出到 worktree 后起服务，新码 = 当前分支；两者打同一份 db 副本）
+curl.exe -s http://127.0.0.1:<旧码端口>/api/real/tenders | sha256sum
+curl.exe -s http://127.0.0.1:<新码端口>/api/real/tenders | sha256sum   # 两值必须相同
+#   本机已验三次：b76fd96c409ce023… / 191064 B / 829 条
 
 # 5 A/B（⚠️ 必须同轮交替 + 顺序翻转，且两服务都活着；单独跑一次的绝对数不可引用）
 #   8017 = d721fcc 旧代码，8016 = W3A+W3B
