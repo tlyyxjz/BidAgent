@@ -65,6 +65,15 @@ python _perf/probe_baseline.py
 | **T3** 12 分钟阶梯 | `python _perf/ladder.py -l 1,10,50,100 -t 180`（零依赖，**首选**） | 1→10→50→100 的完整曲线，每档 ≈5000 样本 |
 | | 或用 locust（需自己装，见下）：`locust -f _perf/locustfile.py --headless -u 100 -r 10 -t 12m ...` | 同上，locust 口径更标准 |
 | **T4** 带宽记账 | 上面两条命令都会打 **MB/s**（ladder 直接给，locust 看 CSV 的 `Total Average Content Size` × RPS） | MB/s；区分「被 CPU 卡」还是「被回环卡」 |
+| **T5** 跨线程成本 | `python _perf/thread_hop_probe.py -n 150` | 同一 SQL 换执行通道（async vs sync）之差 = 跨线程固定税，**实测 0.30ms** |
+| **T6** 拼装写法 | `python _perf/assembly_probe.py -n 40` | `Row` 属性访问 vs 元组解包（3.67 → 1.40 ms），输出 json 须全等 |
+| **T7** 工具开销 / 预热 / 同轮交替 | `python _perf/harness_overhead.py --host http://127.0.0.1:8016 -l 10 -T 30 -r 5` | 客户端 CPU 核（判「压测工具是不是瓶颈」）、服务端 CPU 核、线程数、RSS；连续多轮判预热 |
+
+🔴 **T7 的核心结论（2026-11-07 实测，直接影响怎么报数）**：
+- 客户端只吃 **0.09~0.10 核** ⇒ 压测工具不是瓶颈，别再拿「GIL 卡住并发」解释增速慢
+- 服务端**没有预热爬升**（首轮即高点）⇒ 「进程刚起所以慢」不成立
+- **同一份代码并发 10 的绝对 RPS，跨次可差 48%**（35.07 / 33.27 / 39.00 / 47.7 四次实测）
+  ⇒ **绝对 RPS 一律不引用**；只认同轮交替 + 顺序翻转下的**相对差**，以及**每请求 CPU** 这种比值指标
 
 ⚠️ **为什么 T3 首选自写的 `ladder.py`**：2026-11-06 实测本机 pip 默认源（清华镜像）对 `/simple/` 返回 **403**，
 换 `-i https://pypi.org/simple` 能通但极慢（4 分钟只下完元数据），locust 没装成。
