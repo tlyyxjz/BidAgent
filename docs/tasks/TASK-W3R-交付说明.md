@@ -120,6 +120,51 @@ Required test coverage of 40% reached. Total coverage: 88.28%
 > 用例数与不带探针完全一致（2452）。但它重写了 `Connection.__del__`，
 > **会把 sqlite3 原生的 `ResourceWarning` 顶掉** ⇒ 这一跑**不能**用来证明 warning 已清零。
 
+### 干净克隆 CI 口径模拟（2026-11-07 21:48–22:08，本轮新增读数）
+
+在 `C:/tmp/bidagent_ci` 做干净克隆，`git status` 干净；模拟时克隆与源仓库
+**HEAD 同为 `1f43fd2`**、分支同为 `feature/wb-W3B-tuple-unpack`。
+按 `.github/workflows/ci.yml` 的口径跑完整套件（含 `--cov`、4 个 `--ignore`）。
+
+```
+collected = 2354
+passed    = 2354
+failed    = 0
+skipped   = 0
+errors    = 0
+warnings  = 1（ResourceWarning: unclosed database）
+耗时      = 1169.96s (0:19:29)
+coverage  = 87.50%（10336 语句 / 1292 未覆盖），≥ --cov-fail-under=40
+```
+
+**与本机 `2452 passed / 88.28%` 的差额已算平**，不是漏跑、不是环境差异：
+
+```
+2452 − 2354 = 98
+CI 的 4 个 --ignore 文件用例数 = 34 + 39 + 5 + 20 = 98
+```
+
+两侧 `--collect-only -q` 实测：CI 口径 **2354 tests collected**、全量口径 **2452 tests collected**。
+⇒ **两个数字各自成立，但口径不同，不得混用或互相印证**。
+
+新增守卫 `tests/test_real_demo_single_query_equiv.py` 的 **5 个用例全部出现在 CI 收集列表**
+（逐条 grep 确认），即「CI 会跑到本次改动的测试」由推断变成读数。
+
+**与真实 GitHub Actions 的差异（所以不能写成「CI 通过」）**：
+
+| 项 | 本机模拟 | 真实 CI |
+|---|---|---|
+| OS | Windows | Linux（Actions runner） |
+| Python | 3.13.5 | workflow `setup-python` 指定 |
+| timeout-method | `thread` | `signal` |
+| 分支 | 本地克隆，未推送 | 需推送后才触发 |
+
+第一次模拟（21:48）照抄 `--timeout-method=signal`，Windows 的 `signal` 模块无 `SIGALRM`
+⇒ `INTERNALERROR / no tests ran in 7.48s`，**环境差异，非代码缺陷**；改 `thread` 后重跑得上述读数。
+
+⚠️ **exit code 当时未落盘**：日志止于 pytest 正常 summary、0 failed/errors、coverage 门槛达标，
+据此判「模拟通过」；但没有 `echo $?` 的一手读数，**不写成「exit=0 实测」**。
+
 ### API/Demo 子集（20 个文件）
 
 ```
@@ -228,7 +273,9 @@ count  829
    疑似 `@app.middleware("http")`（BaseHTTPMiddleware）+ SlowAPI。非单点，不动。
 6. **性能只在单机回环验证**：并发 3 峰值 `40.17 → 73.53 RPS`（+83.0%，17σ），
    无跨机器证据，不能外推生产。
-7. **未在 CI 上跑过**：分支未推送，仅本机 Windows + Python 3.13。
+7. **未在真实 CI 上跑过**：分支未推送，仅本机 Windows + Python 3.13。
+   2026-11-07 已补「干净克隆按 CI 口径模拟」（`2354 passed / 87.50%`，见「测试结果」新增小节），
+   **那是模拟，不是真 CI**，本条不撤销。
 8. **探针脚本含占位密钥**：`_perf/*.py` 里 `SECRET_KEY="a"*64`、`ADMIN_SECRET="test-admin-secret-12345"`
    是为满足 app 配置校验而设的**假值**，不是真实凭证；已按 3.3 跑过密钥扫描（本分支新增行
    无 `api_key/password/secret/token` 明文赋值命中，`.env`/`*.key`/`*.pem` 均未入库）。
@@ -279,6 +326,16 @@ app/ 下：0 处直接连接；无 `from sqlite3 import connect` 写法
 
 ⇒ 说明「GC 落点」只反映**那一刻恰好触发回收**，不是泄漏源头。这条本身也是一个坑：
 **按告警落点去改文件，会改错地方。**
+
+### 补 · 干净克隆上的第二次落点（2026-11-07 22:08）
+
+干净克隆按 CI 口径跑，**同一条 `ResourceWarning` 再次出现**，但归属用例变成
+`tests/test_evidence_hardening.py::test_build_tender_stores_sha256`
+（本机全量那次记的是 `test_api_lifecycle_chain_requires_number`），
+告警代码位置为 `sqlalchemy/sql/base.py:1685`（`ColumnCollection.__iter__`）。
+
+⇒ **两次不同落点、同一个文件** —— 更硬地印证「GC 落点不是泄漏源」：
+落点随回收时机漂移，按落点改文件必然改错人。本条仍属**未定位**，不解除待查。
 
 ### 第 4 步 · 结论
 
