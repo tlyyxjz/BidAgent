@@ -114,7 +114,7 @@ BidAgent/
 │       ├── aes_crypto.py    #   AES-GCM 加密
 │       ├── url_safety.py    #   SSRF 防护
 │       └── logger.py        #   结构化日志
-├── tests/                   # 测试（2447 passed）
+├── tests/                   # 测试（2452 passed）
 ├── examples/                # 示例输入输出（3 条真实公告）
 ├── static/                  # Web Demo 静态资源
 ├── data/bidagent.db         # SQLite 数据库

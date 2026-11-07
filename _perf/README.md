@@ -68,6 +68,7 @@ python _perf/probe_baseline.py
 | **T5** 跨线程成本 | `python _perf/thread_hop_probe.py -n 150` | 同一 SQL 换执行通道（async vs sync）之差 = 跨线程固定税，**实测 0.30ms** |
 | **T6** 拼装写法 | `python _perf/assembly_probe.py -n 40` | `Row` 属性访问 vs 元组解包（3.67 → 1.40 ms），输出 json 须全等 |
 | **T7** 工具开销 / 预热 / 同轮交替 | `python _perf/harness_overhead.py --host http://127.0.0.1:8016 -l 10 -T 30 -r 5` | 客户端 CPU 核（判「压测工具是不是瓶颈」）、服务端 CPU 核、线程数、RSS；连续多轮判预热 |
+| **T8** 连接泄漏定位 | `PYTHONPATH=_perf python -m pytest -q -p sqlite_leak_probe`（**必须带 coverage**，否则告警不复现） | 哪个函数创建了 `sqlite3.Connection` 却没 `close()`；只在 `--cov` 下才触发 GC 告警 |
 
 🔴 **T7 的核心结论（2026-11-07 实测，直接影响怎么报数）**：
 - 客户端只吃 **0.09~0.10 核** ⇒ 压测工具不是瓶颈，别再拿「GIL 卡住并发」解释增速慢
