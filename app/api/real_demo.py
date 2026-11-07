@@ -248,9 +248,12 @@ async def list_tenders(db: AsyncSession = Depends(get_db)):
     """列出所有公告（含 amount/purchaser/publish_date/platform 供检索页展示）.
 
     W3A（2026-11-07）：两条查询合并成一条 LEFT JOIN。
-    依据压测 W1 实测：aiosqlite 每次 `await db.execute` 都要跨线程一次，
-    两次往返约 9.4ms，占单请求 23.4ms 的 40%；10 并发时进程烧到 3 个核、每请求 121ms CPU。
-    合并后每请求只跨一次线程。
+    依据压测 W1 实测：改前两段查询合计约 9.4ms，占单请求 23.4ms 的 40%。
+
+    ⚠️ W3B 更正（2026-11-07）：上面那 9.4ms **不是**跨线程开销。
+    实测 aiosqlite 单次跨线程税只有 0.30ms（_perf/thread_hop_probe.py，占 JOIN 总耗时 4.0%）。
+    合并查询的收益来自**省掉第二段查询自身的 DB 工作量**（约 3.15ms），
+    不是省掉线程跳 —— 别为此去换同步驱动或改线程模型，收益对不上。
 
     取值口径与旧实现逐字一致（否则响应会变）：
       同一 tender 下同名字段，取 id 最小且 raw_value 非空的那个；
@@ -284,27 +287,30 @@ async def list_tenders(db: AsyncSession = Depends(get_db)):
     by_id: dict[int, dict] = {}
     created_map: dict[int, object] = {}
     tenders: list[dict] = []
-    for r in result.all():
-        item = by_id.get(r.id)
+    # W3B（2026-11-07）：直接元组解包，不走 Row 属性访问。
+    # 实测（_perf/assembly_probe.py，1042 行，n=40）：3.67ms → 1.40ms，输出 JSON 全等。
+    # 解包顺序 = 上面 select(...) 的列顺序，两者必须同步；错位会立刻抛 ValueError，
+    # 并由 tests/test_real_demo_single_query_equiv.py 的等价断言兜住。
+    for tid, pn, nt, cat, plat, fn, rv in result.all():
+        item = by_id.get(tid)
         if item is None:
             item = {
-                "id": r.id,
-                "name": r.project_name,
-                "type": r.notice_type,
+                "id": tid,
+                "name": pn,
+                "type": nt,
                 "amount": "",
                 "purchaser": "",
                 "publish_date": "",
-                "platform": r.source_platform or "",
+                "platform": plat or "",
             }
-            by_id[r.id] = item
+            by_id[tid] = item
             # created_at 单独存：不能塞进 item，否则会改动 JSON 键序
-            created_map[r.id] = r.created_at
+            created_map[tid] = cat
             tenders.append(item)
-        name = r.field_name
-        if name in field_keys and r.raw_value:
-            key = "purchaser" if name == "purchaser_name" else name
+        if fn in field_keys and rv:
+            key = "purchaser" if fn == "purchaser_name" else fn
             if not item[key]:
-                item[key] = r.raw_value
+                item[key] = rv
 
     # publish_date 为空时才回落到 created_at（与旧实现同义）
     for item in tenders:

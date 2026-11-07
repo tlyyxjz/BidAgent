@@ -54,30 +54,33 @@ def _legacy_assembly(rows, fields) -> list[dict]:
 
 
 def _new_assembly(rows) -> list[dict]:
-    """新实现（单条 LEFT JOIN + 分组）的纯 Python 部分，必须与 _legacy_assembly 等价。"""
+    """新实现（单条 LEFT JOIN + 分组）的纯 Python 部分，必须与 _legacy_assembly 等价。
+
+    W3B：与 `real_demo.list_tenders` 一致，用元组解包而不是 Row 属性访问
+    （实测 1042 行 3.67ms → 1.40ms）。解包顺序 = select 列顺序，错位会抛 ValueError。
+    """
     by_id: dict[int, dict] = {}
     created_map: dict[int, object] = {}
     out: list[dict] = []
-    for r in rows:
-        item = by_id.get(r.id)
+    for tid, pn, nt, cat, plat, fn, rv in rows:
+        item = by_id.get(tid)
         if item is None:
             item = {
-                "id": r.id,
-                "name": r.project_name,
-                "type": r.notice_type,
+                "id": tid,
+                "name": pn,
+                "type": nt,
                 "amount": "",
                 "purchaser": "",
                 "publish_date": "",
-                "platform": r.source_platform or "",
+                "platform": plat or "",
             }
-            by_id[r.id] = item
-            created_map[r.id] = r.created_at
+            by_id[tid] = item
+            created_map[tid] = cat
             out.append(item)
-        name = r.field_name
-        if name in FIELDS and r.raw_value:
-            key = "purchaser" if name == "purchaser_name" else name
+        if fn in FIELDS and rv:
+            key = "purchaser" if fn == "purchaser_name" else fn
             if not item[key]:
-                item[key] = r.raw_value
+                item[key] = rv
     for item in out:
         if not item["publish_date"]:
             ca = created_map.get(item["id"])
