@@ -96,6 +96,20 @@ API/Demo 相关**全部文件**（`ls tests/*.py | grep -E "(demo|api)"`，共 2
 
 ⇒ 改前这些文件全绿，改后仍全绿，通过数 259（含新增 3 个）。
 
+### 全量回归（功能分支 HEAD `f3820db`）
+
+```
+$ CODEBUDDY_SAFE_DELETE_ENABLED=0 python -m pytest -q --no-cov --tb=line -p no:cacheprovider
+2450 passed in 1583.65s (0:26:23)     exit=0
+```
+
+核对：改动前本地全量为 **2447** passed，本分支新增 3 个等价用例 ⇒ 期望 **2450**，实测正是 2450，
+**0 failed / 0 error**。数字能对上，不是"跑完了就行"。
+
+> 必须带 `CODEBUDDY_SAFE_DELETE_ENABLED=0`：不带时安全删除垫片对同一文件删超 50 次会抛
+> `SystemExit(1)`（继承 `BaseException`，`except Exception` 抓不住），表现为
+> `49 passed / 2399 errors` 的假崩，与代码无关。
+
 ## 接口影响
 
 **无变化**。响应体的字段名、字段顺序、空值语义（`""` 而非 `null`）、排序（`tender.id` 升序）全部不变，
