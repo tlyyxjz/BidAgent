@@ -15,10 +15,27 @@ import verify_award_image as vai  # noqa: E402
 DB = os.environ.get("BIDAGENT_DB") or str(REPO / "data" / "bidagent.db")
 HAS_DB = Path(DB).exists()
 HAS_EASYOCR = importlib.util.find_spec("easyocr") is not None
-HAS_FONT = Path(r"C:\Windows\Fonts\msyh.ttc").exists()
+# 字体路径不能只写 Windows：Linux runner 上该路径永远不存在，
+# 会让真 OCR 端到端用例「永久静默跳过」，即使将来装了 easyocr 也跑不起来。
+_FONT_CANDIDATES = (
+    r"C:\Windows\Fonts\msyh.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+)
+HAS_FONT = any(Path(p).exists() for p in _FONT_CANDIDATES)
+_OCR_MISSING = [
+    name
+    for name, ok in (
+        ("easyocr", HAS_EASYOCR),
+        ("DB", HAS_DB),
+        ("中文字体", HAS_FONT),
+    )
+    if not ok
+]
 requires_ocr = pytest.mark.skipif(
-    not (HAS_EASYOCR and HAS_DB and HAS_FONT),
-    reason="easyocr/DB/字体缺失，跳过真 OCR 端到端",
+    bool(_OCR_MISSING),
+    reason=f"真 OCR 端到端缺少：{', '.join(_OCR_MISSING) or '无'}",
 )
 
 

@@ -39,8 +39,12 @@ jobs:
         run: mkdir -p data
 
       - name: Run test suite (coverage >= 40%)
+        # -rs 让 skip 原因可见：CI 未装 easyocr（依赖 torch，体积过大），
+        # 且真 OCR 端到端要求中文字体，因此固定跳过 3 个用例
+        # （test_demo_web.py 1 个 + test_verify_award_image.py 2 个）。
+        # 属已知例外、不是假绿；不显示 reason 会被误读成「全跑了」。
         run: >
-          python -m pytest -q
+          python -m pytest -q -rs
           --cov=app --cov-report=term --cov-report=xml --cov-fail-under=40
           --ignore=tests/test_rate_limit_extra.py
           --ignore=tests/test_rate_limiter.py
