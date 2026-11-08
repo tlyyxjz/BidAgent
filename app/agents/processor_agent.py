@@ -444,6 +444,19 @@ async def processor_agent(state: dict[str, Any]) -> dict[str, Any]:
     state["process_summary"]["llm_extracted"] = llm_success
     state["process_summary"]["llm_failed"] = llm_failed
 
+    # 打标入库（pipeline 集成点）
+    # 防御：打标失败绝不能影响主链路（LLM 限流/超时只记日志），返回结构不变
+    try:
+        from app.tagging.service import tag_pending_tenders
+        _tids = state.get("tender_ids") or []
+        tag_summary = await tag_pending_tenders(
+            db, limit=max(len(_tids), 1), concurrency=5, tender_ids=_tids or None,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("tagging hook failed (pipeline continues): %s", exc)
+        tag_summary = {"tagged": 0, "errors": 1}
+    state["tag_summary"] = tag_summary
+
     logger.info(
         "processor_agent completed total_processed={} categories={} avg_relevance={:.3f} llm_ok={} llm_fail={}",
         len(tenders), len(category_dist), avg_relevance, llm_success, llm_failed,

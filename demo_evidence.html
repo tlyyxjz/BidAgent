@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BidAgent · 证据可溯源演示</title>
+<style>
+  :root{
+    --bg:#F4F8FD; --card:#FFFFFF; --ink:#16233A; --ink2:#5B6B85; --ink3:#8A99B0;
+    --line:#E2EAF5; --brand:#2F7FF0; --brand2:#1F63CC; --brand-soft:#E9F2FF;
+    --hl:#FFE17C; --hl-2:#FFD24A; --hl-line:#E9A72B;
+    --ok:#12A366; --ok-soft:#E4F7EE; --warn:#E08A00; --warn-soft:#FFF3DA;
+    --mono:"JetBrains Mono","Cascadia Mono",Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1240px;margin:0 auto;padding:26px 22px 60px;}
+
+  /* ---------- header ---------- */
+  header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
+  .mark{width:46px;height:46px;border-radius:13px;flex:0 0 auto;
+    background:linear-gradient(135deg,#3E92FF,#1F63CC);
+    box-shadow:0 6px 16px rgba(47,127,240,.32);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:19px;letter-spacing:.5px;}
+  h1{font-size:22px;margin:0;letter-spacing:.3px;}
+  h1 small{display:block;font-size:12.5px;font-weight:500;color:var(--ink2);margin-top:4px;letter-spacing:.2px;}
+  .pills{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+  .pill{background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:7px 14px;font-size:12.5px;color:var(--ink2);}
+  .pill b{color:var(--brand2);font-size:14px;margin-right:2px;}
+  .pill.ok{background:var(--ok-soft);border-color:#BEEBD5;color:#0E7C4F;}
+  .pill.ok b{color:#0E7C4F;}
+
+  /* ---------- doc tabs ---------- */
+  .tabs{display:flex;gap:10px;margin:20px 0 14px;flex-wrap:wrap;}
+  .tab{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:12px;
+    padding:10px 16px;font-size:13.5px;color:var(--ink2);display:flex;gap:9px;align-items:center;
+    transition:.16s;user-select:none;}
+  .tab:hover{border-color:#BFD6F7;}
+  .tab.on{border-color:var(--brand);color:var(--brand2);background:var(--brand-soft);
+    box-shadow:0 3px 12px rgba(47,127,240,.14);font-weight:600;}
+  .tab .dot{width:8px;height:8px;border-radius:50%;background:#C6D4E6;}
+  .tab.on .dot{background:var(--brand);}
+  .tab .cnt{font-family:var(--mono);font-size:11.5px;background:#EFF4FB;border-radius:6px;padding:2px 7px;color:var(--ink2);}
+  .tab.on .cnt{background:#fff;color:var(--brand2);}
+
+  /* ---------- meta ---------- */
+  .meta{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start;
+    box-shadow:0 2px 10px rgba(22,35,58,.04);}
+  .meta .pname{flex:1 1 380px;font-size:15px;font-weight:700;line-height:1.55;}
+  .meta .kv{display:flex;flex-direction:column;gap:3px;min-width:96px;}
+  .meta .kv span{font-size:11px;color:var(--ink3);letter-spacing:.4px;}
+  .meta .kv b{font-size:13px;font-weight:600;color:var(--ink);}
+  .meta a.src{color:var(--brand2);text-decoration:none;font-size:13px;font-weight:600;
+    border-bottom:1px dashed #A9C7F2;padding-bottom:1px;}
+  .meta a.src:hover{color:#0B47A0;border-bottom-style:solid;}
+
+  /* ---------- layout ---------- */
+  .cols{display:grid;grid-template-columns:392px 1fr;gap:16px;margin-top:16px;align-items:start;}
+  @media(max-width:940px){.cols{grid-template-columns:1fr}}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 2px 10px rgba(22,35,58,.04);}
+  .panel-h{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:700;color:var(--ink2);letter-spacing:.5px;}
+  .panel-h .hint{margin-left:auto;font-weight:500;color:var(--ink3);font-size:11.5px;letter-spacing:0;}
+
+  /* ---------- field cards ---------- */
+  .fields{padding:12px;display:flex;flex-direction:column;gap:9px;max-height:640px;overflow:auto;}
+  .fc{border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;transition:.15s;background:#FCFDFF;}
+  .fc:hover{border-color:#BFD6F7;background:#F7FBFF;}
+  .fc.on{border-color:var(--brand);background:var(--brand-soft);box-shadow:0 0 0 3px rgba(47,127,240,.10);}
+  .fc .r1{display:flex;align-items:center;gap:8px;}
+  .fc .fname{font-size:11.5px;color:var(--ink2);font-weight:600;letter-spacing:.3px;}
+  .fc .grade{margin-left:auto;font-size:10.5px;font-weight:700;border-radius:6px;padding:2px 7px;letter-spacing:.2px;}
+  .g-review{background:var(--warn-soft);color:var(--warn);}
+  .g-auto{background:var(--brand-soft);color:var(--brand2);}
+  .g-reject{background:#FDECEC;color:#C0392B;}
+  .fc .val{font-size:15.5px;font-weight:700;margin:7px 0 4px;line-height:1.5;word-break:break-all;}
+  .fc .sub{font-size:11.5px;color:var(--ink3);display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .fc .pos{font-family:var(--mono);font-size:11px;background:#EFF4FB;border-radius:6px;padding:2px 7px;color:var(--ink2);}
+  .fc.on .pos{background:#fff;color:var(--brand2);font-weight:700;}
+  .fc .okmark{color:var(--ok);font-weight:700;font-size:11.5px;}
+  .fc .cf{font-size:11.5px;color:var(--ink3);margin-top:8px;border-top:1px dashed var(--line);padding-top:7px;line-height:1.65;
+    max-height:0;overflow:hidden;transition:.2s;opacity:0;}
+  .fc.on .cf{max-height:120px;opacity:1;}
+
+  /* ---------- document ---------- */
+  .doc{position:relative}
+  .trace{padding:11px 16px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink2);
+    display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow:hidden;
+    background:linear-gradient(180deg,#FBFDFF,#F6FAFF);}
+  .trace b{color:var(--ink);}
+  .trace .tv{max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    flex:0 1 auto;min-width:0;display:inline-block;vertical-align:bottom;}
+  .trace .lead{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .trace .chip{flex:0 0 auto;}
+  .trace .chip{font-family:var(--mono);background:#fff;border:1px solid var(--line);border-radius:7px;padding:3px 9px;font-size:11.5px;}
+  .trace .chip.hl{background:var(--hl);border-color:var(--hl-line);color:#6B4A00;font-weight:700;}
+  .trace .chip.ok{background:var(--ok-soft);border-color:#BEEBD5;color:#0E7C4F;font-weight:700;}
+
+  .text{padding:6px 0 22px;max-height:640px;overflow:auto;}
+  .ln{display:flex;align-items:flex-start;font-size:14.5px;line-height:1.95;}
+  .gutter{flex:0 0 62px;text-align:right;padding-right:12px;color:#B4C2D6;
+    font-family:var(--mono);font-size:11px;line-height:1.95;user-select:none;padding-top:1px;}
+  .ln .body{flex:1;padding-right:20px;word-break:break-word;white-space:pre-wrap;}
+  .ln.h2 .body{font-weight:700;color:#123A78;font-size:15px;}
+  .ln.h2 .mk{color:#B9CBDF;font-weight:400;}
+  .mk{color:#BAC7D9;font-size:12.5px;}
+  mark.ev{background:var(--hl);border-radius:3px;padding:1.5px 0;box-shadow:inset 0 -2px 0 var(--hl-line);
+    cursor:pointer;transition:.15s;color:#4A3200;}
+  mark.ev:hover{background:var(--hl-2);}
+  mark.ev.on{background:var(--hl-2);box-shadow:0 0 0 2px var(--hl-line),inset 0 -2px 0 var(--hl-line);color:#3D2900;font-weight:700;}
+  .anchorflash{animation:flash 1.1s ease-out;}
+  @keyframes flash{0%{background:#CDE3FF}100%{background:transparent}}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    font-size:12.5px;color:var(--ink2);line-height:1.85;box-shadow:0 2px 10px rgba(22,35,58,.04);}
+  footer b{color:var(--ink);}
+  footer .note{margin-top:8px;color:var(--ink3);font-size:11.5px;}
+  code{font-family:var(--mono);background:#EFF4FB;border-radius:5px;padding:1px 6px;font-size:11.5px;color:#2A4A7A;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="mark">BA</div>
+    <h1>BidAgent · 证据可溯源演示
+      <small>每条抽取结论 → 直达原文的第几个字符。点击左侧字段，右侧原文即时定位并高亮。</small>
+    </h1>
+    <div class="pills">
+      <div class="pill"><b>3</b>类公告</div>
+      <div class="pill"><b>12</b>字段</div>
+      <div class="pill"><b>12</b>证据</div>
+      <div class="pill ok"><b>12/12</b>逐字命中</div>
+    </div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="meta" id="meta"></div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="panel-h">抽取结论<span class="hint">点击任一条 →</span></div>
+      <div class="fields" id="fields"></div>
+    </div>
+    <div class="panel doc">
+      <div class="panel-h">原文快照<span class="hint">左侧数字 = 该行起始字符序号</span></div>
+      <div class="trace" id="trace"><span>尚未选择字段。点击左侧任一条结论开始溯源。</span></div>
+      <div class="text" id="text"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>这条链路在做什么：</b>BidAgent 对政府采购公告做结构化抽取后，不停在「给一个值」，而是把每个值<b>定位回原文的字符区间</b>（<code>raw_start / raw_end</code>），并记录哈希快照，使结论可被复核、可被推翻、可被追责。
+    <div class="note">
+      数据说明：本页为真实采集公告的离线快照（来源 <code>ccgp.gov.cn</code>），原文取库存字段 <code>core_content</code>，字段与证据区间取自抽取产物。生成器对所选文档的<b>每一条</b>证据做字符切片强校验，任一不符即中止构建（本次 <b>12/12</b> 全部通过）。<br>
+      评测口径（620 篇十源金标，D 组）：字段准确率 <b>97.60%</b> · 证据可定位率 <b>99.91%</b> · 无依据输出率 <b>0%</b> · 证据 SHA-256 存证 <b>822/828</b>。<br>
+      另有全库回归门禁 <code>scripts/check_evidence_offsets.py</code>：逐条比对 579 条证据的字符切片，可查出「原文被重抓覆盖导致证据失配」这类数据生命周期缺陷。
+    </div>
+  </footer>
+</div>
+
+<script>
+const DATA = [{"id": 114, "label": "招标公告", "notice_type": "tender", "project_name": "东南大学网络与信息中心数据中心云平台软件和存储、网络及计算设备维保服务采购项目公开招标公告", "tender_org": "东南大学", "agency": null, "location": "南京市", "bid_number": "SEU-ZB-260525", "publish_time": "2026-08-05T17:51:52", "source_platform": "ccgp", "source_url": "http://www.ccgp.gov.cn/cggg/zygg/gkzb/202608/t20260805_27075652.htm", "raw": "## 东南大学网络与信息中心数据中心云平台软件和存储、网络及计算设备维保服务采购项目公开招标公告\n2026年08月05日 15:43 来源： 【打印】\n## 公告概要：公告信息：采购项目名称东南大学网络与信息中心数据中心云平台软件和存储、网络及计算设备维保服务采购项目品目\n服务/其他服务\n采购单位东南大学行政区域南京市公告时间2026年08月05日 15:43获取招标文件时间2026年08月05日至2026年08月12日\n每日上午:8:00 至 11:30  下午:13:30 至 17:30（北京时间，法定节假日除外）招标文件售价￥400获取招标文件的地点江苏省南京市鼓楼区清江南路18号鼓楼创新广场D栋9楼902室（https://www.jsygjy.cn）开标时间2026年08月26日 09:00开标地点南京市鼓楼区清江南路18号鼓楼创新广场D栋11楼开标1室\n投标人因故未出席开标会的，视同同意本项目开标结果。预算金额￥184.000000万元（人民币）联系人及联系方式：项目联系人张蓉、王希稳项目联系电话025-85360235、17705161691采购单位东南大学采购单位地址南京市四牌楼2号采购单位联系方式网络与信息中心：孙老师025-83792310-880 实验室与设备管理处：大型装备平台科 025-52091041代理机构名称江苏省设备成套股份有限公司代理机构地址南京市鼓楼区清江南路18号鼓楼创新广场D栋9楼902室代理机构联系方式张蓉、王希稳 025-85360235、17705161691\n## 项目概况 东南大学网络与信息中心数据中心云平台软件和存储、网络及计算设备维保服务采购项目 招标项目的潜在投标人应在江苏省南京市鼓楼区清江南路18号鼓楼创新广场D栋9楼902室（https://www.jsygjy.cn）获取招标文件，并于2026年08月26日 09点00分（北京时间）前递交投标文件。\n一、项目基本情况\n项目编号：SEU-ZB-260525（JD066026M8ZC02687）\n项目名称：东南大学网络与信息中心数据中心云平台软件和存储、网络及计算设备维保服务采购项目\n预算金额：184.000000 万元（人民币）\n最高限价（如有）：184.000000 万元（人民币）\n采购需求：\n项目地点：东南大学九龙湖、四牌楼及江北校区网络与信息中心数据机房\n项目概况：本项目拟对九龙湖、四牌楼及江北校区三校区网络与信息中心数据机房内的服务器、存储、交换机和小型机等设备，以及相关配套软件采购为期1年的维保服务，内容包括设备及软件的日常巡检、运维、坏件更换及故障修复服务，并需提供为期1年的驻场运维服务。\n合同履行期限：一年。\n本项目( 不接受  )联合体投标。\n二、申请人的资格要求：\n1.满足《中华人民共和国政府采购法》第二十二条规定；\n2.落实政府采购政策需满足的资格要求：\n无。\n3.本项目的特定资格要求：3.1满足《中华人民共和国政府采购法》第二十二条规定；（1）具有独立承担民事责任的能力（提供法人或者其他组织的营业执照；供应商为自然人的，提供其身份证）； （2）具有良好的商业信誉和健全的财务会计制度（提供2025年度符合相关要求的财务报告，或投标截止时间前六个月内银行出具的资信证明）；（3）具有履行合同所必需的设备和专业技术能力（供应商根据履行采购项目合同需要，提供履行合同所必需的设备和专业技术能力的证明材料）；（4）有依法缴纳税收和社会保障资金的良好记录（提供参加本次政府采购活动前半年内至少一个月：①提供缴纳税收的凭证；②提供缴纳社会保险的凭据），依法享受免缴、缓缴的，提供证明材料；（5）参加政府采购活动前三年内，在经营活动中没有重大违法记录（提供承诺书）；（6）法律、行政法规规定的其他条件：无。3.2落实政府采购政策需满足的资格要求：无。3.3采购人根据采购项目的特殊要求规定的特定条件，并提供符合特殊要求的证明材料或者情况说明：无。3.4第3.1（5）条所称重大违法记录，是指供应商因违法经营受到刑事处罚或者责令停产停业、吊销许可证或者执照、较大数额罚款等行政处罚。3.5 供应商在参加政府采购活动前3年内因违法经营被禁止在一定期限内参加政府采购活动，期限届满的，可以参加政府采购活动。3.6单位负责人为同一人或者存在直接控股、管理关系的不同供应商，不得参加同一合同项下的政府采购活动。为采购项目提供整体设计、规范编制或者项目管理、监理、检测等服务的供应商，不得再参加该采购项目的其他采购活动。3.7拒绝列入失信被执行人、重大税收违法失信主体名单、政府采购严重违法失信行为记录名单及其他不符合《中华人民共和国政府采购法》第二十二条规定条件的供应商参与政府采购活动。采购人或者采购代理机构在进行资格审查的同时，依法通过“中国政府采购网”、“信用中国”网站等渠道查询投标人信用记录并保存。\n三、获取招标文件\n时间：2026年08月05日  至 2026年08月12日，每天上午8:00至11:30，下午13:30至17:30。（北京时间，法定节假日除外）\n地点：江苏省南京市鼓楼区清江南路18号鼓楼创新广场D栋9楼902室（https://www.jsygjy.cn）\n方式：（1）文件提供方式：纸质文件，售价：400元 （2）支付方式：凡有意参与者，请于获取时间内（北京时间，下同），登录江苏省阳光交易平台（网址为：https://www.jsygjy.cn）按照要求进行实名会员注册、完善相关信息及选择项目。 参与者首次登录平台前，须前往平台免费注册，注册成功且完善相关信息后，可以及时参与平台上所有发布的项目。 参与者应充分考虑平台注册、信息检查、资料上传、费用支付所需时间，参与者必须在获取时间内完成支付，否则将无法保证获取文件。未按照本公告要求获得本项目文件的，采购代理机构不予接收其响应文件。 （3）支付完成后，纸质文件可通过现场领取，现场领取的请至江苏省设备成套股份有限公司（江苏省南京市鼓楼区清江南路18号鼓楼创新广场D栋9楼902室）领取。为方便编制投标（响应）文件，参与者可登录平台免费下载电子招标文件，如与纸质招标（采购）文件不一致，以纸质文件为准。 （4）需要发票的，可在“费用管理--发票管理”模块下载发票；平台服务费发票由江苏招采信息技术有限公司开具。非因招标代理机构或平台原因，发票一经开具不予退换。 （5）平台网站首页“帮助中心”提供操作手册，参与者可以下载并根据操作手册提示进行注册、登录等操作。供应商平台咨询电话：025-83306809（工作日8：30-11：30，13：30-17：30）。 （6）联合体响应（如允许）的，联合体各方应当指定牵头人，并授权其以自身名义在平台办理注册、下载文件、缴纳保证金等手续，其在平台的办理行为，对联合体各方均具有约束力。\n售价：￥400.0 元，本公告包含的招标文件售价总和\n四、提交投标文件截止时间、开标时间和地点\n提交投标文件截止时间：2026年08月26日 09点00分（北京时间）\n开标时间：2026年08月26日 09点00分（北京时间）\n地点：南京市鼓楼区清江南路18号鼓楼创新广场D栋11楼开标1室投标人因故未出席开标会的，视同同意本项目开标结果。\n五、公告期限\n自本公告发布之日起5个工作日。\n六、其他补充事宜\n1、本项目在 中国政府采购网 网站发布公告。\n2、投标人应当从采购代理机构合法获得招标项目的招标文件。本次招标请按“标段”获取招标文件，编制、提交投标文件，并按“标段”开标、评标。\n3、勘察现场：无。\n4、投标人前来投标的授权代表，必须为本单位员工，须提供投标人为其缴纳的截止至投标截止时间前三个月内任意一个月的社保缴纳证明材料。\n5、投标人应提供投标文件一式陆份（正本壹份、副本伍份），所有投标文件均应密封后递交，同时应提供电子版投标文件壹份（电子版须为投标文件正本加盖公章、签字后形成PDF扫描件，扫描件内容应与纸质投标文件正本完全一致、U盘形式（单独封装）、随纸质正本文件一并提交）。当电子版文件和纸质正本文件不一致时，以纸质正本文件为准。电子版文件用于辅助评标和平台存档，投标人需承担前述不一致造成的不利后果。\n6、行业划分：软件和信息技术服务业\n7、本项目(非专门)面向中小企业采购。\n8、本项目(非专门)面向监狱企业采购。\n9、本项目 (非专门)面向残疾人福利性单位采购。\n七、对本次招标提出询问，请按以下方式联系。\n1.采购人信息\n名 称：东南大学\n地址：南京市四牌楼2号\n联系方式：网络与信息中心：孙老师025-83792310-880 实验室与设备管理处：大型装备平台科 025-52091041\n2.采购代理机构信息\n名 称：江苏省设备成套股份有限公司\n地　址：南京市鼓楼区清江南路18号鼓楼创新广场D栋9楼902室\n联系方式：张蓉、王希稳 025-85360235、17705161691\n3.项目联系方式\n项目联系人：张蓉、王希稳\n电　话：　　025-85360235、17705161691\n##", "raw_len": 3750, "fields": [{"name": "project_identifier", "label": "项目编号", "raw_value": "SEU-ZB-260525（JD066026M8ZC02687）", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 829, "end": 866, "text": "项目编号：SEU-ZB-260525（JD066026M8ZC02687）", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "purchaser_name", "label": "采购单位", "raw_value": "东南大学", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 145, "end": 153, "text": "采购单位东南大学", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "amount", "label": "金额", "raw_value": "184.000000 万元", "normalized_value": 1840000.0, "amount_type": "budget", "currency": "CNY", "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 912, "end": 935, "text": "预算金额：184.000000 万元（人民币）", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "publish_date", "label": "公告时间", "raw_value": "2026年08月05日", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 160, "end": 181, "text": "公告时间2026年08月05日 15:43", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "bid_deadline", "label": "投标截止时间", "raw_value": "2026年08月26日 09点00分", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 2884, "end": 2919, "text": "提交投标文件截止时间：2026年08月26日 09点00分（北京时间）", "verified": true, "match_method": "exact", "confidence": 100}]}], "evidence_total": 5}, {"id": 25, "label": "中标公告", "notice_type": "award", "project_name": "东南大学苏州校区教室设备升级改造采购项目中标公告", "tender_org": "东南大学", "agency": null, "location": "南京市", "bid_number": "SEU-ZB-260443", "publish_time": "2026-08-05T18:09:25", "source_platform": "ccgp", "source_url": "http://www.ccgp.gov.cn/cggg/zygg/zbgg/202608/t20260805_27074843.htm", "raw": "## 东南大学苏州校区教室设备升级改造采购项目中标公告\n2026年08月05日 14:51 来源： 【打印】\n## 公告概要：公告信息：采购项目名称东南大学苏州校区教室设备升级改造采购项目品目\n货物/设备/信息化设备/其他信息化设备\n采购单位东南大学行政区域南京市公告时间2026年08月05日 14:51评审专家名单徐炜（采购人代表）、杨培红、褚宁琳、赵悦、李井葵总中标金额￥209.700000 万元（人民币）联系人及联系方式：项目联系人张蓉、王希稳项目联系电话025-85360235、17705161691采购单位东南大学采购单位地址南京市四牌楼2号采购单位联系方式苏州校区：白老师 18951118567； 实验室与设备管理处：刘老师 025-83792693。代理机构名称江苏省设备成套股份有限公司代理机构地址南京市鼓楼区清江南路18号鼓楼创新广场D栋9楼902室代理机构联系方式张蓉、王希稳 025-85360235、17705161691附件：附件1附件本国产品声明函.pdf附件2东南大学苏州校区教室设备升级改造采购项目招标文件（发布稿）.pdf\n一、项目编号：SEU-ZB-260443（JD066026M8ZC02232）（招标文件编号：SEU-ZB-260443（JD066026M8ZC02232））\n二、项目名称：东南大学苏州校区教室设备升级改造采购项目\n三、中标（成交）信息\n供应商名称：苏州凌格文化教育科技有限公司\n供应商地址：苏州市姑苏区人民路2114号D幢301、303室\n中标（成交）金额：209.7000000（万元）\n四、主要标的信息\n 序号    供应商名称      货物名称      货物品牌      货物型号      货物数量      货物单价(元)   1    苏州凌格文化教育科技有限公司      学生终端（主机、显示器）；等      Lenovo；等      启天 M660-A112（C）；TE24-30；等      144套；等      人民币7100；等\n五、评审专家（单一来源采购人员）名单：\n徐炜（采购人代表）、杨培红、褚宁琳、赵悦、李井葵\n六、代理服务收费标准及金额：\n本项目代理费收费标准：本次招标，中标人参照《招标代理服务费管理暂行办法》（国家发展计划委员会计价格【2002】1980号）代理货物招标收费基准费率62%计算，招标代理服务费最高限价5.6万元，在领取中标通知书前向采购代理机构支付招标服务费。\n本项目代理费总金额：1.678200 万元（人民币）\n七、公告期限\n自本公告发布之日起1个工作日。\n八、其它补充事宜\n1、中标人综合得分为83.96分。\n2、各投标人对本次评标结果如有异议，应当在中标公告期限届满之日起七个工作日内以书面形式向本公司提出质疑，七个工作日以外的质疑不再受理。\n九、凡对本次公告内容提出询问，请按以下方式联系。\n1.采购人信息\n名 称：东南大学\n地址：南京市四牌楼2号\n联系方式：苏州校区：白老师 18951118567； 实验室与设备管理处：刘老师 025-83792693。\n2.采购代理机构信息\n名 称：江苏省设备成套股份有限公司\n地　址：南京市鼓楼区清江南路18号鼓楼创新广场D栋9楼902室\n联系方式：张蓉、王希稳 025-85360235、17705161691\n3.项目联系方式\n项目联系人：张蓉、王希稳\n电　话：　　025-85360235、17705161691\n##", "raw_len": 1457, "fields": [{"name": "project_identifier", "label": "项目编号", "raw_value": "SEU-ZB-260443（JD066026M8ZC02232）", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 483, "end": 522, "text": "一、项目编号：SEU-ZB-260443（JD066026M8ZC02232）", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "purchaser_name", "label": "采购单位", "raw_value": "东南大学", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 117, "end": 125, "text": "采购单位东南大学", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "winner_name", "label": "中标供应商", "raw_value": "苏州凌格文化教育科技有限公司", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 603, "end": 623, "text": "供应商名称：苏州凌格文化教育科技有限公司", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "amount", "label": "金额", "raw_value": "209.700000 万元", "normalized_value": 2097000.0, "amount_type": "win_amount", "currency": "CNY", "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 183, "end": 207, "text": "总中标金额￥209.700000 万元（人民币）", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "publish_date", "label": "公告时间", "raw_value": "2026年08月05日 14:51", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 132, "end": 153, "text": "公告时间2026年08月05日 14:51", "verified": true, "match_method": "exact", "confidence": 100}]}], "evidence_total": 5}, {"id": 97, "label": "更正公告", "notice_type": "correction", "project_name": "华北电力大学超临界CO2氛围可光学观测燃烧器更正公告", "tender_org": "华北电力大学", "agency": null, "location": "北京市", "bid_number": null, "publish_time": "2026-08-05T18:19:18", "source_platform": "ccgp", "source_url": "http://www.ccgp.gov.cn/cggg/zygg/gzgg/202608/t20260803_27057555.htm", "raw": "## 华北电力大学超临界CO2氛围可光学观测燃烧器更正公告\n2026年08月03日 14:14 来源： 【打印】\n## 公告概要：公告信息：采购项目名称超临界CO2氛围可光学观测燃烧器品目\n货物/设备/信息化设备/其他信息化设备\n采购单位华北电力大学行政区域北京市公告时间2026年08月03日 14:14首次公告日期2026年07月21日更正日期2026年08月03日更正事项采购公告联系人及联系方式：项目联系人刘佳、刘博威、刘莹、李捷、陶雪娇、张阳、张杰项目联系电话15201303287采购单位华北电力大学采购单位地址北京市昌平区回龙观北农路2号采购单位联系方式张老师 010-61772996代理机构名称北京国金管理咨询有限公司代理机构地址北京市丰台区五圈南路30号院1号楼北京海格通信产业园科研楼D座10层代理机构联系方式刘佳、刘博威、刘莹、李捷、陶雪娇、张阳、张杰15201303287\n一、项目基本情况\n原公告的采购项目编号：[2026]BGC-545\n原公告的采购项目名称：超临界CO2氛围可光学观测燃烧器\n首次公告日期：2026年07月21日\n二、更正信息\n更正事项：采购公告\n更正内容：\n提交投标文件截止时间、开标时间更正为：2026年08月25日 09点30分（北京时间）\n更正日期：2026年08月03日\n三、其他补充事宜\n更正事项：采购公告和采购文件\n四、凡对本次公告内容提出询问，请按以下方式联系。\n1.采购人信息\n名 称：华北电力大学\n地址：北京市昌平区回龙观北农路2号\n联系方式：张老师 010-61772996\n2.采购代理机构信息\n名 称：北京国金管理咨询有限公司\n地　址：北京市丰台区五圈南路30号院1号楼北京海格通信产业园科研楼D座10层\n联系方式：刘佳、刘博威、刘莹、李捷、陶雪娇、张阳、张杰15201303287\n3.项目联系方式\n项目联系人：刘佳、刘博威、刘莹、李捷、陶雪娇、张阳、张杰\n电　话：　　15201303287\n##", "raw_len": 837, "fields": [{"name": "publish_date", "label": "公告时间", "raw_value": "2026年08月03日 14:14", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 30, "end": 47, "text": "2026年08月03日 14:14", "verified": true, "match_method": "exact", "confidence": 100}]}, {"name": "bid_deadline", "label": "投标截止时间", "raw_value": "2026年08月25日 09点30分", "normalized_value": null, "amount_type": null, "currency": null, "display_grade": "review", "grade_cn": "需人工复核", "support_level": "direct", "evidences": [{"start": 504, "end": 547, "text": "提交投标文件截止时间、开标时间更正为：2026年08月25日 09点30分（北京时间）", "verified": true, "match_method": "exact", "confidence": 100}]}], "evidence_total": 2}];
+
+const $ = (s)=>document.querySelector(s);
+const esc = (t)=>t.replace(/[&<>]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+let cur = 0, activeField = -1, activeEv = -1;
+
+/* ---------- tabs ---------- */
+function renderTabs(){
+  $('#tabs').innerHTML = DATA.map((d,i)=>
+    `<div class="tab${i===cur?' on':''}" data-i="${i}">
+       <span class="dot"></span>${d.label}
+       <span class="cnt">${d.fields.length} 字段 / ${d.evidence_total} 证据</span>
+     </div>`).join('');
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+    cur = +t.dataset.i; activeField = -1; activeEv = -1;
+    renderAll();
+  });
+}
+
+/* ---------- meta ---------- */
+function renderMeta(){
+  const d = DATA[cur];
+  $('#meta').innerHTML = `
+    <div class="pname">${esc(d.project_name)}</div>
+    <div class="kv"><span>采购单位</span><b>${esc(d.tender_org||'—')}</b></div>
+    <div class="kv"><span>地区</span><b>${esc(d.location||'—')}</b></div>
+    <div class="kv"><span>编号</span><b>${esc(d.bid_number||'—')}</b></div>
+    <div class="kv"><span>公告时间</span><b>${esc((d.publish_time||'').slice(0,10))}</b></div>
+    <div class="kv"><span>原文</span><a class="src" href="${d.source_url}" target="_blank" rel="noopener">${d.source_platform||'source'} ↗</a></div>
+  `;
+}
+
+/* ---------- fields ---------- */
+function renderFields(){
+  const d = DATA[cur];
+  $('#fields').innerHTML = d.fields.map((f,i)=>{
+    const evs = f.evidences;
+    const first = evs[0];
+    const spans = evs.map(e=>`字符 ${e.start}–${e.end}`).join(' · ');
+    const method = first ? (first.match_method||'') : '';
+    const conf = first && first.confidence!=null ? `置信 ${first.confidence}` : '';
+    return `<div class="fc${i===activeField?' on':''}" data-i="${i}">
+      <div class="r1">
+        <span class="fname">${esc(f.label)}</span>
+        <span class="grade g-${f.display_grade||'review'}">${esc(f.grade_cn||'')}</span>
+      </div>
+      <div class="val">${esc(f.raw_value==null?'—':f.raw_value)}</div>
+      <div class="sub">
+        ${first?`<span class="pos">${spans}</span><span class="okmark">✓ 原文已校验</span>`:`<span class="okmark" style="color:#8A99B0">无原文证据</span>`}
+      </div>
+      ${first?`<div class="cf">匹配方式：<b>${esc(method)}</b> ${conf?'· '+esc(conf):''}<br>
+        原文片段：${esc(first.text).slice(0,80)}${first.text.length>80?'…':''}</div>`:''}
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.fc').forEach(c=>c.onclick=()=>{
+    activeField = +c.dataset.i; activeEv = 0;
+    renderFields(); renderText(); renderTrace(); scrollToEv();
+  });
+}
+
+/* ---------- text ---------- */
+function renderText(){
+  const d = DATA[cur];
+  const text = d.raw;
+  // 行表 + 绝对偏移
+  const lines = [];
+  let pos = 0;
+  for (const ln of text.split('\n')){ lines.push({t:ln, s:pos}); pos += ln.length + 1; }
+
+  const intervals = [];
+  d.fields.forEach((f,fi)=>f.evidences.forEach((e,ei)=>{
+    intervals.push({a:e.start, b:e.end, fi, ei, id:fi+'-'+ei});
+  }));
+
+  const html = lines.map((L)=>{
+    const le = L.s + L.t.length;
+    const rel = intervals.filter(v=>v.b > L.s && v.a < le).sort((x,y)=>x.a-y.a);
+    let out = '', curPos = 0;
+    for (const v of rel){
+      const a = Math.max(v.a - L.s, 0), b = Math.min(v.b - L.s, L.t.length);
+      if (a > curPos) out += esc(L.t.slice(curPos, a));
+      const on = (v.fi===activeField && v.ei===activeEv) ? ' on' : '';
+      out += `<mark class="ev${on}" data-fi="${v.fi}" data-ei="${v.ei}" title="字段：${esc(d.fields[v.fi].label)} · 字符 ${v.a}–${v.b}">${esc(L.t.slice(a,b))}</mark>`;
+      curPos = b;
+    }
+    out += esc(L.t.slice(curPos));
+    const isH2 = L.t.startsWith('## ');
+    if (isH2){
+      out = out.replace(/^##\s/, '<span class="mk">## </span>');
+      out = `<span class="body">${out}</span>`;
+    } else {
+      out = `<span class="body">${out}</span>`;
+    }
+    return `<div class="ln${isH2?' h2':''}"><span class="gutter">${String(L.s).padStart(4,'0')}</span>${out}</div>`;
+  }).join('');
+
+  const box = $('#text');
+  box.innerHTML = html;
+  box.querySelectorAll('mark.ev').forEach(m=>m.onclick=()=>{
+    activeField = +m.dataset.fi; activeEv = +m.dataset.ei;
+    renderFields(); renderText(); renderTrace();
+  });
+}
+
+/* ---------- trace ---------- */
+function renderTrace(){
+  const d = DATA[cur];
+  if (activeField < 0){
+    $('#trace').innerHTML = `
+      <span>已定位 <b>${d.evidence_total}</b> 条证据（右侧黄色高亮），共 <b>${d.raw_len}</b> 字原文。</span>
+      <span class="chip">点击左侧结论 → 聚焦该条</span>`;
+    return;
+  }
+  const f = d.fields[activeField];
+  const e = f.evidences[activeEv] || f.evidences[0];
+  if (!e){ $('#trace').innerHTML = `<span><b>${esc(f.label)}</b> 无原文证据区间。</span>`; return; }
+  const len = e.end - e.start;
+  $('#trace').innerHTML = `
+    <span class="lead">正在溯源：<b>${esc(f.label)}</b> = <b class="tv">${esc(f.raw_value)}</b></span>
+    <span class="chip hl">字符 ${e.start}–${e.end}</span>
+    <span class="chip">长度 ${len} 字</span>
+    <span class="chip">匹配 ${esc(e.match_method||'')}</span>
+    <span class="chip ok">✓ 切片逐字一致</span>
+  `;
+}
+
+/* ---------- scroll ---------- */
+function scrollToEv(smooth){
+  const d = DATA[cur];
+  const f = d.fields[activeField];
+  const e = f && f.evidences[activeEv];
+  if (!e) return;
+  const m = document.querySelector(`mark.ev[data-fi="${activeField}"][data-ei="${activeEv}"]`);
+  const box = $('#text');
+  if (!m) return;
+  const target = m.offsetTop - box.clientHeight/2 + m.offsetHeight/2;
+  box.scrollTo({top: Math.max(target, 0), behavior: smooth===false ? 'auto' : 'smooth'});
+  m.classList.add('anchorflash');
+  setTimeout(()=>m.classList.remove('anchorflash'), 1200);
+}
+
+function renderAll(){ renderTabs(); renderMeta(); renderFields(); renderText(); renderTrace(); }
+
+/* 深链：#d=<doc>&f=<field> → 直接聚焦某条结论，便于分享 */
+function applyHash(){
+  const h = new URLSearchParams(location.hash.replace(/^#/,''));
+  const d = parseInt(h.get('d'),10), f = parseInt(h.get('f'),10);
+  if (!isNaN(d) && d>=0 && d<DATA.length) cur = d;
+  if (!isNaN(f) && f>=0) { activeField = f; activeEv = 0; }
+  renderAll();
+  if (activeField>=0) setTimeout(()=>scrollToEv(false), 60);
+}
+
+applyHash();
+window.addEventListener('hashchange', ()=>{ location.reload(); });
+
+</script>
+</body>
+</html>

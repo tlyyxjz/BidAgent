@@ -66,8 +66,21 @@ def _delete_db_file() -> None:
     并导致 create_all 的 checkfirst 读到陈旧 schema 信息而漏建/错建表
     （典型报错 "no such table: tender_projects"、"table users already exists"）。
     删除文件 + dispose 连接池后，create_all 从零建表，彻底规避该问题。
+
+    路径从 settings.DATABASE_URL 解析（支持 CI/沙箱用环境变量覆盖测试库位置）；
+    默认环境变量（本文件顶部 setdefault）指向 ./data/test_bidagent.db，行为不变。
     """
-    database_file = Path("data/test_bidagent.db")
+    try:
+        from app.models.database import settings
+        url = settings.DATABASE_URL or ""
+    except Exception:
+        url = ""
+    if not url.startswith("sqlite"):
+        return
+    path_part = url.split(":///", 1)[-1] if ":///" in url else ""
+    if not path_part:
+        path_part = "data/test_bidagent.db"
+    database_file = Path(path_part)
     for suffix in ("", "-wal", "-shm"):
         p = Path(str(database_file) + suffix)
         try:

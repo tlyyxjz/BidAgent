@@ -219,6 +219,38 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
 .collector-error{padding:30px 20px;text-align:center;color:var(--text-3);font-size:13px;grid-column:1/-1}
 .collector-error i{font-size:32px;color:var(--error);display:block;margin-bottom:8px}
 
+/* ===== Realtime Network Panel（省级组网·实时采集网络） ===== */
+.rt-net{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.rt-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.rt-head h2{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.rt-head h2 i{color:var(--primary);font-size:17px}
+.rt-head .desc{font-size:11px;color:var(--text-3);font-weight:400;margin-left:6px}
+.rt-actions{display:flex;align-items:center;gap:10px}
+.rt-total{font-size:11px;color:var(--text-3)}
+.rt-total b{color:var(--primary);font-size:13px}
+.rt-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;border:none;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.rt-btn:hover{background:var(--primary-hover)}
+.rt-btn:disabled{opacity:.55;cursor:not-allowed}
+.rt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+.rt-card{border:1px solid var(--border);border-radius:8px;padding:12px 14px;background:var(--bg);transition:all .2s}
+.rt-card:hover{border-color:var(--primary)}
+.rt-card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rt-dot{width:9px;height:9px;border-radius:50%;background:var(--border-2);flex-shrink:0}
+.rt-dot.ok{background:var(--success);box-shadow:0 0 0 3px var(--success-bg)}
+.rt-dot.warn{background:var(--warning);box-shadow:0 0 0 3px var(--warning-bg)}
+.rt-dot.err{background:var(--error);box-shadow:0 0 0 3px var(--error-bg)}
+.rt-dot.loading{background:var(--primary);animation:cpulse 1.2s infinite}
+.rt-name{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-status{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--bg);color:var(--text-3);border:1px solid var(--border);white-space:nowrap}
+.rt-status.ok{background:var(--success-bg);color:var(--success);border-color:transparent}
+.rt-status.warn{background:var(--warning-bg);color:var(--warning);border-color:transparent}
+.rt-status.err{background:var(--error-bg);color:var(--error);border-color:transparent}
+.rt-num{font-size:20px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.2}
+.rt-num .unit{font-size:11px;font-weight:500;color:var(--text-3);margin-left:2px}
+.rt-meta{font-size:11px;color:var(--text-3);margin-top:3px;word-break:break-all}
+.rt-note{font-size:11px;color:var(--text-3);margin-top:12px;display:flex;align-items:center;gap:5px}
+.rt-note i{color:var(--warning)}
+
 </style>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="stylesheet" href="/static/css/bidagent.css?v=3">
@@ -262,8 +294,8 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
   </nav>
   <div class="sidebar-footer">
     <div><span class="comp-tag">标小智</span> v4.1</div>
-    <div>GOAI 2026 初赛</div>
-    <div>W3 · 100 篇评测集</div>
+    <div>GOAI 2026 复赛</div>
+    <div>金标 620 篇 · 十源</div>
   </div>
 </aside>
 
@@ -276,8 +308,8 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
     <div class="header-right">
       <input class="global-search" type="text" placeholder="搜索项目/组织/公告..." />
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
-      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
-      <div class="h-badge vers">v4.1 · 107篇</div>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · 十源</div>
+      <div class="h-badge vers">v4.1 · 金标620篇</div>
     </div>
   </header>
 
@@ -290,7 +322,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
         <div class="sub">招投标数据抽取 + 证据验证 + 组织画像 + 质量评测 · 一站式数据可信分析平台</div>
       </div>
       <div class="right-info">
-        <div class="h-badge data"><i class="ph ph-clock"></i>2026-07-31</div>
+        <div class="h-badge data"><i class="ph ph-clock"></i>2026-08-05</div>
       </div>
     </div>
 
@@ -301,9 +333,9 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
         <div class="kpi-body">
           <div class="kpi-label">公告总数</div>
           <div class="kpi-value" id="kpiTotalTenders">--<span class="unit">篇</span></div>
-          <div class="kpi-sub">W3 评测集 + 实时采集</div>
+          <div class="kpi-sub">金标 620 篇 · 十源</div>
         </div>
-        <div class="kpi-trend info">W3</div>
+        <div class="kpi-trend info">十源</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-icon green"><i class="ph-bold ph-check-circle"></i></div>
@@ -504,7 +536,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
           <a href="/ui/quality-dashboard" class="recent-item">
             <div class="recent-icon purple"><i class="ph ph-chart-bar"></i></div>
             <div class="recent-body">
-              <div class="recent-title">W3 全量评测报告 · 107 篇</div>
+              <div class="recent-title">金标全量评测报告 · 620 篇</div>
               <div class="recent-meta" id="recentQualityMeta">精确率 — · 无依据率 — · 2026-07-31</div>
             </div>
             <div class="recent-status ok">已完成</div>
@@ -513,7 +545,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
             <div class="recent-icon green"><i class="ph ph-arrows-split"></i></div>
             <div class="recent-body">
               <div class="recent-title">跨平台去重 · ccgp + chinabidding</div>
-              <div class="recent-meta">107 篇公告 · 2 平台 · 2026-07-31</div>
+              <div class="recent-meta">620 篇公告 · 十源 · 2026-08-05</div>
             </div>
             <div class="recent-status info">已去重</div>
           </a>
@@ -547,11 +579,35 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:va
       </div>
     </div>
 
+
+    <!-- ===== Realtime Network（省级组网·实时采集网络） ===== -->
+    <div class="section-title"><i class="ph-bold ph-globe-hemisphere-east"></i>实时采集网络<span class="desc">省级组网 · robots 先行 · 域内 8s 限流 · 403 即停熔断 · 单源失败降级</span></div>
+    <div class="rt-net">
+      <div class="rt-head">
+        <h2><i class="ph-bold ph-broadcast"></i>全国真实源组网<span class="desc" id="rtDesc">加载中…</span></h2>
+        <div class="rt-actions">
+          <span class="rt-total">组网库内 <b id="rtTotal">--</b> 条</span>
+          <button class="rt-btn" id="rtRunBtn"><i class="ph-bold ph-lightning"></i>开始实时采集</button>
+        </div>
+      </div>
+      <div class="rt-grid" id="rtGrid"></div>
+      <div class="rt-note"><i class="ph ph-shield-check"></i>合规纪律硬编码在适配器基类：robots 禁止即不发请求；被 403 拦截的源本次会话熔断不再重试；任何一源失败不影响其他源。</div>
+      <div class="rt-xv" id="rtXv" style="margin-top:10px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card-2,rgba(0,0,0,.02))">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <i class="ph-bold ph-tree-structure" style="color:var(--blue,#3b82f6)"></i>
+          <b>多源交叉验证</b>
+          <span id="rtXvStat" style="color:var(--text-2)">加载中…</span>
+        </div>
+        <div id="rtXvMatches" style="margin-top:6px;font-size:12px;color:var(--text-2);line-height:1.8"></div>
+        <div style="margin-top:4px;font-size:11px;color:var(--text-3)"><i class="ph ph-info"></i>编号严格一致/标题相似度≥0.80 才计佐证；无跨源匹配的公告如实标注孤证，宁可少给、不可编造。</div>
+      </div>
+    </div>
+
     <!-- ===== Footer ===== -->
     <div class="footer">
-      <span class="real">● 真实数据</span> · 107 篇真实公告（W3 评测集 + 实时采集） · 321 条证据（IoU ≥ 0.5） ·
-      <span class="src">deepseek-v4-flash</span> · 证据验证 + 来源谱系 + 展示等级 ·
-      标小智 v4.1 · GOAI 2026 初赛
+      <span class="real">● 真实数据</span> · 金标 620 篇十源全量复测 · D 组字段精确率 97.60% · 证据可重放（2328 字段 0 问题） ·
+      <span class="src">glm-4-flash</span> · 证据验证 + 来源谱系 + 展示等级 ·
+      标小智 v4.1 · GOAI 2026 复赛
       <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-size:11px;color:var(--text-3);line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
     </div>
   </main>
@@ -768,6 +824,85 @@ async function loadRecentMeta(){
 }
 loadRecentMeta();
 </script>
+<script>
+/* ===== 实时采集网络面板（/api/real/realtime/*） ===== */
+(function(){
+  var STATUS_LABEL={ok:'成功',empty:'成功·无新增',robots_denied:'robots 拒绝',blocked_403:'403 熔断',timeout:'超时',error:'失败',idle:'已组网',loading:'采集中'};
+  var STATUS_CLS={ok:'ok',empty:'ok',robots_denied:'err',blocked_403:'err',timeout:'warn',error:'err',idle:'',loading:'loading'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function fmtTs(iso){if(!iso)return'—';try{var d=new Date(iso);function p(n){return String(n).padStart(2,'0')}return p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())}catch(e){return iso}}
+  function cardHtml(s){
+    var st=s._rt||'idle';
+    var label=STATUS_LABEL[st]||st;
+    var cls=STATUS_CLS[st]||'';
+    var meta=s.domain||'';
+    if(s._elapsed!=null){meta='耗时 '+(s._elapsed/1000).toFixed(1)+'s · 域 '+esc(s.domain||'')}
+    if(s._error){meta=esc(s._error)}
+    else if(st==='ok'){meta='本轮入库 '+s._ingested+' 条（去重跳过 '+s._skipped+'）· 域 '+esc(s.domain||'')}
+    else if(st==='idle'&&s.last_created){meta='最近入库 '+fmtTs(s.last_created)+' · 域 '+esc(s.domain||'')}
+    var num=(st==='ok'||st==='empty')?(s._ingested!=null?s._ingested:(s.db_count||0)):(s.db_count||0);
+    var unit=(st==='ok'||st==='empty')?'条·本轮新增':'条·库内';
+    return '<div class="rt-card">'
+      +'<div class="rt-card-top"><span class="rt-dot '+cls+'"></span><span class="rt-name" title="'+esc(s.display_name)+'">'+esc(s.display_name)+'</span>'
+      +'<span class="rt-status '+cls+'">'+esc(label)+'</span></div>'
+      +'<div class="rt-num">'+esc(num)+'<span class="unit">'+esc(unit)+'</span></div>'
+      +'<div class="rt-meta">'+meta+'</div></div>';
+  }
+  var sources=[];
+  function render(){
+    document.getElementById('rtGrid').innerHTML=sources.map(cardHtml).join('');
+    document.getElementById('rtTotal').textContent=sources.reduce(function(a,s){return a+(s.db_count||0)},0);
+    document.getElementById('rtDesc').textContent=sources.length+' 个真实源已注册';
+  }
+  async function loadSources(){
+    try{
+      var r=await fetch('/api/real/realtime/sources',{signal:AbortSignal.timeout(15000)});
+      var d=await r.json();
+      if((d.code===0||d.code===200)&&d.data){sources=d.data.sources||[];render()}
+    }catch(e){document.getElementById('rtDesc').textContent='源清单加载失败（服务未启动？）'}
+  }
+  var btn=document.getElementById('rtRunBtn');
+  btn.addEventListener('click',async function(){
+    btn.disabled=true;
+    sources.forEach(function(s){s._rt='loading';s._error=null;s._elapsed=null});
+    render();
+    try{
+      var r=await fetch('/api/real/realtime/collect?limit=3',{method:'POST',signal:AbortSignal.timeout(420000)});
+      var d=await r.json();
+      if((d.code===0||d.code===200)&&d.data){
+        var map={};(d.data.results||[]).forEach(function(x){map[x.source]=x});
+        sources.forEach(function(s){
+          var x=map[s.source];
+          if(!x){s._rt='error';s._error='无结果';return}
+          s._rt=x.status;s._error=x.error||null;s._elapsed=x.elapsed_ms;
+          s._ingested=x.ingested;s._skipped=x.skipped;
+          s.db_count=(s.db_count||0)+(x.ingested||0);
+        });
+      }else{sources.forEach(function(s){s._rt='error';s._error=(d.msg||d.message||'接口异常')})}
+    }catch(e){sources.forEach(function(s){s._rt='error';s._error=String(e&&e.name==='TimeoutError'?'采集超时（>420s）':(e&&e.message||e))})}
+    btn.disabled=false;
+    render();
+    loadSources();
+  });
+  loadSources();
+  async function loadXv(){
+    try{
+      var r=await fetch('/api/real/realtime/cross-validation',{signal:AbortSignal.timeout(30000)});
+      var d=await r.json();
+      if((d.code===0||d.code===200)&&d.data){
+        var x=d.data;
+        document.getElementById('rtXvStat').textContent='库内 '+x.total+' 条 · 跨源佐证 '+x.corroborated+' 条 · 孤证 '+x.single_source+' 条（如实标注）';
+        var uniq={};(x.matches||[]).forEach(function(m){var k=[m.target_tender_id,m.match_tender_id].sort().join('-');uniq[k]=m});
+        var lines=Object.keys(uniq).slice(0,6).map(function(k){var m=uniq[k];
+          return '· #'+m.target_tender_id+'（'+esc(m.target_platform)+'） ↔ #'+m.match_tender_id+'（'+esc(m.match_platform)+'）｜'+esc(m.level==='bid_number_strict'?'项目编号严格一致':'标题强匹配')+'｜'+esc(m.reason)});
+        document.getElementById('rtXvMatches').innerHTML=lines.length?lines.join('<br>'):'暂无跨源佐证对（各源采集窗口未重叠时如实为 0）';
+      }
+    }catch(e){document.getElementById('rtXvStat').textContent='佐证报告加载失败（服务未启动？）'}
+  }
+  loadXv();
+})();
+</script>
+
 
 
 </body>

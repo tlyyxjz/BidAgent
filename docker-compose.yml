@@ -21,6 +21,18 @@ services:
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
       LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+      # 私有化部署：模型适配层全量透传（换模型/换端点只改 .env，不改编排）
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_EXTRACTION_MODEL: ${LLM_EXTRACTION_MODEL:-}
+      LLM_JSON_MODE: ${LLM_JSON_MODE:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # 本地自部署端点（容器内访问宿主机用 host.docker.internal）
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+      VLLM_BASE_URL: ${VLLM_BASE_URL:-http://host.docker.internal:8080/v1}
       REPORT_OUTPUT_DIR: ${REPORT_OUTPUT_DIR:-data/reports}
       ATTACHMENT_DIR: ${ATTACHMENT_DIR:-data/attachments}
       APP_ROLE: web
@@ -75,6 +87,18 @@ services:
       PLAYWRIGHT_TIMEOUT_SECONDS: ${PLAYWRIGHT_TIMEOUT_SECONDS:-30}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+      # 私有化部署：模型适配层全量透传
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_EXTRACTION_MODEL: ${LLM_EXTRACTION_MODEL:-}
+      LLM_JSON_MODE: ${LLM_JSON_MODE:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+      VLLM_BASE_URL: ${VLLM_BASE_URL:-http://host.docker.internal:8080/v1}
       APP_ROLE: worker
       # Sol S-11：worker 也需要 session 目录配置（登录态采集）
       ANTI_DETECT_SESSION_DIR: ${ANTI_DETECT_SESSION_DIR:-data/sessions}
@@ -101,6 +125,17 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      # 私有化部署：模型适配层全量透传
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_EXTRACTION_MODEL: ${LLM_EXTRACTION_MODEL:-}
+      LLM_JSON_MODE: ${LLM_JSON_MODE:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      ZHIPU_API_KEY: ${ZHIPU_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+      VLLM_BASE_URL: ${VLLM_BASE_URL:-http://host.docker.internal:8080/v1}
       REPORT_OUTPUT_DIR: ${REPORT_OUTPUT_DIR:-data/reports}
       APP_ROLE: scheduler
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8000}

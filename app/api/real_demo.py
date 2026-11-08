@@ -23,9 +23,10 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy import select, func
+from sqlalchemy import and_, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.evidence_span import resolve_evidence_span, summarize
 from app.models.database import get_db
 from app.models.tender import Tender
 from app.models.evidence import ExtractedField, Evidence, FieldEvidenceLink
@@ -163,6 +164,7 @@ async def get_tender_detail(tender_id: int, db: AsyncSession = Depends(get_db)):
 
     # 构造响应（按 FIELD_ORDER 排序）
     resp_fields = []
+    span_results: list = []  # 每条证据的解析结论，末尾汇总为 evidence_stats
     for fname in FIELD_ORDER:
         if fname not in fields_by_name:
             # 该字段不存在，标记 absent
@@ -188,14 +190,24 @@ async def get_tender_detail(tender_id: int, db: AsyncSession = Depends(get_db)):
             )
             evidences = []
             for link, ev in links_result:
+                # 偏移基准是 raw_text(=core_content=clean_raw_text)，不是 source_raw_text。
+                # 由服务端解析出可信区间并给出 locatable 结论，前端不再自行 indexOf 猜测
+                # （全文 indexOf 会把短证据挪到文档里另一处相同文本上）。见 evidence_span.py。
+                s, e, slice_ok, relocated, locatable = resolve_evidence_span(
+                    raw_text, ev.raw_start, ev.raw_end, ev.evidence_text
+                )
+                span_results.append((s, e, slice_ok, relocated, locatable))
                 evidences.append({
                     "id": f"{f.field_name}_{vi}_{link.sequence}",
                     "text": ev.evidence_text,
-                    "start": ev.raw_start,
-                    "end": ev.raw_end,
+                    "start": s,
+                    "end": e,
                     "role": link.evidence_role,
                     "match_method": ev.match_method,
                     "confidence": 0.95 if ev.verified else 0.5,
+                    "slice_ok": slice_ok,
+                    "relocated": relocated,
+                    "locatable": locatable,
                 })
 
             values.append({
@@ -219,9 +231,14 @@ async def get_tender_detail(tender_id: int, db: AsyncSession = Depends(get_db)):
 
     data = {
         "clean_raw_text": raw_text,
+        # 显式声明偏移基准，避免消费方按字段名 raw_start 误用 source_raw_text。
+        "offset_space": "clean_raw_text",
+        "clean_raw_len": len(raw_text),
         "tender_id": tender.id,
         "project_name": tender.project_name,
         "fields": resp_fields,
+        # ok/relocated/orphan 三分类，orphan>0 表示该公告存在孤儿证据（原文已不含该文本）。
+        "evidence_stats": summarize(span_results),
     }
     return _ok(data)
 
@@ -230,43 +247,76 @@ async def get_tender_detail(tender_id: int, db: AsyncSession = Depends(get_db)):
 async def list_tenders(db: AsyncSession = Depends(get_db)):
     """列出所有公告（含 amount/purchaser/publish_date/platform 供检索页展示）.
 
-    批量查询字段避免 N+1，供 search.html 真实数据源使用.
+    W3A（2026-11-07）：两条查询合并成一条 LEFT JOIN。
+    依据压测 W1 实测：改前两段查询合计约 9.4ms，占单请求 23.4ms 的 40%。
+
+    ⚠️ W3B 更正（2026-11-07）：上面那 9.4ms **不是**跨线程开销。
+    实测 aiosqlite 单次跨线程税只有 0.30ms（_perf/thread_hop_probe.py，占 JOIN 总耗时 4.0%）。
+    合并查询的收益来自**省掉第二段查询自身的 DB 工作量**（约 3.15ms），
+    不是省掉线程跳 —— 别为此去换同步驱动或改线程模型，收益对不上。
+
+    取值口径与旧实现逐字一致（否则响应会变）：
+      同一 tender 下同名字段，取 id 最小且 raw_value 非空的那个；
+      没有则空串；publish_date 再回落到 created_at 的 YYYY-MM-DD。
+    `order_by(Tender.id, ExtractedField.id)` 是口径的一部分，不是排序偏好。
     """
     result = await db.execute(
-        select(Tender.id, Tender.project_name, Tender.notice_type,
-               Tender.created_at, Tender.source_platform)
-        .order_by(Tender.id)
-    )
-    rows = result.all()
-    tender_ids = [r.id for r in rows]
-
-    # 批量查 amount/purchaser_name/publish_date（避免 N+1）
-    field_map: dict[int, dict] = {}
-    if tender_ids:
-        flds = await db.execute(
-            select(ExtractedField)
-            .where(ExtractedField.tender_id.in_(tender_ids))
-            .where(ExtractedField.field_name.in_(["amount", "purchaser_name", "publish_date"]))
-            .order_by(ExtractedField.id)
+        select(
+            Tender.id,
+            Tender.project_name,
+            Tender.notice_type,
+            Tender.created_at,
+            Tender.source_platform,
+            ExtractedField.field_name,
+            ExtractedField.raw_value,
         )
-        for f in flds.scalars().all():
-            d = field_map.setdefault(f.tender_id, {})
-            if f.field_name not in d and f.raw_value:
-                d[f.field_name] = f.raw_value
+        .outerjoin(
+            ExtractedField,
+            and_(
+                ExtractedField.tender_id == Tender.id,
+                ExtractedField.field_name.in_(
+                    ["amount", "purchaser_name", "publish_date"]
+                ),
+            ),
+        )
+        .order_by(Tender.id, ExtractedField.id)
+    )
 
-    tenders = []
-    for r in rows:
-        fm = field_map.get(r.id, {})
-        tenders.append({
-            "id": r.id,
-            "name": r.project_name,
-            "type": r.notice_type,
-            "amount": fm.get("amount", ""),
-            "purchaser": fm.get("purchaser_name", ""),
-            "publish_date": fm.get("publish_date", "")
-            or (r.created_at.strftime("%Y-%m-%d") if r.created_at else ""),
-            "platform": r.source_platform or "",
-        })
+    # 字段名 → 响应键。保持插入顺序，保证 JSON 键序与旧实现相同。
+    field_keys = ("amount", "purchaser_name", "publish_date")
+    by_id: dict[int, dict] = {}
+    created_map: dict[int, object] = {}
+    tenders: list[dict] = []
+    # W3B（2026-11-07）：直接元组解包，不走 Row 属性访问。
+    # 实测（_perf/assembly_probe.py，1042 行，n=40）：3.67ms → 1.40ms，输出 JSON 全等。
+    # 解包顺序 = 上面 select(...) 的列顺序，两者必须同步；错位会立刻抛 ValueError，
+    # 并由 tests/test_real_demo_single_query_equiv.py 的等价断言兜住。
+    for tid, pn, nt, cat, plat, fn, rv in result.all():
+        item = by_id.get(tid)
+        if item is None:
+            item = {
+                "id": tid,
+                "name": pn,
+                "type": nt,
+                "amount": "",
+                "purchaser": "",
+                "publish_date": "",
+                "platform": plat or "",
+            }
+            by_id[tid] = item
+            # created_at 单独存：不能塞进 item，否则会改动 JSON 键序
+            created_map[tid] = cat
+            tenders.append(item)
+        if fn in field_keys and rv:
+            key = "purchaser" if fn == "purchaser_name" else fn
+            if not item[key]:
+                item[key] = rv
+
+    # publish_date 为空时才回落到 created_at（与旧实现同义）
+    for item in tenders:
+        if not item["publish_date"]:
+            ca = created_map.get(item["id"])
+            item["publish_date"] = ca.strftime("%Y-%m-%d") if ca else ""
     return _ok({"tenders": tenders})
 
 
@@ -275,6 +325,8 @@ async def list_tenders(db: AsyncSession = Depends(get_db)):
 # 顺序：版本历史 → 组织画像（与原 real_demo.py 中的路由顺序保持一致）。
 from app.api import real_demo_versions  # noqa: E402,F401
 from app.api import real_demo_organization  # noqa: E402,F401
+from app.api import realtime_panel  # noqa: E402,F401
+from app.api import cross_validation_api  # noqa: E402,F401
 
 # ==== re-export：保持原有公开接口不变 ====
 # 以下函数已拆到子模块实现，但原有 import 路径（from app.api.real_demo import ...）

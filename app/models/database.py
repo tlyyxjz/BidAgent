@@ -111,7 +111,7 @@ async def init_database() -> None:
     现有 Tender 表保留（向后兼容）。
     """
     # 导入四层实体模型 + organization（FK 依赖），确保表注册到 Base.metadata
-    from app.models import organization, tender_project  # noqa: F401
+    from app.models import notice_tag, organization, tender_project  # noqa: F401
 
     await _set_sqlite_pragmas()
     async with engine.begin() as conn:

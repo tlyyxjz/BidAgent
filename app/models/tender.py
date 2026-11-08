@@ -93,6 +93,10 @@ class Tender(Base):
     attachment_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     # 内容指纹（64 位 SimHash）
     simhash: Mapped[int | None] = mapped_column(BigInteger, index=True, nullable=True)
+    # 大件五存证：core_content 的 SHA-256 指纹（入库即存证）
+    content_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # 大件五存证：source_raw_text 的 SHA-256 指纹（入库即存证）
+    raw_text_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
     )

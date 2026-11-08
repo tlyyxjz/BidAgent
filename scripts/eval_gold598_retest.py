@@ -1,7 +1,7 @@
-"""金标 v4 合集 598 篇全量复测（A/B/C/D 四组消融）。
+"""金标 v4 合集 620 篇全量复测（A/B/C/D 四组消融）。
 
 口径与 scripts/eval_ablation.py 完全一致（复用同一套 run_group_* / summarize），
-仅数据源换成 tests/fixtures/gold/gold_dataset_v4.json（598 篇合集）。
+仅数据源换成 tests/fixtures/gold/gold_dataset_v4.json（620 篇合集）。
 
 用法:
     python scripts/eval_gold598_retest.py [--concurrency 5] [--limit N] [--docs w3_tender_001 ...]
@@ -9,7 +9,7 @@
 特性:
     - 并发: asyncio.Semaphore 控制 LLM 并发数 (默认 5)
     - 断点续跑: 每篇完成即写 checkpoint JSONL, 重跑自动跳过已完成 document_id
-    - 分组汇总: 全局 + 按来源 (frozen93/w3/w4/w5) 分别 summarize
+    - 分组汇总: 全局 + 按来源 (frozen93/w3/w4/w5/w6) 分别 summarize
 """
 from __future__ import annotations
 
@@ -43,6 +43,8 @@ def source_of(doc_id: str, fname: str) -> str:
         return "w4"
     if fname.startswith("w5_"):
         return "w5"
+    if fname.startswith("w6_"):
+        return "w6"
     return "frozen93"
 
 
@@ -104,6 +106,8 @@ def load_dataset() -> list[tuple[GoldDoc, str, str]]:
             raw_dir, src = ROOT / "_w4_raw", "w4"
         elif fname.startswith("w5_"):
             raw_dir, src = ROOT / "_w5_raw", "w5"
+        elif fname.startswith("w6_"):
+            raw_dir, src = ROOT / "_w6_raw", "w6"
         else:
             raw_dir, src = ROOT / "_w2_raw", "frozen93"
         p = raw_dir / fname
@@ -171,7 +175,7 @@ async def main() -> None:
     done = load_checkpoint()
     todo = [d for d in dataset if d[0].document_id not in done]
     print("=" * 70)
-    print("金标 v4 合集 598 篇全量复测 (A/B/C/D)")
+    print("金标 v4 合集 620 篇全量复测 (A/B/C/D)")
     print(f"数据集: {len(dataset)} 篇 | 已完成(checkpoint): {len(done)} | 待跑: {len(todo)}")
     print(f"并发: {args.concurrency}")
     print("=" * 70, flush=True)
@@ -224,7 +228,7 @@ async def main() -> None:
         result["summaries"][grp] = asdict(summarize(grp, rows, metas, invalid))
         result["rows_" + grp] = [asdict(r) for r in rows]
 
-    for src in ("frozen93", "w3", "w4", "w5"):
+    for src in ("frozen93", "w3", "w4", "w5", "w6"):
         sub = [r for r in all_recs if r.get("source") == src]
         if not sub:
             continue

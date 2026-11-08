@@ -157,6 +157,15 @@ a{color:inherit;text-decoration:none}
 .ev-coords .cr{color:var(--primary)}
 .ev-coords .cn{color:var(--purple)}
 .ev-coords .os-tag{display:inline-block;padding:0 5px;background:#F8F6F0;border:1px solid var(--border-2);border-radius:3px;color:var(--text-2);font-family:-apple-system,sans-serif;font-size:9px;margin-left:4px}
+/* 置信度条：证据可信度可视化 */
+.ev-conf{display:flex;align-items:center;gap:6px;margin-top:6px}
+.ev-conf-bar{flex:1;height:5px;background:var(--border-2);border-radius:3px;overflow:hidden}
+.ev-conf-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--primary),var(--success));transition:width .35s ease}
+.ev-conf-val{font-size:10px;color:var(--text-2);font-weight:700;font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+/* 可重放脚注 */
+.replay-note{margin:10px;padding:9px 11px;background:var(--success-bg);border:1px solid rgba(63,115,85,.22);border-radius:6px;font-size:11px;color:var(--text-2);line-height:1.7;flex-shrink:0}
+.replay-note strong{color:var(--success)}
+.replay-note code{font-family:"SFMono-Regular",Consolas,monospace;font-size:10px;background:rgba(63,115,85,.1);padding:1px 5px;border-radius:3px;color:var(--success)}
 .no-evidence{color:var(--error);font-size:12px;padding:6px 0}
 .no-evidence i{margin-right:3px}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px}
@@ -207,8 +216,8 @@ a{color:inherit;text-decoration:none}
   </nav>
   <div class="sidebar-footer">
     <div><span class="comp-tag">标小智</span> v4.1</div>
-    <div>GOAI 2026 初赛</div>
-    <div>W3 · 100 篇评测集</div>
+    <div>GOAI 2026 复赛</div>
+    <div>金标 620 篇 · 十源</div>
   </div>
 </aside>
 
@@ -221,8 +230,8 @@ a{color:inherit;text-decoration:none}
     <div class="header-right">
       <input class="global-search" type="text" placeholder="搜索项目/组织/公告..." />
       <div class="h-badge comp"><i class="ph ph-trophy"></i>GOAI 2026</div>
-      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · W3</div>
-      <div class="h-badge vers">v4.1 · 107篇</div>
+      <div class="h-badge data"><i class="ph ph-database"></i>真实数据 · 十源</div>
+      <div class="h-badge vers">v4.1 · 金标620篇</div>
     </div>
   </header>
 
@@ -270,10 +279,11 @@ a{color:inherit;text-decoration:none}
       <div class="source-box" id="sourceBox"><span style="color:var(--text-3)">来源谱系加载中...</span></div>
       <nav class="fields-nav" id="fieldsNav"></nav>
       <div class="fields-container" id="fieldsContainer"><div class="empty-state">加载中...</div></div>
+      <div class="replay-note"><i class="ph ph-arrows-counter-clockwise"></i> <strong>证据可重放</strong>：每条证据均在浏览器内验证 <code>clean_raw_text[start:end) ≡ 证据文本</code>，切片不符即拒绝高亮（宁可少给、不可编造）。偏移完整性门禁 <code>python scripts/check_evidence_offsets.py</code>（逐条断言切片，非「子串包含」）；值可定位审计 <code>python scripts/audit_gold_replayable.py</code>（620 篇 2328 字段 0 问题）。</div>
     </section>
   </div>
 
-  <div class="footer"><span class="real">● 真实数据</span> · W3 · 100 篇评测集 · 标小智 v4.1 · GOAI 2026 初赛</div>
+  <div class="footer"><span class="real">● 真实数据</span> · 金标 620 篇十源 · 证据可重放 · 标小智 v4.1 · GOAI 2026 复赛</div>
       <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);font-size:11px;color:var(--text-3);line-height:1.6"><i class="ph ph-warning-circle"></i> <strong>免责声明：</strong>本系统仅反映公开招投标活动观察信号，不输出信用评分，不构成授信或投资依据。数据来源于公开公告，仅供人工尽调参考。</div>
 </div>
 
@@ -512,27 +522,37 @@ function findField(ids){
 }
 
 // ===== 原文高亮（<mark>，按 evidence_role 着色） =====
+// 证据位置由服务端解析（app/api/evidence_span.py）：locatable=false 为孤儿证据，直接跳过；
+// 旧响应无该字段时退化为「就近重定位」——只接受期望位置附近的命中，或全文唯一命中。
+// 绝不使用全文 indexOf 的首次命中：日期/金额/地区等短证据在原文里常出现多次，
+// 那样会把高亮挪到文档里另一处，看起来就是"高亮乱飘"。
+function safeRelocate(s){
+  if(!s.text) return -1;
+  if(s.start!=null && s.end!=null && rawText.slice(s.start,s.end)===s.text) return s.start;
+  var lo = Math.max(0,(s.start||0)-400), hi = Math.min(rawText.length,(s.end||0)+400);
+  if(hi > lo){
+    var at = rawText.indexOf(s.text, lo);
+    if(at >= 0 && at + s.text.length <= hi) return at;
+  }
+  var f = rawText.indexOf(s.text);
+  if(f < 0) return -1;
+  return rawText.indexOf(s.text, f + s.text.length) >= 0 ? -1 : f;  // 多处命中 → 不猜
+}
 function renderText(evList){
   var rt = _hc("rawText"); var cc = _hc("charCount");
   if(!rt) return;
   if(!rawText){ rt.textContent = "（无原文）"; if(cc) cc.textContent = "0 字符"; return; }
-  var spans = [];
+  var spans = [], skipped = 0;
   for(var i=0;i<evList.length;i++){
     var s = evList[i];
-    if(s.start==null || s.end==null || s.start<0 || s.end>rawText.length || s.start>=s.end) continue;
-    // K3 修复(2026-08-11): offset 内容校验——切片与证据文本不一致时先全文重定位,
-    // 仍找不到则放弃该条高亮(不错误高亮、不露 UI 痕迹)。背景: id 1-5 跨公告挂靠错位。
-    if(s.text && rawText.slice(s.start, s.end) !== s.text){
-      var rel = rawText.indexOf(s.text);
-      if(rel >= 0){
-        spans.push({start:rel, end:rel+s.text.length, role:s.role, id:s.id});
-      } else {
-        console.warn("[evidence] 证据文本不在原文中, 跳过高亮:", s.id);
-      }
-      continue;
-    }
-    spans.push({start:s.start,end:s.end,role:s.role,id:s.id});
+    if(s.locatable === false){ skipped++; continue; }
+    var st = (s.locatable === true && s.start!=null) ? s.start : safeRelocate(s);
+    if(st==null || st<0){ skipped++; continue; }
+    var en = st + (s.text ? s.text.length : (s.end - s.start));
+    if(st>=en || en>rawText.length) { skipped++; continue; }
+    spans.push({start:st, end:en, role:s.role, id:s.id});
   }
+  if(skipped) console.warn("[evidence] 本公告有 " + skipped + " 条证据位置失效（原文已不含该文本），已跳过高亮。");
   spans.sort(function(a,b){ return a.start - b.start; });
   var merged = [];
   for(var j=0;j<spans.length;j++){
@@ -612,13 +632,17 @@ function renderCards(){
         var ac = evHas(eid) ? " active" : "";
         var normStr = (ns!=null && ne!=null) ? ("["+ns+", "+ne+")") : "—（未规范化）";
         var os = (rs!=null && re!=null) ? ("["+rs+", "+re+")") : "—";
+        var conf = (e.confidence!=null && !isNaN(e.confidence)) ? Math.max(0, Math.min(1, Number(e.confidence))) : null;
+        var confHtml = conf!=null
+          ? '<div class="ev-conf"><span style="font-size:10px;color:var(--text-3)">置信度</span><div class="ev-conf-bar"><div class="ev-conf-fill" style="width:'+Math.round(conf*100)+'%"></div></div><span class="ev-conf-val">'+(conf*100).toFixed(0)+'%</span></div>'
+          : '';
         return '<div class="ev-item'+ac+'" onclick="hlEv(\''+eid+'\','+(rs==null?-1:rs)+','+(re==null?-1:re)+')">'+
           '<span class="ev-role '+roleClass(role)+'">'+(ROLE_LABEL[role]||role)+'</span>'+
-          '<div class="ev-text">'+esc(e.text||"")+'</div>'+
+          '<div class="ev-text">'+esc(e.text||"")+'</div>'+confHtml+
           '<div class="ev-coords">'+
             '<span class="cr">raw: '+os+'</span> · <span class="cn">normalized: '+normStr+'</span>'+
             '<span class="os-tag">offset_space: '+OFFSET_SPACE+'</span>'+
-            '<div style="margin-top:2px;color:var(--text-3)">match: '+esc(e.match_method||"exact")+' · confidence: '+(e.confidence!=null?e.confidence:"—")+' · verified: '+(e.verified!=null?e.verified:"—")+'</div>'+
+            '<div style="margin-top:2px;color:var(--text-3)">match: '+esc(e.match_method||"exact")+' · verified: '+(e.verified!=null?e.verified:"—")+'</div>'+
           '</div>'+
         '</div>';
       }).join("");
@@ -684,8 +708,10 @@ function clearHL(){ evClear(); renderEntityCrumb(); renderText(allEvidence()); r
   await loadNoticeList();
   var p = new URLSearchParams(location.search);
   var nid = p.get("id");
-  // K3 修复(2026-08-11): 默认展示叙事主线公告(东南大学 id=114);
-  // 兜底跳过已知错位公告(id 1-5), 避免评委首屏看到降级页。
+  // 默认展示叙事主线公告(东南大学 id=114)。
+  // 兜底跳过 id 1-5：这 5 篇正文于 2026-08-05 被重抓覆盖成别的公告，旧证据仍挂在同一
+  // tender_id 上且原文已不可恢复（详见 scripts/check_evidence_offsets.py 的 STALE 分类），
+  // 任何高亮都会失效，不作为首屏默认项。
   if(!nid && noticeList.length){
     var BROKEN = [1,2,3,4,5];
     var pref = noticeList.find(function(t){ return t.id===114; })

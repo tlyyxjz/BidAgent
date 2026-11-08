@@ -1,0 +1,15 @@
+# 报告导出的**可选**依赖（scripts/ 下的离线工具，非 app 运行时依赖）
+# ---------------------------------------------------------------
+# 用途：
+#   reportlab  -> scripts/dd_pdf.py   尽调报告导出 PDF
+#   matplotlib -> scripts/dd_report.py  charts_images()，HTML 报告里的金额/趋势图
+#
+# 为什么单独成一个文件、不并进 requirements.txt：
+#   app/ 不 import 这两个模块（grep 确认），且调用点本身就是「延迟 import +
+#   try/except 降级」——dd_report.render_html 在图表后端缺失时仍产出完整 HTML。
+#   它们属于可选增强，混进主依赖树会让 pip-audit 与生产镜像白背两个大包。
+#
+# CI 会真装本文件，让 tests/test_dd_report.py 的两个用例**真跑**而不是被
+# importorskip 静默跳过。
+reportlab>=4.0
+matplotlib>=3.8

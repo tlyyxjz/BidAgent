@@ -42,6 +42,13 @@ def parse_tender_org(text: str | None) -> str | None:
     m = re.search(r"采购单位\s*([\u4e00-\u9fa5A-Za-z（）()]{2,30}?)(?:行政区域|采购单位地址|代理机构)", text)
     if m:
         return m.group(1).strip()
+    # 湖北等分站格式："1、采购人信息 名 称： 湖北大学"（先于宽松模式，避免误抓）
+    m = re.search(
+        r"采购人信息[\s\S]{0,40}?名\s*称[:：]\s*([\u4e00-\u9fa5A-Za-z（）()]{2,50})",
+        text,
+    )
+    if m:
+        return m.group(1).strip()
     # 正文里的"采购人：XXX"或"招标人：XXX"——限制长度防贪婪
     m = re.search(r"(?:采购人|招标人)[:：\s]*([\u4e00-\u9fa5A-Za-z（）()]{2,50})", text)
     if m:
@@ -65,6 +72,16 @@ def parse_publish_time(text: str | None) -> datetime | None:
     """抽取公告时间。None/空文本安全。"""
     if not text:
         return None
+    # 湖北等分站格式：发布日期：2026-08-16 20:32（横杠分隔）
+    m = re.search(r"发布日期[:：]\s*(20\d{2})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2}))?", text)
+    if m:
+        try:
+            if m.group(4):
+                return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                                int(m.group(4)), int(m.group(5)))
+            return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            pass
     # ccgp 格式：2026年08月05日 15:57
     m = re.search(r"(20\d{2})年(\d{2})月(\d{2})日\s*(\d{2}):(\d{2})", text)
     if m:
@@ -106,8 +123,12 @@ def parse_win_amount(text: str | None) -> Decimal | None:
     m = re.search(r"总中标金额[:：\s]*￥?([\d,.]+)\s*(万元|亿元|元|万|亿)", text)
     if m:
         return _to_decimal(m.group(1), m.group(2))
-    # 中标（成交）金额：22.5320000（万元）
-    m = re.search(r"中标(?:（成交）)?(?:金额)?[:：\s]*([\d,.]+)\s*(?:（(万元|亿元|元|万|亿)）|(万元|亿元|元|万|亿))", text)
+    # 中标（成交）金额：22.5320000（万元）/ 中标(成交) 金额: 382.47103 (万元)（OCR/半角变体）
+    m = re.search(
+        r"中标(?:[（(]成交[）)])?\s*(?:金额\s*)?[:：\s]*([\d,.]+)\s*"
+        r"(?:[（(]\s*(万元|亿元|元|万|亿)\s*[）)]|(万元|亿元|元|万|亿))",
+        text,
+    )
     if m:
         unit = m.group(2) or m.group(3)
         return _to_decimal(m.group(1), unit)

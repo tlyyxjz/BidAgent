@@ -57,7 +57,7 @@ def print_metrics(data: dict) -> None:
 
     # 重点突出 D 组（完整系统 = 核心卖点）
     d = summaries.get("D", {})
-    print("▶ 核心结论（D 组 = 完整系统）：")
+    print("[核心结论] D 组 = 完整系统：")
     print(f"   字段精确率 {d['field_precision']:.2%} · 无依据输出率 {d['unjustified_rate']:.2%} "
           f"· 证据精确率 {d['evidence_precision']:.2%} · 空值误报率 {d['null_false_positive_rate']:.2%}")
     print()
@@ -65,7 +65,7 @@ def print_metrics(data: dict) -> None:
     # 按来源分组（D 组）
     by_source = data.get("by_source", {})
     if by_source:
-        print("▶ D 组按来源分组（字段精确率）：")
+        print("[按来源] D 组字段精确率：")
         for src in ("frozen93", "w3", "w4", "w5"):
             if src in by_source and "D" in by_source[src]:
                 fp = by_source[src]["D"].get("field_precision", 0)
@@ -75,7 +75,7 @@ def print_metrics(data: dict) -> None:
     # 元数据（证明可复现的关键：模型/温度/commit）
     meta_keys = ("model_id", "prompt_hash", "code_commit", "temperature")
     if d:
-        print("▶ 复测元数据（可追溯）：")
+        print(">> 复测元数据（可追溯）：")
         for k in meta_keys:
             if k in d and d[k] not in (None, ""):
                 print(f"   {k}: {d[k]}")
@@ -98,7 +98,7 @@ def main() -> None:
         return
 
     if not RESULT_PATH.exists():
-        print(f"❌ 未找到复测结果文件: {RESULT_PATH}")
+        print(f"? 未找到复测结果文件: {RESULT_PATH}")
         print("   请先运行: python scripts/eval_gold598_retest.py")
         print("   或使用: python scripts/reproduce_metrics.py --rerun")
         sys.exit(1)

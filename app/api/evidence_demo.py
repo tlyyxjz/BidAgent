@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.evidence_span import resolve_evidence_span, summarize
 from app.models.database import get_db
 from app.models.tender import Tender
 from app.models.evidence import ExtractedField, Evidence, FieldEvidenceLink
@@ -34,6 +35,11 @@ class EvidenceResponse(BaseModel):
     evidence_role: str
     sequence: int
     is_required: bool
+    # 偏移解析结论（与 /api/real/tenders/{id}/detail 同口径，见 evidence_span.py）：
+    # slice_ok=库内偏移切片逐字一致；relocated=已安全重定位；locatable=False 为孤儿证据。
+    slice_ok: bool = False
+    relocated: bool = False
+    locatable: bool = False
 
 
 class FieldResponse(BaseModel):
@@ -57,6 +63,11 @@ class TenderEvidenceResponse(BaseModel):
     source_platform: str | None = None
     source_url: str | None = None
     core_content: str  # 原文（用于前端高亮）
+    # 显式声明偏移基准，避免消费方按字段名 raw_start 误用 source_raw_text。
+    offset_space: str = "clean_raw_text"
+    clean_raw_len: int = 0
+    # ok/relocated/orphan 三分类；orphan>0 表示该公告存在孤儿证据。
+    evidence_stats: dict = {}
     fields: list[FieldResponse] = []
 
 
@@ -81,6 +92,8 @@ async def get_tender_evidence(
     )
     fields = fields_result.scalars().all()
 
+    raw_text = tender.core_content or ""
+    span_results: list = []
     field_responses = []
     for f in fields:
         # 查该字段的证据关联
@@ -92,18 +105,25 @@ async def get_tender_evidence(
         )
         evidences = []
         for link, ev in links_result:
+            s, e, slice_ok, relocated, locatable = resolve_evidence_span(
+                raw_text, ev.raw_start, ev.raw_end, ev.evidence_text
+            )
+            span_results.append((s, e, slice_ok, relocated, locatable))
             evidences.append(EvidenceResponse(
                 evidence_id=ev.id,
                 evidence_text=ev.evidence_text,
                 context_before=ev.context_before,
                 context_after=ev.context_after,
-                raw_start=ev.raw_start,
-                raw_end=ev.raw_end,
+                raw_start=s,
+                raw_end=e,
                 match_method=ev.match_method,
                 verified=ev.verified,
                 evidence_role=link.evidence_role,
                 sequence=link.sequence,
                 is_required=link.is_required,
+                slice_ok=slice_ok,
+                relocated=relocated,
+                locatable=locatable,
             ))
 
         field_responses.append(FieldResponse(
@@ -124,7 +144,9 @@ async def get_tender_evidence(
         notice_type=tender.notice_type,
         source_platform=tender.source_platform,
         source_url=tender.source_url,
-        core_content=tender.core_content or "",
+        core_content=raw_text,
+        clean_raw_len=len(raw_text),
+        evidence_stats=summarize(span_results),
         fields=field_responses,
     )
 
@@ -144,6 +166,11 @@ async def get_tender_fields(
     if not fields:
         raise HTTPException(status_code=404, detail="公告无字段或不存在")
 
+    tender = (await db.execute(
+        select(Tender).where(Tender.id == tender_id)
+    )).scalar_one_or_none()
+    raw_text = (tender.core_content if tender else "") or ""
+
     field_responses = []
     for f in fields:
         links_result = await db.execute(
@@ -154,18 +181,24 @@ async def get_tender_fields(
         )
         evidences = []
         for link, ev in links_result:
+            s, e, slice_ok, relocated, locatable = resolve_evidence_span(
+                raw_text, ev.raw_start, ev.raw_end, ev.evidence_text
+            )
             evidences.append(EvidenceResponse(
                 evidence_id=ev.id,
                 evidence_text=ev.evidence_text,
                 context_before=ev.context_before,
                 context_after=ev.context_after,
-                raw_start=ev.raw_start,
-                raw_end=ev.raw_end,
+                raw_start=s,
+                raw_end=e,
                 match_method=ev.match_method,
                 verified=ev.verified,
                 evidence_role=link.evidence_role,
                 sequence=link.sequence,
                 is_required=link.is_required,
+                slice_ok=slice_ok,
+                relocated=relocated,
+                locatable=locatable,
             ))
 
         field_responses.append(FieldResponse(

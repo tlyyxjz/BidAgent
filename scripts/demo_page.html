@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>标小智 · 中标真实性核验（复赛演示）</title>
+<style>
+  :root { --navy:#1e2761; --navy2:#2a347c; --gold:#f9e795; --ice:#cadcfc;
+          --bg:#f6f8fa; --dark:#212635; --gray:#57606a;
+          --green:#1a7f37; --amber:#9a6700; --red:#cf222e; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Microsoft YaHei",sans-serif; background:var(--bg); color:var(--dark); min-height:100vh; }
+  header { background:var(--navy); color:#fff; padding:18px 28px; }
+  header h1 { font-size:22px; } header .sub { color:var(--ice); font-size:13px; margin-top:4px; }
+  .tabs { display:flex; gap:8px; padding:16px 28px 0; }
+  .tab { padding:8px 22px; border-radius:8px 8px 0 0; background:#fff; border:1px solid #d0d7de;
+         cursor:pointer; font-size:14px; }
+  .tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .panel { display:none; background:#fff; border:1px solid #d0d7de; border-radius:0 10px 10px 10px;
+           margin:0 28px 28px; padding:20px; }
+  .panel.active { display:block; }
+  .row { display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+  label { width:70px; font-size:13px; color:var(--gray); }
+  input[type=text], input[type=file] { flex:1; min-width:220px; padding:8px 10px;
+    border:1px solid #d0d7de; border-radius:6px; font-size:14px; }
+  button { padding:8px 20px; background:var(--navy); color:#fff; border:none; border-radius:6px;
+           cursor:pointer; font-size:14px; }
+  button.ghost { background:#fff; color:var(--navy); border:1px solid var(--navy); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .verdict { font-size:20px; font-weight:700; padding:12px 16px; border-radius:8px; margin:14px 0; }
+  .verdict.verified { background:#e6f4ea; color:var(--green); }
+  .verdict.suspicious { background:#fdf3d8; color:var(--amber); }
+  .verdict.fake { background:#fdebec; color:var(--red); }
+  .checks td { padding:6px 10px; border-bottom:1px solid #e8ecf1; font-size:13px; }
+  .ok { color:var(--green); font-weight:700; } .bad { color:var(--red); font-weight:700; }
+  .evidence { background:var(--navy); color:#fff; border-radius:8px; padding:12px 16px;
+              font-size:13px; margin:10px 0; }
+  .evidence .pos { color:var(--gold); font-weight:700; }
+  .hint { font-size:12px; color:var(--gray); margin-bottom:14px; }
+  .ocr { background:#f0f2f5; border-radius:6px; padding:10px; font-size:12px;
+         font-family:Consolas,monospace; white-space:pre-wrap; margin-top:10px; }
+  /* 实时采集（D4） */
+  .rt-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:14px; }
+  .rt-card { border:1px solid #d0d7de; border-radius:8px; padding:12px 14px; font-size:13px; }
+  .rt-card.ok { border-left:4px solid var(--green); }
+  .rt-card.warn { border-left:4px solid var(--amber); }
+  .rt-card.err { border-left:4px solid var(--red); }
+  .rt-card h4 { font-size:14px; margin-bottom:6px; }
+  .rt-card .meta { color:var(--gray); font-size:12px; line-height:1.7; }
+  .rt-summary { margin-top:14px; font-size:14px; font-weight:700; }
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--navy);
+             border-top-color:transparent; border-radius:50%; animation:spin .8s linear infinite;
+             vertical-align:-2px; margin-right:6px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>标小智 BidAgent · 中标真实性核验</h1>
+  <div class="sub">输入一份中标通知书的信息，与官方公告库比对：真 / 存疑 / 伪造，每条结论都回得到原文</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-t="text">✍️ 文本核验</div>
+  <div class="tab" data-t="img">📷 图片核验（OCR）</div>
+  <div class="tab" data-t="rt">🔄 实时采集</div>
+</div>
+
+<div class="panel active" id="panel-text">
+  <div class="hint">示例（可直接点"核验"）：编号 GHHX2026000062 · 金额 22.532万元 · 中标人 青岛盛信合创电子技术有限公司 · 采购人 中国电子口岸数据中心青岛分中心</div>
+  <div class="row"><label>项目编号</label><input id="bid" value="GHHX2026000062"></div>
+  <div class="row"><label>中标金额</label><input id="amount" value="22.532万元"></div>
+  <div class="row"><label>中标人</label><input id="winner" value="青岛盛信合创电子技术有限公司"></div>
+  <div class="row"><label>采购人</label><input id="purchaser" value="中国电子口岸数据中心青岛分中心"></div>
+  <div class="row"><button onclick="doVerify()">核验</button>
+    <button class="ghost" onclick="showCards()">查看证据卡片</button></div>
+  <div id="result-text"></div>
+</div>
+
+<div class="panel" id="panel-img">
+  <div class="hint">上传一张中标通知书照片（截图/扫描件），系统自动识别编号/金额/中标人/采购人并核验</div>
+  <div class="row"><input type="file" id="photo" accept="image/*"></div>
+  <div class="row"><button onclick="doVerifyImage()">识别并核验</button></div>
+  <div id="result-img"></div>
+</div>
+
+<div class="panel" id="panel-rt">
+  <div class="hint">现场从湖北/江苏/云南/山东四省政府采购网抓取最新中标公告并入库（合规：robots 先行 · 单域名 8 秒限流 · 403 熔断）。
+    每源抓 3 条，四源并发，预计 40~90 秒。</div>
+  <div class="row"><button id="rt-btn" onclick="doRealtime()">立即采集并入库</button></div>
+  <div id="result-rt"></div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  $("#panel-" + t.dataset.t).classList.add("active");
+});
+
+const MARKS = { verified: "真", suspicious: "存疑", fake: "伪造" };
+
+function renderResult(box, r) {
+  const v = r.verdict;
+  let html = `<div class="verdict ${v}">核验结论：${MARKS[v]}</div>`;
+  html += `<div style="font-size:14px;margin-bottom:8px">${r.reason || ""}</div>`;
+  if (r.evidence && r.evidence.project_name) {
+    html += `<div class="evidence">匹配公告：${r.evidence.project_name}<br>来源：${r.evidence.source_url || ""}`;
+    if (r.evidence.winner_line) html += `<br>原文证据：${r.evidence.winner_line}`;
+    html += `</div>`;
+  }
+  if (r.rows && r.rows.length) {
+    html += `<table class="checks"><tr><th>字段</th><th>通知书</th><th>官方记录</th><th>比对</th></tr>`;
+    r.rows.forEach(row => (row.checks || []).forEach(c => {
+      html += `<tr><td>${c.field}</td><td>${c.input}</td><td>${c.db}</td>
+               <td class="${c.match ? "ok" : "bad"}">${c.match ? "一致" : "不符"}</td></tr>`;
+    }));
+    html += `</table>`;
+  }
+  box.innerHTML = html;
+}
+
+async function doVerify() {
+  const box = $("#result-text");
+  box.innerHTML = "核验中…";
+  try {
+    const r = await fetch("/demo/api/verify", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        bid_number: $("#bid").value, amount: $("#amount").value,
+        winner: $("#winner").value, purchaser: $("#purchaser").value,
+      }),
+    });
+    const d = await r.json();
+    renderResult(box, d.result);
+  } catch (e) { box.innerHTML = "核验失败：" + e.message; }
+}
+
+function showCards() {
+  const q = new URLSearchParams({
+    bid_number: $("#bid").value, amount: $("#amount").value,
+    winner: $("#winner").value, purchaser: $("#purchaser").value,
+  });
+  window.open("/demo/api/cards?" + q.toString());
+}
+
+async function doVerifyImage() {
+  const box = $("#result-img");
+  const f = $("#photo").files[0];
+  if (!f) { box.innerHTML = "先选择图片"; return; }
+  box.innerHTML = "OCR 识别中（本机模型，几秒到几十秒）…";
+  const fd = new FormData();
+  fd.append("file", f);
+  try {
+    const r = await fetch("/demo/api/verify-image", { method: "POST", body: fd });
+    const d = await r.json();
+    let html = `<div class="ocr">OCR 识别：编号=${d.fields.bid_number || "?"} · 金额=${d.fields.win_amount_raw || "?"} · 中标人=${d.fields.winner || "?"} · 采购人=${d.fields.purchaser || "?"}</div>`;
+    if (d.warnings && d.warnings.length) html += `<div class="hint">⚠ ${d.warnings.join("；")}</div>`;
+    renderResult(box, d.result);
+    if (d.ocr_text) html += `<div class="ocr">识别原文片段：\n${d.ocr_text}</div>`;
+    box.innerHTML = html;
+  } catch (e) { box.innerHTML = "识别失败：" + e.message; }
+}
+
+// ---------- 实时采集（D4） ----------
+function rtCardCls(s) {
+  if (s.status === "ok") return "ok";
+  if (s.status === "empty") return "warn";
+  return "err";
+}
+
+function renderRealtime(d) {
+  let html = `<div class="rt-grid">`;
+  d.sources.forEach(s => {
+    let meta = `状态：${s.status_text} · 抓到 ${s.fetched} 条 · 耗时 ${(s.elapsed_ms / 1000).toFixed(1)}s`;
+    if (s.ingest) {
+      meta += `<br>入库：新增 <b>${s.ingest.inserted}</b> · 重复跳过 ${s.ingest.duplicates} · 失败 ${s.ingest.errors}`;
+    }
+    if (s.error) meta += `<br><span style="color:var(--red)">${s.error}</span>`;
+    html += `<div class="rt-card ${rtCardCls(s)}"><h4>${s.display_name}</h4>
+             <div class="meta">${meta}</div></div>`;
+  });
+  html += `</div>`;
+  html += `<div class="rt-summary">本次共入库 ${d.total_inserted} 条新公告（成功源 ${d.ok_count}/4，总耗时 ${(d.elapsed_ms / 1000).toFixed(1)}s）。可切回"文本核验"页签查询刚入库的公告。</div>`;
+  return html;
+}
+
+async function doRealtime() {
+  const box = $("#result-rt");
+  const btn = $("#rt-btn");
+  btn.disabled = true;
+  box.innerHTML = `<span class="spinner"></span>正在合规抓取四省公告（robots 先行 + 每域名 8 秒限流），预计 40~90 秒，请勿关闭页面…`;
+  try {
+    const r = await fetch("/demo/api/realtime");
+    const d = await r.json();
+    box.innerHTML = renderRealtime(d);
+  } catch (e) {
+    box.innerHTML = `<span class="bad">采集失败：${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
