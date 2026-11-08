@@ -517,6 +517,20 @@ CI 日志进度行有 3 个 `s`（27% 处 1 个、97% 处 2 个）。查代码�
 ② 字体判定改为跨平台候选列表，skip reason 明确写出缺什么。
 本机复验 `tests/test_verify_award_image.py + test_demo_web.py`：**13 passed / 0 skipped**，未破坏原有行为。
 
+**修复由第二次真 CI 验证**（run `42438203879`，conclusion = **success**）：
+
+```
+short test summary info
+SKIPPED [1] tests/test_demo_web.py:66: easyocr 未安装
+SKIPPED [1] tests/test_verify_award_image.py:116: 真 OCR 端到端缺少：easyocr, 中文字体
+SKIPPED [1] tests/test_verify_award_image.py:133: 真 OCR 端到端缺少：easyocr, 中文字体
+2351 passed, 3 skipped, 32 warnings in 299.67s (0:04:59)
+Required test coverage of 40% reached. Total coverage: 87.38%
+```
+
+⇒ 3 个跳过从「静默」变成「带原因可见」，且 reason 明确写出缺什么；
+`-rs` 与跨平台字体判定两个改动都生效。
+
 ### 4. ResourceWarning 收口（结论：目标环境不存在，源头仍未定位）
 
 - 真 CI 日志 `grep -c "unclosed database" = 0` ⇒ 该 warning **不是项目代码的普遍缺陷**，
