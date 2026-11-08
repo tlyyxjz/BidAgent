@@ -463,6 +463,81 @@ CODEBUDDY_SAFE_DELETE_ENABLED=0 python -m pytest -q --no-cov --tb=line -p no:cac
 
 ---
 
+## 真 CI 验收与补测收口（2026-11-08）
+
+用户「现在全部落实」⇒ 推送分支触发真 CI、补跑 CI 排除的 98 个用例、
+追查 skipped 与 warning。读数如下。
+
+### 1. 真实 GitHub Actions（run `42437316986`，conclusion = **success**）
+
+环境：`runs-on: ubuntu-latest` + `actions/setup-python@v5`（`python-version: "3.11"`，
+实际 3.11.18）+ `--timeout-method=signal`。**10 个步骤全绿**，含 `pip-audit`。
+
+```
+2351 passed, 3 skipped, 0 failed, 32 warnings in 365.03s (0:06:05)
+Required test coverage of 40% reached. Total coverage: 87.38%
+TOTAL 10336 语句 1304 未覆盖 87%
+```
+
+本机模拟 vs 真 CI 第一次有了完整对照：
+
+| 项 | 本机干净克隆模拟 | 真实 CI |
+|---|---|---|
+| 用例 | 2354 passed / 0 skipped | 2351 passed + **3 skipped** = 2354 |
+| 覆盖率 | 87.50% | 87.38% |
+| 耗时 | 19:29 | **06:05** |
+| warning | 1（unclosed database） | 32（第三方/字体类），**unclosed database 0 条** |
+| OS / Python | Windows / 3.13.5 | Linux / 3.11.18 |
+| timeout-method | `thread` | `signal` |
+
+⇒ 用例总数一致，差异全部由 OS / 解释器 / 依赖解释；
+⇒ 「CI 通过」现有平台一手读数，不再是推断，也不再是本机模拟。
+
+### 2. CI 排除的 98 个用例单独补跑（exit code 已落盘）
+
+`fc28a74` 因「时序/E2E 慢文件」把 4 个文件移出 CI（34+39+5+20 = 98 个用例）。
+这些用例长期不被 CI 保护，本轮单独补跑：
+
+```
+98 passed in 258.78s (0:04:18)    EXIT=0
+```
+
+⇒ 本机全绿，但**仍不建议直接放回 CI**：`test_e2e_pages.py` 要真 uvicorn + chromium，
+`test_rate_limiter.py` 含真实 sleep，历史上正是因 flaky 才排除。恢复需独立立项。
+
+### 3. 真 CI 的 3 个 skipped 已定位并修根因
+
+CI 日志进度行有 3 个 `s`（27% 处 1 个、97% 处 2 个）。查代码：
+
+- `tests/test_demo_web.py:66` `HAS_OCR` 检查 easyocr ⇒ CI 未装（依赖 torch，体积过大）⇒ skip 1；
+- `tests/test_verify_award_image.py:18` 原写死 `C:\Windows\Fonts\msyh.ttc`
+  ⇒ **Linux 上永远 False**，2 个真 OCR 端到端用例永久静默跳过，即使将来装了 easyocr 也跑不起来。
+
+修复两处：① ci.yml 加 `-rs`，让 skip reason 出现在 CI 日志里，杜绝「绿了但没跑」的误读；
+② 字体判定改为跨平台候选列表，skip reason 明确写出缺什么。
+本机复验 `tests/test_verify_award_image.py + test_demo_web.py`：**13 passed / 0 skipped**，未破坏原有行为。
+
+### 4. ResourceWarning 收口（结论：目标环境不存在，源头仍未定位）
+
+- 真 CI 日志 `grep -c "unclosed database" = 0` ⇒ 该 warning **不是项目代码的普遍缺陷**，
+  是 Windows + Py3.13.5 + `--cov` 组合下才有；32 条 CI warning 全是
+  jieba / fastapi / matplotlib 中文字体缺失等第三方与环境类。
+- 新增 T9 最小消融探针 `_perf/cov_thread_probe.py`：去掉项目全部代码，
+  只留 coverage 7.15.0 + 12 个短线程写入 ⇒ 12 线程后只剩 1 个连接、
+  GC 后 **0 条 unclosed database** ⇒ **否掉「coverage 自己按线程泄漏连接」这个假设**
+  （`CoverageData._reap_dead_thread_dbs` 会在下次 `_connect()` 回收死线程连接）。
+- 🔴 曾启动 `PYTHONTRACEMALLOC=10` 全量追栈，6 分 24 秒只到 18%，
+  开销过大且目标环境无此告警 ⇒ **主动判死该路线**，不再立项。
+- 结论：本项目在**目标运行环境**满足「代码产生的 warning 清零」；
+  本机那 1 条登记为「环境相关、未定位」，不写成已修复、不写成 0 warnings。
+
+### 5. 本轮新增未闭环（只登记，不强行解释）
+
+并发 5→10 断崖、老进程快 44%、3.6ms 残差仍是「未解释」，按标准不许引用，
+也不是待办；两个分支仍未合 main（标准第一章：AI 不拥有合并权）。
+
+---
+
 ## 状态
 
 **待人工验收。**
