@@ -1,3 +1,14 @@
+# 标小智 BidAgent · 可验证招投标数据引擎
+
+[![CI](https://github.com/tlyyxjz/BidAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/tlyyxjz/BidAgent/actions/workflows/ci.yml)
+![license](https://img.shields.io/badge/license-Apache--2.0-blue)
+![tests](https://img.shields.io/badge/CI-passing-brightgreen)
+
+> **给一份中标公告，24 秒告诉你它是不是真的，并且每个数字都能指回原文第几个字符。**
+> 面向供应链金融贷前尽调与企业采购核验 · GOAI 2026。单篇公告核验成本不足 1 分钱、端到端约 24 秒（620 篇金标实测），把供应商中标记录核验从人工约 1-2 人时压缩到分钟级——LLM 只生成候选，确定性程序负责验证，找不到依据的字段一律不输出。
+
+---
+
 ## 这东西能帮你干什么
 
 你要确认一家公司自报的中标记录是真是假。以前的做法是打开政府采购网、搜公司名、翻公告、一条条对——一份公告要花 1 到 2 个人时。
@@ -22,13 +33,8 @@
 
 > **技术定位**：本项目的核心是「可验证文档抽取」——LLM 只生成候选，确定性程序验证，每个结果可回溯原文。该技术通用，可迁移到科研文献调研、实验数据提取等场景；招投标数据是它的首个落地验证场景。
 
-# 标小智 — 可验证招投标数据引擎
-
-> **给一份中标公告，24 秒告诉你它是不是真的，并且每个数字都能指回原文第几个字符。**
-> 面向供应链金融贷前尽调与企业采购核验 · GOAI 2026。单篇公告核验成本不足 1 分钱、端到端约 24 秒（620 篇金标实测），把供应商中标记录核验从人工约 1-2 人时压缩到分钟级——LLM 只生成候选，确定性程序负责验证，找不到依据的字段一律不输出。
-
 **当前状态**：v4.1 对齐版（GOAI 世界人工智能开源大赛 · 无界应用赛道 · AI+金融方向）
-**测试**：2452 passed（本地全量，含新增 5 条列表接口等价用例）／CI 稳定子集 2346 passed, 3 skipped · **评测数据**：829 篇真实公告 · 金标 620 篇 · **数据源**：10+ 个省级平台 · **分支**：feature/qoder-sprint-realtime-quality（复赛）
+**测试**：本地全量 `2452 passed / 88.28%`（2026-11-07 实测）；本分支真 CI `2351 passed, 3 skipped / 87.38%`（2026-11-08，run 42437316986）；main 分支历史 CI `1940 passed / 86.98%` · **评测数据**：829 篇真实公告 · 金标 620 篇 · **数据源**：10+ 个省级平台
 
 ---
 
@@ -41,7 +47,7 @@
 | **3 分钟 Demo 视频** | 包内 `标小智_Demo视频.webm`（附字幕 `标小智_Demo字幕.srt`） |
 | **路演 PPT** | 包内 `标小智_初赛路演_v2.pptx` |
 | **项目简介** | 包内 `introduction_500.md`（419 字，8 要素） |
-| **关键数字** | 2452 测试通过（本地全量）· 覆盖率 88.28% · 金标 620 篇 · 单篇核验成本 <1 分钱 · 10+ 省级数据源 |
+| **关键数字** | 本地全量 2452 测试通过 · 覆盖率 88.28% · 真 CI 2351 passed + 3 skipped · 覆盖率 87.38% · 金标 620 篇 · 单篇核验成本 <1 分钱 · 10+ 省级数据源 |
 
 ---
 
@@ -237,10 +243,10 @@ TenderProject（采购项目）
 
 ### 测试
 
-- **2452 passed（本地全量口径，2026-11-07 实测 26 分 31 秒，exit=0）** · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium，覆盖工作台/列表/详情/看板/搜索渲染主路径与零 JS 异常）。其中 5 条为列表接口等价用例（3 条随 W3A 新增，2 条为 2026-11-07 自查补充）
-- **CI 口径**（同一套测试，CI 排除 4 个时序敏感/E2E 文件共 98 个用例）：复赛分支 `2346 passed, 3 skipped`（10330 语句 / 1304 未覆盖 = 87.38%）；main 分支 `1940 passed`（9298 语句 / 1211 未覆盖 = 86.98%）。三处数字均可复现：本地跑 `pytest -q --cov=app`，CI 数取自 Actions 日志的 `passed` 行与 coverage `TOTAL` 行
-- 告警：**带 `--cov` 跑时汇总 1 条** `ResourceWarning: unclosed database`（GC 落在 `test_api_lifecycle_chain_requires_number`）；**不带 coverage 跑同样 2447 用例是 0 warning**，两者唯一差别是 coverage 的追踪改变了 GC 时机。2026-11-06 用连接探针（包住 `sqlite3.connect` 注入记录用的 `Connection` 子类，`close()` 出表、GC 未关则打印创建栈）全量跑：`2447 passed`，**0 条泄漏**，即经默认 factory 创建的连接全部正常关闭 ⇒ 残留者来自不经该路径的连接（AIOSQLite 包装层最可疑）。结论：**仅告警、0 failed、不影响结果，来源仍未钉死，不要对外说"0 warnings"**；`asyncio` mark 误标与 `datetime.utcnow()` 弃用告警确已清零
-- 测试覆盖率：本地全量 **88.28%**（10330 语句 / 1211 未覆盖）；CI **87%**（阈值见 pyproject.toml，`fail_under=40`）
+- **2452 passed（本地全量口径，2026-11-07 实测 26 分 31 秒，exit=0）** · 0 errors / 0 failures（含 5 个 Playwright 页面级 E2E：`tests/test_e2e_pages.py`，真实 uvicorn + chromium）。其中 5 条为列表接口等价用例（W3A 新增 3 条 + 自查补充 2 条）
+- **CI 口径**（CI 排除 4 个时序敏感/E2E 文件共 98 个用例）：本分支真 CI `2351 passed, 3 skipped`、覆盖率 `87.38%`（2026-11-08，run `42437316986`，Linux / Py3.11.18 / signal，10 步全绿含 pip-audit）；main 分支历史 `1940 passed / 86.98%`。98 个被排除用例单独补跑 `98 passed / EXIT=0`。**三处数字口径不同，不得混用或互相印证**
+- 告警：真 CI 32 条均为第三方/字体类，`unclosed database` **0 条**；本机 Windows + Py3.13 + `--cov` 下有 1 条 `ResourceWarning: unclosed database`，属环境相关、**源头未定位**，登记待查。不得对外宣称「0 warnings」
+- 测试覆盖率：本地全量 **88.28%**（10336 语句 / 1211 未覆盖）；本分支真 CI **87.38%**；CI 阈值 `fail_under=40`（pyproject.toml）
 
 ---
 
@@ -536,7 +542,7 @@ pytest --cov=app --cov-report=term-missing
 - 结构化日志带 request_id 上下文，不记录凭证
 - 统一错误响应 `{code, data, msg}`
 - Docker 多阶段构建 + non-root 用户 + healthcheck
-- GitHub Actions CI：pytest 稳定子集（排除 4 个时序敏感/E2E 文件，单测 180s 超时兜底、偶发失败自动重跑）+ 覆盖率 40% 阈值 + pip-audit 依赖漏洞扫描（.github/workflows/ci.yml）；**CI 实测**（2026-11-06 两个分支各一次 success）：复赛分支 2346 passed / 3 skipped、覆盖率 87%，main 分支 1940 passed、覆盖率 87%；全量 2447 用例在开发机本地执行（27 分 27 秒）；W3A/W3B 落地后为 **2452 用例 / 26 分 31 秒**（2026-11-07 实测）
+- GitHub Actions CI：pytest 稳定子集（排除 4 个时序敏感/E2E 文件，单测 180s 超时兜底、偶发失败自动重跑）+ 覆盖率 40% 阈值 + pip-audit 依赖漏洞扫描（`.github/workflows/ci.yml`）；**CI 实测**：本分支 `2351 passed, 3 skipped / 87.38%`（2026-11-08，Linux / Py3.11.18 / signal，加 `-rs` 暴露 3 条 skip 原因），main 分支 `1940 passed / 86.98%`（2026-11-06）；98 个被排除用例本地补跑 `98 passed / EXIT=0`；全量 `2452 passed` 在开发机本地执行（26 分 31 秒）
 
 ## 许可证
 
